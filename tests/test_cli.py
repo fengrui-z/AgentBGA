@@ -1,0 +1,67 @@
+from contextlib import redirect_stdout
+from io import StringIO
+import json
+import os
+from pathlib import Path
+import tempfile
+import unittest
+from unittest import mock
+
+from agentbga.cli import main
+
+
+class CLITests(unittest.TestCase):
+    def test_doctor_checks_each_named_api_key(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "players.json"
+            config.write_text(json.dumps({
+                "schema_version": "agentbga.players.v1",
+                "players": [
+                    {"name": "A", "backend": "openai", "model": "a", "api_key_env": "A_KEY"},
+                    {"name": "B", "backend": "anthropic", "model": "b", "api_key_env": "B_KEY"},
+                ],
+            }))
+            output = StringIO()
+            with mock.patch.dict(os.environ, {"A_KEY": "present"}, clear=True), redirect_stdout(output):
+                code = main(["doctor", "--players-config", str(config)])
+            self.assertEqual(1, code)
+            result = json.loads(output.getvalue())
+            self.assertFalse(result["ready_for_model"])
+            self.assertEqual([True, False], [row["api_key_configured"] for row in result["data"]["players"]])
+
+    def test_named_random_players_config_runs_and_status_preserves_names(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = root / "players.json"
+            database = root / "match.sqlite3"
+            config.write_text(json.dumps({
+                "schema_version": "agentbga.players.v1",
+                "players": [
+                    {"name": "Baseline One", "backend": "random"},
+                    {"name": "Baseline Two", "backend": "random"},
+                ],
+            }))
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main([
+                    "run", "--players-config", str(config), "--seed", "77", "--db", str(database),
+                ])
+            self.assertEqual(0, code)
+            result = json.loads(output.getvalue())
+            self.assertEqual(
+                {"Baseline One", "Baseline Two"},
+                {row["player"] for row in result["data"]["rankings"]},
+            )
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main(["match", "status", result["data"]["match_id"], "--db", str(database)])
+            self.assertEqual(0, code)
+            status = json.loads(output.getvalue())
+            self.assertEqual(
+                ["Baseline One", "Baseline Two"],
+                [row["name"] for row in status["data"]["players"]],
+            )
+
+
+if __name__ == "__main__":
+    unittest.main()

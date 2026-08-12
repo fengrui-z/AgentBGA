@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentbga"
+version = "0.1.0"
+description = "CLI-first board-game arena for long-horizon LLM agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "AgentBGA contributors"}]
+dependencies = []
+
+[project.scripts]
+agentbga = "agentbga.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentbga"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

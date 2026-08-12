@@ -1,0 +1,114 @@
+"""Run complete matches by binding named controllers to seats."""
+
+from __future__ import annotations
+
+import random
+from typing import Any, Callable
+
+from . import splendor
+from .agents import AgentError, PlayerConfig, build_model_agent, random_choice
+from .store import Store
+
+
+EventSink = Callable[[dict[str, Any]], None]
+
+
+def legacy_players(
+    controllers: list[str], *, model: str | None = None,
+    base_url: str = "https://api.openai.com/v1", api_key_env: str = "OPENAI_API_KEY",
+) -> list[PlayerConfig]:
+    players = []
+    for seat, backend in enumerate(controllers):
+        value: dict[str, Any] = {"name": f"Seat {seat} ({backend})", "backend": backend}
+        if backend == "openai":
+            value.update(model=model, base_url=base_url, api_key_env=api_key_env)
+        players.append(PlayerConfig.from_dict(value, seat))
+    return players
+
+
+def run_match(
+    store: Store,
+    match_id: str,
+    players: list[PlayerConfig] | list[str],
+    *,
+    model: str | None = None,
+    base_url: str = "https://api.openai.com/v1",
+    api_key_env: str = "OPENAI_API_KEY",
+    max_turns: int = 250,
+    retries: int = 1,
+    fallback: str = "random",
+    sink: EventSink | None = None,
+) -> dict[str, Any]:
+    version, state, _ = store.load(match_id)
+    if players and isinstance(players[0], str):
+        players = legacy_players(players, model=model, base_url=base_url, api_key_env=api_key_env)  # type: ignore[arg-type]
+    configs: list[PlayerConfig] = players  # type: ignore[assignment]
+    if len(configs) != state["player_count"]:
+        raise ValueError("player/controller count must equal player count")
+    store.set_players(match_id, [config.public_dict() for config in configs])
+    rngs = [random.Random(state["seed"] * 1009 + seat) for seat in range(state["player_count"])]
+    model_agents = {
+        seat: build_model_agent(config)
+        for seat, config in enumerate(configs)
+        if config.backend in {"openai", "anthropic", "gemini"}
+    }
+
+    while state["status"] == "active":
+        if state["turn_count"] >= max_turns:
+            raise RuntimeError(f"match exceeded --max-turns={max_turns}")
+        seat = state["active_seat"]
+        legal = splendor.legal_actions(state, seat)
+        if not legal:
+            raise RuntimeError(f"seat {seat} has no legal actions")
+        config = configs[seat]
+        metadata: dict[str, Any] = {}
+        if config.backend == "random":
+            action_id = random_choice(legal, rngs[seat])
+        elif config.backend == "human":
+            print(f"\n{config.name} (seat {seat}), version {version}. Legal actions:")
+            for index, item in enumerate(legal):
+                print(f"  [{index}] {item['action']}")
+            while True:
+                raw = input("Choose action number: ").strip()
+                if raw.isdigit() and int(raw) < len(legal):
+                    action_id = legal[int(raw)]["id"]
+                    break
+                print("Invalid selection.")
+        else:
+            last_error: Exception | None = None
+            for attempt in range(retries + 1):
+                try:
+                    action_id, metadata = model_agents[seat].choose(splendor.observe(state, seat), legal)
+                    break
+                except AgentError as error:
+                    last_error = error
+                    if sink:
+                        sink({"type": "agent_error", "seat": seat, "player": config.name,
+                              "backend": config.backend, "attempt": attempt + 1, "error": str(error)})
+            else:
+                if fallback == "random":
+                    action_id = random_choice(legal, rngs[seat])
+                    metadata = {"fallback": "random", "error": str(last_error)}
+                else:
+                    raise AgentError(f"{config.name} exhausted retries: {last_error}")
+        selected = next(item["action"] for item in legal if item["id"] == action_id)
+        version, state, events = store.act(match_id, seat, version, selected)
+        if seat in model_agents or metadata:
+            store.record_controller_call(match_id, version, seat, config.backend, metadata)
+        if sink:
+            sink({
+                "type": "turn", "match_id": match_id, "version": version,
+                "seat": seat, "player": config.name, "backend": config.backend,
+                "action_id": action_id, "action": selected, "events": events, "agent": metadata,
+            })
+    by_seat = {seat: config.public_dict() for seat, config in enumerate(configs)}
+    rankings = [{**row, "player": by_seat[row["seat"]]["name"], "backend": by_seat[row["seat"]]["backend"]}
+                for row in splendor.rankings(state)]
+    result = {
+        "match_id": match_id, "version": version, "turns": state["turn_count"],
+        "players": [{"seat": seat, **config.public_dict()} for seat, config in enumerate(configs)],
+        "rankings": rankings,
+    }
+    if sink:
+        sink({"type": "match_finished", **result})
+    return result
