@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 import json
 import os
 from pathlib import Path
@@ -12,7 +12,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Protocol
+from typing import Any, Callable, Iterator, Protocol
 
 
 class AgentError(RuntimeError):
@@ -21,13 +21,14 @@ class AgentError(RuntimeError):
 
 @dataclass(frozen=True)
 class PlayerConfig:
-    """Public controller configuration. API key values are never stored here."""
+    """Controller configuration with an optional process-only API key."""
 
     name: str
     backend: str
     model: str | None = None
     base_url: str | None = None
     api_key_env: str | None = None
+    api_key: str | None = field(default=None, repr=False, compare=False)
 
     @classmethod
     def from_dict(cls, value: dict[str, Any], seat: int) -> "PlayerConfig":
@@ -71,11 +72,17 @@ class PlayerConfig:
         )
 
     def public_dict(self) -> dict[str, Any]:
-        return {key: value for key, value in asdict(self).items() if value is not None}
+        return {key: value for key, value in asdict(self).items() if value is not None and key != "api_key"}
+
+
+StreamSink = Callable[[str, str], None]
 
 
 class ModelAgent(Protocol):
-    def choose(self, observation: dict[str, Any], legal: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]: ...
+    def choose(
+        self, observation: dict[str, Any], legal: list[dict[str, Any]],
+        on_stream: StreamSink | None = None,
+    ) -> tuple[str, dict[str, Any]]: ...
 
 
 def load_players_config(path: str) -> list[PlayerConfig]:
@@ -134,7 +141,7 @@ def _prompt(observation: dict[str, Any], legal: list[dict[str, Any]]) -> tuple[s
 class HTTPModelAgent:
     backend = "http"
 
-    def __init__(self, *, model: str, base_url: str, api_key_env: str, api_key: str | None = None, timeout: float = 120):
+    def __init__(self, *, model: str, base_url: str, api_key_env: str, api_key: str | None = None, timeout: float = 600):
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.api_key_env = api_key_env
@@ -149,26 +156,86 @@ class HTTPModelAgent:
     def response_parts(self, payload: dict[str, Any]) -> tuple[str, dict[str, Any], str]:
         raise NotImplementedError
 
-    def choose(self, observation: dict[str, Any], legal: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
+    def stream_request(self, url: str, body: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        body["stream"] = True
+        return url, body
+
+    def stream_parts(self, payload: dict[str, Any]) -> tuple[str, str, dict[str, Any], str | None]:
+        raise NotImplementedError
+
+    @staticmethod
+    def _sse_payloads(response: Any) -> Iterator[str]:
+        data: list[str] = []
+        for raw_line in response:
+            line = raw_line.decode("utf-8", errors="replace").rstrip("\r\n")
+            if not line:
+                if data:
+                    yield "\n".join(data)
+                    data = []
+                continue
+            if line.startswith("data:"):
+                data.append(line[5:].lstrip())
+        if data:
+            yield "\n".join(data)
+
+    def _stream_response(
+        self, response: Any, on_stream: StreamSink | None,
+    ) -> tuple[str, dict[str, Any], str]:
+        content: list[str] = []
+        reasoning: list[str] = []
+        usage: dict[str, Any] = {}
+        actual_model = self.model
+        for data in self._sse_payloads(response):
+            if data == "[DONE]":
+                break
+            payload = json.loads(data)
+            content_delta, reasoning_delta, chunk_usage, chunk_model = self.stream_parts(payload)
+            if reasoning_delta:
+                reasoning.append(reasoning_delta)
+                if on_stream:
+                    on_stream("reasoning", reasoning_delta)
+            if content_delta:
+                content.append(content_delta)
+                if on_stream:
+                    on_stream("content", content_delta)
+            if chunk_usage:
+                usage.update(chunk_usage)
+            if chunk_model:
+                actual_model = chunk_model
+        return "".join(content), usage, actual_model
+
+    def choose(
+        self, observation: dict[str, Any], legal: list[dict[str, Any]],
+        on_stream: StreamSink | None = None,
+    ) -> tuple[str, dict[str, Any]]:
         system, user = _prompt(observation, legal)
         url, headers, body = self.request_parts(system, user)
+        url, body = self.stream_request(url, body)
         request = urllib.request.Request(
-            url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", **headers}, method="POST"
+            url, data=json.dumps(body).encode(), headers={
+                "Content-Type": "application/json", "Accept": "text/event-stream", **headers,
+            }, method="POST"
         )
         started = time.monotonic()
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                payload = json.loads(response.read())
+                content_type = response.headers.get_content_type()
+                if content_type == "text/event-stream":
+                    raw, usage, actual_model = self._stream_response(response, on_stream)
+                else:
+                    payload = json.loads(response.read())
+                    raw, usage, actual_model = self.response_parts(payload)
+                    if on_stream and raw:
+                        on_stream("content", raw)
         except urllib.error.HTTPError as error:
             detail = error.read().decode(errors="replace")[:1000].replace(self.api_key, "[REDACTED]")
             raise AgentError(f"{self.backend} endpoint returned HTTP {error.code}: {detail}") from error
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, UnicodeError) as error:
             raise AgentError(f"{self.backend} endpoint failed: {error}") from error
         try:
-            raw, usage, actual_model = self.response_parts(payload)
             selected = _extract_json(raw)["action_id"]
         except (KeyError, IndexError, TypeError, json.JSONDecodeError) as error:
-            raise AgentError(f"unexpected {self.backend} response shape: {str(payload)[:1000]}") from error
+            raise AgentError(f"unexpected {self.backend} response: {raw[:1000]}") from error
         if selected not in {item["id"] for item in legal}:
             raise AgentError(f"model selected unknown or stale action ID: {selected}")
         return selected, {
@@ -181,7 +248,7 @@ class OpenAICompatibleAgent(HTTPModelAgent):
     backend = "openai"
 
     def __init__(self, *, model: str, base_url: str = "https://api.openai.com/v1", api_key: str | None = None,
-                 api_key_env: str = "OPENAI_API_KEY", timeout: float = 120):
+                 api_key_env: str = "OPENAI_API_KEY", timeout: float = 600):
         super().__init__(model=model, base_url=base_url, api_key_env=api_key_env, api_key=api_key, timeout=timeout)
 
     def request_parts(self, system: str, user: str) -> tuple[str, dict[str, str], dict[str, Any]]:
@@ -189,6 +256,20 @@ class OpenAICompatibleAgent(HTTPModelAgent):
         return url, {"Authorization": f"Bearer {self.api_key}"}, {
             "model": self.model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         }
+
+    def stream_request(self, url: str, body: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        body["stream"] = True
+        return url, body
+
+    def stream_parts(self, payload: dict[str, Any]) -> tuple[str, str, dict[str, Any], str | None]:
+        choices = payload.get("choices") or []
+        delta = choices[0].get("delta", {}) if choices else {}
+        content = delta.get("content") or ""
+        reasoning = delta.get("reasoning_content") or delta.get("reasoning") or ""
+        tool_calls = delta.get("tool_calls") or []
+        if tool_calls:
+            content += "".join(call.get("function", {}).get("arguments", "") for call in tool_calls)
+        return content, reasoning, payload.get("usage") or {}, payload.get("model")
 
     def response_parts(self, payload: dict[str, Any]) -> tuple[str, dict[str, Any], str]:
         message = payload["choices"][0]["message"]
@@ -199,12 +280,25 @@ class OpenAICompatibleAgent(HTTPModelAgent):
 class AnthropicAgent(HTTPModelAgent):
     backend = "anthropic"
 
+    def __init__(self, *, model: str, base_url: str, api_key_env: str, api_key: str | None = None,
+                 timeout: float = 600):
+        super().__init__(model=model, base_url=base_url, api_key_env=api_key_env, api_key=api_key, timeout=timeout)
+
     def request_parts(self, system: str, user: str) -> tuple[str, dict[str, str], dict[str, Any]]:
         url = self.base_url if self.base_url.endswith("/v1/messages") else self.base_url + "/v1/messages"
         return url, {"x-api-key": self.api_key, "anthropic-version": "2023-06-01"}, {
             "model": self.model, "max_tokens": 128, "system": system,
             "messages": [{"role": "user", "content": user}],
         }
+
+    def stream_parts(self, payload: dict[str, Any]) -> tuple[str, str, dict[str, Any], str | None]:
+        event_type = payload.get("type")
+        delta = payload.get("delta") or {}
+        content = delta.get("text", "") if delta.get("type") == "text_delta" else ""
+        reasoning = delta.get("thinking", "") if delta.get("type") == "thinking_delta" else ""
+        message = payload.get("message") or {}
+        usage = payload.get("usage") or message.get("usage") or delta.get("usage") or {}
+        return content, reasoning, usage, message.get("model") if event_type == "message_start" else None
 
     def response_parts(self, payload: dict[str, Any]) -> tuple[str, dict[str, Any], str]:
         text = "".join(block.get("text", "") for block in payload["content"] if block.get("type") == "text")
@@ -213,6 +307,10 @@ class AnthropicAgent(HTTPModelAgent):
 
 class GeminiAgent(HTTPModelAgent):
     backend = "gemini"
+
+    def __init__(self, *, model: str, base_url: str, api_key_env: str, api_key: str | None = None,
+                 timeout: float = 600):
+        super().__init__(model=model, base_url=base_url, api_key_env=api_key_env, api_key=api_key, timeout=timeout)
 
     def request_parts(self, system: str, user: str) -> tuple[str, dict[str, str], dict[str, Any]]:
         if self.base_url.endswith(":generateContent"):
@@ -226,6 +324,19 @@ class GeminiAgent(HTTPModelAgent):
             "generationConfig": {"responseMimeType": "application/json", "maxOutputTokens": 128},
         }
 
+    def stream_request(self, url: str, body: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        if url.endswith(":generateContent"):
+            url = url[:-len(":generateContent")] + ":streamGenerateContent?alt=sse"
+        elif not url.endswith(":streamGenerateContent?alt=sse"):
+            url = url + ("&" if "?" in url else "?") + "alt=sse"
+        return url, body
+
+    def stream_parts(self, payload: dict[str, Any]) -> tuple[str, str, dict[str, Any], str | None]:
+        parts = ((payload.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []
+        content = "".join(part.get("text", "") for part in parts if not part.get("thought"))
+        reasoning = "".join(part.get("text", "") for part in parts if part.get("thought"))
+        return content, reasoning, payload.get("usageMetadata") or {}, payload.get("modelVersion")
+
     def response_parts(self, payload: dict[str, Any]) -> tuple[str, dict[str, Any], str]:
         parts = payload["candidates"][0]["content"]["parts"]
         return "".join(part.get("text", "") for part in parts), payload.get("usageMetadata", {}), self.model
@@ -235,4 +346,7 @@ def build_model_agent(config: PlayerConfig) -> ModelAgent:
     classes = {"openai": OpenAICompatibleAgent, "anthropic": AnthropicAgent, "gemini": GeminiAgent}
     if config.backend not in classes or not config.model or not config.base_url or not config.api_key_env:
         raise AgentError(f"player {config.name} is not a configured model controller")
-    return classes[config.backend](model=config.model, base_url=config.base_url, api_key_env=config.api_key_env)
+    return classes[config.backend](
+        model=config.model, base_url=config.base_url,
+        api_key_env=config.api_key_env, api_key=config.api_key,
+    )

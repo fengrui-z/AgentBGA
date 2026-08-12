@@ -106,6 +106,12 @@ def build_parser() -> argparse.ArgumentParser:
     doctor.add_argument("--model")
     doctor.add_argument("--players-config", help="validate all players in a named multi-model config")
     add_db(doctor)
+
+    web = commands.add_parser("web", help="run the local visual match table")
+    web.add_argument("--host", default="127.0.0.1", choices=["127.0.0.1", "localhost", "::1"])
+    web.add_argument("--port", type=int, default=8765)
+    web.add_argument("--static-dir", help="built frontend directory (default: web/dist/client)")
+    add_db(web)
     return parser
 
 
@@ -171,6 +177,11 @@ def execute(args: argparse.Namespace) -> int:
         )
         emit(envelope(checks, ready_for_model=ready))
         return 0 if ready else 1
+
+    if args.group == "web":
+        from .web import serve
+        serve(args.host, args.port, args.db, args.static_dir)
+        return 0
 
     store = Store(args.db)
     try:

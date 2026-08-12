@@ -79,6 +79,67 @@ class _ErrorHandler(BaseHTTPRequestHandler):
         pass
 
 
+class _StreamingHandler(BaseHTTPRequestHandler):
+    backend = "openai"
+
+    def do_POST(self):
+        body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        if self.backend == "openai":
+            self.assert_stream(body)
+            chunks = [
+                {"model": "stream-model", "choices": [{"delta": {"reasoning_content": "考虑贵族。"}}]},
+                {"model": "stream-model", "choices": [{"delta": {"content": '{"action_id":'}}]},
+                {"model": "stream-model", "choices": [{"delta": {"content": '"a-test"}'}}]},
+                {"choices": [], "usage": {"prompt_tokens": 10, "completion_tokens": 5}},
+            ]
+        elif self.backend == "anthropic":
+            chunks = [
+                {"type": "message_start", "message": {"model": "stream-model", "usage": {"input_tokens": 9}}},
+                {"type": "content_block_delta", "delta": {"type": "thinking_delta", "thinking": "分析费用。"}},
+                {"type": "content_block_delta", "delta": {"type": "text_delta", "text": '{"action_id":"a-test"}'}},
+                {"type": "message_delta", "usage": {"output_tokens": 4}},
+            ]
+        else:
+            chunks = [
+                {"modelVersion": "stream-model", "candidates": [{"content": {"parts": [{"text": "评估市场。", "thought": True}]}}]},
+                {"candidates": [{"content": {"parts": [{"text": '{"action_id":"a-test"}'}]}}],
+                 "usageMetadata": {"promptTokenCount": 8, "candidatesTokenCount": 4}},
+            ]
+        raw = "".join(f"data: {json.dumps(chunk)}\n\n" for chunk in chunks)
+        if self.backend == "openai":
+            raw += "data: [DONE]\n\n"
+        encoded = raw.encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def assert_stream(self, body):
+        if body.get("stream") is not True:
+            raise AssertionError("stream was not enabled")
+
+    def log_message(self, format, *args):
+        pass
+
+
+class _StreamingServer:
+    def __init__(self, backend):
+        self.backend = backend
+
+    def __enter__(self):
+        handler = type("BackendStreamingHandler", (_StreamingHandler,), {"backend": self.backend})
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.url = f"http://127.0.0.1:{self.server.server_port}"
+        return self
+
+    def __exit__(self, *args):
+        self.server.shutdown()
+        self.server.server_close()
+
+
 class _Server:
     def __enter__(self):
         _BackendHandler.requests = []
@@ -133,7 +194,7 @@ class AgentTests(unittest.TestCase):
         request = _BackendHandler.requests[-1]
         self.assertEqual("a-test", action_id)
         self.assertEqual("gemini", metadata["backend"])
-        self.assertEqual("/v1beta/models/gemini-model:generateContent", request["path"])
+        self.assertEqual("/v1beta/models/gemini-model:streamGenerateContent?alt=sse", request["path"])
         self.assertEqual("google-key", request["headers"]["X-Goog-Api-Key"])
         self.assertIn("system_instruction", request["body"])
 
@@ -141,6 +202,33 @@ class AgentTests(unittest.TestCase):
         with mock.patch.dict(os.environ, {}, clear=True):
             with self.assertRaisesRegex(AgentError, "MISSING_PLAYER_KEY"):
                 AnthropicAgent(model="m", base_url="http://invalid", api_key_env="MISSING_PLAYER_KEY")
+
+    def test_model_request_timeout_defaults_to_ten_minutes(self):
+        agents = [
+            OpenAICompatibleAgent(model="m", api_key="test"),
+            AnthropicAgent(model="m", base_url="https://api.anthropic.com", api_key_env="KEY", api_key="test"),
+            GeminiAgent(model="m", base_url="https://example.test", api_key_env="KEY", api_key="test"),
+        ]
+        self.assertEqual([600, 600, 600], [agent.timeout for agent in agents])
+
+    def test_streams_reasoning_and_content_for_each_backend(self):
+        constructors = {
+            "openai": lambda url: OpenAICompatibleAgent(model="m", base_url=url + "/v1", api_key="test"),
+            "anthropic": lambda url: AnthropicAgent(model="m", base_url=url, api_key_env="KEY", api_key="test"),
+            "gemini": lambda url: GeminiAgent(model="m", base_url=url, api_key_env="KEY", api_key="test"),
+        }
+        for backend, constructor in constructors.items():
+            with self.subTest(backend=backend), _StreamingServer(backend) as server:
+                streamed = []
+                action_id, metadata = constructor(server.url).choose(
+                    {"status": "active"}, LEGAL,
+                    on_stream=lambda channel, delta: streamed.append((channel, delta)),
+                )
+                self.assertEqual("a-test", action_id)
+                self.assertTrue(any(channel == "reasoning" for channel, _ in streamed))
+                self.assertIn('{"action_id":"a-test"}', "".join(delta for channel, delta in streamed if channel == "content"))
+                self.assertEqual("stream-model", metadata["model"])
+                self.assertTrue(metadata["usage"])
 
     def test_http_error_redacts_api_key(self):
         server = ThreadingHTTPServer(("127.0.0.1", 0), _ErrorHandler)

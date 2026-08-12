@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import random
+import time
 from typing import Any, Callable
 
 from . import splendor
@@ -77,13 +78,48 @@ def run_match(
         else:
             last_error: Exception | None = None
             for attempt in range(retries + 1):
+                pending = {"reasoning": "", "content": ""}
+                last_stream_flush = [time.monotonic()]
+
+                def flush_stream() -> None:
+                    if not sink:
+                        return
+                    for channel in ("reasoning", "content"):
+                        if pending[channel]:
+                            sink({"type": "agent_stream", "version": version,
+                                  "seat": seat, "player": config.name,
+                                  "backend": config.backend, "attempt": attempt + 1,
+                                  "channel": channel, "delta": pending[channel]})
+                            pending[channel] = ""
+                    last_stream_flush[0] = time.monotonic()
+
                 try:
-                    action_id, metadata = model_agents[seat].choose(splendor.observe(state, seat), legal)
+                    if sink:
+                        sink({"type": "agent_started", "version": version,
+                              "seat": seat, "player": config.name,
+                              "backend": config.backend, "attempt": attempt + 1})
+
+                    def stream(channel: str, delta: str) -> None:
+                        pending[channel] += delta
+                        if time.monotonic() - last_stream_flush[0] >= 0.1:
+                            flush_stream()
+
+                    action_id, metadata = model_agents[seat].choose(
+                        splendor.observe(state, seat), legal, on_stream=stream,
+                    )
+                    flush_stream()
+                    if sink:
+                        sink({"type": "agent_finished", "version": version,
+                              "seat": seat, "player": config.name,
+                              "backend": config.backend, "attempt": attempt + 1,
+                              "agent": metadata})
                     break
                 except AgentError as error:
+                    flush_stream()
                     last_error = error
                     if sink:
-                        sink({"type": "agent_error", "seat": seat, "player": config.name,
+                        sink({"type": "agent_error", "version": version,
+                              "seat": seat, "player": config.name,
                               "backend": config.backend, "attempt": attempt + 1, "error": str(error)})
             else:
                 if fallback == "random":
