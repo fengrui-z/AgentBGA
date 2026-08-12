@@ -109,6 +109,42 @@ rankings. Only the environment-variable name is persisted; its secret value is n
 Keys are read only from the environment variable named by `--api-key-env`
 (default `OPENAI_API_KEY`). They are never written to SQLite, events, or output.
 Model call metadata and token usage are stored without raw prompts or responses.
+Model API calls use a 600-second timeout by default so slower reasoning models can
+finish their turns; the live event stream sends keepalives while a model is thinking.
+
+### Local live table
+
+The web table lets you configure 2–4 seats with a separate backend, endpoint,
+model name, API key, and display name for every seat. It streams every move live
+and shows the market, bank, nobles, each agent's gems, purchased cards, reserved
+cards, engine discounts, and prestige. The right-side model Chat streams each
+backend's exposed reasoning/content chunks while it is deciding, with the parsed
+game action kept in the action log below it. Provider-hidden chain-of-thought
+cannot be displayed when an API does not return it.
+
+The setup form includes editable presets for DeepSeek, Alibaba Cloud Model
+Studio (pay-as-you-go), Zhipu AI, and MiniMax. Selecting a provider fills its
+OpenAI-compatible endpoint and offers common model IDs; choosing Custom keeps
+all fields editable for gateways, regional endpoints, and newly released models.
+
+Build the static frontend once, then start the localhost-only server:
+
+```console
+cd web
+npm install
+npm run build
+cd ..
+
+./agentbga web
+```
+
+Open `http://127.0.0.1:8765`. API keys entered in the form stay in browser/process
+memory for that match and are sent only to this local server. They are never put
+in local storage, URLs, logs, SQLite rows, match events, or snapshots. The server
+intentionally refuses non-localhost binds because it accepts credentials.
+
+For frontend development, run `./agentbga web` in one terminal and `npm run dev`
+inside `web/` in another, then open `http://127.0.0.1:3000`.
 
 ## Current CLI surface
 
@@ -127,6 +163,8 @@ agentbga match replay MATCH_ID --json
 
 agentbga run --players 2 --controllers openai,random \
   --model YOUR_MODEL --base-url ENDPOINT --jsonl
+
+agentbga web --port 8765
 ```
 
 The repository-local form is `./agentbga ...`. All non-interactive commands emit
@@ -151,6 +189,7 @@ protocols, Splendor MVP scope, evaluation plan, and implementation milestones.
   state verification, random matches, interactive human seats, and API model seats.
 - Independent named seats using OpenAI-compatible, Anthropic, Gemini, random, or
   human backends, with retries and auditable fallback.
+- Local live table for per-seat model configuration and real-time visual matches.
 
 Planned next: MCP adapter, tournament scheduling/reports, stronger scripted
 baselines, model-specific prompt/memory policies, and a richer human TUI.

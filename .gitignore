@@ -8,3 +8,8 @@ build/
 .agentbga/
 *.sqlite3
 .env
+web/node_modules/
+web/.next/
+web/.vinext/
+web/.wrangler/
+web/dist/
