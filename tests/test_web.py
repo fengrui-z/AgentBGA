@@ -157,6 +157,42 @@ class WebTests(unittest.TestCase):
                     {"name": "Baseline", "backend": "random"},
                 ]})
 
+    def test_human_turn_waits_for_current_legal_action(self):
+        with tempfile.TemporaryDirectory() as directory:
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            completed = threading.Event()
+
+            def fake_run(_store, _match_id, players, sink, turn_gate, human_choice):
+                turn_gate()
+                action_id = human_choice(
+                    0, 0, {"viewer_seat": 0},
+                    [{"id": "a-human", "action": {"type": "pass", "reason": "test"}}],
+                )
+                sink({"type": "turn", "version": 1, "seat": 0, "player": players[0].name,
+                      "backend": "human", "action_id": action_id, "action": {"type": "pass"}})
+                sink({"type": "match_failed", "error": "test stop"})
+                completed.set()
+
+            with mock.patch("agentbga.web.run_match", side_effect=fake_run):
+                created = hub.create({"players": [
+                    {"name": "You", "backend": "human"},
+                    {"name": "Bot", "backend": "random"},
+                ]})
+                deadline = time.monotonic() + 2
+                snapshot = hub.get(created["match_id"])
+                while not snapshot["human_turn"] and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                    snapshot = hub.get(created["match_id"])
+
+                self.assertEqual("You", snapshot["human_turn"]["player"])
+                with self.assertRaisesRegex(ValueError, "stale|another seat"):
+                    hub.submit_human_action(created["match_id"], 1, 0, "a-human")
+                with self.assertRaisesRegex(ValueError, "not legal"):
+                    hub.submit_human_action(created["match_id"], 0, 0, "a-wrong")
+                submitted = hub.submit_human_action(created["match_id"], 0, 0, "a-human")
+                self.assertIsNone(submitted["human_turn"])
+                self.assertTrue(completed.wait(2))
+
     def test_http_health_and_static_page(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -176,6 +212,52 @@ class WebTests(unittest.TestCase):
                 server.server_close()
             self.assertTrue(health["ok"])
             self.assertIn("AgentBGA", page)
+
+    def test_http_human_action_endpoint_validates_and_submits(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "index.html").write_text("<h1>AgentBGA</h1>", encoding="utf-8")
+            hub = MatchHub(root / "matches.sqlite3")
+            ready = threading.Event()
+            finished = threading.Event()
+
+            def fake_run(_store, _match_id, _players, sink, turn_gate, human_choice):
+                turn_gate()
+                ready.set()
+                selected = human_choice(
+                    0, 0, {"viewer_seat": 0},
+                    [{"id": "a-http", "action": {"type": "pass", "reason": "test"}}],
+                )
+                sink({"type": "turn", "version": 1, "seat": 0, "backend": "human",
+                      "action_id": selected, "action": {"type": "pass"}})
+                sink({"type": "match_failed", "error": "test stop"})
+                finished.set()
+
+            with mock.patch("agentbga.web.run_match", side_effect=fake_run):
+                created = hub.create({"players": [
+                    {"name": "You", "backend": "human"},
+                    {"name": "Bot", "backend": "random"},
+                ]})
+                handler = type("TestWebHandler", (WebHandler,), {"hub": hub, "static_dir": root})
+                server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+                thread = threading.Thread(target=server.serve_forever, daemon=True)
+                thread.start()
+                try:
+                    self.assertTrue(ready.wait(2))
+                    deadline = time.monotonic() + 2
+                    while not hub.get(created["match_id"])["human_turn"] and time.monotonic() < deadline:
+                        time.sleep(0.01)
+                    request = urllib.request.Request(
+                        f"http://127.0.0.1:{server.server_port}/api/matches/{created['match_id']}/action",
+                        data=json.dumps({"seat": 0, "expected_version": 0, "action_id": "a-http"}).encode(),
+                        headers={"Content-Type": "application/json"}, method="POST",
+                    )
+                    response = json.load(urllib.request.urlopen(request))
+                finally:
+                    server.shutdown()
+                    server.server_close()
+            self.assertIsNone(response["human_turn"])
+            self.assertTrue(finished.wait(2))
 
     def test_web_server_refuses_nonlocal_bind_and_missing_build(self):
         with self.assertRaisesRegex(ValueError, "localhost"):
