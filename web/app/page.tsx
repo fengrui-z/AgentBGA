@@ -61,9 +61,11 @@ type ChatTurn = {
   startedAt: number; latencyMs?: number;
 };
 
+const GEM_ORDER = ["red", "green", "white", "blue", "black", "gold"] as const;
+const BONUS_ORDER = GEM_ORDER.slice(0, 5);
 const GEM_META: Record<string, {label: string; mark: string}> = {
+  red: { label: "红宝石", mark: "●" }, green: { label: "祖母绿", mark: "⬟" },
   white: { label: "钻石", mark: "◇" }, blue: { label: "蓝宝石", mark: "◆" },
-  green: { label: "祖母绿", mark: "⬟" }, red: { label: "红宝石", mark: "●" },
   black: { label: "玛瑙", mark: "⬢" }, gold: { label: "黄金", mark: "★" },
 };
 const BACKENDS: Record<Backend, {label: string; url: string; key: string; model: string}> = {
@@ -114,13 +116,13 @@ function Gem({color, value, compact = false}: {color: string; value: number; com
 }
 
 function Cost({cost}: {cost: Record<string, number>}) {
-  return <div className="costs">{Object.entries(cost).filter(([, amount]) => amount > 0).map(([color, amount]) =>
-    <Gem key={color} color={color} value={amount} compact />
+  return <div className="costs">{BONUS_ORDER.filter(color => (cost[color] ?? 0) > 0).map(color =>
+    <Gem key={color} color={color} value={cost[color]} compact />
   )}</div>;
 }
 
-function DevCard({card, small = false}: {card: Card; small?: boolean}) {
-  return <article className={`dev-card card-${card.bonus} ${small ? "dev-card-small" : ""}`} title={card.id}>
+function DevCard({card, small = false, reserved = false}: {card: Card; small?: boolean; reserved?: boolean}) {
+  return <article className={`dev-card card-${card.bonus} ${small ? "dev-card-small" : ""} ${reserved ? "dev-card-reserved" : ""}`} title={card.id}>
     <div className="card-top"><strong>{card.points || "·"}</strong><span>{GEM_META[card.bonus]?.mark}</span></div>
     <Cost cost={card.cost} />
   </article>;
@@ -133,11 +135,11 @@ function PlayerPanel({player: p, identity, active}: {player: PlayerView; identit
       <div className="score"><strong>{p.score}</strong><span>声望</span></div>
     </header>
     <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>思考：最高</b>}</div>
-    <div className="asset-row"><span className="asset-title">宝石</span><div>{Object.keys(GEM_META).map(c => <Gem key={c} color={c} value={p.tokens[c]} compact />)}</div></div>
-    <div className="asset-row"><span className="asset-title">引擎</span><div>{Object.keys(GEM_META).slice(0, 5).map(c => <Gem key={c} color={c} value={p.bonuses[c]} compact />)}</div></div>
+    <div className="asset-row"><span className="asset-title">宝石</span><div>{GEM_ORDER.map(c => <Gem key={c} color={c} value={p.tokens[c]} compact />)}</div></div>
+    <div className="asset-row"><span className="asset-title">引擎</span><div>{BONUS_ORDER.map(c => <Gem key={c} color={c} value={p.bonuses[c]} compact />)}</div></div>
     <div className="owned-head"><span>已购发展牌</span><b>{p.purchased_count}</b></div>
     <div className="owned-cards">{p.purchased.length ? p.purchased.map(card => <DevCard key={card.id} card={card} small />) : <em>尚未建立引擎</em>}</div>
-    <div className="reserve-row"><span>预留 {p.reserved_count}/3</span><div>{p.reserved.map((card, i) => "hidden" in card ? <i key={i}>?</i> : <DevCard key={card.id} card={card} small />)}</div></div>
+    <div className="reserve-row"><span>预留 {p.reserved_count}/3</span><div>{p.reserved.map((card, i) => "hidden" in card ? <i className="reserved-hidden" key={i}>?</i> : <DevCard key={card.id} card={card} reserved />)}</div></div>
     {p.nobles.length > 0 && <div className="noble-owned">贵族 × {p.nobles.length}</div>}
   </section>;
 }
@@ -159,8 +161,8 @@ function describeAction(item: Timeline, names: Record<number, string>) {
   const who = event.player || names[seat] || `座位 ${seat + 1}`;
   const action = event.action ?? {};
   if (action.type === "take_tokens") {
-    const take = Object.entries((action.take ?? {}) as Record<string, number>).map(([c, n]) => `${GEM_META[c]?.label}×${n}`).join("、");
-    const returned = Object.entries((action.return ?? {}) as Record<string, number>).map(([c, n]) => `${GEM_META[c]?.label}×${n}`).join("、");
+    const take = tokenText((action.take ?? {}) as Record<string, number>);
+    const returned = tokenText((action.return ?? {}) as Record<string, number>);
     return `${who} 拿取 ${take}${returned ? `，归还 ${returned}` : ""}`;
   }
   if (action.type === "buy_visible" || action.type === "buy_reserved") return `${who} 购买 ${action.card_id}`;
@@ -177,17 +179,23 @@ function describeAction(item: Timeline, names: Record<number, string>) {
 }
 
 function tokenText(tokens: Record<string, number>) {
-  return Object.entries(tokens).filter(([, count]) => count > 0)
-    .map(([color, count]) => `${GEM_META[color]?.label || color} × ${count}`).join("、");
+  return GEM_ORDER.filter(color => (tokens[color] ?? 0) > 0)
+    .map(color => `${GEM_META[color]?.label || color} × ${tokens[color]}`).join("、");
 }
 
 function humanActionText(action: Record<string, unknown>) {
-  if (action.type === "choose_initial_hand") return `保留 ${(action.card_ids as string[]).join("、")}`;
+  if (action.type === "choose_initial_hand") {
+    if (Array.isArray(action.card_ids)) return `保留 ${action.card_ids.join("、")}`;
+    return `保留 ${Number(action.kept_count ?? 0)} 张起始手牌`;
+  }
   if (action.type === "select_action") return `使用 ${ARK_ACTION_LABELS[String(action.action_card)] || action.action_card}，强度 ${action.strength}${action.x_tokens ? `（X +${action.x_tokens}）` : ""}`;
   if (action.type === "take_x_token") return `将 ${ARK_ACTION_LABELS[String(action.action_card)] || action.action_card} 移到 1 并获得 X token`;
   if (action.type === "draw_cards") return `抽 ${action.draw_count} 张牌${action.discard_count ? `，再弃 ${action.discard_count} 张` : ""}`;
   if (action.type === "snap_card") return `拿取展示区 ${action.card_id}`;
-  if (action.type === "discard_card" || action.type === "break_discard") return `弃牌 ${action.card_id || (action.card_ids as string[]).join("、")}`;
+  if (action.type === "discard_card" || action.type === "break_discard") {
+    const cards = Array.isArray(action.card_ids) ? action.card_ids.join("、") : "";
+    return `弃牌 ${action.card_id || cards || Number(action.discarded_count ?? 0) + " 张"}`;
+  }
   if (action.type === "place_building") return `建造 ${action.building_type}（${action.size} 格，₡${action.cost}）`;
   if (action.type === "play_animal") return `打出动物 ${action.card_id}，使用 ${action.enclosure_id}`;
   if (action.type === "association_task") return `协会任务：${action.task}`;
@@ -225,11 +233,51 @@ const ACTION_GROUPS: Record<string, string> = {
 };
 
 function groupActions(actions: LegalAction[]) {
-  return actions.reduce<Record<string, LegalAction[]>>((groups, item) => {
+  const groups = actions.reduce<Record<string, LegalAction[]>>((result, item) => {
     const kind = String(item.action.type);
-    (groups[kind] ||= []).push(item);
-    return groups;
+    (result[kind] ||= []).push(item);
+    return result;
   }, {});
+  const priority: Record<string, number> = {buy_visible: 0, buy_reserved: 1, reserve_visible: 2, take_tokens: 3, reserve_deck: 4};
+  return Object.fromEntries(Object.entries(groups).sort(([a], [b]) => (priority[a] ?? 10) - (priority[b] ?? 10)));
+}
+
+const CARD_ACTION_TYPES = new Set(["buy_visible", "buy_reserved", "reserve_visible"]);
+
+function findActionCard(action: Record<string, unknown>, view?: View) {
+  const cardId = String(action.card_id ?? "");
+  if (!cardId || !view) return undefined;
+  const visible = Object.values(view.market).flat().find(card => card.id === cardId);
+  if (visible) return visible;
+  return view.players[view.active_seat]?.reserved.find(
+    (card): card is Card => !("hidden" in card) && card.id === cardId,
+  );
+}
+
+function HumanActionChoice({item, view, disabled, submitting, onChoose}: {
+  item: LegalAction; view?: View; disabled: boolean; submitting: boolean; onChoose: () => void;
+}) {
+  const kind = String(item.action.type);
+  if (kind === "take_tokens") {
+    const take = (item.action.take ?? {}) as Record<string, number>;
+    const returned = (item.action.return ?? {}) as Record<string, number>;
+    const returnColors = GEM_ORDER.filter(color => (returned[color] ?? 0) > 0);
+    return <button className="token-action-choice" disabled={disabled} onClick={onChoose} aria-label={humanActionText(item.action)} title={`${humanActionText(item.action)} · ${item.id}`}>
+      <span className="token-choice-gems">{GEM_ORDER.filter(color => (take[color] ?? 0) > 0).map(color => <Gem key={color} color={color} value={take[color]}/>)}</span>
+      {returnColors.length > 0 && <span className="token-choice-return"><b>归还</b>{returnColors.map(color => <Gem key={color} color={color} value={returned[color]} compact/>)}</span>}
+      {submitting && <i>提交中…</i>}
+    </button>;
+  }
+  const card = CARD_ACTION_TYPES.has(kind) ? findActionCard(item.action, view) : undefined;
+  if (!card) return <button disabled={disabled} onClick={onChoose}><strong>{humanActionText(item.action)}</strong><small>{item.id}{submitting ? " · 提交中…" : ""}</small></button>;
+  const payment = tokenText((item.action.payment ?? item.action.return ?? {}) as Record<string, number>);
+  return <button className={`card-action-choice card-${card.bonus}`} disabled={disabled} onClick={onChoose} aria-label={humanActionText(item.action)}>
+    <span className="card-action-label">{kind === "reserve_visible" ? "预留" : "购买"}</span>
+    <span className="card-action-top"><strong>{card.points || "·"}</strong><b>{GEM_META[card.bonus]?.mark}</b></span>
+    <Cost cost={card.cost}/>
+    {payment && <small>{kind === "reserve_visible" ? "归还" : "支付"}：{payment}</small>}
+    {submitting && <i>提交中…</i>}
+  </button>;
 }
 
 const ARK_ACTION_LABELS: Record<string, string> = {
@@ -264,7 +312,7 @@ function ArkPlayerPanel({player: p, identity}: {player: ArkPlayerView; identity?
 
 function SplendorBoard({view}: {view?: View}) {
   return <>
-    <div className="bank-bar"><div><small>供应区</small><strong>宝石银行</strong></div>{view && Object.keys(GEM_META).map(c => <Gem key={c} color={c} value={view.bank[c]}/>)}</div>
+    <div className="bank-bar"><div><small>供应区</small><strong>宝石银行</strong></div>{view && GEM_ORDER.map(c => <Gem key={c} color={c} value={view.bank[c]}/>)}</div>
     <section className="nobles"><header><span>贵族</span><b>{view?.available_nobles.length || 0} AVAILABLE</b></header><div>{view?.available_nobles.map(n => <article key={n.id}><strong>3</strong><Cost cost={n.required}/></article>)}</div></section>
     <section className="market">{[3,2,1].map(tier => <div className="tier" key={tier}>
       <div className="tier-label"><span>TIER</span><strong>0{tier}</strong><small>{view?.deck_counts[String(tier)]} 张</small></div>
@@ -304,8 +352,10 @@ export default function Home() {
   const [controlling, setControlling] = useState(false);
   const [submittingAction, setSubmittingAction] = useState("");
   const sourceRef = useRef<EventSource | null>(null);
-  const splendorView = snapshot?.game === "splendor" ? snapshot.views[0] as View : undefined;
-  const arkView = snapshot?.game === "ark_nova" ? snapshot.views[0] as ArkView : undefined;
+  const humanSeat = snapshot?.human_turn?.seat ?? snapshot?.players.find(player => player.backend === "human")?.seat ?? 0;
+  const viewer = snapshot?.views[humanSeat];
+  const splendorView = snapshot?.game === "splendor" ? viewer as View : undefined;
+  const arkView = snapshot?.game === "ark_nova" ? viewer as ArkView : undefined;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
 
   function updatePlayer(id: string, patch: Partial<PlayerForm>) {
@@ -497,12 +547,11 @@ export default function Home() {
     {error && <div className="table-error" role="alert">{error}</div>}
     <div className="table-grid">
       <aside className="players-column">{snapshot.players.map(identity => {
-        // The spectator sees each agent's own observation. Agents still receive only their seat's view.
-        const ownView = snapshot.views[identity.seat];
-        const ownPlayer = ownView.players[identity.seat];
+        // Render the whole table from the human seat. Without a human, seat 0 is the spectator view.
+        const visiblePlayer = viewer.players[identity.seat];
         return snapshot.game === "splendor"
-          ? <PlayerPanel key={identity.seat} player={ownPlayer as PlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
-          : <ArkPlayerPanel key={identity.seat} player={ownPlayer as ArkPlayerView} identity={identity}/>;
+          ? <PlayerPanel key={identity.seat} player={visiblePlayer as PlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
+          : <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity}/>;
       })}</aside>
       <section className="board">
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? "等待当前模型完成…" : "对局已暂停"}</strong><span>{snapshot.pause_pending ? "返回的这一手会正常落盘，下一位不会开始思考。" : "牌桌停在安全的回合边界，点击“继续对局”即可恢复。"}</span></div>}
@@ -510,7 +559,7 @@ export default function Home() {
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}，请选择行动</h2></div><b>{snapshot.human_turn.legal_actions.length} 个合法选项</b></header>
           <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
             <h3>{ACTION_GROUPS[kind] || kind}<span>{actions.length}</span></h3>
-            <div>{actions.map(item => <button key={item.id} disabled={Boolean(submittingAction)} onClick={() => submitHumanAction(item)}><strong>{humanActionText(item.action)}</strong><small>{item.id}{submittingAction === item.id ? " · 提交中…" : ""}</small></button>)}</div>
+            <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div>
           </section>)}</div>
         </section>}
         {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : <ArkNovaBoard view={arkView} players={snapshot.players}/>}
