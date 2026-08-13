@@ -6,10 +6,18 @@ play. Every capability is exposed through a stable, machine-readable CLI and can
 also be wrapped as MCP tools.
 
 The playable game is **Splendor (base game, 2–4 players)**. A game-plugin registry
-now also exposes an **Ark Nova controlled core**: deterministic setup, multi-step
-turns, the five action cards, Break resolution, seat-scoped hidden information,
-persistence/replay, CLI discovery, and a dedicated web renderer. It uses generated
-research cards; publisher card abilities and verified map geometry remain deferred.
+now also exposes an **Ark Nova controlled core V2**: deterministic setup, multi-step
+turns, the five action cards, upgrades, Break resolution, partner-zoo discounts,
+donations, release projects, controlled effects and final objectives, seat-scoped
+hidden information, persistence/replay, CLI discovery, and a dedicated web renderer.
+It uses generated research cards; publisher card abilities and verified map geometry
+remain deferred.
+
+The two plugins share a small reusable mechanics kernel for structured decision
+steps, stable action IDs, resource payments and transfers, hidden zones, bounded
+tracks, map/network topology, rankings, and semantic events. The kernel does not
+attempt to encode every board-game rule: each game still owns legality, timing,
+special effects, end conditions, and scoring. See [the architecture notes](docs/architecture.md#31-reusable-mechanics-kernel).
 
 ## Project principles
 
@@ -270,10 +278,13 @@ for future interaction tests. No scanned card art or publisher rules text is bun
 - Local live table for per-seat model configuration and real-time visual matches.
 - GamePlugin/GameRegistry boundary used by Store, Runner, CLI, harness prompts, web API,
   and per-game React renderers.
-- Ark Nova 2–4 player controlled core with initial-hand selection, all five action
-  state machines, action-card strength movement, X tokens, Break resolution, Map A
-  schematic, a 212-card research deck, hidden information, invariants, replay, and UI.
+- Ark Nova 2–4 player controlled core V2 with initial-hand selection, all five action
+  state machines, action-card strength movement and upgrades, X tokens, Break resolution,
+  partner-zoo discounts, donations, animal release, controlled effect primitives,
+  generated final objectives, Map A schematic, hidden information, replay, and UI.
 
-Planned next for Ark Nova: official card data, verified map footprints, published
-end-game scoring, action upgrades, donation/release flows, and data-driven effects.
+Planned next for Ark Nova: legally distributable verified card data, verified map
+footprints, the published appeal/conservation scoring geometry, full enclosure
+conditions and special-enclosure occupancy, interactive/after-finishing card timing,
+and per-card FAQ interaction coverage.
 Framework work continues with tournament scheduling/reports and stronger baselines.

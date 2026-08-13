@@ -147,6 +147,196 @@ class ArkNovaControlledCoreTests(unittest.TestCase):
         self.assertTrue(all(len(player["hand"]) <= 3 for player in state["players"]))
         self.assertTrue(all(player["money"] > starting_money[player["seat"]] for player in state["players"]))
 
+    def test_conservation_milestone_inserts_action_upgrade_before_next_turn(self):
+        state = finish_initial_hands(ark_nova.new_game(2, 22, {"turn_limit": 20}))
+        player = state["players"][0]
+        project = state["base_conservation_projects"][0]
+        project.update({"tag": "bird", "project_kind": "tag"})
+        sources = [card for card in state["zoo_deck"] if card.get("card_type") == "animal"][:2]
+        for card in sources:
+            state["zoo_deck"].remove(card)
+            card["tags"] = ["bird"]
+            player["played_cards"].append(card)
+        association = next(card for card in player["action_cards"] if card["action"] == "association")
+        player["x_tokens"] = max(0, 5 - association["strength"])
+        state = apply_kind(state, "select_action", action_card="association", strength=5)
+        state = apply_kind(state, "association_task", task="conservation_project", level=2)
+        self.assertEqual("choose_action_upgrade", state["phase"])
+        self.assertEqual(0, state["active_seat"])
+        state, events = ark_nova.apply_action(
+            state, 0, next(item["action"] for item in ark_nova.legal_actions(state, 0)
+                           if item["action"]["type"] == "upgrade_action_card"),
+        )
+        self.assertEqual("action_card_upgraded", events[1]["type"])
+        self.assertEqual(1, state["active_seat"])
+        self.assertEqual("choose_action", state["phase"])
+
+    def test_partner_zoo_discount_and_controlled_effect_primitives(self):
+        state = finish_initial_hands(ark_nova.new_game(2, 24, {"turn_limit": 20}))
+        player = state["players"][0]
+        animal = next(card for card in state["zoo_deck"] if card["card_type"] == "animal"
+                      and 2 <= card["enclosure_size"] <= 3)
+        state["zoo_deck"].remove(animal)
+        animal["effects"] = [{"type": "gain_money", "amount": 3}]
+        player["hand"].append(animal)
+        player["partner_zoos"].append(animal["continent"])
+        starting_money = player["money"]
+        state = apply_kind(state, "select_action", action_card="animals", x_tokens=0)
+        action = next(item["action"] for item in ark_nova.legal_actions(state, 0)
+                      if item["action"]["type"] == "play_animal" and item["action"]["card_id"] == animal["id"])
+        self.assertEqual(max(0, animal["cost"] - 3), action["cost"])
+        state, events = ark_nova.apply_action(state, 0, action)
+        self.assertEqual(starting_money - action["cost"] + 3, state["players"][0]["money"])
+        self.assertTrue(any(event["type"] == "effects_resolved" for event in events))
+
+    def test_upgraded_association_can_make_a_donation(self):
+        state = finish_initial_hands(ark_nova.new_game(2, 26, {"turn_limit": 20}))
+        player = state["players"][0]
+        next(card for card in player["action_cards"] if card["action"] == "association")["upgraded"] = True
+        association = next(card for card in player["action_cards"] if card["action"] == "association")
+        player["x_tokens"] = max(0, 2 - association["strength"])
+        state = apply_kind(state, "select_action", action_card="association", strength=max(2, association["strength"]))
+        state = apply_kind(state, "association_task", task="reputation")
+        self.assertEqual("association_donation", state["phase"])
+        money = state["players"][0]["money"]
+        state = apply_kind(state, "make_donation")
+        self.assertEqual(money - 2, state["players"][0]["money"])
+        self.assertEqual(1, state["players"][0]["conservation"])
+        self.assertEqual(1, len(state["association_board"]["donations"]))
+
+    def test_release_project_returns_enclosure_and_removes_appeal(self):
+        state = finish_initial_hands(ark_nova.new_game(2, 28, {"turn_limit": 20}))
+        player = state["players"][0]
+        animal = next(card for card in state["zoo_deck"] if card["card_type"] == "animal"
+                      and card["enclosure_size"] <= 3)
+        state["zoo_deck"].remove(animal)
+        animal["enclosure_id"] = "starting-enclosure-3"
+        player["played_cards"].append(animal)
+        player["map"]["buildings"][0]["occupied"] = True
+        player["appeal"] += animal["appeal"]
+        project = next(card for card in state["zoo_deck"] if card["card_type"] == "conservation_project")
+        state["zoo_deck"].remove(project)
+        project.update({"project_kind": "release_animal", "levels": [2, 4, 5]})
+        player["hand"].append(project)
+        association = next(card for card in player["action_cards"] if card["action"] == "association")
+        player["x_tokens"] = max(0, 5 - association["strength"])
+        starting_appeal = player["appeal"]
+        state = apply_kind(state, "select_action", action_card="association", strength=5)
+        state = apply_kind(state, "association_task", task="release_animal", card_id=animal["id"])
+        player = state["players"][0]
+        self.assertFalse(player["map"]["buildings"][0]["occupied"])
+        self.assertEqual(starting_appeal - animal["appeal"], player["appeal"])
+        self.assertIn(project["id"], player["supported_projects"])
+        self.assertTrue(any(card["id"] == animal["id"] for card in state["zoo_discard"]))
+
+    def test_controlled_final_card_scoring_counts_only_one_unresolved_card(self):
+        state = ark_nova.new_game(2, 30)
+        player = state["players"][0]
+        player["final_scoring_cards"] = [
+            {"id": "f-a", "objective": "buildings", "per": 1, "points_per_step": 2,
+             "maximum": 8, "implementation": "controlled_final_scoring"},
+            {"id": "f-b", "objective": "animals", "per": 1, "points_per_step": 2,
+             "maximum": 8, "implementation": "controlled_final_scoring"},
+        ]
+        player["final_card_choice_resolved"] = False
+        row = next(row for row in ark_nova.rankings(state) if row["seat"] == 0)
+        self.assertEqual(2, row["final_card_points"])
+
+    def test_upgraded_animals_can_play_from_reputation_range(self):
+        state = finish_initial_hands(ark_nova.new_game(2, 32, {"turn_limit": 20}))
+        player = state["players"][0]
+        next(card for card in player["action_cards"] if card["action"] == "animals")["upgraded"] = True
+        player["reputation"] = 4
+        animal = next(card for card in state["zoo_deck"] if card["card_type"] == "animal"
+                      and card["enclosure_size"] <= 3)
+        state["zoo_deck"].remove(animal)
+        displaced = state["card_display"][0]
+        state["card_display"][0] = animal
+        state["zoo_deck"].append(displaced)
+        state = apply_kind(state, "select_action", action_card="animals", x_tokens=0)
+        action = next(item["action"] for item in ark_nova.legal_actions(state, 0)
+                      if item["action"].get("source") == "display" and item["action"]["card_id"] == animal["id"])
+        state, _ = ark_nova.apply_action(state, 0, action)
+        self.assertTrue(any(card["id"] == animal["id"] for card in state["players"][0]["played_cards"]))
+
+    def test_upgraded_build_offers_special_enclosures(self):
+        state = finish_initial_hands(ark_nova.new_game(2, 34, {"turn_limit": 20}))
+        player = state["players"][0]
+        next(card for card in player["action_cards"] if card["action"] == "build")["upgraded"] = True
+        build = next(card for card in player["action_cards"] if card["action"] == "build")
+        player["x_tokens"] = max(0, 5 - build["strength"])
+        state = apply_kind(state, "select_action", action_card="build", strength=max(5, build["strength"]))
+        kinds = {item["action"].get("building_type") for item in ark_nova.legal_actions(state, 0)}
+        self.assertTrue({"petting_zoo", "reptile_house", "large_bird_aviary"} <= kinds)
+
+    def test_upgraded_sponsors_can_play_from_reputation_range(self):
+        state = finish_initial_hands(ark_nova.new_game(2, 36, {"turn_limit": 20}))
+        player = state["players"][0]
+        next(card for card in player["action_cards"] if card["action"] == "sponsors")["upgraded"] = True
+        player["reputation"] = 4
+        sponsor = next(card for card in state["zoo_deck"] if card["card_type"] == "sponsor"
+                       and card["level"] <= 5)
+        state["zoo_deck"].remove(sponsor)
+        displaced = state["card_display"][0]
+        state["card_display"][0] = sponsor
+        state["zoo_deck"].append(displaced)
+        sponsors = next(card for card in player["action_cards"] if card["action"] == "sponsors")
+        player["x_tokens"] = max(0, sponsor["level"] - sponsors["strength"])
+        state = apply_kind(state, "select_action", action_card="sponsors",
+                           strength=max(sponsor["level"], sponsors["strength"]))
+        state = apply_kind(state, "play_sponsor", source="display", card_id=sponsor["id"])
+        self.assertTrue(any(card["id"] == sponsor["id"] for card in state["players"][0]["played_cards"]))
+
+    def test_conservation_five_offers_money_or_bonus_tile(self):
+        state = finish_initial_hands(ark_nova.new_game(2, 38, {"turn_limit": 20}))
+        player = state["players"][0]
+        player["conservation"] = 4
+        player["conservation_tokens_on_map"] = 7
+        next(card for card in player["action_cards"] if card["action"] == "association")["upgraded"] = True
+        association = next(card for card in player["action_cards"] if card["action"] == "association")
+        player["x_tokens"] = max(0, 2 - association["strength"])
+        state = apply_kind(state, "select_action", action_card="association",
+                           strength=max(2, association["strength"]))
+        state = apply_kind(state, "association_task", task="reputation")
+        state = apply_kind(state, "make_donation")
+        self.assertEqual("choose_conservation_bonus", state["phase"])
+        actions = [item["action"] for item in ark_nova.legal_actions(state, 0)]
+        self.assertTrue(any(action["choice"] == "money" for action in actions))
+        self.assertTrue(any(action["choice"] == "bonus_tile" for action in actions))
+
+    def test_upgraded_association_supports_multiple_distinct_tasks(self):
+        state = finish_initial_hands(ark_nova.new_game(2, 40, {"turn_limit": 20}))
+        player = state["players"][0]
+        card = next(card for card in player["action_cards"] if card["action"] == "association")
+        card["upgraded"] = True
+        player["association_workers"]["active"] = 2
+        player["association_workers"]["reserve"] = 2
+        player["x_tokens"] = max(0, 5 - card["strength"])
+        state = apply_kind(state, "select_action", action_card="association", strength=5)
+        state = apply_kind(state, "association_task", task="reputation")
+        self.assertEqual("association_task", state["phase"])
+        tasks = {item["action"].get("task") for item in ark_nova.legal_actions(state, 0)}
+        self.assertIn("partner_zoo", tasks)
+        self.assertNotIn("reputation", tasks)
+
+    def test_upgraded_sponsors_can_play_multiple_cards_by_level_budget(self):
+        state = finish_initial_hands(ark_nova.new_game(2, 42, {"turn_limit": 20}))
+        player = state["players"][0]
+        action_card = next(card for card in player["action_cards"] if card["action"] == "sponsors")
+        action_card["upgraded"] = True
+        sponsors = [card for card in state["zoo_deck"] if card["card_type"] == "sponsor"
+                    and card["level"] <= 2][:2]
+        for card in sponsors:
+            state["zoo_deck"].remove(card)
+            player["hand"].append(card)
+        player["x_tokens"] = max(0, 4 - action_card["strength"])
+        state = apply_kind(state, "select_action", action_card="sponsors",
+                           strength=max(4, action_card["strength"]))
+        state = apply_kind(state, "play_sponsor", card_id=sponsors[0]["id"])
+        self.assertEqual("sponsors_choose", state["phase"])
+        self.assertTrue(any(item["action"].get("card_id") == sponsors[1]["id"]
+                            for item in ark_nova.legal_actions(state, 0)))
+
     def test_random_legal_agents_finish_many_seeded_matches(self):
         for seed in range(40):
             state = ark_nova.new_game(2 + seed % 3, seed, {"turn_limit": 18 + seed % 5})

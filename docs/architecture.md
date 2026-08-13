@@ -150,6 +150,52 @@ boundary should initially require only setup, transition, legal-action generatio
 observation projection, terminal detection, scoring, and schema/metadata. Extract
 shared concepts only after the second game exposes genuine commonality.
 
+### 3.1 Reusable mechanics kernel
+
+Splendor and the Ark Nova controlled core now provide that second-game evidence.
+Their shared mechanisms live in `agentbga.mechanics`; game rules remain in the
+plugins. The distinction is intentional:
+
+```mermaid
+flowchart TB
+  APP["Match service / CLI / MCP"] --> CONTRACT["GamePlugin contract"]
+  CONTRACT --> SPL["Splendor policies"]
+  CONTRACT --> ARK["Ark Nova policies"]
+  CONTRACT --> FUTURE["Future game policies"]
+  SPL --> KERNEL["Reusable mechanics kernel"]
+  ARK --> KERNEL
+  FUTURE --> KERNEL
+  KERNEL --> ACTIONS["ActionSpace / DecisionStep"]
+  KERNEL --> ECON["Resource ledger / Cost resolver"]
+  KERNEL --> ZONES["Zones / hidden projections"]
+  KERNEL --> TRACKS["Tracks / milestones"]
+  KERNEL --> MAPS["Hex and graph topology"]
+  KERNEL --> EVENTS["Semantic events / rankings"]
+```
+
+The kernel provides deterministic operations, not a universal rules language:
+
+- `ActionSpace` canonicalizes legal structured choices and produces stable IDs.
+- `DecisionStep` represents one model- or human-facing choice inside a player turn.
+- resource pools, discounts, wildcard payments, and atomic transfers support
+  economic systems without deciding where a game permits resources to come from;
+- zones move unique cards or pieces and project private contents as hidden counts;
+- bounded tracks report milestone crossings but plugins resolve their rewards;
+- topology supports axial hex maps and arbitrary networks, useful for enclosure,
+  route, adjacency, and connection rules;
+- semantic domain events give evaluation code common facts while retaining
+  game-specific payloads.
+
+Game-specific policies still own setup, legality, effect order, special cards,
+end conditions, and scoring formulae. For example, Ark Nova owns enclosure rules
+and Break resolution; Splendor owns reservation limits and noble eligibility; a
+future Brass plugin will own market sourcing, canal/rail eras, and network access.
+
+This separation is also an evaluation design. Cross-game analytics can compare
+semantic events such as resources spent, cards acquired, track movement, and
+decision depth. Strategy remains game-specific and is never flattened into a
+misleading universal action vocabulary.
+
 ## 4. Game plugin contract
 
 A game package implements the following logical interface:

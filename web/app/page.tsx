@@ -29,6 +29,7 @@ type ArkPlayerView = {
   action_cards: ArkActionCard[]; association_workers: {active: number; reserve: number; committed: unknown[]};
   partner_zoos: string[]; universities: string[]; map: ArkMap; hand_count: number; initial_draw_count: number;
   initial_keep_required: number; hand: ArkCard[]; initial_draw: ArkCard[]; played_cards: ArkCard[]; final_scoring_cards: (ArkCard | {hidden: true})[];
+  supported_projects: string[]; upgrade_rewards_claimed: number[]; final_card_choice_resolved: boolean;
 };
 type ArkView = {
   game: "ark_nova"; rules_version: string; implementation_status: string; status: string; phase: string;
@@ -36,7 +37,7 @@ type ArkView = {
   break_track: {position: number; start_marker: string; triggered: boolean}; card_display: ArkCard[];
   game_board_bonus_tiles: {id: string; implementation: string}[];
   deck_count: number; discard_count: number; base_conservation_projects: {id: string; tag: string; levels: number[]}[];
-  association_board: {partner_zoos: Record<string, number>; universities: Record<string, number>; blocked_two_player: string[]};
+  association_board: {partner_zoos: Record<string, number>; universities: Record<string, number>; blocked_two_player: string[]; donations: {seat: number; cost: number}[]};
   players: ArkPlayerView[];
 };
 type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
@@ -190,6 +191,10 @@ function humanActionText(action: Record<string, unknown>) {
   if (action.type === "place_building") return `建造 ${action.building_type}（${action.size} 格，₡${action.cost}）`;
   if (action.type === "play_animal") return `打出动物 ${action.card_id}，使用 ${action.enclosure_id}`;
   if (action.type === "association_task") return `协会任务：${action.task}`;
+  if (action.type === "make_donation") return `捐款 ₡${action.cost}，获得 1 保育点`;
+  if (action.type === "upgrade_action_card") return `升级 ${ARK_ACTION_LABELS[String(action.action_card)] || action.action_card} 行动牌`;
+  if (action.type === "choose_conservation_bonus") return action.choice === "money" ? `选择保育奖励：₡${action.amount}` : `选择奖励标记 ${action.tile_id}`;
+  if (action.type === "keep_final_card") return `保留终局牌 ${action.card_id}`;
   if (action.type === "play_sponsor") return `打出赞助商 ${action.card_id}`;
   if (action.type === "advance_break") return `推进 Break ${action.steps} 格，获得 ₡${action.money}`;
   if (action.type === "finish_action") return "结束当前行动";
@@ -215,6 +220,8 @@ const ACTION_GROUPS: Record<string, string> = {
   draw_cards: "抽牌", snap_card: "拿取展示牌", discard_card: "弃牌", break_discard: "Break 弃牌",
   place_building: "放置建筑", play_animal: "打出动物", association_task: "协会任务",
   play_sponsor: "打出赞助商", advance_break: "推进 Break", finish_action: "结束行动",
+  make_donation: "捐款", upgrade_action_card: "升级行动牌", keep_final_card: "选择终局牌",
+  choose_conservation_bonus: "选择保育奖励", finish_association_tasks: "结束协会任务",
 };
 
 function groupActions(actions: LegalAction[]) {
@@ -250,6 +257,7 @@ function ArkPlayerPanel({player: p, identity}: {player: ArkPlayerView; identity?
     <div className="ark-worker-row"><span>X TOKEN <b>{p.x_tokens}/5</b></span><span>协会工人 <b>{p.association_workers.active}</b> + {p.association_workers.reserve}</span></div>
     <div className="ark-actions">{[...p.action_cards].sort((a, b) => b.strength - a.strength).map(card => <div key={card.action} className={`ark-action action-${card.action}`}><b>{card.strength}</b><span>{ARK_ACTION_LABELS[card.action]}</span>{card.upgraded && <i>Ⅱ</i>}</div>)}</div>
     <div className="ark-hidden-row"><span>起始抽牌 <b>{p.initial_draw_count}</b> / 留 {p.initial_keep_required}</span><span>终局牌 <b>{p.final_scoring_cards.length}</b></span></div>
+    <div className="ark-hidden-row"><span>合作动物园 <b>{p.partner_zoos.length}</b></span><span>大学 <b>{p.universities.length}</b></span><span>项目 <b>{p.supported_projects.length}</b></span></div>
     <div className="ark-hand-preview"><span>手牌 {p.hand_count}</span>{p.hand.slice(0, 6).map((card, index) => <i key={card.id || index} title={card.id || "hidden"}>{card.hidden ? "?" : card.card_type?.slice(0, 1).toUpperCase()}</i>)}</div>
   </section>;
 }
@@ -275,7 +283,7 @@ function ArkNovaBoard({view, players}: {view?: ArkView; players: Snapshot["playe
       <div className="ark-decision"><span>CURRENT DECISION</span><strong>{view.turn.decision.replaceAll("_", " ")}</strong><small>{view.phase.replaceAll("_", " ")}</small></div>
     </section>
     <section className="ark-display"><header><div><span>CARD DISPLAY</span><h3>中央卡牌展示区</h3></div><b>牌库 {view.deck_count} · 弃牌 {view.discard_count}</b></header><div>{view.card_display.map((card, index) => <article key={card.id || index} className={card.hidden ? "is-facedown" : ""}><span>0{index + 1}</span><strong>{card.hidden ? "起始选牌后翻开" : card.card_type?.replaceAll("_", " ")}</strong><small>{card.tags?.join(" · ")}</small>{card.id && <code>{card.id}</code>}</article>)}</div></section>
-    <section className="ark-association"><header><span>ASSOCIATION BOARD</span><h3>协会板与基础保育项目</h3></header><div className="ark-projects">{view.base_conservation_projects.map(project => <article key={project.id}><b>{project.tag}</b><span>{project.levels.join(" / ")}</span><code>{project.id}</code></article>)}</div><div className="ark-association-meta"><span>合作动物园 {Object.keys(view.association_board.partner_zoos).length}</span><span>大学 {Object.keys(view.association_board.universities).length}</span>{view.association_board.blocked_two_player.length > 0 && <span>双人封锁 {view.association_board.blocked_two_player.length}</span>}</div></section>
+    <section className="ark-association"><header><span>ASSOCIATION BOARD</span><h3>协会板与基础保育项目</h3></header><div className="ark-projects">{view.base_conservation_projects.map(project => <article key={project.id}><b>{project.tag}</b><span>{project.levels.join(" / ")}</span><code>{project.id}</code></article>)}</div><div className="ark-association-meta"><span>合作动物园 {Object.values(view.association_board.partner_zoos).filter(Boolean).length} 可用</span><span>大学 {Object.values(view.association_board.universities).filter(Boolean).length} 可用</span><span>捐款 {view.association_board.donations?.length || 0}</span>{view.association_board.blocked_two_player.length > 0 && <span>双人封锁 {view.association_board.blocked_two_player.length}</span>}</div></section>
     <section className="ark-zoo-section"><header><span>BEGINNER MAP A</span><h3>玩家动物园</h3></header><div>{view.players.map(player => <article key={player.seat}><div><strong>{players[player.seat]?.name || `玩家 ${player.seat + 1}`}</strong><span>3 格起始围栏 · 空置</span></div><ArkZooMap map={player.map}/></article>)}</div><small>本里程碑的坐标为可测试的示意几何；正式 footprint 会在地图规则阶段按规则场景校准。</small></section>
   </div>;
 }
@@ -448,7 +456,7 @@ export default function Home() {
       <div className="hero-marks"><span>多游戏插件</span><span>座位隔离观察</span><span>{game === "splendor" ? "完整引擎" : "CONTROLLED CORE"}</span></div>
     </section>
     <section className="setup-card">
-      <div className="game-picker" role="group" aria-label="选择游戏"><button className={game === "splendor" ? "selected" : ""} onClick={() => setGame("splendor")}><span>PLAYABLE</span><b>璀璨宝石</b><small>完整基础版引擎</small></button><button className={game === "ark_nova" ? "selected" : ""} onClick={() => setGame("ark_nova")}><span>CONTROLLED CORE</span><b>方舟动物园</b><small>多阶段状态机 · 研究卡池</small></button></div>
+      <div className="game-picker" role="group" aria-label="选择游戏"><button className={game === "splendor" ? "selected" : ""} onClick={() => setGame("splendor")}><span>PLAYABLE</span><b>璀璨宝石</b><small>完整基础版引擎</small></button><button className={game === "ark_nova" ? "selected" : ""} onClick={() => setGame("ark_nova")}><span>CONTROLLED CORE V2</span><b>方舟动物园</b><small>升级 · 捐款 · 释放 · 效果系统</small></button></div>
       <header><div><span>NEW TABLE</span><h2>创建一桌{game === "splendor" ? "璀璨宝石" : "方舟动物园"}</h2></div><div className="matchup-presets"><button onClick={() => setMatchup("human")}>人类 vs Agent</button><button onClick={() => setMatchup("harness")}>Harness 对战</button><b>{players.length} PLAYERS</b></div></header>
       <div className="players-config">{players.map((p, index) => <article className="player-config" key={p.id}>
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`将 ${p.name} 前移`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`将 ${p.name} 后移`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
@@ -472,7 +480,7 @@ export default function Home() {
         <div className="field mini speed"><label htmlFor="match-speed">每步间隔 <b>{speed}ms</b></label><input id="match-speed" type="range" min="0" max="2000" step="50" value={speed} onChange={e => setSpeed(Number(e.target.value))}/></div>
         <button className="start" disabled={starting} onClick={startMatch}>{starting ? "正在入席…" : "开始对局 →"}</button>
       </div>
-      {game === "ark_nova" && <div className="setup-scope-note"><b>受控核心版</b> 可完整结束并供 Agent 调用，但使用无特殊能力的结构化研究卡牌和示意 Map A；尚不是完整商业卡池规则实现。</div>}
+      {game === "ark_nova" && <div className="setup-scope-note"><b>受控核心 V2</b> 已支持行动升级、合作动物园折扣、捐款、释放动物、地图奖励、效果原语和终局目标；仍使用结构化研究卡池与示意 Map A，并非完整商业卡池复刻。</div>}
       {error && <div className="error">{error}</div>}
     </section>
   </main>;
