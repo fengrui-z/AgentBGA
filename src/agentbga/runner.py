@@ -14,6 +14,7 @@ from .store import Store
 
 EventSink = Callable[[dict[str, Any]], None]
 TurnGate = Callable[[], None]
+HumanChoice = Callable[[int, int, dict[str, Any], list[dict[str, Any]]], str]
 
 
 def legacy_players(
@@ -42,6 +43,7 @@ def run_match(
     fallback: str = "random",
     sink: EventSink | None = None,
     turn_gate: TurnGate | None = None,
+    human_choice: HumanChoice | None = None,
 ) -> dict[str, Any]:
     version, state, _ = store.load(match_id)
     if players and isinstance(players[0], str):
@@ -85,15 +87,22 @@ def run_match(
         if config.backend == "random":
             action_id = random_choice(legal, rngs[seat])
         elif config.backend == "human":
-            print(f"\n{config.name} (seat {seat}), version {version}. Legal actions:")
-            for index, item in enumerate(legal):
-                print(f"  [{index}] {item['action']}")
-            while True:
-                raw = input("Choose action number: ").strip()
-                if raw.isdigit() and int(raw) < len(legal):
-                    action_id = legal[int(raw)]["id"]
-                    break
-                print("Invalid selection.")
+            observation = splendor.observe(state, seat)
+            observation["state_version"] = version
+            if human_choice:
+                action_id = human_choice(seat, version, observation, legal)
+                if action_id not in {item["id"] for item in legal}:
+                    raise AgentError("human selected unknown or stale action ID")
+            else:
+                print(f"\n{config.name} (seat {seat}), version {version}. Legal actions:")
+                for index, item in enumerate(legal):
+                    print(f"  [{index}] {item['action']}")
+                while True:
+                    raw = input("Choose action number: ").strip()
+                    if raw.isdigit() and int(raw) < len(legal):
+                        action_id = legal[int(raw)]["id"]
+                        break
+                    print("Invalid selection.")
         else:
             last_error: Exception | None = None
             for attempt in range(retries + 1):

@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 
-type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "random";
+type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "human" | "random";
 type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "deepseek" | "dashscope" | "zhipu" | "minimax";
 type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string };
 type Card = { id: string; tier: number; bonus: string; points: number; cost: Record<string, number> };
@@ -19,8 +19,10 @@ type View = {
 type Snapshot = {
   match_id: string; version: number; status: string; turn_count: number; active_seat: number;
   paused: boolean; pause_pending: boolean;
+  human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
   players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: View[];
 };
+type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
   type: string; player?: string; seat?: number; error?: string; turns?: number;
   backend?: string; agent?: {latency_ms?: number}; action?: Record<string, unknown>;
@@ -47,6 +49,7 @@ const BACKENDS: Record<Backend, {label: string; url: string; key: string; model:
   pi: { label: "Pi", url: "https://api.openai.com/v1", key: "", model: "" },
   codex: { label: "Codex Harness", url: "https://api.openai.com/v1", key: "", model: "" },
   opencode: { label: "OpenCode Harness", url: "https://api.deepseek.com", key: "", model: "" },
+  human: { label: "人类玩家", url: "", key: "", model: "" },
   random: { label: "随机基线", url: "", key: "", model: "" },
 };
 const PROVIDERS: Record<Provider, {label: string; backend: Backend; url: string; models: string[]; note: string}> = {
@@ -70,6 +73,10 @@ function deepseekHarnessPlayer(seed: number, backend: "opencode" | "codex"): Pla
     id: crypto.randomUUID(), name: `Agent ${seed}`, provider: backend, backend,
     model: "deepseek-v4-flash", base_url: "https://api.deepseek.com", api_key: "",
   };
+}
+
+function humanPlayer(seed: number): PlayerForm {
+  return {id: crypto.randomUUID(), name: seed === 1 ? "你" : `玩家 ${seed}`, provider: "custom", backend: "human", model: "", base_url: "", api_key: ""};
 }
 
 function api(path: string) { return path; }
@@ -139,6 +146,40 @@ function describeAction(item: Timeline, names: Record<number, string>) {
   return `${who}：${action.type}`;
 }
 
+function tokenText(tokens: Record<string, number>) {
+  return Object.entries(tokens).filter(([, count]) => count > 0)
+    .map(([color, count]) => `${GEM_META[color]?.label || color} × ${count}`).join("、");
+}
+
+function humanActionText(action: Record<string, unknown>) {
+  if (action.type === "take_tokens") {
+    const taken = tokenText((action.take ?? {}) as Record<string, number>);
+    const returned = tokenText((action.return ?? {}) as Record<string, number>);
+    return `拿取 ${taken}${returned ? `；归还 ${returned}` : ""}`;
+  }
+  if (action.type === "buy_visible" || action.type === "buy_reserved") {
+    const payment = tokenText((action.payment ?? {}) as Record<string, number>);
+    return `购买 ${action.card_id}${payment ? `；支付 ${payment}` : "；免费"}`;
+  }
+  if (action.type === "reserve_visible") return `预留公开牌 ${action.card_id}${action.return && tokenText(action.return as Record<string, number>) ? `；归还 ${tokenText(action.return as Record<string, number>)}` : ""}`;
+  if (action.type === "reserve_deck") return `从 ${action.tier} 阶牌库暗中预留一张牌`;
+  if (action.type === "choose_noble") return `选择贵族 ${action.noble_id}`;
+  return action.type === "pass" ? "跳过本回合" : String(action.type);
+}
+
+const ACTION_GROUPS: Record<string, string> = {
+  buy_visible: "购买公开牌", buy_reserved: "购买预留牌", take_tokens: "拿取宝石",
+  reserve_visible: "预留公开牌", reserve_deck: "预留牌库顶牌", choose_noble: "选择贵族", pass: "其他",
+};
+
+function groupActions(actions: LegalAction[]) {
+  return actions.reduce<Record<string, LegalAction[]>>((groups, item) => {
+    const kind = String(item.action.type);
+    (groups[kind] ||= []).push(item);
+    return groups;
+  }, {});
+}
+
 export default function Home() {
   const [players, setPlayers] = useState<PlayerForm[]>([
     deepseekHarnessPlayer(1, "opencode"),
@@ -152,6 +193,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
   const [controlling, setControlling] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState("");
   const sourceRef = useRef<EventSource | null>(null);
   const view = snapshot?.views[0];
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
@@ -165,6 +207,33 @@ export default function Home() {
       }
       return {...p, ...patch};
     }));
+  }
+
+  function movePlayer(index: number, offset: number) {
+    setPlayers(current => {
+      const destination = index + offset;
+      if (destination < 0 || destination >= current.length) return current;
+      const ordered = [...current];
+      [ordered[index], ordered[destination]] = [ordered[destination], ordered[index]];
+      return ordered;
+    });
+  }
+
+  function shufflePlayers() {
+    setPlayers(current => {
+      const ordered = [...current];
+      for (let index = ordered.length - 1; index > 0; index--) {
+        const destination = Math.floor(Math.random() * (index + 1));
+        [ordered[index], ordered[destination]] = [ordered[destination], ordered[index]];
+      }
+      return ordered;
+    });
+  }
+
+  function setMatchup(kind: "human" | "harness") {
+    setPlayers(kind === "human" ? [humanPlayer(1), deepseekHarnessPlayer(2, "opencode")] : [
+      deepseekHarnessPlayer(1, "opencode"), deepseekHarnessPlayer(2, "codex"),
+    ]);
   }
 
   function selectProvider(id: string, provider: Provider) {
@@ -249,19 +318,38 @@ export default function Home() {
     finally { setControlling(false); }
   }
 
+  async function submitHumanAction(item: LegalAction) {
+    if (!snapshot?.human_turn || submittingAction) return;
+    setSubmittingAction(item.id); setError("");
+    try {
+      const response = await fetch(api(`/api/matches/${snapshot.match_id}/action`), {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          seat: snapshot.human_turn.seat,
+          expected_version: snapshot.human_turn.version,
+          action_id: item.id,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || data.error || "无法提交行动");
+      setSnapshot(data);
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { setSubmittingAction(""); }
+  }
+
   if (!snapshot) return <main className="setup-shell">
     <section className="hero">
       <div className="eyebrow">AGENT BOARD GAME ARENA / SPLENDOR</div>
       <h1>把模型放上牌桌，<br/><i>看见</i>每一次决策。</h1>
-      <p>配置 2–4 名不同模型。所有 Agent Harness 固定使用最高思考强度；API 密钥只进入本机进程内存，不会写入浏览器存储、对局数据库或日志。</p>
-      <div className="hero-marks"><span>实时行动</span><span>完整引擎</span><span>逐步回放</span></div>
+      <p>配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；所有 Agent Harness 固定使用最高思考强度。</p>
+      <div className="hero-marks"><span>人机对战</span><span>实时行动</span><span>完整引擎</span></div>
     </section>
     <section className="setup-card">
-      <header><div><span>NEW TABLE</span><h2>创建一桌璀璨宝石</h2></div><b>{players.length} PLAYERS</b></header>
+      <header><div><span>NEW TABLE</span><h2>创建一桌璀璨宝石</h2></div><div className="matchup-presets"><button onClick={() => setMatchup("human")}>人类 vs Agent</button><button onClick={() => setMatchup("harness")}>Harness 对战</button><b>{players.length} PLAYERS</b></div></header>
       <div className="players-config">{players.map((p, index) => <article className="player-config" key={p.id}>
-        <div className="config-index">0{index + 1}</div>
+        <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`将 ${p.name} 前移`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`将 ${p.name} 后移`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>选手名</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
-        {p.backend !== "random" && <>
+        {!(["random", "human"] as Backend[]).includes(p.backend) && <>
           <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>Harness / 服务商</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label="Agent Harness">{(["claude_code", "pi", "codex", "opencode"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label}</option>)}</optgroup><optgroup label="直连模型 API">{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label}</option>)}</optgroup></select></div>
           <div className="field backend-field"><label htmlFor={`${p.id}-backend`}>运行方式</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).filter(([id]) => id !== "random").map(([id, b]) => <option key={id} value={id}>{b.label}</option>)}</select></div>
           <div className="field grow endpoint-field"><label htmlFor={`${p.id}-endpoint`}>Endpoint</label><input id={`${p.id}-endpoint`} value={p.base_url} onChange={e => updatePlayer(p.id, {provider: "custom", base_url: e.target.value})}/></div>
@@ -269,11 +357,13 @@ export default function Home() {
           <div className="field key-field"><label htmlFor={`${p.id}-key`}>API Key</label><input id={`${p.id}-key`} type="password" autoComplete="off" placeholder="仅在本次对局使用" value={p.api_key} onChange={e => updatePlayer(p.id, {api_key: e.target.value})}/></div>
           <div className="provider-note">{PROVIDERS[p.provider].note}</div>
         </>}
-        {p.backend === "random" && <div className="field"><label htmlFor={`${p.id}-backend`}>Backend</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).map(([id, b]) => <option key={id} value={id}>{b.label}</option>)}</select></div>}
+        {(["random", "human"] as Backend[]).includes(p.backend) && <div className="field manual-backend"><label htmlFor={`${p.id}-backend`}>运行方式</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).map(([id, b]) => <option key={id} value={id}>{b.label}</option>)}</select><small>{p.backend === "human" ? "轮到该座位时在牌桌上操作" : "无需 API，自动随机行动"}</small></div>}
         {players.length > 2 && <button className="remove" aria-label={`移除 ${p.name}`} onClick={() => setPlayers(x => x.filter(y => y.id !== p.id))}>×</button>}
       </article>)}</div>
       <div className="setup-actions">
-        <button className="add-player" disabled={players.length >= 4} onClick={() => setPlayers(x => [...x, player(x.length + 1, "random")])}>＋ 添加选手</button>
+        <button className="add-player human-add" disabled={players.length >= 4} onClick={() => setPlayers(x => [...x, humanPlayer(x.length + 1)])}>＋ 添加人类</button>
+        <button className="add-player" disabled={players.length >= 4} onClick={() => setPlayers(x => [...x, player(x.length + 1, "random")])}>＋ 添加 AI / 基线</button>
+        <button className="shuffle-order" onClick={shufflePlayers}>⤨ 随机座次</button>
         <div className="field mini"><label htmlFor="match-seed">Seed</label><input id="match-seed" inputMode="numeric" value={seed} onChange={e => setSeed(e.target.value)}/></div>
         <div className="field mini speed"><label htmlFor="match-speed">每步间隔 <b>{speed}ms</b></label><input id="match-speed" type="range" min="0" max="2000" step="50" value={speed} onChange={e => setSpeed(Number(e.target.value))}/></div>
         <button className="start" disabled={starting} onClick={startMatch}>{starting ? "正在入席…" : "开始对局 →"}</button>
@@ -301,6 +391,13 @@ export default function Home() {
       })}</aside>
       <section className="board">
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? "等待当前模型完成…" : "对局已暂停"}</strong><span>{snapshot.pause_pending ? "返回的这一手会正常落盘，下一位不会开始思考。" : "牌桌停在安全的回合边界，点击“继续对局”即可恢复。"}</span></div>}
+        {snapshot.human_turn && <section className="human-turn" aria-live="polite">
+          <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}，请选择行动</h2></div><b>{snapshot.human_turn.legal_actions.length} 个合法选项</b></header>
+          <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
+            <h3>{ACTION_GROUPS[kind] || kind}<span>{actions.length}</span></h3>
+            <div>{actions.map(item => <button key={item.id} disabled={Boolean(submittingAction)} onClick={() => submitHumanAction(item)}><strong>{humanActionText(item.action)}</strong><small>{item.id}{submittingAction === item.id ? " · 提交中…" : ""}</small></button>)}</div>
+          </section>)}</div>
+        </section>}
         <div className="bank-bar"><div><small>供应区</small><strong>宝石银行</strong></div>{view && Object.keys(GEM_META).map(c => <Gem key={c} color={c} value={view.bank[c]}/>)}</div>
         <section className="nobles"><header><span>贵族</span><b>{view?.available_nobles.length || 0} AVAILABLE</b></header><div>{view?.available_nobles.map(n => <article key={n.id}><strong>3</strong><Cost cost={n.required}/></article>)}</div></section>
         <section className="market">{[3,2,1].map(tier => <div className="tier" key={tier}>

@@ -53,6 +53,7 @@ class MatchHub:
             "pause_pending": bool(
                 record["paused"] and record["running"] and not record["at_pause_gate"]
             ),
+            "human_turn": record.get("human_pending"),
         }
 
     def _append_locked(
@@ -78,6 +79,8 @@ class MatchHub:
                 record["running"] = False
                 record["paused"] = False
                 record["at_pause_gate"] = False
+                record["human_pending"] = None
+                record["human_submission"] = None
             self._append_locked(record, event, snapshot)
             self.condition.notify_all()
 
@@ -118,6 +121,7 @@ class MatchHub:
             record = {
                 "events": [], "snapshot": snapshot, "running": True,
                 "paused": False, "at_pause_gate": False,
+                "human_pending": None, "human_submission": None,
             }
             record["snapshot"] = self._with_runtime(snapshot, record)
             self.matches[match_id] = record
@@ -161,6 +165,62 @@ class MatchHub:
                 self.condition.wait()
             record["at_pause_gate"] = False
 
+    def _wait_for_human_action(
+        self, match_id: str, configs: list[PlayerConfig], seat: int, version: int,
+        _observation: dict[str, Any], legal: list[dict[str, Any]],
+    ) -> str:
+        with self.condition:
+            record = self.matches[match_id]
+            pending = {
+                "seat": seat,
+                "player": configs[seat].name,
+                "version": version,
+                "legal_actions": legal,
+            }
+            record["human_pending"] = pending
+            record["human_submission"] = None
+            snapshot = self._with_runtime(record["snapshot"], record)
+            self._append_locked(record, {
+                "type": "human_turn_started", "match_id": match_id,
+                "seat": seat, "player": configs[seat].name, "version": version,
+                "legal_action_count": len(legal),
+            }, snapshot)
+            self.condition.notify_all()
+            while record["running"] and record["human_submission"] is None:
+                self.condition.wait()
+            action_id = record["human_submission"]
+            record["human_submission"] = None
+            if not isinstance(action_id, str):
+                raise RuntimeError("match stopped before the human submitted an action")
+            return action_id
+
+    def submit_human_action(
+        self, match_id: str, seat: int, expected_version: int, action_id: str,
+    ) -> dict[str, Any]:
+        with self.condition:
+            if match_id not in self.matches:
+                raise KeyError(match_id)
+            record = self.matches[match_id]
+            if not record["running"]:
+                raise ValueError("match is no longer running")
+            pending = record.get("human_pending")
+            if not pending:
+                raise ValueError("match is not waiting for a human action")
+            if pending["seat"] != seat or pending["version"] != expected_version:
+                raise ValueError("human turn is stale or belongs to another seat")
+            legal_ids = {item["id"] for item in pending["legal_actions"]}
+            if action_id not in legal_ids:
+                raise ValueError("action_id is not legal for the current human turn")
+            record["human_submission"] = action_id
+            record["human_pending"] = None
+            snapshot = self._with_runtime(record["snapshot"], record)
+            self._append_locked(record, {
+                "type": "human_action_submitted", "match_id": match_id,
+                "seat": seat, "version": expected_version, "action_id": action_id,
+            }, snapshot)
+            self.condition.notify_all()
+            return dict(record["snapshot"])
+
     def _run(self, match_id: str, configs: list[PlayerConfig], speed_ms: int) -> None:
         store = Store(self.db_path)
         try:
@@ -169,8 +229,15 @@ class MatchHub:
                 if event.get("type") == "turn" and speed_ms:
                     time.sleep(speed_ms / 1000)
 
-            run_match(store, match_id, configs, sink=sink,
-                      turn_gate=lambda: self._wait_for_turn(match_id))
+            options: dict[str, Any] = {
+                "sink": sink,
+                "turn_gate": lambda: self._wait_for_turn(match_id),
+            }
+            if any(config.backend == "human" for config in configs):
+                options["human_choice"] = lambda seat, version, observation, legal: self._wait_for_human_action(
+                    match_id, configs, seat, version, observation, legal,
+                )
+            run_match(store, match_id, configs, **options)
         except Exception as error:
             self._publish(match_id, {"type": "match_failed", "error": str(error)})
         finally:
@@ -226,6 +293,25 @@ class WebHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urlsplit(self.path).path
+        human_action = re_match(r"^/api/matches/([a-f0-9]+)/(action)$", path)
+        if human_action:
+            match_id, _ = human_action
+            try:
+                payload = self._read_json()
+                seat = payload.get("seat")
+                expected_version = payload.get("expected_version")
+                action_id = payload.get("action_id")
+                if not isinstance(seat, int) or not isinstance(expected_version, int) or not isinstance(action_id, str):
+                    raise ValueError("seat, expected_version, and action_id are required")
+                self._json(
+                    HTTPStatus.OK,
+                    self.hub.submit_human_action(match_id, seat, expected_version, action_id),
+                )
+            except KeyError:
+                self._json(HTTPStatus.NOT_FOUND, {"error": "match_not_found"})
+            except (ValueError, json.JSONDecodeError) as error:
+                self._json(HTTPStatus.CONFLICT, {"error": "invalid_human_action", "message": str(error)})
+            return
         control = re_match(r"^/api/matches/([a-f0-9]+)/(pause|resume)$", path)
         if control:
             match_id, action = control
@@ -240,15 +326,19 @@ class WebHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.NOT_FOUND, {"error": "not_found"})
             return
         try:
-            length = int(self.headers.get("Content-Length", "0"))
-            if length > 64 * 1024:
-                raise ValueError("request is too large")
-            payload = json.loads(self.rfile.read(length))
-            if not isinstance(payload, dict):
-                raise ValueError("request must be a JSON object")
+            payload = self._read_json()
             self._json(HTTPStatus.CREATED, self.hub.create(payload))
         except (ValueError, json.JSONDecodeError) as error:
             self._json(HTTPStatus.BAD_REQUEST, {"error": "invalid_request", "message": str(error)})
+
+    def _read_json(self) -> dict[str, Any]:
+        length = int(self.headers.get("Content-Length", "0"))
+        if length > 64 * 1024:
+            raise ValueError("request is too large")
+        payload = json.loads(self.rfile.read(length))
+        if not isinstance(payload, dict):
+            raise ValueError("request must be a JSON object")
+        return payload
 
     def do_GET(self) -> None:
         path = urlsplit(self.path).path

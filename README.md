@@ -122,6 +122,12 @@ backend's exposed reasoning/content chunks while it is deciding, with the parsed
 game action kept in the action log below it. Provider-hidden chain-of-thought
 cannot be displayed when an API does not return it.
 
+Choose the **Human vs Agent** preset, or change any seat's run mode to **Human
+player**, to play from the browser. At a human turn, the server publishes only
+that seat's current legal actions and waits until the UI submits an action ID
+for the matching seat and state version. The setup screen can move each player
+up or down, randomize seats, and applies the displayed order as the turn order.
+
 The table header includes a safe pause/resume control. A pause requested while
 a model is generating lets that response finish and commits its action, then
 stops before the next seat starts. The status changes from `waiting to pause`
