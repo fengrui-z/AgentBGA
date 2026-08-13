@@ -19,13 +19,14 @@ from .agents import AgentError, PlayerConfig, StreamSink
 HarnessEventSink = Callable[[dict[str, Any]], None]
 
 
-TURN_PROMPT = """You are seat {seat} in an AgentBGA Splendor benchmark, at state version {version}.
+TURN_PROMPT = """You are seat {seat} in an AgentBGA {game} benchmark, at state version {version}.
 Play by using the agentbga MCP tools. Do not inspect the parent project, database, or another seat.
-Hidden opponent cards are unavailable by design.
+Hidden opponent information is unavailable by design.
 
 Call observe, then legal_actions, then commit exactly one choice with submit_action.
-You must call submit_action exactly once before finishing. You may keep strategic notes inside
-this seat workspace for later turns. After submitting, briefly report completion.
+You must call submit_action exactly once for this decision step before finishing. A player turn may
+contain later decision steps with the same active seat. You may keep strategic notes inside this seat
+workspace for later decisions and turns. After submitting, briefly report completion.
 """
 
 
@@ -43,11 +44,11 @@ async function audit(tool: string, args: object, result: unknown) {
 function result(value: unknown) { return { content: [{ type: "text", text: JSON.stringify(value) }], details: value }; }
 
 export default function (pi: any) {
-  pi.registerTool({ name: "observe", label: "Observe", description: "Read your seat-scoped Splendor observation.",
+  pi.registerTool({ name: "observe", label: "Observe", description: "Read your seat-scoped board-game observation.",
     promptSnippet: "Read the current seat-scoped board state", parameters: Type.Object({}, { additionalProperties: false }),
     async execute() { const value = (await context()).observation; await audit("observe", {}, value); return result(value); } });
   pi.registerTool({ name: "legal_actions", label: "Legal actions", description: "List legal action IDs for this seat and state.",
-    promptSnippet: "List the current legal Splendor actions", parameters: Type.Object({}, { additionalProperties: false }),
+    promptSnippet: "List the current legal board-game actions", parameters: Type.Object({}, { additionalProperties: false }),
     async execute() { const value = (await context()).legal_actions; await audit("legal_actions", {}, value); return result(value); } });
   pi.registerTool({ name: "submit_action", label: "Submit action", description: "Commit exactly one current legal action ID.",
     promptSnippet: "Commit exactly one legal action ID", promptGuidelines: ["Call submit_action exactly once before finishing the turn."],
@@ -482,6 +483,7 @@ class HarnessAgent:
         prompt = TURN_PROMPT.format(
             seat=self.session.seat,
             version=observation.get("state_version", observation.get("turn_count")),
+            game=observation.get("game", "board-game"),
         )
         started = time.monotonic()
         raw, stderr, returncode = self._run(self._command(prompt))

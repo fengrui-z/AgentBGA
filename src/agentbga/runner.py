@@ -6,7 +6,6 @@ import random
 import time
 from typing import Any, Callable
 
-from . import splendor
 from .agents import AgentError, HARNESS_BACKENDS, PlayerConfig, build_model_agent, random_choice
 from .harness import build_harness_agent
 from .store import Store
@@ -46,6 +45,13 @@ def run_match(
     human_choice: HumanChoice | None = None,
 ) -> dict[str, Any]:
     version, state, _ = store.load(match_id)
+    game = store.game(match_id)
+    description = game.describe()
+    if not description.get("runnable", True):
+        raise ValueError(
+            f"{description['name']} is currently {description.get('implementation_status', 'unavailable')} "
+            "and cannot run complete matches yet"
+        )
     if players and isinstance(players[0], str):
         players = legacy_players(players, model=model, base_url=base_url, api_key_env=api_key_env)  # type: ignore[arg-type]
     configs: list[PlayerConfig] = players  # type: ignore[assignment]
@@ -79,7 +85,7 @@ def run_match(
         if state["turn_count"] >= max_turns:
             raise RuntimeError(f"match exceeded --max-turns={max_turns}")
         seat = state["active_seat"]
-        legal = splendor.legal_actions(state, seat)
+        legal = game.legal_actions(state, seat)
         if not legal:
             raise RuntimeError(f"seat {seat} has no legal actions")
         config = configs[seat]
@@ -87,7 +93,7 @@ def run_match(
         if config.backend == "random":
             action_id = random_choice(legal, rngs[seat])
         elif config.backend == "human":
-            observation = splendor.observe(state, seat)
+            observation = game.observe(state, seat)
             observation["state_version"] = version
             if human_choice:
                 action_id = human_choice(seat, version, observation, legal)
@@ -132,7 +138,7 @@ def run_match(
                         if time.monotonic() - last_stream_flush[0] >= 0.1:
                             flush_stream()
 
-                    observation = splendor.observe(state, seat)
+                    observation = game.observe(state, seat)
                     observation["state_version"] = version
                     action_id, metadata = model_agents[seat].choose(observation, legal, on_stream=stream)
                     flush_stream()
@@ -167,9 +173,9 @@ def run_match(
             })
     by_seat = {seat: config.public_dict() for seat, config in enumerate(configs)}
     rankings = [{**row, "player": by_seat[row["seat"]]["name"], "backend": by_seat[row["seat"]]["backend"]}
-                for row in splendor.rankings(state)]
+                for row in game.rankings(state)]
     result = {
-        "match_id": match_id, "version": version, "turns": state["turn_count"],
+        "match_id": match_id, "game": game.game_id, "version": version, "turns": state["turn_count"],
         "players": [{"seat": seat, **config.public_dict()} for seat, config in enumerate(configs)],
         "rankings": rankings,
     }

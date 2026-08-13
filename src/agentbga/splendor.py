@@ -14,6 +14,8 @@ import json
 import random
 from typing import Any
 
+from .game import GameRuleError
+
 COLORS = ("white", "blue", "green", "red", "black")
 # Rinascimento's source CSV uses a historical suit index order which differs
 # from its cost-column order. Keep this explicit; merging the enums corrupts
@@ -23,7 +25,7 @@ TOKENS = COLORS + ("gold",)
 RULES_VERSION = "classic-1.0"
 
 
-class RuleError(ValueError):
+class RuleError(GameRuleError):
     """A stable, user-correctable rule rejection."""
 
 
@@ -90,7 +92,33 @@ CARDS = card_catalog()
 NOBLES = noble_catalog()
 
 
-def new_game(players: int, seed: int) -> dict[str, Any]:
+def describe() -> dict[str, Any]:
+    return {
+        "id": "splendor",
+        "name": "Splendor",
+        "rules_version": RULES_VERSION,
+        "players": {"minimum": 2, "maximum": 4},
+        "hidden_information": True,
+        "implementation_status": "playable",
+        "runnable": True,
+        "decision_model": "one_decision_per_player_turn",
+        "action_types": [
+            "take_tokens", "reserve_visible", "reserve_deck",
+            "buy_visible", "buy_reserved", "choose_noble", "pass",
+        ],
+        "colors": list(COLORS),
+        "win_condition": (
+            "Finish the round after a player reaches 15 prestige; highest prestige wins, "
+            "then fewest purchased cards."
+        ),
+    }
+
+
+def new_game(
+    players: int, seed: int, config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if config not in (None, {}):
+        raise RuleError("Splendor does not accept game setup options")
     if players not in (2, 3, 4):
         raise RuleError("Splendor requires 2, 3, or 4 players")
     rng = random.Random(seed)
@@ -412,6 +440,7 @@ def observe(state: dict[str, Any], seat: int) -> dict[str, Any]:
             "nobles": [NOBLES[n] for n in player["nobles"]],
         })
     return {
+        "game": "splendor",
         "rules_version": state["rules_version"],
         "viewer_seat": seat,
         "status": state["status"],

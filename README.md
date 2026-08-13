@@ -5,9 +5,10 @@ act over long horizons. It is designed for both agent-vs-human and agent-vs-agen
 play. Every capability is exposed through a stable, machine-readable CLI and can
 also be wrapped as MCP tools.
 
-The first supported game will be **Splendor (base game, 2–4 players)**. The engine
-is intended to grow into a game-neutral framework suitable for heavier multiplayer
-strategy games such as *Ark Nova* and *The Castles of Burgundy*.
+The playable game is **Splendor (base game, 2–4 players)**. A game-plugin registry
+now also exposes the first **Ark Nova** milestone: deterministic base-game setup,
+seat-scoped hidden information, persistence/replay, CLI discovery, and a dedicated
+web renderer. Ark Nova actions and card effects are intentionally not enabled yet.
 
 ## Project principles
 
@@ -128,6 +129,12 @@ that seat's current legal actions and waits until the UI submits an action ID
 for the matching seat and state version. The setup screen can move each player
 up or down, randomize seats, and applies the displayed order as the turn order.
 
+Choose **Ark Nova** on the same setup screen to inspect the current setup milestone.
+It renders the display, tracks, Association board, action-card strengths, player
+resources, private-card counts, and schematic beginner maps. Because this milestone
+does not execute turns, it neither needs API keys nor starts model harnesses. The UI
+and API label it `setup_only` rather than presenting it as a playable match.
+
 The table header includes a safe pause/resume control. A pause requested while
 a model is generating lets that response finish and commits its action, then
 stops before the next seat starts. The status changes from `waiting to pause`
@@ -211,8 +218,10 @@ inside `web/` in another, then open `http://127.0.0.1:3000`.
 ```console
 agentbga games list --json
 agentbga games describe splendor --json
+agentbga games describe ark_nova --json
 
 agentbga match create --game splendor --players 4 --seed 42 --json
+agentbga match create --game ark_nova --players 2 --seed 42 --json
 agentbga match observe MATCH_ID --seat 0 --json
 agentbga match legal-actions MATCH_ID --seat 0 --json
 agentbga match act MATCH_ID --seat 0 --expected-version 7 \
@@ -240,6 +249,11 @@ capabilities that are absent from the non-interactive CLI.
 
 See [docs/architecture.md](docs/architecture.md) for the proposed architecture,
 protocols, Splendor MVP scope, evaluation plan, and implementation milestones.
+The Ark Nova setup implementation follows the official
+[English Rulebook v1.2](https://www.feuerland-spiele.de/fileadmin/game/Arche_Nova/Arche_Nova_Rules_EN_Low_2022_01.pdf)
+and tracks the official
+[FAQ/Errata v2](https://www.feuerland-spiele.de/fileadmin/game/Arche_Nova/Arche_Nova_FAQ_V2_EN_A4_low.pdf)
+for future interaction tests. No scanned card art or publisher rules text is bundled.
 
 ## Current status
 
@@ -251,6 +265,12 @@ protocols, Splendor MVP scope, evaluation plan, and implementation milestones.
 - Independent named seats using OpenAI-compatible, Anthropic, Gemini, random, or
   human backends, with retries and auditable fallback.
 - Local live table for per-seat model configuration and real-time visual matches.
+- GamePlugin/GameRegistry boundary used by Store, Runner, CLI, harness prompts, web API,
+  and per-game React renderers.
+- Ark Nova 2–4 player deterministic setup skeleton with Map A schematic, 212-card
+  structural deck, 12 base projects, 11 final-scoring placeholders, hidden information,
+  state invariants, exact setup replay, and a setup-only frontend.
 
-Planned next: MCP adapter, tournament scheduling/reports, stronger scripted
-baselines, model-specific prompt/memory policies, and a richer human TUI.
+Planned next for Ark Nova: initial-hand decision steps, then the five action state
+machines, Break resolution, verified map footprints, scoring, and data-driven effects.
+Framework work continues with tournament scheduling/reports and stronger baselines.

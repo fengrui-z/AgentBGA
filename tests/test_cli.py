@@ -11,6 +11,37 @@ from agentbga.cli import main
 
 
 class CLITests(unittest.TestCase):
+    def test_games_describe_and_create_ark_nova_setup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "match.sqlite3"
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main(["games", "describe", "ark_nova"])
+            self.assertEqual(0, code)
+            description = json.loads(output.getvalue())["data"]
+            self.assertEqual("setup_only", description["implementation_status"])
+            self.assertFalse(description["runnable"])
+
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main([
+                    "match", "create", "--game", "ark_nova", "--players", "2",
+                    "--seed", "42", "--db", str(database),
+                ])
+            self.assertEqual(0, code)
+            created = json.loads(output.getvalue())["data"]
+            self.assertEqual("ark_nova", created["game"])
+
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main([
+                    "match", "observe", created["match_id"], "--seat", "0",
+                    "--db", str(database),
+                ])
+            self.assertEqual(0, code)
+            observed = json.loads(output.getvalue())["data"]
+            self.assertEqual("ark_nova", observed["game"])
+            self.assertEqual([], observed["legal_actions"])
     def test_doctor_accepts_common_harnesses(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "players.json"

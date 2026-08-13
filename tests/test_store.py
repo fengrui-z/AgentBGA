@@ -21,6 +21,17 @@ class StoreTests(unittest.TestCase):
             self.assertEqual(1, replay[-1]["version"])
             store.close()
 
+    def test_create_and_load_ark_nova_setup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = Store(Path(directory) / "test.sqlite3")
+            match_id, version, state = store.create(3, 42, "ark_nova")
+            self.assertEqual(0, version)
+            self.assertEqual("ark_nova", store.game_id(match_id))
+            self.assertEqual("initial_hand_selection", state["phase"])
+            replay = store.replay(match_id)
+            self.assertEqual(0, replay[-1]["version"])
+            store.close()
+
 
 if __name__ == "__main__":
     unittest.main()

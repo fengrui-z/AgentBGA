@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AgentBGA · Splendor Live Table",
-  description: "Configure multiple LLMs and watch their Splendor decisions live.",
+  title: "AgentBGA · Long-Horizon Game Arena",
+  description: "Configure humans and model harnesses, then inspect their board-game decisions live.",
   icons: {icon: "/favicon.svg"},
 };
 

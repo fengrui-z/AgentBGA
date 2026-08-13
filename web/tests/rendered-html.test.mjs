@@ -8,8 +8,10 @@ test("static export contains the AgentBGA match setup", async () => {
   const html = await readFile(new URL("dist/client/index.html", root), "utf8");
 
   assert.match(html, /<html lang="zh-CN">/);
-  assert.match(html, /<title>AgentBGA · Splendor Live Table<\/title>/);
-  assert.match(html, /创建一桌璀璨宝石/);
+  assert.match(html, /<title>AgentBGA · Long-Horizon Game Arena<\/title>/);
+  assert.match(html, /创建一桌.*璀璨宝石/);
+  assert.match(html, /方舟动物园/);
+  assert.match(html, /SETUP MILESTONE/);
   assert.match(html, /OpenAI 兼容/);
   assert.match(html, /Anthropic/);
   assert.match(html, /Gemini/);
@@ -34,6 +36,8 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /暂停|继续对局/);
   assert.match(source, /human_turn|submitHumanAction/);
   assert.match(source, /随机座次|movePlayer/);
+  assert.match(source, /ArkNovaBoard/);
+  assert.match(source, /game_description\.runnable/);
   assert.doesNotMatch(html, /react-loading-skeleton|Your site is taking shape/);
 });
 

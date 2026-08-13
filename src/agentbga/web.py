@@ -14,8 +14,8 @@ import time
 from typing import Any
 from urllib.parse import urlsplit
 
-from . import splendor
 from .agents import PlayerConfig
+from .registry import get_game, list_games
 from .runner import run_match
 from .store import Store
 
@@ -31,16 +31,19 @@ class MatchHub:
         store = Store(self.db_path)
         try:
             version, state, _ = store.load(match_id)
+            game = store.game(match_id)
             players = store.players(match_id)
             return {
                 "match_id": match_id,
+                "game": game.game_id,
+                "game_description": game.describe(),
                 "version": version,
                 "status": state["status"],
                 "turn_count": state["turn_count"],
                 "active_seat": state["active_seat"],
                 "phase": state["phase"],
                 "players": players,
-                "views": [splendor.observe(state, seat) for seat in range(state["player_count"])],
+                "views": [game.observe(state, seat) for seat in range(state["player_count"])],
             }
         finally:
             store.close()
@@ -85,6 +88,11 @@ class MatchHub:
             self.condition.notify_all()
 
     def create(self, payload: dict[str, Any]) -> dict[str, Any]:
+        game_id = payload.get("game", "splendor")
+        if not isinstance(game_id, str):
+            raise ValueError("game must be a string")
+        game = get_game(game_id)
+        game_description = game.describe()
         raw_players = payload.get("players")
         if not isinstance(raw_players, list) or len(raw_players) not in (2, 3, 4):
             raise ValueError("players must contain 2, 3, or 4 entries")
@@ -95,7 +103,7 @@ class MatchHub:
             api_key = raw.get("api_key")
             public = {key: value for key, value in raw.items() if key != "api_key"}
             config = PlayerConfig.from_dict(public, seat)
-            if config.backend not in {"random", "human"} and (
+            if game_description.get("runnable", True) and config.backend not in {"random", "human"} and (
                 not isinstance(api_key, str) or not api_key.strip()
             ):
                 raise ValueError(f"player {seat} requires api_key")
@@ -112,25 +120,26 @@ class MatchHub:
             raise ValueError("speed_ms must be an integer from 0 to 10000")
         store = Store(self.db_path)
         try:
-            match_id, _, _ = store.create(len(configs), seed)
+            match_id, _, _ = store.create(len(configs), seed, game_id)
             store.set_players(match_id, [config.public_dict() for config in configs])
         finally:
             store.close()
         snapshot = self._snapshot(match_id)
         with self.condition:
             record = {
-                "events": [], "snapshot": snapshot, "running": True,
+                "events": [], "snapshot": snapshot, "running": bool(game_description.get("runnable", True)),
                 "paused": False, "at_pause_gate": False,
                 "human_pending": None, "human_submission": None,
             }
             record["snapshot"] = self._with_runtime(snapshot, record)
             self.matches[match_id] = record
             created_snapshot = dict(record["snapshot"])
-        thread = threading.Thread(
-            target=self._run, args=(match_id, configs, speed_ms), daemon=True,
-            name=f"agentbga-{match_id}",
-        )
-        thread.start()
+        if record["running"]:
+            thread = threading.Thread(
+                target=self._run, args=(match_id, configs, speed_ms), daemon=True,
+                name=f"agentbga-{match_id}",
+            )
+            thread.start()
         return created_snapshot
 
     def set_paused(self, match_id: str, paused: bool) -> dict[str, Any]:
@@ -344,6 +353,9 @@ class WebHandler(BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         if path == "/api/health":
             self._json(HTTPStatus.OK, {"ok": True, "service": "agentbga-web"})
+            return
+        if path == "/api/games":
+            self._json(HTTPStatus.OK, {"games": list_games()})
             return
         match = re_match(r"^/api/matches/([a-f0-9]+)(/events)?$", path)
         if match:
