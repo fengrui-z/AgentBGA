@@ -1,0 +1,515 @@
+"""External agent-harness controllers for Codex, OpenCode, and custom commands."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+import json
+import os
+from pathlib import Path
+import selectors
+import shutil
+import subprocess
+import sys
+import time
+from typing import Any, Callable
+
+from .agents import AgentError, PlayerConfig, StreamSink
+
+
+HarnessEventSink = Callable[[dict[str, Any]], None]
+
+
+TURN_PROMPT = """You are seat {seat} in an AgentBGA Splendor benchmark, at state version {version}.
+Play by using the agentbga MCP tools. Do not inspect the parent project, database, or another seat.
+Hidden opponent cards are unavailable by design.
+
+Call observe, then legal_actions, then commit exactly one choice with submit_action.
+You must call submit_action exactly once before finishing. You may keep strategic notes inside
+this seat workspace for later turns. After submitting, briefly report completion.
+"""
+
+
+PI_EXTENSION = r'''import { Type } from "@sinclair/typebox";
+import { readFile, writeFile, appendFile } from "node:fs/promises";
+
+const contextPath = process.env.AGENTBGA_SEAT_CONTEXT!;
+const submissionPath = process.env.AGENTBGA_SEAT_SUBMISSION!;
+const auditPath = process.env.AGENTBGA_SEAT_AUDIT!;
+
+async function context() { return JSON.parse(await readFile(contextPath, "utf8")); }
+async function audit(tool: string, args: object, result: unknown) {
+  await appendFile(auditPath, JSON.stringify({ tool, arguments: args, result, created_at: Date.now() / 1000 }) + "\n");
+}
+function result(value: unknown) { return { content: [{ type: "text", text: JSON.stringify(value) }], details: value }; }
+
+export default function (pi: any) {
+  pi.registerTool({ name: "observe", label: "Observe", description: "Read your seat-scoped Splendor observation.",
+    promptSnippet: "Read the current seat-scoped board state", parameters: Type.Object({}, { additionalProperties: false }),
+    async execute() { const value = (await context()).observation; await audit("observe", {}, value); return result(value); } });
+  pi.registerTool({ name: "legal_actions", label: "Legal actions", description: "List legal action IDs for this seat and state.",
+    promptSnippet: "List the current legal Splendor actions", parameters: Type.Object({}, { additionalProperties: false }),
+    async execute() { const value = (await context()).legal_actions; await audit("legal_actions", {}, value); return result(value); } });
+  pi.registerTool({ name: "submit_action", label: "Submit action", description: "Commit exactly one current legal action ID.",
+    promptSnippet: "Commit exactly one legal action ID", promptGuidelines: ["Call submit_action exactly once before finishing the turn."],
+    parameters: Type.Object({ action_id: Type.String() }, { additionalProperties: false }),
+    async execute(_id: string, args: { action_id: string }) {
+      const value = await context();
+      if (!value.legal_actions.some((item: any) => item.id === args.action_id)) throw new Error("unknown or stale action ID");
+      try { await readFile(submissionPath, "utf8"); throw new Error("an action has already been submitted for this turn"); } catch (error: any) {
+        if (error?.code !== "ENOENT") throw error;
+      }
+      const accepted = { accepted: true, action_id: args.action_id, match_id: value.match_id, seat: value.seat, version: value.version };
+      await writeFile(submissionPath, JSON.stringify(accepted)); await audit("submit_action", args, accepted); return result(accepted);
+    } });
+}
+'''
+
+
+@dataclass
+class HarnessSession:
+    match_id: str
+    seat: int
+    workspace: Path
+    runtime: Path
+    session_id: str | None = None
+
+
+class HarnessAgent:
+    """Run one persistent external CLI session for a tournament seat."""
+
+    def __init__(self, config: PlayerConfig, match_id: str, seat: int, *,
+                 event_sink: HarnessEventSink | None = None, timeout: float = 600,
+                 runs_root: str | Path | None = None):
+        self.config = config
+        self.timeout = timeout
+        self.event_sink = event_sink
+        root = Path(runs_root) if runs_root else Path.cwd() / ".agentbga" / "runs"
+        workspace = root / match_id / f"seat-{seat}-{config.backend}"
+        runtime = root / "_runtime" / match_id / f"seat-{seat}"
+        workspace.mkdir(parents=True, exist_ok=True)
+        runtime.mkdir(parents=True, exist_ok=True)
+        self.session = HarnessSession(match_id, seat, workspace, runtime)
+        self.binary = shutil.which(config.backend)
+        if not self.binary:
+            raise AgentError(f"harness executable not found: {config.backend}")
+
+    def _emit(self, event_type: str, **payload: Any) -> None:
+        if self.event_sink:
+            self.event_sink({
+                "type": event_type, "harness": self.config.backend,
+                "seat": self.session.seat, "player": self.config.name, **payload,
+            })
+
+    def _command(self, prompt: str) -> list[str]:
+        model = self.config.model or ""
+        if self.config.backend == "claude":
+            allowed_tools = [
+                "mcp__agentbga__observe",
+                "mcp__agentbga__legal_actions",
+                "mcp__agentbga__submit_action",
+            ]
+            command = [self.binary, "--print", "--output-format", "stream-json", "--verbose",
+                       "--include-partial-messages", "--bare", "--strict-mcp-config",
+                       "--mcp-config", str(self.session.workspace / "claude-mcp.json"),
+                       "--model", model, "--effort", "max", "--permission-mode", "dontAsk",
+                       "--allowedTools", *allowed_tools, "--tools", ""]
+            if self.session.session_id:
+                command.extend(["--resume", self.session.session_id])
+            # --tools accepts a variable number of values. Without the explicit
+            # option terminator Commander consumes the turn prompt as another tool.
+            return [*command, "--", prompt]
+        if self.config.backend == "pi":
+            command = [self.binary, "--mode", "json", "--provider", "agentbga",
+                       "--model", model, "--thinking", "xhigh",
+                       "--no-builtin-tools", "--no-context-files",
+                       "--no-skills", "--no-prompt-templates", "--no-extensions",
+                       "--extension", str(self.session.workspace / "agentbga-tools.ts"),
+                       "--session-dir", str(self.session.workspace / ".pi-sessions")]
+            if self.session.session_id:
+                command.extend(["--session", self.session.session_id])
+            return [*command, prompt]
+        if self.config.backend == "codex":
+            overrides = getattr(self, "_codex_config_args", [])
+            common = ["--model", model, "--json", "--sandbox", "workspace-write",
+                      "--skip-git-repo-check",
+                      "--ignore-user-config", "--ignore-rules", *overrides]
+            if self.session.session_id:
+                return [self.binary, "exec", "resume", "--model", model, "--json",
+                        "--skip-git-repo-check", "--ignore-user-config", "--ignore-rules",
+                        *overrides, self.session.session_id, prompt]
+            return [self.binary, "exec", *common, "--cd", str(self.session.workspace), prompt]
+        if self.config.backend == "opencode":
+            selected_model = model if "/" in model else f"agentbga/{model}"
+            command = [self.binary, "run", "--pure", "--format", "json", "--model", selected_model,
+                       "--variant", "max", "--thinking", "--dir", str(self.session.workspace)]
+            if self.session.session_id:
+                command.extend(["--session", self.session.session_id])
+            return [*command, prompt]
+        raise AgentError(f"unsupported harness: {self.config.backend}")
+
+    def _redact_text(self, value: str) -> str:
+        key = self.config.api_key or os.environ.get(self.config.api_key_env or "", "")
+        return value.replace(key, "[REDACTED]") if key else value
+
+    def _provider_api_key_env(self) -> str:
+        """Return the credential variable understood by the selected harness/provider."""
+        configured = self.config.api_key_env or ""
+        if configured not in {"AGENTBGA_API_KEY", ""}:
+            return configured
+        endpoint = (self.config.base_url or "").lower()
+        if self.config.backend == "pi":
+            if "anthropic" in endpoint:
+                return "ANTHROPIC_API_KEY"
+            if "googleapis.com" in endpoint:
+                return "GEMINI_API_KEY"
+            if "deepseek" in endpoint:
+                return "DEEPSEEK_API_KEY"
+            return "OPENAI_API_KEY"
+        return configured
+
+    def _environment(self) -> dict[str, str]:
+        source_env = dict(os.environ)
+        secret_markers = ("KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL")
+        env = {
+            name: value for name, value in source_env.items()
+            if not any(marker in name.upper() for marker in secret_markers)
+        }
+        key_name = self.config.api_key_env or ""
+        key = self.config.api_key or source_env.get(key_name)
+        if key_name and key:
+            env[key_name] = key
+        if self.config.backend == "codex":
+            codex_home = self.session.workspace / ".codex-home"
+            codex_home.mkdir(exist_ok=True)
+            env["CODEX_HOME"] = str(codex_home)
+            if key:
+                env["OPENAI_API_KEY"] = key
+            if self.config.base_url:
+                env["OPENAI_BASE_URL"] = self.config.base_url
+        elif self.config.backend == "opencode":
+            for variable, dirname in (
+                ("XDG_DATA_HOME", ".opencode-data"),
+                ("XDG_CONFIG_HOME", ".opencode-config"),
+                ("XDG_CACHE_HOME", ".opencode-cache"),
+                ("XDG_STATE_HOME", ".opencode-state"),
+            ):
+                target = self.session.workspace / dirname
+                target.mkdir(exist_ok=True)
+                env[variable] = str(target)
+            if key:
+                env["DEEPSEEK_API_KEY"] = key
+            if self.config.base_url:
+                env["DEEPSEEK_BASE_URL"] = self.config.base_url
+        elif self.config.backend == "claude":
+            claude_config = self.session.workspace / ".claude-config"
+            claude_config.mkdir(exist_ok=True)
+            env["CLAUDE_CONFIG_DIR"] = str(claude_config)
+            if key:
+                env["ANTHROPIC_API_KEY"] = key
+            if self.config.base_url:
+                env["ANTHROPIC_BASE_URL"] = self.config.base_url
+        elif self.config.backend == "pi":
+            pi_home = self.session.workspace / ".pi-home"
+            pi_home.mkdir(exist_ok=True)
+            env["PI_CODING_AGENT_DIR"] = str(pi_home)
+            env["PI_SKIP_VERSION_CHECK"] = "1"
+            env["PI_TELEMETRY"] = "0"
+            pi_key_env = self._provider_api_key_env()
+            env["AGENTBGA_API_KEY"] = key or ""
+            if pi_key_env and key:
+                env[pi_key_env] = key
+            env["AGENTBGA_SEAT_CONTEXT"] = str(self.session.runtime / "turn-context.json")
+            env["AGENTBGA_SEAT_SUBMISSION"] = str(self.session.runtime / "submission.json")
+            env["AGENTBGA_SEAT_AUDIT"] = str(self.session.runtime / "tool-events.jsonl")
+        if hasattr(self, "_pythonpath"):
+            env["PYTHONPATH"] = self._pythonpath
+        return env
+
+    def _prepare_turn(
+        self, observation: dict[str, Any], legal: list[dict[str, Any]],
+    ) -> Path:
+        context_path = self.session.runtime / "turn-context.json"
+        submission_path = self.session.runtime / "submission.json"
+        audit_path = self.session.runtime / "tool-events.jsonl"
+        submission_path.unlink(missing_ok=True)
+        audit_path.unlink(missing_ok=True)
+        context = {
+            "schema_version": "agentbga.seat-context.v1",
+            "match_id": self.session.match_id,
+            "seat": self.session.seat,
+            "version": observation.get("state_version", observation.get("turn_count")),
+            "observation": observation,
+            "legal_actions": [{"id": item["id"], **item["action"]} for item in legal],
+        }
+        context_path.write_text(
+            json.dumps(context, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
+        )
+        package_root = Path(__file__).resolve().parents[1]
+        inherited = os.environ.get("PYTHONPATH")
+        self._pythonpath = str(package_root) + (os.pathsep + inherited if inherited else "")
+        mcp_command = [sys.executable, "-m", "agentbga.seat_mcp", "--context", str(context_path)]
+        claude_mcp = {"mcpServers": {"agentbga": {
+            "type": "stdio", "command": mcp_command[0], "args": mcp_command[1:],
+        }}}
+        (self.session.workspace / "claude-mcp.json").write_text(
+            json.dumps(claude_mcp, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        (self.session.workspace / "agentbga-tools.ts").write_text(PI_EXTENSION, encoding="utf-8")
+        pi_dir = self.session.workspace / ".pi-home"
+        pi_dir.mkdir(exist_ok=True)
+        pi_api_key_env = self._provider_api_key_env()
+        pi_models = {"providers": {"agentbga": {
+            "baseUrl": self.config.base_url, "api": self.config.wire_api or "openai-completions",
+            "apiKey": f"${pi_api_key_env}", "models": [{
+                "id": self.config.model,
+                "reasoning": True,
+                "thinkingLevelMap": {
+                    "minimal": None, "low": None, "medium": None,
+                    "high": "high", "xhigh": "max",
+                },
+            }],
+        }}}
+        (pi_dir / "models.json").write_text(
+            json.dumps(pi_models, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        codex_dir = self.session.workspace / ".codex"
+        codex_dir.mkdir(exist_ok=True)
+        escaped_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
+        provider = ""
+        if self.config.base_url and self.config.base_url.rstrip("/") != "https://api.openai.com/v1":
+            default_wire_api = self.config.wire_api or "chat"
+            provider = (
+                "model_provider = \"agentbga\"\n"
+                "[model_providers.agentbga]\n"
+                "name = \"AgentBGA seat provider\"\n"
+                f"base_url = {json.dumps(self.config.base_url.rstrip('/'))}\n"
+                f"env_key = {json.dumps(self.config.api_key_env or 'OPENAI_API_KEY')}\n"
+                f"wire_api = {json.dumps(default_wire_api)}\n"
+                "requires_openai_auth = false\n"
+            )
+        codex_config = (
+            "approval_policy = \"never\"\n"
+            "sandbox_mode = \"workspace-write\"\n"
+            "web_search = \"disabled\"\n"
+            "model_reasoning_effort = \"max\"\n"
+            + provider
+            + "[mcp_servers.agentbga]\n"
+            f"command = {json.dumps(mcp_command[0])}\n"
+            f"args = [{escaped_args}]\n"
+        )
+        (codex_dir / "config.toml").write_text(codex_config, encoding="utf-8")
+        provider_id, separator, model_id = (self.config.model or "").partition("/")
+        if not separator:
+            provider_id, model_id = "agentbga", provider_id
+        opencode_config: dict[str, Any] = {
+            "$schema": "https://opencode.ai/config.json",
+            "mcp": {"agentbga": {"type": "local", "command": mcp_command, "enabled": True}},
+            "permission": {
+                "*": "deny", "read": "allow", "edit": "allow",
+                "agentbga_*": "allow",
+            },
+        }
+        if provider_id and model_id:
+            opencode_config["provider"] = {
+                provider_id: {
+                    "npm": "@ai-sdk/openai" if self.config.wire_api == "responses" else "@ai-sdk/openai-compatible",
+                    "name": "AgentBGA seat provider",
+                    "options": {
+                        "baseURL": self.config.base_url,
+                        "apiKey": f"{{env:{self.config.api_key_env or 'DEEPSEEK_API_KEY'}}}",
+                    },
+                    "models": {model_id: {
+                        "name": model_id,
+                        "variants": {"max": {
+                            "reasoningEffort": "max",
+                            "thinking": {"type": "enabled"},
+                        }},
+                    }},
+                },
+            }
+        (self.session.workspace / "opencode.json").write_text(
+            json.dumps(opencode_config, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        self._codex_config_args = [
+            "--config", "approval_policy=\"never\"",
+            "--config", "sandbox_mode=\"workspace-write\"",
+            "--config", "web_search=\"disabled\"",
+            "--config", "model_reasoning_effort=\"max\"",
+            "--config", f"mcp_servers.agentbga.command={json.dumps(mcp_command[0])}",
+            "--config", f"mcp_servers.agentbga.args=[{escaped_args}]",
+        ]
+        if provider:
+            self._codex_config_args.extend([
+                "--config", "model_provider=\"agentbga\"",
+                "--config", "model_providers.agentbga.name=\"AgentBGA seat provider\"",
+                "--config", f"model_providers.agentbga.base_url={json.dumps(self.config.base_url.rstrip('/'))}",
+                "--config", f"model_providers.agentbga.env_key={json.dumps(self.config.api_key_env or 'OPENAI_API_KEY')}",
+                "--config", f"model_providers.agentbga.wire_api={json.dumps(self.config.wire_api or 'chat')}",
+                "--config", "model_providers.agentbga.requires_openai_auth=false",
+            ])
+        return submission_path
+
+    def _emit_tool_audit(self) -> None:
+        path = self.session.runtime / "tool-events.jsonl"
+        if not path.is_file():
+            return
+        for line in path.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            self._emit("harness_tool_call", tool=row.get("tool"), arguments=row.get("arguments") or {})
+            self._emit("harness_tool_result", tool=row.get("tool"), result=row.get("result"))
+
+    @staticmethod
+    def _event_text(payload: dict[str, Any]) -> str:
+        assistant_event = payload.get("assistantMessageEvent")
+        if isinstance(assistant_event, dict) and assistant_event.get("type") in {
+            "text_delta", "thinking_delta",
+        }:
+            return str(assistant_event.get("delta") or "")
+        stream_event = payload.get("event")
+        if isinstance(stream_event, dict):
+            delta = stream_event.get("delta")
+            if isinstance(delta, dict):
+                for key in ("text", "thinking"):
+                    if isinstance(delta.get(key), str):
+                        return delta[key]
+        item = payload.get("item") or payload.get("part") or payload
+        if not isinstance(item, dict):
+            return ""
+        for key in ("text", "content", "output", "message"):
+            value = item.get(key)
+            if isinstance(value, str):
+                return value
+        return ""
+
+    @staticmethod
+    def _event_session_id(payload: dict[str, Any]) -> str | None:
+        if payload.get("type") == "session" and isinstance(payload.get("id"), str):
+            return payload["id"]
+        for key in ("thread_id", "session_id", "sessionID"):
+            value = payload.get(key)
+            if isinstance(value, str) and value:
+                return value
+        session = payload.get("session")
+        if isinstance(session, dict):
+            value = session.get("id")
+            if isinstance(value, str):
+                return value
+        return None
+
+    @staticmethod
+    def _tool_details(payload: dict[str, Any]) -> tuple[str, Any] | None:
+        if payload.get("type") == "tool_execution_start":
+            return str(payload.get("toolName") or "tool"), payload.get("args") or {}
+        item = payload.get("item") or payload.get("part") or payload
+        if not isinstance(item, dict):
+            return None
+        item_type = str(item.get("type") or payload.get("type") or "")
+        if "tool" not in item_type.lower() and not item.get("tool") and not item.get("name"):
+            return None
+        name = item.get("tool") or item.get("name") or item.get("tool_name") or item_type
+        arguments = item.get("arguments") or item.get("input") or item.get("args") or {}
+        return str(name), arguments
+
+    def _run(self, command: list[str]) -> tuple[str, str, int]:
+        safe_command = [part for part in command if part != self.config.api_key]
+        self._emit("harness_started", command=safe_command, session_id=self.session.session_id)
+        started = time.monotonic()
+        process = subprocess.Popen(
+            command, cwd=self.session.workspace, env=self._environment(),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            encoding="utf-8", errors="replace", bufsize=1,
+        )
+        selector = selectors.DefaultSelector()
+        assert process.stdout is not None and process.stderr is not None
+        selector.register(process.stdout, selectors.EVENT_READ, "stdout")
+        selector.register(process.stderr, selectors.EVENT_READ, "stderr")
+        output: list[str] = []
+        errors: list[str] = []
+        try:
+            while selector.get_map():
+                remaining = self.timeout - (time.monotonic() - started)
+                if remaining <= 0:
+                    process.kill()
+                    raise AgentError(f"{self.config.backend} harness timed out after {self.timeout:g}s")
+                for key, _ in selector.select(min(0.25, remaining)):
+                    line = key.fileobj.readline()
+                    if line == "":
+                        selector.unregister(key.fileobj)
+                        continue
+                    line = line.rstrip("\r\n")
+                    if key.data == "stderr":
+                        line = self._redact_text(line)
+                        errors.append(line)
+                        self._emit("harness_output", channel="stderr", delta=line + "\n")
+                        continue
+                    line = self._redact_text(line)
+                    output.append(line)
+                    try:
+                        payload = json.loads(line)
+                    except json.JSONDecodeError:
+                        self._emit("harness_output", channel="content", delta=line + "\n")
+                        continue
+                    session_id = self._event_session_id(payload)
+                    if session_id:
+                        self.session.session_id = session_id
+                    tool = self._tool_details(payload)
+                    if tool:
+                        self._emit("harness_tool_call", tool=tool[0], arguments=tool[1], raw_type=payload.get("type"))
+                    text = self._event_text(payload)
+                    if text:
+                        assistant_event = payload.get("assistantMessageEvent") or {}
+                        stream_delta = ((payload.get("event") or {}).get("delta") or {})
+                        channel = "reasoning" if (
+                            assistant_event.get("type") == "thinking_delta" or "thinking" in stream_delta
+                        ) else "content"
+                        self._emit("harness_output", channel=channel, delta=text)
+            returncode = process.wait(timeout=2)
+        finally:
+            selector.close()
+            if process.poll() is None:
+                process.kill()
+                process.wait()
+        return "\n".join(output), "\n".join(errors), returncode
+
+    def choose(
+        self, observation: dict[str, Any], legal: list[dict[str, Any]],
+        on_stream: StreamSink | None = None,
+    ) -> tuple[str, dict[str, Any]]:
+        submission_path = self._prepare_turn(observation, legal)
+        prompt = TURN_PROMPT.format(
+            seat=self.session.seat,
+            version=observation.get("state_version", observation.get("turn_count")),
+        )
+        started = time.monotonic()
+        raw, stderr, returncode = self._run(self._command(prompt))
+        self._emit_tool_audit()
+        if returncode != 0:
+            detail = stderr[-1000:] or raw[-1000:]
+            detail = self._redact_text(detail)
+            self._emit("harness_error", error=detail, exit_code=returncode)
+            raise AgentError(f"{self.config.backend} harness exited {returncode}: {detail}")
+        if not submission_path.is_file():
+            raise AgentError(f"{self.config.backend} harness finished without calling submit_action")
+        submission = json.loads(submission_path.read_text(encoding="utf-8"))
+        action_id = submission.get("action_id")
+        if action_id not in {item["id"] for item in legal}:
+            raise AgentError("harness submitted an unknown or stale action ID")
+        latency = round((time.monotonic() - started) * 1000, 3)
+        metadata = {
+            "backend": self.config.backend, "harness": self.config.backend,
+            "model": self.config.model, "session_id": self.session.session_id,
+            "reasoning_effort": self.config.reasoning_effort,
+            "latency_ms": latency,
+        }
+        self._emit("harness_finished", action_id=action_id, latency_ms=latency,
+                   session_id=self.session.session_id,
+                   reasoning_effort=self.config.reasoning_effort)
+        return action_id, metadata
+
+
+def build_harness_agent(config: PlayerConfig, match_id: str, seat: int,
+                        event_sink: HarnessEventSink | None = None) -> HarnessAgent:
+    return HarnessAgent(config, match_id, seat, event_sink=event_sink)

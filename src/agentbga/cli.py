@@ -7,11 +7,12 @@ import json
 import os
 from pathlib import Path
 import secrets
+import shutil
 import sys
 from typing import Any
 
 from . import __version__, splendor
-from .agents import AgentError, load_players_config
+from .agents import AgentError, HARNESS_BACKENDS, load_players_config
 from .runner import run_match
 from .store import ConflictError, MatchNotFound, Store
 
@@ -56,7 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     create.add_argument("--seed", type=int)
     add_db(create)
 
-    for name in ("observe", "legal-actions", "status", "verify", "replay"):
+    for name in ("observe", "legal-actions", "status", "verify", "replay", "harness-events"):
         item = match_sub.add_parser(name)
         item.add_argument("match_id")
         if name in ("observe", "legal-actions"):
@@ -154,11 +155,16 @@ def execute(args: argparse.Namespace) -> int:
             for seat, player in enumerate(players):
                 key_required = player.backend not in {"random", "human"}
                 key_configured = not key_required or bool(os.environ.get(player.api_key_env or ""))
+                harness_required = player.backend in HARNESS_BACKENDS
+                harness_executable = not harness_required or bool(shutil.which(player.backend))
                 player_checks.append({
                     "seat": seat, **player.public_dict(),
                     "api_key_configured": key_configured,
+                    "harness_executable": harness_executable,
                 })
-            ready = sys.version_info >= (3, 11) and all(row["api_key_configured"] for row in player_checks)
+            ready = sys.version_info >= (3, 11) and all(
+                row["api_key_configured"] and row["harness_executable"] for row in player_checks
+            )
             emit(envelope({
                 "python": {"ok": sys.version_info >= (3, 11), "version": sys.version.split()[0]},
                 "database": {"ok": True, "path": str(db)},
@@ -230,6 +236,9 @@ def execute(args: argparse.Namespace) -> int:
             elif args.command == "replay":
                 frames = store.replay(args.match_id)
                 emit(envelope(frames, match_id=args.match_id, version=frames[-1]["version"]))
+            elif args.command == "harness-events":
+                version, _, _ = store.load(args.match_id)
+                emit(envelope(store.harness_events(args.match_id), match_id=args.match_id, version=version))
             elif args.command == "act":
                 version, state, _ = store.load(args.match_id)
                 if args.action_id:

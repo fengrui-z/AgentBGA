@@ -1,0 +1,20 @@
+{
+  "schema_version": "agentbga.players.v1",
+  "players": [
+    {
+      "name": "Agent 1 · OpenCode + DeepSeek V4 Flash",
+      "backend": "opencode",
+      "model": "deepseek-v4-flash",
+      "base_url": "https://api.deepseek.com",
+      "api_key_env": "DEEPSEEK_API_KEY"
+    },
+    {
+      "name": "Agent 2 · Codex + DeepSeek V4 Flash",
+      "backend": "codex",
+      "model": "deepseek-v4-flash",
+      "base_url": "https://api.deepseek.com",
+      "api_key_env": "DEEPSEEK_API_KEY",
+      "wire_api": "chat"
+    }
+  ]
+}
