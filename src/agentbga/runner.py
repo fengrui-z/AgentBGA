@@ -7,11 +7,13 @@ import time
 from typing import Any, Callable
 
 from . import splendor
-from .agents import AgentError, PlayerConfig, build_model_agent, random_choice
+from .agents import AgentError, HARNESS_BACKENDS, PlayerConfig, build_model_agent, random_choice
+from .harness import build_harness_agent
 from .store import Store
 
 
 EventSink = Callable[[dict[str, Any]], None]
+TurnGate = Callable[[], None]
 
 
 def legacy_players(
@@ -39,6 +41,7 @@ def run_match(
     retries: int = 1,
     fallback: str = "random",
     sink: EventSink | None = None,
+    turn_gate: TurnGate | None = None,
 ) -> dict[str, Any]:
     version, state, _ = store.load(match_id)
     if players and isinstance(players[0], str):
@@ -48,13 +51,29 @@ def run_match(
         raise ValueError("player/controller count must equal player count")
     store.set_players(match_id, [config.public_dict() for config in configs])
     rngs = [random.Random(state["seed"] * 1009 + seat) for seat in range(state["player_count"])]
-    model_agents = {
+    model_agents: dict[int, Any] = {
         seat: build_model_agent(config)
         for seat, config in enumerate(configs)
         if config.backend in {"openai", "anthropic", "gemini"}
     }
+    for harness_seat, harness_config in enumerate(configs):
+        if harness_config.backend not in HARNESS_BACKENDS:
+            continue
+
+        def harness_sink(event: dict[str, Any], seat: int = harness_seat) -> None:
+            enriched = {"version": version, "backend": configs[seat].backend, **event}
+            if enriched.get("type") != "harness_output":
+                store.record_harness_event(match_id, version, seat, enriched)
+            if sink:
+                sink(enriched)
+
+        model_agents[harness_seat] = build_harness_agent(
+            harness_config, match_id, harness_seat, event_sink=harness_sink,
+        )
 
     while state["status"] == "active":
+        if turn_gate:
+            turn_gate()
         if state["turn_count"] >= max_turns:
             raise RuntimeError(f"match exceeded --max-turns={max_turns}")
         seat = state["active_seat"]
@@ -104,9 +123,9 @@ def run_match(
                         if time.monotonic() - last_stream_flush[0] >= 0.1:
                             flush_stream()
 
-                    action_id, metadata = model_agents[seat].choose(
-                        splendor.observe(state, seat), legal, on_stream=stream,
-                    )
+                    observation = splendor.observe(state, seat)
+                    observation["state_version"] = version
+                    action_id, metadata = model_agents[seat].choose(observation, legal, on_stream=stream)
                     flush_stream()
                     if sink:
                         sink({"type": "agent_finished", "version": version,

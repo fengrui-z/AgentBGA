@@ -71,10 +71,31 @@ class Store:
                 model TEXT,
                 base_url TEXT,
                 api_key_env TEXT,
+                harness TEXT,
+                wire_api TEXT,
+                reasoning_effort TEXT,
                 PRIMARY KEY(match_id, seat)
+            );
+            CREATE TABLE IF NOT EXISTS harness_events (
+                match_id TEXT NOT NULL,
+                version INTEGER NOT NULL,
+                seat INTEGER NOT NULL,
+                seq INTEGER NOT NULL,
+                event_json TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                PRIMARY KEY(match_id, version, seat, seq)
             );
             """
         )
+        columns = {
+            row["name"] for row in self.connection.execute("PRAGMA table_info(match_players)").fetchall()
+        }
+        if "harness" not in columns:
+            self.connection.execute("ALTER TABLE match_players ADD COLUMN harness TEXT")
+        if "wire_api" not in columns:
+            self.connection.execute("ALTER TABLE match_players ADD COLUMN wire_api TEXT")
+        if "reasoning_effort" not in columns:
+            self.connection.execute("ALTER TABLE match_players ADD COLUMN reasoning_effort TEXT")
         self.connection.commit()
 
     def close(self) -> None:
@@ -159,21 +180,52 @@ class Store:
                  json.dumps(metadata, separators=(",", ":")), time.time()),
             )
 
+    def record_harness_event(
+        self, match_id: str, version: int, seat: int, event: dict[str, Any],
+    ) -> None:
+        """Persist a redacted harness/tool event for audit and UI replay."""
+        with self.connection:
+            seq = self.connection.execute(
+                "SELECT COALESCE(MAX(seq), -1) + 1 FROM harness_events "
+                "WHERE match_id=? AND version=? AND seat=?", (match_id, version, seat),
+            ).fetchone()[0]
+            self.connection.execute(
+                "INSERT INTO harness_events VALUES (?, ?, ?, ?, ?, ?)",
+                (match_id, version, seat, seq,
+                 json.dumps(event, separators=(",", ":")), time.time()),
+            )
+
+    def harness_events(self, match_id: str) -> list[dict[str, Any]]:
+        self.load(match_id)
+        rows = self.connection.execute(
+            "SELECT version,seat,seq,event_json,created_at FROM harness_events "
+            "WHERE match_id=? ORDER BY version,seat,seq", (match_id,),
+        ).fetchall()
+        return [{
+            "version": row["version"], "seat": row["seat"], "seq": row["seq"],
+            "event": json.loads(row["event_json"]), "created_at": row["created_at"],
+        } for row in rows]
+
     def set_players(self, match_id: str, players: list[dict[str, Any]]) -> None:
         self.load(match_id)
         with self.connection:
             self.connection.execute("DELETE FROM match_players WHERE match_id=?", (match_id,))
             for seat, player in enumerate(players):
                 self.connection.execute(
-                    "INSERT INTO match_players VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO match_players "
+                    "(match_id,seat,name,backend,model,base_url,api_key_env,harness,wire_api,reasoning_effort) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (match_id, seat, player["name"], player["backend"], player.get("model"),
-                     player.get("base_url"), player.get("api_key_env")),
+                     player.get("base_url"), player.get("api_key_env"),
+                     player["backend"] if player["backend"] in {"claude", "pi", "codex", "opencode"} else None,
+                     player.get("wire_api"), player.get("reasoning_effort")),
                 )
 
     def players(self, match_id: str) -> list[dict[str, Any]]:
         self.load(match_id)
         rows = self.connection.execute(
-            "SELECT seat,name,backend,model,base_url,api_key_env FROM match_players WHERE match_id=? ORDER BY seat",
+            "SELECT seat,name,backend,model,base_url,api_key_env,harness,wire_api,reasoning_effort "
+            "FROM match_players WHERE match_id=? ORDER BY seat",
             (match_id,),
         ).fetchall()
         return [{key: row[key] for key in row.keys() if row[key] is not None} for row in rows]

@@ -45,20 +45,40 @@ class MatchHub:
         finally:
             store.close()
 
+    @staticmethod
+    def _with_runtime(snapshot: dict[str, Any], record: dict[str, Any]) -> dict[str, Any]:
+        return {
+            **snapshot,
+            "paused": bool(record["paused"]),
+            "pause_pending": bool(
+                record["paused"] and record["running"] and not record["at_pause_gate"]
+            ),
+        }
+
+    def _append_locked(
+        self, record: dict[str, Any], event: dict[str, Any], snapshot: dict[str, Any] | None,
+    ) -> None:
+        item = {"seq": len(record["events"]), "event": event}
+        if snapshot is not None:
+            decorated = self._with_runtime(snapshot, record)
+            item["snapshot"] = decorated
+            record["snapshot"] = decorated
+        record["events"].append(item)
+
     def _publish(self, match_id: str, event: dict[str, Any]) -> None:
         # Token deltas are deliberately lightweight: copying every full board snapshot
         # for a long reasoning stream would create hundreds of megabytes of traffic.
-        snapshot = None if event.get("type") == "agent_stream" else self._snapshot(match_id)
+        lightweight = {
+            "agent_stream", "harness_output", "harness_tool_call", "harness_tool_result",
+        }
+        snapshot = None if event.get("type") in lightweight else self._snapshot(match_id)
         with self.condition:
             record = self.matches[match_id]
-            item = {"seq": len(record["events"]), "event": event}
-            if snapshot is not None:
-                item["snapshot"] = snapshot
-            record["events"].append(item)
-            if snapshot is not None:
-                record["snapshot"] = snapshot
             if event.get("type") in {"match_finished", "match_failed"}:
                 record["running"] = False
+                record["paused"] = False
+                record["at_pause_gate"] = False
+            self._append_locked(record, event, snapshot)
             self.condition.notify_all()
 
     def create(self, payload: dict[str, Any]) -> dict[str, Any]:
@@ -95,13 +115,51 @@ class MatchHub:
             store.close()
         snapshot = self._snapshot(match_id)
         with self.condition:
-            self.matches[match_id] = {"events": [], "snapshot": snapshot, "running": True}
+            record = {
+                "events": [], "snapshot": snapshot, "running": True,
+                "paused": False, "at_pause_gate": False,
+            }
+            record["snapshot"] = self._with_runtime(snapshot, record)
+            self.matches[match_id] = record
+            created_snapshot = dict(record["snapshot"])
         thread = threading.Thread(
             target=self._run, args=(match_id, configs, speed_ms), daemon=True,
             name=f"agentbga-{match_id}",
         )
         thread.start()
-        return snapshot
+        return created_snapshot
+
+    def set_paused(self, match_id: str, paused: bool) -> dict[str, Any]:
+        with self.condition:
+            if match_id not in self.matches:
+                raise KeyError(match_id)
+            record = self.matches[match_id]
+            if not record["running"]:
+                raise ValueError("match is no longer running")
+            if record["paused"] == paused:
+                return dict(record["snapshot"])
+            record["paused"] = paused
+            if not paused:
+                record["at_pause_gate"] = False
+            snapshot = self._with_runtime(record["snapshot"], record)
+            event_type = "pause_requested" if paused else "match_resumed"
+            self._append_locked(record, {"type": event_type, "match_id": match_id}, snapshot)
+            self.condition.notify_all()
+            return dict(record["snapshot"])
+
+    def _wait_for_turn(self, match_id: str) -> None:
+        with self.condition:
+            record = self.matches[match_id]
+            if record["paused"] and record["running"]:
+                record["at_pause_gate"] = True
+                snapshot = self._with_runtime(record["snapshot"], record)
+                self._append_locked(
+                    record, {"type": "match_paused", "match_id": match_id}, snapshot,
+                )
+                self.condition.notify_all()
+            while record["paused"] and record["running"]:
+                self.condition.wait()
+            record["at_pause_gate"] = False
 
     def _run(self, match_id: str, configs: list[PlayerConfig], speed_ms: int) -> None:
         store = Store(self.db_path)
@@ -111,7 +169,8 @@ class MatchHub:
                 if event.get("type") == "turn" and speed_ms:
                     time.sleep(speed_ms / 1000)
 
-            run_match(store, match_id, configs, sink=sink)
+            run_match(store, match_id, configs, sink=sink,
+                      turn_gate=lambda: self._wait_for_turn(match_id))
         except Exception as error:
             self._publish(match_id, {"type": "match_failed", "error": str(error)})
         finally:
@@ -166,7 +225,18 @@ class WebHandler(BaseHTTPRequestHandler):
         self._headers(HTTPStatus.NO_CONTENT, "text/plain", 0)
 
     def do_POST(self) -> None:
-        if self.path != "/api/matches":
+        path = urlsplit(self.path).path
+        control = re_match(r"^/api/matches/([a-f0-9]+)/(pause|resume)$", path)
+        if control:
+            match_id, action = control
+            try:
+                self._json(HTTPStatus.OK, self.hub.set_paused(match_id, action == "pause"))
+            except KeyError:
+                self._json(HTTPStatus.NOT_FOUND, {"error": "match_not_found"})
+            except ValueError as error:
+                self._json(HTTPStatus.CONFLICT, {"error": "match_not_running", "message": str(error)})
+            return
+        if path != "/api/matches":
             self._json(HTTPStatus.NOT_FOUND, {"error": "not_found"})
             return
         try:

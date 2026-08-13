@@ -11,6 +11,31 @@ from agentbga.cli import main
 
 
 class CLITests(unittest.TestCase):
+    def test_doctor_accepts_common_harnesses(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "players.json"
+            config.write_text(json.dumps({
+                "schema_version": "agentbga.players.v1",
+                "players": [
+                    {"name": "Claude", "backend": "claude", "model": "claude-test"},
+                    {"name": "Pi", "backend": "pi", "model": "model-test"},
+                    {"name": "Codex", "backend": "codex", "model": "gpt-test"},
+                    {"name": "OpenCode", "backend": "opencode", "model": "deepseek/test"},
+                ],
+            }))
+            output = StringIO()
+            with mock.patch.dict(os.environ, {
+                "ANTHROPIC_API_KEY": "present", "AGENTBGA_API_KEY": "present",
+                "OPENAI_API_KEY": "present", "DEEPSEEK_API_KEY": "present",
+            }, clear=True), mock.patch("agentbga.cli.shutil.which", return_value="/bin/harness"), redirect_stdout(output):
+                code = main(["doctor", "--players-config", str(config)])
+            self.assertEqual(0, code)
+            result = json.loads(output.getvalue())
+            self.assertEqual(
+                ["claude", "pi", "codex", "opencode"],
+                [row["backend"] for row in result["data"]["players"]],
+            )
+
     def test_doctor_checks_each_named_api_key(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "players.json"

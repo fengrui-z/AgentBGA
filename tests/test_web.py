@@ -46,7 +46,7 @@ class WebTests(unittest.TestCase):
             captured = threading.Event()
             seen = {}
 
-            def fake_run(_store, _match_id, players, sink):
+            def fake_run(_store, _match_id, players, sink, turn_gate):
                 seen["key"] = players[0].api_key
                 seen["public"] = players[0].public_dict()
                 captured.set()
@@ -78,7 +78,7 @@ class WebTests(unittest.TestCase):
             hub = MatchHub(Path(directory) / "matches.sqlite3")
             ready = threading.Event()
 
-            def fake_run(_store, _match_id, _players, sink):
+            def fake_run(_store, _match_id, _players, sink, turn_gate):
                 sink({"type": "agent_started", "version": 0, "seat": 0, "player": "API",
                       "backend": "openai", "attempt": 1})
                 sink({"type": "agent_stream", "version": 0, "seat": 0, "player": "API",
@@ -96,6 +96,57 @@ class WebTests(unittest.TestCase):
             stream = next(item for item in events if item["event"]["type"] == "agent_stream")
             self.assertEqual("chunk", stream["event"]["delta"])
             self.assertNotIn("snapshot", stream)
+
+            hub.matches[created["match_id"]]["running"] = True
+            hub._publish(created["match_id"], {
+                "type": "harness_tool_result", "seat": 0, "tool": "observe", "result": {"large": True},
+            })
+            events, _ = hub.events_after(created["match_id"], -1, wait=0)
+            tool_result = next(item for item in events if item["event"]["type"] == "harness_tool_result")
+            self.assertNotIn("snapshot", tool_result)
+
+    def test_pause_waits_at_turn_boundary_and_resume_releases_match(self):
+        with tempfile.TemporaryDirectory() as directory:
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            model_started = threading.Event()
+            may_finish_turn = threading.Event()
+            reached_next_turn = threading.Event()
+
+            def fake_run(_store, _match_id, _players, sink, turn_gate):
+                turn_gate()
+                model_started.set()
+                may_finish_turn.wait(2)
+                sink({"type": "turn", "version": 1, "seat": 0, "player": "API",
+                      "backend": "openai", "action": {"type": "pass"}})
+                turn_gate()
+                reached_next_turn.set()
+                sink({"type": "match_failed", "error": "test stop"})
+
+            with mock.patch("agentbga.web.run_match", side_effect=fake_run):
+                created = hub.create({"players": [
+                    {"name": "API", "backend": "openai", "model": "m", "api_key": "test"},
+                    {"name": "Baseline", "backend": "random"},
+                ]})
+                self.assertTrue(model_started.wait(2))
+                requested = hub.set_paused(created["match_id"], True)
+                self.assertTrue(requested["paused"])
+                self.assertTrue(requested["pause_pending"])
+                may_finish_turn.set()
+
+                deadline = time.monotonic() + 2
+                while hub.get(created["match_id"])["pause_pending"] and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                paused = hub.get(created["match_id"])
+                self.assertTrue(paused["paused"])
+                self.assertFalse(paused["pause_pending"])
+                self.assertFalse(reached_next_turn.is_set())
+
+                resumed = hub.set_paused(created["match_id"], False)
+                self.assertFalse(resumed["paused"])
+                self.assertTrue(reached_next_turn.wait(2))
+                deadline = time.monotonic() + 2
+                while hub.events_after(created["match_id"], -1, wait=0)[1] and time.monotonic() < deadline:
+                    time.sleep(0.01)
 
     def test_model_player_requires_nonempty_key(self):
         with tempfile.TemporaryDirectory() as directory:

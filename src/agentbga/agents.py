@@ -19,6 +19,10 @@ class AgentError(RuntimeError):
     pass
 
 
+HARNESS_BACKENDS = frozenset({"claude", "pi", "codex", "opencode"})
+HARNESS_REASONING_EFFORT = "max"
+
+
 @dataclass(frozen=True)
 class PlayerConfig:
     """Controller configuration with an optional process-only API key."""
@@ -28,16 +32,18 @@ class PlayerConfig:
     model: str | None = None
     base_url: str | None = None
     api_key_env: str | None = None
+    wire_api: str | None = None
+    reasoning_effort: str | None = None
     api_key: str | None = field(default=None, repr=False, compare=False)
 
     @classmethod
     def from_dict(cls, value: dict[str, Any], seat: int) -> "PlayerConfig":
-        allowed = {"name", "backend", "model", "base_url", "api_key_env"}
+        allowed = {"name", "backend", "model", "base_url", "api_key_env", "wire_api"}
         unknown = set(value) - allowed
         if unknown:
             raise ValueError(f"player {seat} has unknown fields: {', '.join(sorted(unknown))}")
         backend = str(value.get("backend", "")).lower()
-        if backend not in {"random", "human", "openai", "anthropic", "gemini"}:
+        if backend not in {"random", "human", "openai", "anthropic", "gemini", *HARNESS_BACKENDS}:
             raise ValueError(f"player {seat} has unsupported backend: {backend}")
         name = str(value.get("name", f"Seat {seat}")).strip()
         if not name:
@@ -49,6 +55,10 @@ class PlayerConfig:
             "openai": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
             "anthropic": ("https://api.anthropic.com", "ANTHROPIC_API_KEY"),
             "gemini": ("https://generativelanguage.googleapis.com/v1beta", "GEMINI_API_KEY"),
+            "claude": ("https://api.anthropic.com", "ANTHROPIC_API_KEY"),
+            "pi": ("https://api.openai.com/v1", "AGENTBGA_API_KEY"),
+            "codex": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
+            "opencode": (None, "DEEPSEEK_API_KEY"),
         }
         base_url, api_key_env = (None, None)
         if backend in defaults:
@@ -63,12 +73,17 @@ class PlayerConfig:
         selected_key_env = str(value.get("api_key_env") or api_key_env) if (value.get("api_key_env") or api_key_env) else None
         if selected_key_env and not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", selected_key_env):
             raise ValueError(f"player {seat} api_key_env must be an environment variable name")
+        wire_api = value.get("wire_api")
+        if wire_api is not None and wire_api not in {"responses", "chat"}:
+            raise ValueError(f"player {seat} wire_api must be responses or chat")
         return cls(
             name=name,
             backend=backend,
             model=str(model) if model else None,
             base_url=selected_url,
             api_key_env=selected_key_env,
+            wire_api=str(wire_api) if wire_api else None,
+            reasoning_effort=HARNESS_REASONING_EFFORT if backend in HARNESS_BACKENDS else None,
         )
 
     def public_dict(self) -> dict[str, Any]:

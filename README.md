@@ -102,8 +102,8 @@ Example configuration:
 }
 ```
 
-Supported `backend` values are `openai`, `anthropic`, `gemini`, `random`, and
-`human`. Player names appear in streamed turns, persisted match metadata, and final
+Supported `backend` values are `openai`, `anthropic`, `gemini`, `claude`, `pi`,
+`codex`, `opencode`, `random`, and `human`. Player names appear in streamed turns, persisted match metadata, and final
 rankings. Only the environment-variable name is persisted; its secret value is not.
 
 Keys are read only from the environment variable named by `--api-key-env`
@@ -121,6 +121,12 @@ cards, engine discounts, and prestige. The right-side model Chat streams each
 backend's exposed reasoning/content chunks while it is deciding, with the parsed
 game action kept in the action log below it. Provider-hidden chain-of-thought
 cannot be displayed when an API does not return it.
+
+The table header includes a safe pause/resume control. A pause requested while
+a model is generating lets that response finish and commits its action, then
+stops before the next seat starts. The status changes from `waiting to pause`
+to `paused` when that turn boundary is reached, while the live stream remains
+connected. Pause state belongs to the running local server process.
 
 The setup form includes editable presets for DeepSeek, Alibaba Cloud Model
 Studio (pay-as-you-go), Zhipu AI, and MiniMax. Selecting a provider fills its
@@ -143,6 +149,54 @@ memory for that match and are sent only to this local server. They are never put
 in local storage, URLs, logs, SQLite rows, match events, or snapshots. The server
 intentionally refuses non-localhost binds because it accepts credentials.
 
+### Harness-vs-harness matches
+
+Claude Code, Pi, Codex, and OpenCode can participate as persistent agent
+harnesses instead of as single API calls. In the web setup, choose one of these
+Harness presets, then enter only its Endpoint, API key, and model name. Each
+seat receives its own workspace and three seat-bound tools: `observe`,
+`legal_actions`, and `submit_action`. Claude Code, Codex, and OpenCode consume
+them over MCP; Pi receives equivalent native tools through a generated extension. A harness
+must submit exactly one current legal action before its turn can advance. Its
+session ID is reused across turns, so its own notes and conversation can support
+long-horizon plans without exposing another seat's hidden observation.
+
+Configure API credentials in the shell, then run the included example:
+
+```console
+export DEEPSEEK_API_KEY=...
+./agentbga doctor --players-config examples/codex-vs-opencode.json
+./agentbga run --players-config examples/codex-vs-opencode.json --seed 42 --jsonl
+```
+
+The default web table and this example compare the same model through two
+harnesses: seat 1 is OpenCode + `deepseek-v4-flash`, and seat 2 is Codex +
+`deepseek-v4-flash`. Both use `https://api.deepseek.com`; only the API-key
+fields need to be filled in on the web screen. AgentBGA fixes every harness at
+its highest reasoning setting for comparable quality-first runs: Claude Code
+uses `max`, Pi maps its `xhigh` level to provider effort `max`, Codex uses
+`model_reasoning_effort=max`, and OpenCode runs the generated `max` variant.
+The requested normalized value (`reasoning_effort: max`) is stored with each
+harness seat and controller-call metadata for reproducibility.
+
+All four Harness presets are available in the web setup screen. The corresponding
+`claude`, `pi`, `codex`, or `opencode` executable is required. AgentBGA starts it with its
+JSON event modes, records redacted harness/tool events, and keeps API keys out of
+the database and emitted commands. Inspect an audit trail with:
+
+```console
+./agentbga match harness-events MATCH_ID --json
+```
+
+Harness memory workspaces live under `.agentbga/runs/MATCH_ID/seat-N-HARNESS/`.
+Authoritative turn contexts live in a separate runtime directory outside that
+seat's sandbox. The MCP server is authoritative for submission; prose, direct
+file writes, or a final JSON message cannot change the board by itself.
+
+`harness-events` is an administrator/research export: tool results can contain
+that seat's private observation. Harness prose/token streams remain live-only and
+are not persisted; API keys are redacted before any harness output is emitted.
+
 For frontend development, run `./agentbga web` in one terminal and `npm run dev`
 inside `web/` in another, then open `http://127.0.0.1:3000`.
 
@@ -160,6 +214,7 @@ agentbga match act MATCH_ID --seat 0 --expected-version 7 \
 agentbga match events MATCH_ID --after 0 --jsonl
 agentbga match verify MATCH_ID --json
 agentbga match replay MATCH_ID --json
+agentbga match harness-events MATCH_ID --json
 
 agentbga run --players 2 --controllers openai,random \
   --model YOUR_MODEL --base-url ENDPOINT --jsonl
