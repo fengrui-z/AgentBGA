@@ -14,17 +14,17 @@ from .seat_tool import call_tool
 TOOLS = [
     {
         "name": "observe",
-        "description": "Read your seat-scoped current Splendor observation.",
+        "description": "Read your seat-scoped current board-game observation.",
         "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
     },
     {
         "name": "legal_actions",
-        "description": "List the only actions legal for your seat in this state version.",
+        "description": "List the only actions legal for your seat in this decision and state version.",
         "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
     },
     {
         "name": "submit_action",
-        "description": "Commit exactly one legal action ID for this turn.",
+        "description": "Commit exactly one legal action ID for this decision step.",
         "inputSchema": {
             "type": "object", "properties": {"action_id": {"type": "string"}},
             "required": ["action_id"], "additionalProperties": False,

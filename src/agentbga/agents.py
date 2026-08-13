@@ -142,10 +142,12 @@ def _extract_json(text: str) -> dict[str, Any]:
 
 
 def _prompt(observation: dict[str, Any], legal: list[dict[str, Any]]) -> tuple[str, str]:
+    game = str(observation.get("game", "board game")).replace("_", " ").title()
     system = (
-        "You are playing Splendor in a rigorous board-game benchmark. Plan for long-term "
-        "prestige, efficient discounts, nobles, opponents, and final-round timing. "
-        "Choose exactly one action from LEGAL_ACTIONS. Return only JSON of the form "
+        f"You are playing {game} in a rigorous long-horizon board-game benchmark. "
+        "Use the complete seat-scoped observation, maintain a long-term plan, and account "
+        "for opponents and end-game timing. Choose exactly one action from LEGAL_ACTIONS "
+        "for this decision step. Return only JSON of the form "
         '{"action_id":"a-..."}. Never invent an action.'
     )
     compact_actions = [{"id": item["id"], **item["action"]} for item in legal]

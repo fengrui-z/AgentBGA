@@ -9,7 +9,7 @@ import time
 import uuid
 from typing import Any
 
-from . import splendor
+from .registry import get_game
 
 
 class ConflictError(RuntimeError):
@@ -18,6 +18,16 @@ class ConflictError(RuntimeError):
 
 class MatchNotFound(KeyError):
     pass
+
+
+def _public_game_event(event: dict[str, Any]) -> dict[str, Any]:
+    """Project authoritative events into a spectator-safe audit representation."""
+    if event.get("type") == "action_accepted" and event.get("action", {}).get("type") == "choose_initial_hand":
+        return {
+            **event,
+            "action": {"type": "choose_initial_hand", "kept_count": len(event["action"]["card_ids"])},
+        }
+    return event
 
 
 def default_db_path() -> Path:
@@ -101,18 +111,25 @@ class Store:
     def close(self) -> None:
         self.connection.close()
 
-    def create(self, players: int, seed: int) -> tuple[str, int, dict[str, Any]]:
-        state = splendor.new_game(players, seed)
+    def create(
+        self, players: int, seed: int, game_id: str = "splendor",
+        config: dict[str, Any] | None = None,
+    ) -> tuple[str, int, dict[str, Any]]:
+        game = get_game(game_id)
+        state = game.setup(players, seed, config)
         match_id = uuid.uuid4().hex[:16]
         now = time.time()
-        digest = splendor.state_hash(state)
+        digest = game.state_hash(state)
         with self.connection:
             self.connection.execute(
                 "INSERT INTO matches VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (match_id, "splendor", splendor.RULES_VERSION, 0, seed,
+                (match_id, game_id, game.rules_version, 0, seed,
                  json.dumps(state, separators=(",", ":")), digest, now, now),
             )
-            event = {"type": "match_created", "players": players, "seed": seed}
+            event = {
+                "type": "match_created", "game": game_id, "players": players,
+                "seed": seed, "config": config or {},
+            }
             self.connection.execute(
                 "INSERT INTO events VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (match_id, 0, 0, None, json.dumps(event, separators=(",", ":")), digest, now),
@@ -125,15 +142,25 @@ class Store:
             raise MatchNotFound(match_id)
         return row["version"], json.loads(row["state_json"]), row["state_hash"]
 
+    def game_id(self, match_id: str) -> str:
+        row = self.connection.execute("SELECT game_id FROM matches WHERE id = ?", (match_id,)).fetchone()
+        if row is None:
+            raise MatchNotFound(match_id)
+        return str(row["game_id"])
+
+    def game(self, match_id: str):
+        return get_game(self.game_id(match_id))
+
     def act(self, match_id: str, seat: int, expected_version: int, action: dict[str, Any]) -> tuple[int, dict[str, Any], list[dict[str, Any]]]:
         self.connection.execute("BEGIN IMMEDIATE")
         try:
             version, state, _ = self.load(match_id)
             if version != expected_version:
                 raise ConflictError(f"expected version {expected_version}, current version is {version}")
-            next_state, events = splendor.apply_action(state, seat, action)
+            game = self.game(match_id)
+            next_state, events = game.apply_action(state, seat, action)
             next_version = version + 1
-            digest = splendor.state_hash(next_state)
+            digest = game.state_hash(next_state)
             now = time.time()
             updated = self.connection.execute(
                 "UPDATE matches SET version=?, state_json=?, state_hash=?, updated_at=? WHERE id=? AND version=?",
@@ -164,7 +191,8 @@ class Store:
         return [
             {
                 "seq": row["seq"], "version": row["version"], "seat": row["seat"],
-                "event": json.loads(row["event_json"]), "state_hash": row["state_hash"],
+                "event": _public_game_event(json.loads(row["event_json"])),
+                "state_hash": row["state_hash"],
             }
             for row in rows
         ]
@@ -233,8 +261,15 @@ class Store:
     def replay(self, match_id: str) -> list[dict[str, Any]]:
         """Rebuild a match only from its seed and accepted actions."""
         _, stored_state, stored_digest = self.load(match_id)
-        state = splendor.new_game(stored_state["player_count"], stored_state["seed"])
-        frames = [{"version": 0, "state_hash": splendor.state_hash(state), "action": None}]
+        game = self.game(match_id)
+        created = self.connection.execute(
+            "SELECT event_json FROM events WHERE match_id=? AND seq=0", (match_id,)
+        ).fetchone()
+        created_event = json.loads(created["event_json"]) if created else {}
+        state = game.setup(
+            stored_state["player_count"], stored_state["seed"], created_event.get("config") or None,
+        )
+        frames = [{"version": 0, "state_hash": game.state_hash(state), "action": None}]
         accepted = self.connection.execute(
             "SELECT version, seat, event_json, state_hash FROM events "
             "WHERE match_id=? ORDER BY seq", (match_id,)
@@ -243,14 +278,14 @@ class Store:
             event = json.loads(row["event_json"])
             if event.get("type") != "action_accepted":
                 continue
-            state, _ = splendor.apply_action(state, row["seat"], event["action"])
-            digest = splendor.state_hash(state)
+            state, _ = game.apply_action(state, row["seat"], event["action"])
+            digest = game.state_hash(state)
             if digest != row["state_hash"]:
                 raise AssertionError(f"replay hash mismatch at version {row['version']}")
             frames.append({
                 "version": row["version"], "seat": row["seat"],
                 "action": event["action"], "state_hash": digest,
             })
-        if splendor.state_hash(state) != stored_digest:
+        if game.state_hash(state) != stored_digest:
             raise AssertionError("replayed final state does not match stored state")
         return frames

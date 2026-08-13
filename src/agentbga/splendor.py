@@ -8,11 +8,22 @@ from __future__ import annotations
 
 from collections import Counter
 from copy import deepcopy
-from itertools import combinations, product
-import hashlib
-import json
+from itertools import combinations
 import random
 from typing import Any
+
+from .game import GameRuleError
+from .mechanics import (
+    ActionSpace,
+    action_accepted,
+    assign_competition_ranks,
+    hidden_items,
+    payment_options,
+    state_digest,
+    transfer_resources,
+    validate_resource_pool,
+    validate_unique_items,
+)
 
 COLORS = ("white", "blue", "green", "red", "black")
 # Rinascimento's source CSV uses a historical suit index order which differs
@@ -23,7 +34,7 @@ TOKENS = COLORS + ("gold",)
 RULES_VERSION = "classic-1.0"
 
 
-class RuleError(ValueError):
+class RuleError(GameRuleError):
     """A stable, user-correctable rule rejection."""
 
 
@@ -90,7 +101,33 @@ CARDS = card_catalog()
 NOBLES = noble_catalog()
 
 
-def new_game(players: int, seed: int) -> dict[str, Any]:
+def describe() -> dict[str, Any]:
+    return {
+        "id": "splendor",
+        "name": "Splendor",
+        "rules_version": RULES_VERSION,
+        "players": {"minimum": 2, "maximum": 4},
+        "hidden_information": True,
+        "implementation_status": "playable",
+        "runnable": True,
+        "decision_model": "one_decision_per_player_turn",
+        "action_types": [
+            "take_tokens", "reserve_visible", "reserve_deck",
+            "buy_visible", "buy_reserved", "choose_noble", "pass",
+        ],
+        "colors": list(COLORS),
+        "win_condition": (
+            "Finish the round after a player reaches 15 prestige; highest prestige wins, "
+            "then fewest purchased cards."
+        ),
+    }
+
+
+def new_game(
+    players: int, seed: int, config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if config not in (None, {}):
+        raise RuleError("Splendor does not accept game setup options")
     if players not in (2, 3, 4):
         raise RuleError("Splendor requires 2, 3, or 4 players")
     rng = random.Random(seed)
@@ -133,8 +170,7 @@ def new_game(players: int, seed: int) -> dict[str, Any]:
 
 
 def state_hash(state: dict[str, Any]) -> str:
-    raw = json.dumps(state, sort_keys=True, separators=(",", ":")).encode()
-    return hashlib.sha256(raw).hexdigest()
+    return state_digest(state)
 
 
 def bonuses(state: dict[str, Any], seat: int) -> dict[str, int]:
@@ -186,28 +222,11 @@ def _post_take_returns(player_tokens: dict[str, int], gained: dict[str, int]) ->
 def _payments(state: dict[str, Any], seat: int, card_id: str) -> list[dict[str, int]]:
     card = CARDS[card_id]
     player = state["players"][seat]
-    discount = bonuses(state, seat)
-    due = {color: max(0, card["cost"][color] - discount[color]) for color in COLORS}
-    choices = [range(min(due[color], player["tokens"][color]) + 1) for color in COLORS]
-    results: list[dict[str, int]] = []
-    for amounts in product(*choices):
-        gold_needed = sum(due[color] - amounts[index] for index, color in enumerate(COLORS))
-        if gold_needed > player["tokens"]["gold"]:
-            continue
-        payment = {color: amounts[index] for index, color in enumerate(COLORS) if amounts[index]}
-        if gold_needed:
-            payment["gold"] = gold_needed
-        results.append(payment)
-    # Prefer spending colored tokens first; deterministic agents see the common
-    # payment before strategically unusual gold-preserving alternatives.
-    results.sort(key=lambda payment: (payment.get("gold", 0), json.dumps(payment, sort_keys=True)))
-    return results
+    return payment_options(card["cost"], player["tokens"], discounts=bonuses(state, seat), wildcard="gold")
 
 
-def _action_id(state: dict[str, Any], action: dict[str, Any]) -> str:
-    material = json.dumps(action, sort_keys=True, separators=(",", ":"))
-    digest = hashlib.sha256(f'{state["turn_count"]}:{state["phase"]}:{material}'.encode()).hexdigest()[:12]
-    return f"a-{digest}"
+def _action_space(state: dict[str, Any], actions: list[dict[str, Any]]) -> ActionSpace:
+    return ActionSpace.from_actions(state["phase"], state["turn_count"], actions)
 
 
 def legal_actions(state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
@@ -215,7 +234,7 @@ def legal_actions(state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
         return []
     if state["phase"] == "choose_noble":
         actions = [{"type": "choose_noble", "noble_id": noble} for noble in state["pending_nobles"]]
-        return [{"id": _action_id(state, action), "action": action} for action in actions]
+        return _action_space(state, actions).wrapped()
 
     player = state["players"][seat]
     actions: list[dict[str, Any]] = []
@@ -264,7 +283,7 @@ def legal_actions(state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
     if not actions:
         actions.append({"type": "pass", "reason": "no_legal_main_action"})
 
-    return [{"id": _action_id(state, action), "action": action} for action in actions]
+    return _action_space(state, actions).wrapped()
 
 
 def _eligible_nobles(state: dict[str, Any], seat: int) -> list[str]:
@@ -290,16 +309,12 @@ def _finish_turn(state: dict[str, Any]) -> None:
 
 
 def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    legal = {item["id"]: item["action"] for item in legal_actions(state, seat)}
-    canonical = json.dumps(action, sort_keys=True, separators=(",", ":"))
-    allowed = {json.dumps(item, sort_keys=True, separators=(",", ":")): item for item in legal.values()}
-    if canonical not in allowed:
-        raise RuleError("action is not legal in the current state")
-    action = allowed[canonical]
+    legal = [item["action"] for item in legal_actions(state, seat)]
+    action = _action_space(state, legal).require(action, error_factory=RuleError)
     next_state = deepcopy(state)
     player = next_state["players"][seat]
     kind = action["type"]
-    events: list[dict[str, Any]] = [{"type": "action_accepted", "seat": seat, "action": action}]
+    events: list[dict[str, Any]] = [action_accepted(seat, action)]
 
     if kind == "choose_noble":
         noble = action["noble_id"]
@@ -310,9 +325,7 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
         return next_state, events
 
     if kind == "take_tokens":
-        for token, count in action["take"].items():
-            next_state["bank"][token] -= count
-            player["tokens"][token] += count
+        transfer_resources(next_state["bank"], player["tokens"], action["take"])
     elif kind in ("reserve_visible", "reserve_deck"):
         tier = str(action["tier"])
         if kind == "reserve_visible":
@@ -324,8 +337,7 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
             card_id = next_state["decks"][tier].pop()
         player["reserved"].append(card_id)
         if next_state["bank"]["gold"]:
-            next_state["bank"]["gold"] -= 1
-            player["tokens"]["gold"] += 1
+            transfer_resources(next_state["bank"], player["tokens"], {"gold": 1})
         events.append({
             "type": "card_reserved", "seat": seat,
             "card_id": card_id if kind == "reserve_visible" else None,
@@ -333,9 +345,7 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
         })
     elif kind in ("buy_visible", "buy_reserved"):
         card_id = action["card_id"]
-        for token, count in action["payment"].items():
-            player["tokens"][token] -= count
-            next_state["bank"][token] += count
+        transfer_resources(player["tokens"], next_state["bank"], action["payment"])
         if kind == "buy_visible":
             tier = str(action["tier"])
             next_state["market"][tier].remove(card_id)
@@ -350,9 +360,7 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
     else:  # pragma: no cover - legal action construction prevents this
         raise RuleError(f"unknown action type: {kind}")
 
-    for token, count in action.get("return", {}).items():
-        player["tokens"][token] -= count
-        next_state["bank"][token] += count
+    transfer_resources(player["tokens"], next_state["bank"], action.get("return", {}))
 
     eligible = _eligible_nobles(next_state, seat)
     if len(eligible) == 1:
@@ -380,16 +388,11 @@ def rankings(state: dict[str, Any]) -> list[dict[str, Any]]:
         }
         for seat, player in enumerate(state["players"])
     ]
-    rows.sort(key=lambda row: (-row["score"], row["development_cards"], row["seat"]))
-    rank = 0
-    previous: tuple[int, int] | None = None
-    for index, row in enumerate(rows):
-        key = (row["score"], row["development_cards"])
-        if key != previous:
-            rank = index + 1
-            previous = key
-        row["rank"] = rank
-    return rows
+    return assign_competition_ranks(
+        rows,
+        sort_key=lambda row: (-row["score"], row["development_cards"], row["seat"]),
+        tie_key=lambda row: (row["score"], row["development_cards"]),
+    )
 
 
 def observe(state: dict[str, Any], seat: int) -> dict[str, Any]:
@@ -406,12 +409,11 @@ def observe(state: dict[str, Any], seat: int) -> dict[str, Any]:
             "purchased_count": len(player["purchased"]),
             "purchased": [CARDS[c] for c in player["purchased"]],
             "reserved_count": len(player["reserved"]),
-            "reserved": [CARDS[c] for c in player["reserved"]] if own else [
-                {"hidden": True} for _ in player["reserved"]
-            ],
+            "reserved": [CARDS[c] for c in player["reserved"]] if own else hidden_items(player["reserved"]),
             "nobles": [NOBLES[n] for n in player["nobles"]],
         })
     return {
+        "game": "splendor",
         "rules_version": state["rules_version"],
         "viewer_seat": seat,
         "status": state["status"],
@@ -431,8 +433,10 @@ def validate_state(state: dict[str, Any]) -> None:
     for location, tokens in [("bank", state["bank"])] + [
         (f"player {p['seat']}", p["tokens"]) for p in state["players"]
     ]:
-        if set(tokens) != set(TOKENS) or any(not isinstance(v, int) or v < 0 for v in tokens.values()):
-            raise AssertionError(f"invalid tokens at {location}")
+        try:
+            validate_resource_pool(tokens, expected_keys=set(TOKENS), label=location)
+        except AssertionError as error:
+            raise AssertionError(f"invalid tokens at {location}") from error
     expected_color = {2: 4, 3: 5, 4: 7}[state["player_count"]]
     for token in COLORS:
         actual = state["bank"][token] + sum(p["tokens"][token] for p in state["players"])
@@ -451,10 +455,16 @@ def validate_state(state: dict[str, Any]) -> None:
         all_cards.extend(player["purchased"])
         if len(player["reserved"]) > 3 or _token_total(player["tokens"]) > 10:
             raise AssertionError("player limit exceeded")
-    if len(all_cards) != len(CARDS) or len(set(all_cards)) != len(CARDS):
-        raise AssertionError("development card conservation failed")
+    try:
+        validate_unique_items([all_cards], expected_count=len(CARDS), label="development cards")
+    except AssertionError as error:
+        raise AssertionError("development card conservation failed") from error
     all_nobles = list(state["available_nobles"])
     for player in state["players"]:
         all_nobles.extend(player["nobles"])
-    if len(all_nobles) != state["player_count"] + 1 or len(set(all_nobles)) != len(all_nobles):
-        raise AssertionError("noble conservation failed")
+    try:
+        validate_unique_items(
+            [all_nobles], expected_count=state["player_count"] + 1, label="nobles",
+        )
+    except AssertionError as error:
+        raise AssertionError("noble conservation failed") from error

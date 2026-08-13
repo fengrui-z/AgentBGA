@@ -13,6 +13,85 @@ from agentbga.web import MatchHub, WebHandler, serve
 
 
 class WebTests(unittest.TestCase):
+    def test_games_endpoint_lists_registered_renderers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "index.html").write_text("ok")
+            handler = type(
+                "TestWebHandler", (WebHandler,),
+                {"hub": MatchHub(root / "matches.sqlite3"), "static_dir": root},
+            )
+            server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                response = json.load(urllib.request.urlopen(
+                    f"http://127.0.0.1:{server.server_port}/api/games"
+                ))
+            finally:
+                server.shutdown()
+                server.server_close()
+            self.assertEqual(["splendor", "ark_nova"], [game["id"] for game in response["games"]])
+
+    def test_ark_nova_setup_snapshot_uses_game_renderer_contract(self):
+        stopped = threading.Event()
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "ark_nova", "seed": 42,
+                "players": [
+                    {"name": "Red", "backend": "random"},
+                    {"name": "Blue", "backend": "random"},
+                ],
+            })
+            self.assertEqual("ark_nova", created["game"])
+            self.assertEqual("controlled_core", created["game_description"]["implementation_status"])
+            self.assertEqual("active", created["status"])
+            self.assertEqual("ark_nova", created["views"][0]["game"])
+            self.assertTrue(stopped.wait(2))
+
+    def test_ark_nova_controlled_core_requires_model_credentials_when_runnable(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch("agentbga.web.run_match"):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            with self.assertRaisesRegex(ValueError, "requires api_key"):
+                hub.create({
+                    "game": "ark_nova", "seed": 7,
+                    "players": [
+                        {"name": "Harness A", "backend": "opencode", "model": "model-a"},
+                        {"name": "Harness B", "backend": "codex", "model": "model-b"},
+                    ],
+                })
+
+    def test_ark_nova_random_match_launches_runner(self):
+        launched = threading.Event()
+        stopped = threading.Event()
+        def fake_run(_store, _match_id, _players, **options):
+            launched.set()
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "ark_nova", "seed": 7,
+                "players": [
+                    {"name": "Random A", "backend": "random"},
+                    {"name": "Random B", "backend": "random"},
+                ],
+            })
+            self.assertEqual("active", created["status"])
+            self.assertTrue(launched.wait(2))
+            self.assertTrue(stopped.wait(2))
+            deadline = time.monotonic() + 2
+            while hub.events_after(created["match_id"], -1, wait=0)[1] and time.monotonic() < deadline:
+                time.sleep(0.01)
+
     def test_random_match_streams_snapshots_until_finished(self):
         with tempfile.TemporaryDirectory() as directory:
             hub = MatchHub(Path(directory) / "matches.sqlite3")

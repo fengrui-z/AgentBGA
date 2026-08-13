@@ -6,7 +6,6 @@ import random
 import time
 from typing import Any, Callable
 
-from . import splendor
 from .agents import AgentError, HARNESS_BACKENDS, PlayerConfig, build_model_agent, random_choice
 from .harness import build_harness_agent
 from .store import Store
@@ -46,6 +45,13 @@ def run_match(
     human_choice: HumanChoice | None = None,
 ) -> dict[str, Any]:
     version, state, _ = store.load(match_id)
+    game = store.game(match_id)
+    description = game.describe()
+    if not description.get("runnable", True):
+        raise ValueError(
+            f"{description['name']} is currently {description.get('implementation_status', 'unavailable')} "
+            "and cannot run complete matches yet"
+        )
     if players and isinstance(players[0], str):
         players = legacy_players(players, model=model, base_url=base_url, api_key_env=api_key_env)  # type: ignore[arg-type]
     configs: list[PlayerConfig] = players  # type: ignore[assignment]
@@ -73,13 +79,16 @@ def run_match(
             harness_config, match_id, harness_seat, event_sink=harness_sink,
         )
 
+    setup_decision_limit = state.get("player_count", 0) * 2
     while state["status"] == "active":
         if turn_gate:
             turn_gate()
-        if state["turn_count"] >= max_turns:
+        if state["turn_count"] >= max_turns and state.get("phase") != "initial_hand_selection":
             raise RuntimeError(f"match exceeded --max-turns={max_turns}")
+        if state.get("phase") == "initial_hand_selection" and state.get("decision_count", 0) > setup_decision_limit:
+            raise RuntimeError("initial setup exceeded the decision limit")
         seat = state["active_seat"]
-        legal = splendor.legal_actions(state, seat)
+        legal = game.legal_actions(state, seat)
         if not legal:
             raise RuntimeError(f"seat {seat} has no legal actions")
         config = configs[seat]
@@ -87,7 +96,7 @@ def run_match(
         if config.backend == "random":
             action_id = random_choice(legal, rngs[seat])
         elif config.backend == "human":
-            observation = splendor.observe(state, seat)
+            observation = game.observe(state, seat)
             observation["state_version"] = version
             if human_choice:
                 action_id = human_choice(seat, version, observation, legal)
@@ -132,7 +141,7 @@ def run_match(
                         if time.monotonic() - last_stream_flush[0] >= 0.1:
                             flush_stream()
 
-                    observation = splendor.observe(state, seat)
+                    observation = game.observe(state, seat)
                     observation["state_version"] = version
                     action_id, metadata = model_agents[seat].choose(observation, legal, on_stream=stream)
                     flush_stream()
@@ -160,16 +169,24 @@ def run_match(
         if seat in model_agents or metadata:
             store.record_controller_call(match_id, version, seat, config.backend, metadata)
         if sink:
+            public_action = selected
+            if selected.get("type") == "choose_initial_hand":
+                public_action = {"type": "choose_initial_hand", "kept_count": len(selected["card_ids"])}
             sink({
-                "type": "turn", "match_id": match_id, "version": version,
+                "type": "decision", "match_id": match_id, "version": version,
                 "seat": seat, "player": config.name, "backend": config.backend,
-                "action_id": action_id, "action": selected, "events": events, "agent": metadata,
+                "action_id": action_id, "action": public_action,
+                "events": [event for event in events if event.get("type") != "action_accepted"],
+                "agent": metadata,
+                "turn_count": state["turn_count"],
+                "decision_count": state.get("decision_count", state["turn_count"]),
             })
     by_seat = {seat: config.public_dict() for seat, config in enumerate(configs)}
     rankings = [{**row, "player": by_seat[row["seat"]]["name"], "backend": by_seat[row["seat"]]["backend"]}
-                for row in splendor.rankings(state)]
+                for row in game.rankings(state)]
     result = {
-        "match_id": match_id, "version": version, "turns": state["turn_count"],
+        "match_id": match_id, "game": game.game_id, "version": version, "turns": state["turn_count"],
+        "decisions": state.get("decision_count", state["turn_count"]),
         "players": [{"seat": seat, **config.public_dict()} for seat, config in enumerate(configs)],
         "rankings": rankings,
     }

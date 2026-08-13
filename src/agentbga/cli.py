@@ -11,8 +11,10 @@ import shutil
 import sys
 from typing import Any
 
-from . import __version__, splendor
+from . import __version__
 from .agents import AgentError, HARNESS_BACKENDS, load_players_config
+from .game import GameRuleError
+from .registry import game_ids, get_game, list_games
 from .runner import run_match
 from .store import ConflictError, MatchNotFound, Store
 
@@ -46,15 +48,16 @@ def build_parser() -> argparse.ArgumentParser:
     games_list = games_sub.add_parser("list")
     games_list.add_argument("--json", action="store_true", help=argparse.SUPPRESS)
     describe = games_sub.add_parser("describe")
-    describe.add_argument("game", choices=["splendor"])
+    describe.add_argument("game", choices=game_ids())
     describe.add_argument("--json", action="store_true", help=argparse.SUPPRESS)
 
     match = commands.add_parser("match", help="create, inspect, and mutate matches")
     match_sub = match.add_subparsers(dest="command", required=True)
     create = match_sub.add_parser("create")
-    create.add_argument("--game", default="splendor", choices=["splendor"])
+    create.add_argument("--game", default="splendor", choices=game_ids())
     create.add_argument("--players", type=int, required=True, choices=[2, 3, 4])
     create.add_argument("--seed", type=int)
+    create.add_argument("--game-config", help="game-specific JSON object, or @path/to/config.json")
     add_db(create)
 
     for name in ("observe", "legal-actions", "status", "verify", "replay", "harness-events"):
@@ -80,10 +83,11 @@ def build_parser() -> argparse.ArgumentParser:
     add_db(events)
 
     run = commands.add_parser("run", help="create and run a complete match")
-    run.add_argument("--game", default="splendor", choices=["splendor"])
+    run.add_argument("--game", choices=game_ids(), help="game for a new match (default: splendor)")
     run.add_argument("--players", type=int, choices=[2, 3, 4])
     run.add_argument("--seed", type=int)
     run.add_argument("--match-id", help="resume an existing match instead of creating one")
+    run.add_argument("--game-config", help="game-specific JSON object for a new match")
     run.add_argument(
         "--controllers",
         help="legacy comma-separated seats: random, openai, or human",
@@ -125,25 +129,9 @@ def _load_action(raw: str) -> dict[str, Any]:
     return value
 
 
-def _game_description() -> dict[str, Any]:
-    return {
-        "id": "splendor",
-        "name": "Splendor",
-        "rules_version": splendor.RULES_VERSION,
-        "players": {"minimum": 2, "maximum": 4},
-        "hidden_information": True,
-        "action_types": [
-            "take_tokens", "reserve_visible", "reserve_deck",
-            "buy_visible", "buy_reserved", "choose_noble", "pass_if_stuck",
-        ],
-        "colors": list(splendor.COLORS),
-        "win_condition": "Finish the round after a player reaches 15 prestige; highest prestige wins, then fewest purchased cards.",
-    }
-
-
 def execute(args: argparse.Namespace) -> int:
     if args.group == "games":
-        data = [_game_description()] if args.command == "list" else _game_description()
+        data = list_games() if args.command == "list" else get_game(args.game).describe()
         emit(envelope(data))
         return 0
 
@@ -194,18 +182,20 @@ def execute(args: argparse.Namespace) -> int:
         if args.group == "match":
             if args.command == "create":
                 seed = args.seed if args.seed is not None else secrets.randbits(63)
-                match_id, version, state = store.create(args.players, seed)
+                game_config = _load_action(args.game_config) if args.game_config else None
+                match_id, version, state = store.create(args.players, seed, args.game, game_config)
                 emit(envelope({
-                    "match_id": match_id, "game": "splendor", "rules_version": state["rules_version"],
+                    "match_id": match_id, "game": args.game, "rules_version": state["rules_version"],
                     "version": version, "seed": seed, "players": args.players,
                 }))
             elif args.command in ("observe", "legal-actions", "status", "verify"):
                 version, state, digest = store.load(args.match_id)
+                game = store.game(args.match_id)
                 if args.command == "observe":
-                    data = splendor.observe(state, args.seat)
-                    data["legal_actions"] = splendor.legal_actions(state, args.seat)
+                    data = game.observe(state, args.seat)
+                    data["legal_actions"] = game.legal_actions(state, args.seat)
                 elif args.command == "legal-actions":
-                    data = splendor.legal_actions(state, args.seat)
+                    data = game.legal_actions(state, args.seat)
                 elif args.command == "status":
                     saved_players = store.players(args.match_id)
                     player_by_seat = {row["seat"]: row for row in saved_players}
@@ -213,18 +203,20 @@ def execute(args: argparse.Namespace) -> int:
                         {**row, **({"player": player_by_seat[row["seat"]]["name"],
                                    "backend": player_by_seat[row["seat"]]["backend"]}
                                   if row["seat"] in player_by_seat else {})}
-                        for row in splendor.rankings(state)
+                        for row in game.rankings(state)
                     ]
                     data = {
+                        "game": game.game_id,
                         "status": state["status"], "turn_count": state["turn_count"],
+                        "decision_count": state.get("decision_count", state["turn_count"]),
                         "active_seat": state["active_seat"], "phase": state["phase"],
                         "players": saved_players,
                         "rankings": ranked,
                     }
                 else:
-                    splendor.validate_state(state)
+                    game.validate_state(state)
                     replay = store.replay(args.match_id)
-                    computed = splendor.state_hash(state)
+                    computed = game.state_hash(state)
                     if computed != digest:
                         raise AssertionError("stored state hash does not match state")
                     data = {
@@ -241,18 +233,25 @@ def execute(args: argparse.Namespace) -> int:
                 emit(envelope(store.harness_events(args.match_id), match_id=args.match_id, version=version))
             elif args.command == "act":
                 version, state, _ = store.load(args.match_id)
+                game = store.game(args.match_id)
                 if args.action_id:
                     item = next(
-                        (item for item in splendor.legal_actions(state, args.seat) if item["id"] == args.action_id), None
+                        (item for item in game.legal_actions(state, args.seat) if item["id"] == args.action_id), None
                     )
                     if item is None:
-                        raise splendor.RuleError("unknown or stale action ID")
+                        raise GameRuleError("unknown or stale action ID")
                     action = item["action"]
                 else:
                     action = _load_action(args.action)
                 next_version, next_state, events = store.act(
                     args.match_id, args.seat, args.expected_version, action
                 )
+                if action.get("type") == "choose_initial_hand":
+                    events = [
+                        ({**event, "action": {"type": "choose_initial_hand", "kept_count": 4}}
+                         if event.get("type") == "action_accepted" else event)
+                        for event in events
+                    ]
                 emit(envelope({
                     "events": events, "status": next_state["status"],
                     "active_seat": next_state["active_seat"], "phase": next_state["phase"],
@@ -277,6 +276,9 @@ def execute(args: argparse.Namespace) -> int:
             if args.match_id:
                 match_id = args.match_id
                 _, state, _ = store.load(match_id)
+                stored_game = store.game_id(match_id)
+                if args.game is not None and args.game != stored_game:
+                    raise ValueError("--game differs from resumed match")
                 if args.players is not None and args.players != state["player_count"]:
                     raise ValueError("--players differs from resumed match")
             else:
@@ -284,7 +286,8 @@ def execute(args: argparse.Namespace) -> int:
                 if players != len(players_config):
                     raise ValueError("--players must equal the number of configured players")
                 seed = args.seed if args.seed is not None else secrets.randbits(63)
-                match_id, _, _ = store.create(players, seed)
+                game_config = _load_action(args.game_config) if args.game_config else None
+                match_id, _, _ = store.create(players, seed, args.game or "splendor", game_config)
             sink = emit if args.jsonl else None
             result = run_match(
                 store, match_id, players_config, model=args.model, base_url=args.base_url,
@@ -309,7 +312,7 @@ def main(argv: list[str] | None = None) -> int:
     except ConflictError as error:
         emit(error_payload("version_conflict", str(error)))
         return 5
-    except splendor.RuleError as error:
+    except GameRuleError as error:
         emit(error_payload("illegal_action", str(error)))
         return 6
     except AgentError as error:

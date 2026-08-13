@@ -11,6 +11,49 @@ from agentbga.cli import main
 
 
 class CLITests(unittest.TestCase):
+    def test_games_describe_and_create_ark_nova_setup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "match.sqlite3"
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main(["games", "describe", "ark_nova"])
+            self.assertEqual(0, code)
+            description = json.loads(output.getvalue())["data"]
+            self.assertEqual("controlled_core", description["implementation_status"])
+            self.assertTrue(description["runnable"])
+
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main([
+                    "match", "create", "--game", "ark_nova", "--players", "2",
+                    "--seed", "42", "--db", str(database),
+                ])
+            self.assertEqual(0, code)
+            created = json.loads(output.getvalue())["data"]
+            self.assertEqual("ark_nova", created["game"])
+
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main([
+                    "match", "observe", created["match_id"], "--seat", "0",
+                    "--db", str(database),
+                ])
+            self.assertEqual(0, code)
+            observed = json.loads(output.getvalue())["data"]
+            self.assertEqual("ark_nova", observed["game"])
+            self.assertEqual(70, len(observed["legal_actions"]))
+
+    def test_ark_nova_cli_accepts_game_config(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main([
+                    "match", "create", "--game", "ark_nova", "--players", "2",
+                    "--seed", "5", "--game-config", '{"turn_limit":12}',
+                    "--db", str(Path(directory) / "match.sqlite3"),
+                ])
+            self.assertEqual(0, code)
+            self.assertEqual("ark_nova", json.loads(output.getvalue())["data"]["game"])
     def test_doctor_accepts_common_harnesses(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "players.json"
