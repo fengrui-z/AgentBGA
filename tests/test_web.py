@@ -34,7 +34,13 @@ class WebTests(unittest.TestCase):
             self.assertEqual(["splendor", "ark_nova"], [game["id"] for game in response["games"]])
 
     def test_ark_nova_setup_snapshot_uses_game_renderer_contract(self):
-        with tempfile.TemporaryDirectory() as directory:
+        stopped = threading.Event()
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
             hub = MatchHub(Path(directory) / "matches.sqlite3")
             created = hub.create({
                 "game": "ark_nova", "seed": 42,
@@ -44,22 +50,47 @@ class WebTests(unittest.TestCase):
                 ],
             })
             self.assertEqual("ark_nova", created["game"])
-            self.assertEqual("setup_only", created["game_description"]["implementation_status"])
-            self.assertEqual("setup", created["status"])
-            self.assertFalse(hub.events_after(created["match_id"], -1, wait=0)[1])
+            self.assertEqual("controlled_core", created["game_description"]["implementation_status"])
+            self.assertEqual("active", created["status"])
             self.assertEqual("ark_nova", created["views"][0]["game"])
+            self.assertTrue(stopped.wait(2))
 
-    def test_ark_nova_setup_does_not_require_or_launch_model_credentials(self):
-        with tempfile.TemporaryDirectory() as directory, mock.patch("agentbga.web.run_match") as run:
-            created = MatchHub(Path(directory) / "matches.sqlite3").create({
+    def test_ark_nova_controlled_core_requires_model_credentials_when_runnable(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch("agentbga.web.run_match"):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            with self.assertRaisesRegex(ValueError, "requires api_key"):
+                hub.create({
+                    "game": "ark_nova", "seed": 7,
+                    "players": [
+                        {"name": "Harness A", "backend": "opencode", "model": "model-a"},
+                        {"name": "Harness B", "backend": "codex", "model": "model-b"},
+                    ],
+                })
+
+    def test_ark_nova_random_match_launches_runner(self):
+        launched = threading.Event()
+        stopped = threading.Event()
+        def fake_run(_store, _match_id, _players, **options):
+            launched.set()
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
                 "game": "ark_nova", "seed": 7,
                 "players": [
-                    {"name": "Harness A", "backend": "opencode", "model": "model-a"},
-                    {"name": "Harness B", "backend": "codex", "model": "model-b"},
+                    {"name": "Random A", "backend": "random"},
+                    {"name": "Random B", "backend": "random"},
                 ],
             })
-            self.assertEqual("setup", created["status"])
-            run.assert_not_called()
+            self.assertEqual("active", created["status"])
+            self.assertTrue(launched.wait(2))
+            self.assertTrue(stopped.wait(2))
+            deadline = time.monotonic() + 2
+            while hub.events_after(created["match_id"], -1, wait=0)[1] and time.monotonic() < deadline:
+                time.sleep(0.01)
 
     def test_random_match_streams_snapshots_until_finished(self):
         with tempfile.TemporaryDirectory() as directory:

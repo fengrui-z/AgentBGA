@@ -57,6 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     create.add_argument("--game", default="splendor", choices=game_ids())
     create.add_argument("--players", type=int, required=True, choices=[2, 3, 4])
     create.add_argument("--seed", type=int)
+    create.add_argument("--game-config", help="game-specific JSON object, or @path/to/config.json")
     add_db(create)
 
     for name in ("observe", "legal-actions", "status", "verify", "replay", "harness-events"):
@@ -86,6 +87,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--players", type=int, choices=[2, 3, 4])
     run.add_argument("--seed", type=int)
     run.add_argument("--match-id", help="resume an existing match instead of creating one")
+    run.add_argument("--game-config", help="game-specific JSON object for a new match")
     run.add_argument(
         "--controllers",
         help="legacy comma-separated seats: random, openai, or human",
@@ -180,7 +182,8 @@ def execute(args: argparse.Namespace) -> int:
         if args.group == "match":
             if args.command == "create":
                 seed = args.seed if args.seed is not None else secrets.randbits(63)
-                match_id, version, state = store.create(args.players, seed, args.game)
+                game_config = _load_action(args.game_config) if args.game_config else None
+                match_id, version, state = store.create(args.players, seed, args.game, game_config)
                 emit(envelope({
                     "match_id": match_id, "game": args.game, "rules_version": state["rules_version"],
                     "version": version, "seed": seed, "players": args.players,
@@ -205,6 +208,7 @@ def execute(args: argparse.Namespace) -> int:
                     data = {
                         "game": game.game_id,
                         "status": state["status"], "turn_count": state["turn_count"],
+                        "decision_count": state.get("decision_count", state["turn_count"]),
                         "active_seat": state["active_seat"], "phase": state["phase"],
                         "players": saved_players,
                         "rankings": ranked,
@@ -242,6 +246,12 @@ def execute(args: argparse.Namespace) -> int:
                 next_version, next_state, events = store.act(
                     args.match_id, args.seat, args.expected_version, action
                 )
+                if action.get("type") == "choose_initial_hand":
+                    events = [
+                        ({**event, "action": {"type": "choose_initial_hand", "kept_count": 4}}
+                         if event.get("type") == "action_accepted" else event)
+                        for event in events
+                    ]
                 emit(envelope({
                     "events": events, "status": next_state["status"],
                     "active_seat": next_state["active_seat"], "phase": next_state["phase"],
@@ -276,7 +286,8 @@ def execute(args: argparse.Namespace) -> int:
                 if players != len(players_config):
                     raise ValueError("--players must equal the number of configured players")
                 seed = args.seed if args.seed is not None else secrets.randbits(63)
-                match_id, _, _ = store.create(players, seed, args.game or "splendor")
+                game_config = _load_action(args.game_config) if args.game_config else None
+                match_id, _, _ = store.create(players, seed, args.game or "splendor", game_config)
             sink = emit if args.jsonl else None
             result = run_match(
                 store, match_id, players_config, model=args.model, base_url=args.base_url,

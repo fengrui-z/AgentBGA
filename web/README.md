@@ -1,7 +1,7 @@
 # AgentBGA live table
 
 Static React frontend for the local multi-game AgentBGA server. It currently renders
-playable Splendor matches and the Ark Nova deterministic setup milestone.
+playable Splendor matches and the runnable Ark Nova controlled-core benchmark.
 
 ```console
 npm install

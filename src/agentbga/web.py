@@ -40,6 +40,7 @@ class MatchHub:
                 "version": version,
                 "status": state["status"],
                 "turn_count": state["turn_count"],
+                "decision_count": state.get("decision_count", state["turn_count"]),
                 "active_seat": state["active_seat"],
                 "phase": state["phase"],
                 "players": players,
@@ -116,11 +117,14 @@ class MatchHub:
         if not isinstance(seed, int):
             raise ValueError("seed must be an integer")
         speed_ms = payload.get("speed_ms", 650)
-        if not isinstance(speed_ms, int) or not 0 <= speed_ms <= 10_000:
-            raise ValueError("speed_ms must be an integer from 0 to 10000")
+        if not isinstance(speed_ms, int) or not 0 <= speed_ms <= 600_000:
+            raise ValueError("speed_ms must be an integer from 0 to 600000")
+        game_config = payload.get("game_config")
+        if game_config is not None and not isinstance(game_config, dict):
+            raise ValueError("game_config must be an object")
         store = Store(self.db_path)
         try:
-            match_id, _, _ = store.create(len(configs), seed, game_id)
+            match_id, _, _ = store.create(len(configs), seed, game_id, game_config)
             store.set_players(match_id, [config.public_dict() for config in configs])
         finally:
             store.close()
@@ -235,7 +239,7 @@ class MatchHub:
         try:
             def sink(event: dict[str, Any]) -> None:
                 self._publish(match_id, event)
-                if event.get("type") == "turn" and speed_ms:
+                if event.get("type") in {"decision", "turn"} and speed_ms:
                     time.sleep(speed_ms / 1000)
 
             options: dict[str, Any] = {

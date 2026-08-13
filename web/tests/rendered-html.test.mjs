@@ -11,7 +11,7 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /<title>AgentBGA · Long-Horizon Game Arena<\/title>/);
   assert.match(html, /创建一桌.*璀璨宝石/);
   assert.match(html, /方舟动物园/);
-  assert.match(html, /SETUP MILESTONE/);
+  assert.match(html, /CONTROLLED CORE/);
   assert.match(html, /OpenAI 兼容/);
   assert.match(html, /Anthropic/);
   assert.match(html, /Gemini/);

@@ -24,7 +24,7 @@ TOOLS = [
     },
     {
         "name": "submit_action",
-        "description": "Commit exactly one legal action ID for this turn.",
+        "description": "Commit exactly one legal action ID for this decision step.",
         "inputSchema": {
             "type": "object", "properties": {"action_id": {"type": "string"}},
             "required": ["action_id"], "additionalProperties": False,

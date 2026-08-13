@@ -6,9 +6,10 @@ play. Every capability is exposed through a stable, machine-readable CLI and can
 also be wrapped as MCP tools.
 
 The playable game is **Splendor (base game, 2–4 players)**. A game-plugin registry
-now also exposes the first **Ark Nova** milestone: deterministic base-game setup,
-seat-scoped hidden information, persistence/replay, CLI discovery, and a dedicated
-web renderer. Ark Nova actions and card effects are intentionally not enabled yet.
+now also exposes an **Ark Nova controlled core**: deterministic setup, multi-step
+turns, the five action cards, Break resolution, seat-scoped hidden information,
+persistence/replay, CLI discovery, and a dedicated web renderer. It uses generated
+research cards; publisher card abilities and verified map geometry remain deferred.
 
 ## Project principles
 
@@ -129,11 +130,11 @@ that seat's current legal actions and waits until the UI submits an action ID
 for the matching seat and state version. The setup screen can move each player
 up or down, randomize seats, and applies the displayed order as the turn order.
 
-Choose **Ark Nova** on the same setup screen to inspect the current setup milestone.
+Choose **Ark Nova** on the same setup screen to run the controlled-core benchmark.
 It renders the display, tracks, Association board, action-card strengths, player
-resources, private-card counts, and schematic beginner maps. Because this milestone
-does not execute turns, it neither needs API keys nor starts model harnesses. The UI
-and API label it `setup_only` rather than presenting it as a playable match.
+resources, private-card counts, and schematic beginner maps. Human and model seats
+use the same decision-step action IDs. The UI and API label it `controlled_core` so
+results are not confused with the future complete commercial card-pool benchmark.
 
 The table header includes a safe pause/resume control. A pause requested while
 a model is generating lets that response finish and commits its action, then
@@ -222,6 +223,8 @@ agentbga games describe ark_nova --json
 
 agentbga match create --game splendor --players 4 --seed 42 --json
 agentbga match create --game ark_nova --players 2 --seed 42 --json
+agentbga match create --game ark_nova --players 2 --seed 42 \
+  --game-config '{"turn_limit":60}' --json
 agentbga match observe MATCH_ID --seat 0 --json
 agentbga match legal-actions MATCH_ID --seat 0 --json
 agentbga match act MATCH_ID --seat 0 --expected-version 7 \
@@ -267,10 +270,10 @@ for future interaction tests. No scanned card art or publisher rules text is bun
 - Local live table for per-seat model configuration and real-time visual matches.
 - GamePlugin/GameRegistry boundary used by Store, Runner, CLI, harness prompts, web API,
   and per-game React renderers.
-- Ark Nova 2–4 player deterministic setup skeleton with Map A schematic, 212-card
-  structural deck, 12 base projects, 11 final-scoring placeholders, hidden information,
-  state invariants, exact setup replay, and a setup-only frontend.
+- Ark Nova 2–4 player controlled core with initial-hand selection, all five action
+  state machines, action-card strength movement, X tokens, Break resolution, Map A
+  schematic, a 212-card research deck, hidden information, invariants, replay, and UI.
 
-Planned next for Ark Nova: initial-hand decision steps, then the five action state
-machines, Break resolution, verified map footprints, scoring, and data-driven effects.
+Planned next for Ark Nova: official card data, verified map footprints, published
+end-game scoring, action upgrades, donation/release flows, and data-driven effects.
 Framework work continues with tournament scheduling/reports and stronger baselines.

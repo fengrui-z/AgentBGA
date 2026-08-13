@@ -28,7 +28,7 @@ type ArkPlayerView = {
   seat: number; money: number; x_tokens: number; appeal: number; conservation: number; reputation: number;
   action_cards: ArkActionCard[]; association_workers: {active: number; reserve: number; committed: unknown[]};
   partner_zoos: string[]; universities: string[]; map: ArkMap; hand_count: number; initial_draw_count: number;
-  initial_keep_required: number; played_cards: ArkCard[]; final_scoring_cards: (ArkCard | {hidden: true})[];
+  initial_keep_required: number; hand: ArkCard[]; initial_draw: ArkCard[]; played_cards: ArkCard[]; final_scoring_cards: (ArkCard | {hidden: true})[];
 };
 type ArkView = {
   game: "ark_nova"; rules_version: string; implementation_status: string; status: string; phase: string;
@@ -41,7 +41,7 @@ type ArkView = {
 };
 type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
 type Snapshot = {
-  match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; active_seat: number;
+  match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
   paused: boolean; pause_pending: boolean;
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
   players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | ArkView)[];
@@ -153,7 +153,7 @@ function describeAction(item: Timeline, names: Record<number, string>) {
   if (event.type === "harness_tool_result") return `${event.player} 收到 ${event.tool} 结果`;
   if (event.type === "harness_finished") return `${event.player} 通过 ${event.harness} 提交 ${event.action_id}`;
   if (event.type === "harness_error") return `${event.player} Harness 失败：${event.error}`;
-  if (event.type !== "turn") return event.type;
+  if (!["decision", "turn"].includes(event.type)) return event.type;
   const seat = event.seat ?? 0;
   const who = event.player || names[seat] || `座位 ${seat + 1}`;
   const action = event.action ?? {};
@@ -167,6 +167,11 @@ function describeAction(item: Timeline, names: Record<number, string>) {
   if (action.type === "reserve_deck") return `${who} 从 ${action.tier} 阶牌库暗中预留一张牌`;
   if (action.type === "choose_noble") return `${who} 获得贵族 ${action.noble_id}`;
   if (action.type === "pass") return `${who} 无合法行动，跳过回合`;
+  if (["choose_initial_hand", "select_action", "take_x_token", "draw_cards", "snap_card",
+    "discard_card", "break_discard", "place_building", "play_animal", "association_task",
+    "play_sponsor", "advance_break", "finish_action"].includes(String(action.type))) {
+    return `${who}：${humanActionText(action)}`;
+  }
   return `${who}：${action.type}`;
 }
 
@@ -176,6 +181,18 @@ function tokenText(tokens: Record<string, number>) {
 }
 
 function humanActionText(action: Record<string, unknown>) {
+  if (action.type === "choose_initial_hand") return `保留 ${(action.card_ids as string[]).join("、")}`;
+  if (action.type === "select_action") return `使用 ${ARK_ACTION_LABELS[String(action.action_card)] || action.action_card}，强度 ${action.strength}${action.x_tokens ? `（X +${action.x_tokens}）` : ""}`;
+  if (action.type === "take_x_token") return `将 ${ARK_ACTION_LABELS[String(action.action_card)] || action.action_card} 移到 1 并获得 X token`;
+  if (action.type === "draw_cards") return `抽 ${action.draw_count} 张牌${action.discard_count ? `，再弃 ${action.discard_count} 张` : ""}`;
+  if (action.type === "snap_card") return `拿取展示区 ${action.card_id}`;
+  if (action.type === "discard_card" || action.type === "break_discard") return `弃牌 ${action.card_id || (action.card_ids as string[]).join("、")}`;
+  if (action.type === "place_building") return `建造 ${action.building_type}（${action.size} 格，₡${action.cost}）`;
+  if (action.type === "play_animal") return `打出动物 ${action.card_id}，使用 ${action.enclosure_id}`;
+  if (action.type === "association_task") return `协会任务：${action.task}`;
+  if (action.type === "play_sponsor") return `打出赞助商 ${action.card_id}`;
+  if (action.type === "advance_break") return `推进 Break ${action.steps} 格，获得 ₡${action.money}`;
+  if (action.type === "finish_action") return "结束当前行动";
   if (action.type === "take_tokens") {
     const taken = tokenText((action.take ?? {}) as Record<string, number>);
     const returned = tokenText((action.return ?? {}) as Record<string, number>);
@@ -194,6 +211,10 @@ function humanActionText(action: Record<string, unknown>) {
 const ACTION_GROUPS: Record<string, string> = {
   buy_visible: "购买公开牌", buy_reserved: "购买预留牌", take_tokens: "拿取宝石",
   reserve_visible: "预留公开牌", reserve_deck: "预留牌库顶牌", choose_noble: "选择贵族", pass: "其他",
+  choose_initial_hand: "选择起始手牌", select_action: "选择行动牌", take_x_token: "替代 X-token 行动",
+  draw_cards: "抽牌", snap_card: "拿取展示牌", discard_card: "弃牌", break_discard: "Break 弃牌",
+  place_building: "放置建筑", play_animal: "打出动物", association_task: "协会任务",
+  play_sponsor: "打出赞助商", advance_break: "推进 Break", finish_action: "结束行动",
 };
 
 function groupActions(actions: LegalAction[]) {
@@ -229,6 +250,7 @@ function ArkPlayerPanel({player: p, identity}: {player: ArkPlayerView; identity?
     <div className="ark-worker-row"><span>X TOKEN <b>{p.x_tokens}/5</b></span><span>协会工人 <b>{p.association_workers.active}</b> + {p.association_workers.reserve}</span></div>
     <div className="ark-actions">{[...p.action_cards].sort((a, b) => b.strength - a.strength).map(card => <div key={card.action} className={`ark-action action-${card.action}`}><b>{card.strength}</b><span>{ARK_ACTION_LABELS[card.action]}</span>{card.upgraded && <i>Ⅱ</i>}</div>)}</div>
     <div className="ark-hidden-row"><span>起始抽牌 <b>{p.initial_draw_count}</b> / 留 {p.initial_keep_required}</span><span>终局牌 <b>{p.final_scoring_cards.length}</b></span></div>
+    <div className="ark-hand-preview"><span>手牌 {p.hand_count}</span>{p.hand.slice(0, 6).map((card, index) => <i key={card.id || index} title={card.id || "hidden"}>{card.hidden ? "?" : card.card_type?.slice(0, 1).toUpperCase()}</i>)}</div>
   </section>;
 }
 
@@ -246,7 +268,7 @@ function SplendorBoard({view}: {view?: View}) {
 function ArkNovaBoard({view, players}: {view?: ArkView; players: Snapshot["players"]}) {
   if (!view) return null;
   return <div className="ark-board">
-    <section className="ark-milestone"><div><span>ARK NOVA · SETUP MILESTONE</span><h2>确定性开局已就绪</h2></div><p>当前版本可创建、观察、校验和重放开局状态。行动状态机与完整卡池将在下一规则里程碑开放。</p><code>{view.rules_version}</code></section>
+    <section className="ark-milestone"><div><span>ARK NOVA · CONTROLLED CORE</span><h2>{view.phase === "initial_hand_selection" ? "正在选择起始手牌" : "多阶段对局进行中"}</h2></div><p>回合、行动牌、建造、动物、协会、赞助商和 Break 已接通；当前使用无特殊能力的研究卡池，不代表完整商业卡池。</p><code>{view.rules_version}</code></section>
     <section className="ark-track-board">
       <div><span>TRACKS / BREAK</span><h3>公共轨道</h3></div>
       <div className="ark-track-stack"><ArkTrack label="BREAK" value={view.break_track.position} tone="break"/><ArkTrack label="ACTIVE APPEAL" value={view.players[view.active_seat]?.appeal || 0} tone="appeal"/><ArkTrack label="ACTIVE CONSERVATION" value={view.players[view.active_seat]?.conservation || 0} tone="conservation"/><ArkTrack label="ACTIVE REPUTATION" value={view.players[view.active_seat]?.reputation || 0} tone="reputation"/></div>
@@ -332,6 +354,7 @@ export default function Home() {
         method: "POST", headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
           game, seed: seed === "" ? null : Number(seed), speed_ms: speed,
+          ...(game === "ark_nova" ? {game_config: {turn_limit: 60}} : {}),
           players: players.map(p => ({
             name: p.name, backend: p.backend, model: p.model,
             base_url: p.base_url, api_key: p.api_key,
@@ -341,7 +364,6 @@ export default function Home() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || "无法启动对局");
       setSnapshot(data);
-      if (!data.game_description?.runnable) return;
       const source = new EventSource(api(`/api/matches/${data.match_id}/events`));
       source.addEventListener("match", raw => {
         const item: Timeline = JSON.parse((raw as MessageEvent).data);
@@ -422,11 +444,11 @@ export default function Home() {
     <section className="hero">
       <div className="eyebrow">AGENT BOARD GAME ARENA / {game === "splendor" ? "SPLENDOR" : "ARK NOVA"}</div>
       <h1>把模型放上牌桌，<br/><i>看见</i>每一次决策。</h1>
-      <p>{game === "splendor" ? "配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；所有 Agent Harness 固定使用最高思考强度。" : "查看方舟动物园的确定性开局、隐藏信息视图、行动牌强度、公共轨道与示意六角地图。该里程碑暂不启动 Agent。"}</p>
-      <div className="hero-marks"><span>多游戏插件</span><span>座位隔离观察</span><span>{game === "splendor" ? "完整引擎" : "SETUP ONLY"}</span></div>
+      <p>{game === "splendor" ? "配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；所有 Agent Harness 固定使用最高思考强度。" : "在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。"}</p>
+      <div className="hero-marks"><span>多游戏插件</span><span>座位隔离观察</span><span>{game === "splendor" ? "完整引擎" : "CONTROLLED CORE"}</span></div>
     </section>
     <section className="setup-card">
-      <div className="game-picker" role="group" aria-label="选择游戏"><button className={game === "splendor" ? "selected" : ""} onClick={() => setGame("splendor")}><span>PLAYABLE</span><b>璀璨宝石</b><small>完整基础版引擎</small></button><button className={game === "ark_nova" ? "selected" : ""} onClick={() => setGame("ark_nova")}><span>SETUP MILESTONE</span><b>方舟动物园</b><small>规则 v1.2 · 新手地图 A</small></button></div>
+      <div className="game-picker" role="group" aria-label="选择游戏"><button className={game === "splendor" ? "selected" : ""} onClick={() => setGame("splendor")}><span>PLAYABLE</span><b>璀璨宝石</b><small>完整基础版引擎</small></button><button className={game === "ark_nova" ? "selected" : ""} onClick={() => setGame("ark_nova")}><span>CONTROLLED CORE</span><b>方舟动物园</b><small>多阶段状态机 · 研究卡池</small></button></div>
       <header><div><span>NEW TABLE</span><h2>创建一桌{game === "splendor" ? "璀璨宝石" : "方舟动物园"}</h2></div><div className="matchup-presets"><button onClick={() => setMatchup("human")}>人类 vs Agent</button><button onClick={() => setMatchup("harness")}>Harness 对战</button><b>{players.length} PLAYERS</b></div></header>
       <div className="players-config">{players.map((p, index) => <article className="player-config" key={p.id}>
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`将 ${p.name} 前移`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`将 ${p.name} 后移`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
@@ -448,17 +470,17 @@ export default function Home() {
         <button className="shuffle-order" onClick={shufflePlayers}>⤨ 随机座次</button>
         <div className="field mini"><label htmlFor="match-seed">Seed</label><input id="match-seed" inputMode="numeric" value={seed} onChange={e => setSeed(e.target.value)}/></div>
         <div className="field mini speed"><label htmlFor="match-speed">每步间隔 <b>{speed}ms</b></label><input id="match-speed" type="range" min="0" max="2000" step="50" value={speed} onChange={e => setSpeed(Number(e.target.value))}/></div>
-        <button className="start" disabled={starting} onClick={startMatch}>{starting ? "正在入席…" : game === "splendor" ? "开始对局 →" : "生成开局 →"}</button>
+        <button className="start" disabled={starting} onClick={startMatch}>{starting ? "正在入席…" : "开始对局 →"}</button>
       </div>
-      {game === "ark_nova" && <div className="setup-scope-note"><b>第一里程碑</b> API Key 可以留空：后端只生成可重放的开局状态，不会调用模型。行动状态机完成后会沿用同一套玩家配置。</div>}
+      {game === "ark_nova" && <div className="setup-scope-note"><b>受控核心版</b> 可完整结束并供 Agent 调用，但使用无特殊能力的结构化研究卡牌和示意 Map A；尚不是完整商业卡池规则实现。</div>}
       {error && <div className="error">{error}</div>}
     </section>
   </main>;
 
   return <main className="table-shell">
     <header className="table-header">
-      <div><span className="brand-mark">ABGA</span><strong>{snapshot.game_description.name} {snapshot.game === "splendor" ? "Live Table" : "Setup Lab"}</strong></div>
-      <div className="match-meta"><span>对局 <code>{snapshot.match_id}</code></span><span>{snapshot.game === "ark_nova" ? "决策" : "回合"} <b>{snapshot.game === "ark_nova" ? arkView?.decision_count : snapshot.turn_count}</b></span><span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status === "setup" ? "状态骨架" : snapshot.status !== "active" ? "已结束" : snapshot.paused ? (snapshot.pause_pending ? "等待暂停" : "已暂停") : "进行中"}</span></div>
+      <div><span className="brand-mark">ABGA</span><strong>{snapshot.game_description.name} {snapshot.game === "splendor" ? "Live Table" : "Controlled Arena"}</strong></div>
+      <div className="match-meta"><span>对局 <code>{snapshot.match_id}</code></span><span>回合 <b>{snapshot.turn_count}</b>{snapshot.game === "ark_nova" && <> · 决策 <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span><span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? "已结束" : snapshot.paused ? (snapshot.pause_pending ? "等待暂停" : "已暂停") : "进行中"}</span></div>
       <div className="table-actions">
         <button className={`pause-button ${snapshot.paused ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? "处理中…" : snapshot.paused ? "▶ 继续对局" : "Ⅱ 暂停"}</button>
         <button onClick={() => { sourceRef.current?.close(); setSnapshot(null); setTimeline([]); setChat([]); setError(""); }}>新对局</button>
@@ -494,7 +516,7 @@ export default function Home() {
           {turn.content && <div className="model-answer"><b>回复</b><pre>{turn.content}</pre></div>}
           {turn.status === "thinking" && <div className="typing"><i/><i/><i/></div>}
         </article>)}</div>
-        <section className="action-drawer"><header><span>ACTIONS</span><strong>行动记录</strong><b>{timeline.filter(item => item.event.type === "turn").length}</b></header>
+        <section className="action-drawer"><header><span>ACTIONS</span><strong>决策记录</strong><b>{timeline.filter(item => ["decision", "turn"].includes(item.event.type)).length}</b></header>
           <div>{[...timeline].reverse().filter(item => !["agent_started", "agent_finished"].includes(item.event.type)).slice(0, 40).map(item => <article key={item.seq} className={`event event-${item.event.type}`}>
             <span>{String(item.seq + 1).padStart(3,"0")}</span><div><p>{describeAction(item, names)}</p>{item.event.backend && <small>{item.event.backend}{item.event.agent?.latency_ms ? ` · ${item.event.agent.latency_ms}ms` : ""}</small>}
               {item.event.tool && (item.event.arguments !== undefined || item.event.result !== undefined) && <details className="tool-payload"><summary>查看工具数据</summary><pre>{JSON.stringify(item.event.result ?? item.event.arguments, null, 2)}</pre></details>}
