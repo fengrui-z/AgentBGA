@@ -38,6 +38,16 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /随机座次|movePlayer/);
   assert.match(source, /ArkNovaBoard/);
   assert.match(source, /game_description\.runnable/);
+  assert.match(source, /GEM_ORDER = \["red", "green", "white", "blue", "black", "gold"\]/);
+  assert.match(source, /DevCard key=\{card\.id\} card=\{card\} reserved/);
+  assert.match(source, /players\.find\(player => player\.backend === "human"\)/);
+  assert.match(source, /function HumanActionChoice/);
+  assert.match(source, /card-action-grid/);
+  assert.match(source, /token-action-choice/);
+  assert.match(source, /token-choice-gems/);
+  assert.match(source, /Array\.isArray\(action\.card_ids\)/);
+  assert.match(source, /kept_count \?\? 0/);
+  assert.doesNotMatch(source, /\(action\.card_ids as string\[\]\)\.join/);
   assert.doesNotMatch(html, /react-loading-skeleton|Your site is taking shape/);
 });
 
