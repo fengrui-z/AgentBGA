@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-from . import ark_nova, splendor
+from . import ark_nova, brass_birmingham, splendor
 from .game import GamePlugin
 
 
@@ -83,6 +83,7 @@ class GameRegistry:
 _REGISTRY = GameRegistry((
     _ModulePlugin(splendor, "splendor"),
     _ModulePlugin(ark_nova, "ark_nova"),
+    _ModulePlugin(brass_birmingham, "brass_birmingham"),
 ))
 
 

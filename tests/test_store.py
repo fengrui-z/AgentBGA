@@ -64,6 +64,21 @@ class StoreTests(unittest.TestCase):
             self.assertNotIn("card_ids", str(first))
             store.close()
 
+    def test_brass_birmingham_random_controllers_finish_and_replay(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = Store(Path(directory) / "test.sqlite3")
+            match_id, _, _ = store.create(2, 21, "brass_birmingham")
+            players = [
+                PlayerConfig.from_dict({"name": "A", "backend": "random"}, 0),
+                PlayerConfig.from_dict({"name": "B", "backend": "random"}, 1),
+            ]
+            result = run_match(store, match_id, players, max_turns=100)
+            self.assertEqual("brass_birmingham", result["game"])
+            self.assertGreater(result["decisions"], result["turns"])
+            self.assertEqual("finished", store.load(match_id)[1]["status"])
+            self.assertEqual(result["version"], store.replay(match_id)[-1]["version"])
+            store.close()
+
     def test_public_events_redact_private_initial_hand_but_replay_remains_exact(self):
         with tempfile.TemporaryDirectory() as directory:
             store = Store(Path(directory) / "test.sqlite3")

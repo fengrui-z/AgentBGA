@@ -94,6 +94,10 @@ class MatchHub:
             raise ValueError("game must be a string")
         game = get_game(game_id)
         game_description = game.describe()
+        if not game_description.get("runnable", True):
+            raise ValueError(
+                f"{game_id} is registered for development but is not runnable yet"
+            )
         raw_players = payload.get("players")
         if not isinstance(raw_players, list) or len(raw_players) not in (2, 3, 4):
             raise ValueError("players must contain 2, 3, or 4 entries")
@@ -359,7 +363,9 @@ class WebHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.OK, {"ok": True, "service": "agentbga-web"})
             return
         if path == "/api/games":
-            self._json(HTTPStatus.OK, {"games": list_games()})
+            self._json(HTTPStatus.OK, {
+                "games": [game for game in list_games() if game.get("runnable", True)],
+            })
             return
         match = re_match(r"^/api/matches/([a-f0-9]+)(/events)?$", path)
         if match:

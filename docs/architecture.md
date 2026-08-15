@@ -37,6 +37,8 @@ flowchart LR
   MCP --> APP
   APP --> REG["Game registry"]
   REG --> SPL["Splendor rules plugin"]
+  REG --> ARK["Ark Nova rules plugin"]
+  REG --> BRASS["Brass: Birmingham rules plugin"]
   APP --> STORE["SQLite event store + snapshots"]
   APP --> OBS["Per-seat observation projector"]
 ```
@@ -188,8 +190,11 @@ The kernel provides deterministic operations, not a universal rules language:
 
 Game-specific policies still own setup, legality, effect order, special cards,
 end conditions, and scoring formulae. For example, Ark Nova owns enclosure rules
-and Break resolution; Splendor owns reservation limits and noble eligibility; a
-future Brass plugin will own market sourcing, canal/rail eras, and network access.
+and Break resolution; Splendor owns reservation limits and noble eligibility;
+Brass: Birmingham owns market sourcing, canal/rail eras, card permission, and
+network access.  Brass also contributes reusable action-budget, stable turn-order,
+typed-network, candidate-supply, and price-track primitives without moving those
+game-specific policies into the kernel.
 
 This separation is also an evaluation design. Cross-game analytics can compare
 semantic events such as resources spent, cards acquired, track movement, and

@@ -58,7 +58,8 @@ class RegisteredGameContractTests(unittest.TestCase):
             with self.subTest(game=game_id):
                 plugin = get_game(game_id)
                 state = plugin.setup(2, 1)
-                self.assertEqual([], plugin.legal_actions(state, 1))
+                wrong_seat = (state["active_seat"] + 1) % state["player_count"]
+                self.assertEqual([], plugin.legal_actions(state, wrong_seat))
 
 
 if __name__ == "__main__":
