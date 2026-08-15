@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 
 type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "human" | "random";
 type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "deepseek" | "dashscope" | "zhipu" | "minimax";
-type GameId = "splendor" | "ark_nova";
+type GameId = "splendor" | "ark_nova" | "brass_birmingham";
 type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string };
 type Card = { id: string; tier: number; bonus: string; points: number; cost: Record<string, number> };
 type PlayerView = {
@@ -40,12 +40,35 @@ type ArkView = {
   association_board: {partner_zoos: Record<string, number>; universities: Record<string, number>; blocked_two_player: string[]; donations: {seat: number; cost: number}[]};
   players: ArkPlayerView[];
 };
+type BrassIndustry = {
+  id: string; tile_id?: string; industry: string; level: number; owner: number; location: string;
+  resources: number; flipped: boolean; vp: number; income_spaces: number; link_icons: number;
+};
+type BrassPlayerView = {
+  seat: number; money: number; income_position: number; vp: number; spent_this_round: number;
+  hand_count: number; hand: {id?: string; card_type?: string; location?: string; industry?: string; industries?: string[]; hidden?: true}[];
+  discard: unknown[]; wild_cards: {location: number; industry: number}; links_remaining: number;
+  industry_stacks: Record<string, {level: number}[]>;
+};
+type BrassView = {
+  game: "brass_birmingham"; rules_version: string; implementation_status: string; status: string;
+  phase: string; era: "canal" | "rail"; round: number; turn_count: number; decision_count: number;
+  active_seat: number; turn_order: number[]; turn: {decision: string; actions_remaining: number; actions_total: number};
+  deck_count: number; markets: Record<"coal" | "iron", {prices: number[]; occupied: boolean[]}>;
+  board: {
+    locations: {id: string; kind: string; industry_slots: {id: string; accepts: string[]; industry_id: string | null}[]}[];
+    merchant_locations: {id: string; slots: {id: string; buys: string; beer: number}[]}[];
+    connection_spaces: {id: string; endpoints: string[]; available_eras: string[]}[];
+    industries: BrassIndustry[]; links: {id: string; connection_id: string; owner: number; era: string}[];
+  };
+  players: BrassPlayerView[];
+};
 type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
 type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
   paused: boolean; pause_pending: boolean;
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
-  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | ArkView)[];
+  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | ArkView | BrassView)[];
 };
 type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
@@ -183,16 +206,21 @@ function tokenText(tokens: Record<string, number>) {
     .map(color => `${GEM_META[color]?.label || color} × ${tokens[color]}`).join("、");
 }
 
-function humanActionText(action: Record<string, unknown>) {
+function humanActionText(action: Record<string, unknown>, brassView?: BrassView) {
   if (action.type === "choose_initial_hand") {
     if (Array.isArray(action.card_ids)) return `保留 ${action.card_ids.join("、")}`;
     return `保留 ${Number(action.kept_count ?? 0)} 张起始手牌`;
   }
+  if (action.type === "select_action" && action.action) return `选择 ${BRASS_ACTION_LABELS[String(action.action)] || String(action.action).toUpperCase()}行动`;
   if (action.type === "select_action") return `使用 ${ARK_ACTION_LABELS[String(action.action_card)] || action.action_card}，强度 ${action.strength}${action.x_tokens ? `（X +${action.x_tokens}）` : ""}`;
   if (action.type === "take_x_token") return `将 ${ARK_ACTION_LABELS[String(action.action_card)] || action.action_card} 移到 1 并获得 X token`;
   if (action.type === "draw_cards") return `抽 ${action.draw_count} 张牌${action.discard_count ? `，再弃 ${action.discard_count} 张` : ""}`;
   if (action.type === "snap_card") return `拿取展示区 ${action.card_id}`;
   if (action.type === "discard_card" || action.type === "break_discard") {
+    if (action.type === "discard_card" && brassView) {
+      const card = brassView.players[brassView.active_seat]?.hand.find(candidate => candidate.id === action.card_id);
+      return `弃置 ${card ? brassCardLabel(card) : action.card_id}`;
+    }
     const cards = Array.isArray(action.card_ids) ? action.card_ids.join("、") : "";
     return `弃牌 ${action.card_id || cards || Number(action.discarded_count ?? 0) + " 张"}`;
   }
@@ -206,6 +234,29 @@ function humanActionText(action: Record<string, unknown>) {
   if (action.type === "play_sponsor") return `打出赞助商 ${action.card_id}`;
   if (action.type === "advance_break") return `推进 Break ${action.steps} 格，获得 ₡${action.money}`;
   if (action.type === "finish_action") return "结束当前行动";
+  if (action.type === "discard_wild") return `弃置万能${action.wild_type === "location" ? "地点" : "产业"}牌`;
+  if (action.type === "scout_discard_extra") return `再弃 ${Array.isArray(action.card_ids) ? action.card_ids.join("、") : "2 张牌"}`;
+  if (action.type === "develop_tiles") return `研发 ${Array.isArray(action.industries) ? action.industries.map(value => BRASS_INDUSTRY_LABELS[String(value)] || value).join(" + ") : "产业"}`;
+  if (action.type === "build_industry") return `在 ${brassLocationLabel(String(action.location_id))} 建造 ${BRASS_INDUSTRY_LABELS[String(action.industry)] || action.industry}（£${action.cost}）`;
+  if (action.type === "build_link" || action.type === "select_network_link") {
+    const connection = brassView?.board.connection_spaces.find(space => space.id === action.connection_id);
+    const route = connection?.endpoints.map(brassLocationLabel).join(" ↔ ") || action.connection_id;
+    return `铺设${action.link_kind === "canal" ? "运河" : "铁路"}：${route}`;
+  }
+  if (action.type === "select_network_count") return `铺设 ${action.count} 条铁路（基础费用 £${action.cost}）`;
+  if (action.type === "take_resource") {
+    const resource = action.resource === "coal" ? "煤炭" : action.resource === "iron" ? "铁" : "啤酒";
+    const industry = brassView?.board.industries.find(candidate => candidate.id === action.source_id);
+    const source = action.source === "market" ? `${resource}市场` : industry ? `${brassLocationLabel(industry.location)}的${BRASS_INDUSTRY_LABELS[industry.industry]}` : action.source === "merchant" ? "商人啤酒" : action.source_id;
+    return `从${source}取得${resource}${action.cost ? `（£${action.cost}）` : ""}`;
+  }
+  if (action.type === "sell_industry") {
+    const industry = brassView?.board.industries.find(candidate => candidate.id === action.industry_id);
+    return `出售${industry ? `${brassLocationLabel(industry.location)}的${BRASS_INDUSTRY_LABELS[industry.industry]}` : action.industry_id}给${brassLocationLabel(String(action.merchant_location_id))}`;
+  }
+  if (action.type === "finish_sell") return "结束出售行动";
+  if (action.type === "merchant_bonus_develop") return `商人奖励研发 ${action.industry}`;
+  if (action.type === "liquidate_industry") return `变卖 ${action.industry_id}，获得 £${action.value}`;
   if (action.type === "take_tokens") {
     const taken = tokenText((action.take ?? {}) as Record<string, number>);
     const returned = tokenText((action.return ?? {}) as Record<string, number>);
@@ -230,6 +281,10 @@ const ACTION_GROUPS: Record<string, string> = {
   play_sponsor: "打出赞助商", advance_break: "推进 Break", finish_action: "结束行动",
   make_donation: "捐款", upgrade_action_card: "升级行动牌", keep_final_card: "选择终局牌",
   choose_conservation_bonus: "选择保育奖励", finish_association_tasks: "结束协会任务",
+  discard_wild: "弃置万能牌", scout_discard_extra: "侦察弃牌", develop_tiles: "选择研发板块",
+  build_industry: "选择产业与城市", build_link: "铺设运河", select_network_count: "铁路数量",
+  select_network_link: "选择铁路", take_resource: "选择资源来源", sell_industry: "出售产业",
+  finish_sell: "结束出售", merchant_bonus_develop: "商人研发奖励", liquidate_industry: "变卖产业",
 };
 
 function groupActions(actions: LegalAction[]) {
@@ -254,8 +309,8 @@ function findActionCard(action: Record<string, unknown>, view?: View) {
   );
 }
 
-function HumanActionChoice({item, view, disabled, submitting, onChoose}: {
-  item: LegalAction; view?: View; disabled: boolean; submitting: boolean; onChoose: () => void;
+function HumanActionChoice({item, view, brassView, disabled, submitting, onChoose}: {
+  item: LegalAction; view?: View; brassView?: BrassView; disabled: boolean; submitting: boolean; onChoose: () => void;
 }) {
   const kind = String(item.action.type);
   if (kind === "take_tokens") {
@@ -269,7 +324,7 @@ function HumanActionChoice({item, view, disabled, submitting, onChoose}: {
     </button>;
   }
   const card = CARD_ACTION_TYPES.has(kind) ? findActionCard(item.action, view) : undefined;
-  if (!card) return <button disabled={disabled} onClick={onChoose}><strong>{humanActionText(item.action)}</strong><small>{item.id}{submitting ? " · 提交中…" : ""}</small></button>;
+  if (!card) return <button disabled={disabled} onClick={onChoose}><strong>{humanActionText(item.action, brassView)}</strong><small>{item.id}{submitting ? " · 提交中…" : ""}</small></button>;
   const payment = tokenText((item.action.payment ?? item.action.return ?? {}) as Record<string, number>);
   return <button className={`card-action-choice card-${card.bonus}`} disabled={disabled} onClick={onChoose} aria-label={humanActionText(item.action)}>
     <span className="card-action-label">{kind === "reserve_visible" ? "预留" : "购买"}</span>
@@ -308,6 +363,73 @@ function ArkPlayerPanel({player: p, identity}: {player: ArkPlayerView; identity?
     <div className="ark-hidden-row"><span>合作动物园 <b>{p.partner_zoos.length}</b></span><span>大学 <b>{p.universities.length}</b></span><span>项目 <b>{p.supported_projects.length}</b></span></div>
     <div className="ark-hand-preview"><span>手牌 {p.hand_count}</span>{p.hand.slice(0, 6).map((card, index) => <i key={card.id || index} title={card.id || "hidden"}>{card.hidden ? "?" : card.card_type?.slice(0, 1).toUpperCase()}</i>)}</div>
   </section>;
+}
+
+const BRASS_INDUSTRY_LABELS: Record<string, string> = {
+  cotton_mill: "棉纺厂", coal_mine: "煤矿", iron_works: "炼铁厂",
+  manufacturer: "制造厂", pottery: "陶瓷厂", brewery: "啤酒厂",
+};
+const BRASS_ACTION_LABELS: Record<string, string> = {
+  build: "建造", network: "铺设网络", develop: "研发", sell: "出售", loan: "贷款", scout: "侦察", pass: "跳过",
+};
+const BRASS_LOCATION_LABELS: Record<string, string> = {
+  belper: "贝尔珀", birmingham: "伯明翰", burton_on_trent: "特伦特河畔伯顿", cannock: "坎诺克",
+  coalbrookdale: "科尔布鲁克代尔", coventry: "考文垂", derby: "德比", dudley: "达德利",
+  kidderminster: "基德明斯特", leek: "利克", nuneaton: "纽尼顿", redditch: "雷迪奇",
+  stafford: "斯塔福德", stoke_on_trent: "特伦特河畔斯托克", stone: "斯通", tamworth: "塔姆沃思",
+  uttoxeter: "阿托克斯特", walsall: "沃尔索尔", wolverhampton: "伍尔弗汉普顿", worcester: "伍斯特",
+  warrington: "沃灵顿", nottingham: "诺丁汉", shrewsbury: "什鲁斯伯里", gloucester: "格洛斯特", oxford: "牛津",
+  farm_brewery_cannock: "坎诺克农场啤酒厂", farm_brewery_kidderminster_worcester: "基德明斯特／伍斯特农场啤酒厂",
+};
+
+function brassLocationLabel(location: string) {
+  return BRASS_LOCATION_LABELS[location] || location.replaceAll("_", " ");
+}
+
+function brassCardLabel(card: BrassPlayerView["hand"][number]) {
+  if (card.hidden) return "隐藏牌";
+  if (card.card_type === "location" && card.location) return `${brassLocationLabel(card.location)}地点牌`;
+  const industries = card.industries || (card.industry ? [card.industry] : []);
+  return `${industries.map(industry => BRASS_INDUSTRY_LABELS[industry] || industry).join("／") || "产业"}牌`;
+}
+
+function brassIncomeLevel(position: number) {
+  if (position <= 10) return position - 10;
+  if (position <= 30) return Math.floor((position - 9) / 2);
+  if (position <= 60) return 11 + Math.floor((position - 31) / 3);
+  if (position <= 96) return 21 + Math.floor((position - 61) / 4);
+  return 30;
+}
+
+function BrassPlayerPanel({player: p, identity, active}: {player: BrassPlayerView; identity?: Snapshot["players"][number]; active: boolean}) {
+  return <section className={`player-panel brass-player-panel ${active ? "active-player" : ""}`}>
+    <header><div><span className="seat-label">座位 {p.seat + 1}</span><h3>{identity?.name || `玩家 ${p.seat + 1}`}</h3></div><div className="brass-vp"><strong>{p.vp}</strong><span>VP</span></div></header>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}</div>
+    <div className="brass-economy"><span>现金 <b>£{p.money}</b></span><span>收入 <b>{brassIncomeLevel(p.income_position)}</b></span><span>本轮支出 <b>£{p.spent_this_round}</b></span></div>
+    <div className="brass-hand"><span>手牌 <b>{p.hand_count}</b></span><span>万能地点 <b>{p.wild_cards.location}</b></span><span>万能产业 <b>{p.wild_cards.industry}</b></span></div>
+    {p.hand.some(card => !card.hidden) && <div className="brass-hand-cards">{p.hand.map((card, index) => <span key={card.id || index} title={card.id}><b>{brassCardLabel(card)}</b><small>{card.id}</small></span>)}</div>}
+    <div className="brass-stack-grid">{Object.entries(p.industry_stacks).map(([industry, stack]) => <span key={industry} title={BRASS_INDUSTRY_LABELS[industry]}><i className={`industry-mark industry-${industry}`}/><b>{stack.length}</b><small>{stack[0] ? `L${stack[0].level}` : "—"}</small></span>)}</div>
+    <div className="brass-links">剩余连接片 <b>{p.links_remaining}</b></div>
+  </section>;
+}
+
+function BrassMarket({label, market, resource}: {label: string; market: {prices: number[]; occupied: boolean[]}; resource: string}) {
+  return <div className={`brass-market brass-market-${resource}`}><header><span>{label}</span><b>{market.occupied.filter(Boolean).length}</b></header><div>{market.prices.map((price, index) => <i key={index} className={market.occupied[index] ? "filled" : "empty"} title={`£${price}`}><small>£{price}</small></i>)}</div></div>;
+}
+
+function BrassBoard({view, players}: {view?: BrassView; players: Snapshot["players"]}) {
+  if (!view) return null;
+  const industryById = new Map(view.board.industries.map(industry => [industry.id, industry]));
+  const linksByConnection = new Map(view.board.links.map(link => [link.connection_id, link]));
+  return <div className="brass-board">
+    <section className="brass-status"><div><span>BRASS · BIRMINGHAM</span><h2>{view.era === "canal" ? "运河时代" : "铁路时代"} · 第 {view.round} 轮</h2></div><div><small>CURRENT DECISION</small><strong>{view.turn.decision.replaceAll("_", " ")}</strong><b>{view.turn.actions_remaining}/{view.turn.actions_total} ACTIONS</b></div><code>{view.rules_version}</code></section>
+    <section className="brass-economy-board"><BrassMarket label="煤炭市场" market={view.markets.coal} resource="coal"/><BrassMarket label="铁市场" market={view.markets.iron} resource="iron"/><div className="brass-deck"><span>牌库</span><strong>{view.deck_count}</strong><small>行动顺序 · {view.turn_order.map(seat => players[seat]?.name || seat + 1).join(" → ")}</small></div></section>
+    <section className="brass-map"><header><div><span>BLACK COUNTRY / BIRMINGHAM</span><h3>产业城市与连接网络</h3></div><b>{view.board.industries.length} 产业 · {view.board.links.length} 连接</b></header>
+      <div className="brass-city-grid">{view.board.locations.filter(location => location.kind === "industry").map(location => <article key={location.id}><h4>{brassLocationLabel(location.id)}</h4><div>{location.industry_slots.map(slot => {const tile = slot.industry_id ? industryById.get(slot.industry_id) : undefined; return <span key={slot.id} className={tile ? `occupied seat-${tile.owner}` : "vacant"} title={slot.accepts.map(kind => BRASS_INDUSTRY_LABELS[kind]).join(" / ")}>{tile ? <><i className={`industry-mark industry-${tile.industry}`}/><b>L{tile.level}</b><small>{tile.flipped ? "已翻面" : tile.resources ? `×${tile.resources}` : "未翻面"}</small></> : <small>{slot.accepts.map(kind => BRASS_INDUSTRY_LABELS[kind]).join("/")}</small>}</span>;})}</div></article>)}</div>
+    </section>
+    <section className="brass-network"><header><span>连接位</span><b>{view.era === "canal" ? "运河" : "铁路"}</b></header><div>{view.board.connection_spaces.filter(space => space.available_eras.includes(view.era)).map(space => {const link = linksByConnection.get(space.id); return <span key={space.id} className={link ? `built seat-${link.owner}` : "open"}><b>{space.endpoints.map(brassLocationLabel).join(" ↔ ")}</b><small>{link ? players[link.owner]?.name || `座位 ${link.owner + 1}` : "未铺设"}</small></span>;})}</div></section>
+    <section className="brass-merchants"><header><span>MERCHANTS</span><h3>商人区</h3></header><div>{view.board.merchant_locations.map(merchant => <article key={merchant.id}><b>{brassLocationLabel(merchant.id)}</b>{merchant.slots.map(slot => <span key={slot.id}>{slot.buys === "any" ? "任意商品" : slot.buys === "blank" ? "空白" : BRASS_INDUSTRY_LABELS[slot.buys]}<i>{slot.beer ? "🍺" : "—"}</i></span>)}</article>)}</div></section>
+  </div>;
 }
 
 function SplendorBoard({view}: {view?: View}) {
@@ -356,6 +478,7 @@ export default function Home() {
   const viewer = snapshot?.views[humanSeat];
   const splendorView = snapshot?.game === "splendor" ? viewer as View : undefined;
   const arkView = snapshot?.game === "ark_nova" ? viewer as ArkView : undefined;
+  const brassView = snapshot?.game === "brass_birmingham" ? viewer as BrassView : undefined;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
 
   function updatePlayer(id: string, patch: Partial<PlayerForm>) {
@@ -500,14 +623,14 @@ export default function Home() {
 
   if (!snapshot) return <main className="setup-shell">
     <section className="hero">
-      <div className="eyebrow">AGENT BOARD GAME ARENA / {game === "splendor" ? "SPLENDOR" : "ARK NOVA"}</div>
+      <div className="eyebrow">AGENT BOARD GAME ARENA / {game === "splendor" ? "SPLENDOR" : game === "ark_nova" ? "ARK NOVA" : "BRASS: BIRMINGHAM"}</div>
       <h1>把模型放上牌桌，<br/><i>看见</i>每一次决策。</h1>
-      <p>{game === "splendor" ? "配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；所有 Agent Harness 固定使用最高思考强度。" : "在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。"}</p>
-      <div className="hero-marks"><span>多游戏插件</span><span>座位隔离观察</span><span>{game === "splendor" ? "完整引擎" : "CONTROLLED CORE"}</span></div>
+      <p>{game === "splendor" ? "配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；所有 Agent Harness 固定使用最高思考强度。" : game === "ark_nova" ? "在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。" : "测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。"}</p>
+      <div className="hero-marks"><span>多游戏插件</span><span>座位隔离观察</span><span>{game === "ark_nova" ? "CONTROLLED CORE" : "完整对局引擎"}</span></div>
     </section>
     <section className="setup-card">
-      <div className="game-picker" role="group" aria-label="选择游戏"><button className={game === "splendor" ? "selected" : ""} onClick={() => setGame("splendor")}><span>PLAYABLE</span><b>璀璨宝石</b><small>完整基础版引擎</small></button><button className={game === "ark_nova" ? "selected" : ""} onClick={() => setGame("ark_nova")}><span>CONTROLLED CORE V2</span><b>方舟动物园</b><small>升级 · 捐款 · 释放 · 效果系统</small></button></div>
-      <header><div><span>NEW TABLE</span><h2>创建一桌{game === "splendor" ? "璀璨宝石" : "方舟动物园"}</h2></div><div className="matchup-presets"><button onClick={() => setMatchup("human")}>人类 vs Agent</button><button onClick={() => setMatchup("harness")}>Harness 对战</button><b>{players.length} PLAYERS</b></div></header>
+      <div className="game-picker" role="group" aria-label="选择游戏"><button className={game === "splendor" ? "selected" : ""} onClick={() => setGame("splendor")}><span>PLAYABLE</span><b>璀璨宝石</b><small>完整基础版引擎</small></button><button className={game === "ark_nova" ? "selected" : ""} onClick={() => setGame("ark_nova")}><span>CONTROLLED CORE V2</span><b>方舟动物园</b><small>升级 · 捐款 · 释放 · 效果系统</small></button><button className={game === "brass_birmingham" ? "selected" : ""} onClick={() => setGame("brass_birmingham")}><span>PLAYABLE BETA</span><b>伯明翰</b><small>产业 · 网络 · 双时代经济</small></button></div>
+      <header><div><span>NEW TABLE</span><h2>创建一桌{game === "splendor" ? "璀璨宝石" : game === "ark_nova" ? "方舟动物园" : "伯明翰"}</h2></div><div className="matchup-presets"><button onClick={() => setMatchup("human")}>人类 vs Agent</button><button onClick={() => setMatchup("harness")}>Harness 对战</button><b>{players.length} PLAYERS</b></div></header>
       <div className="players-config">{players.map((p, index) => <article className="player-config" key={p.id}>
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`将 ${p.name} 前移`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`将 ${p.name} 后移`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>选手名</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
@@ -531,6 +654,7 @@ export default function Home() {
         <button className="start" disabled={starting} onClick={startMatch}>{starting ? "正在入席…" : "开始对局 →"}</button>
       </div>
       {game === "ark_nova" && <div className="setup-scope-note"><b>受控核心 V2</b> 已支持行动升级、合作动物园折扣、捐款、释放动物、地图奖励、效果原语和终局目标；仍使用结构化研究卡池与示意 Map A，并非完整商业卡池复刻。</div>}
+      {game === "brass_birmingham" && <div className="setup-scope-note"><b>PLAYABLE BETA</b> 支持官方人数牌组、产业板、市场、商人、Build/Sell/Develop、单双铁路、负收入变卖、双时代计分与完整回放；界面不包含出版商美术。</div>}
       {error && <div className="error">{error}</div>}
     </section>
   </main>;
@@ -551,7 +675,9 @@ export default function Home() {
         const visiblePlayer = viewer.players[identity.seat];
         return snapshot.game === "splendor"
           ? <PlayerPanel key={identity.seat} player={visiblePlayer as PlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
-          : <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity}/>;
+          : snapshot.game === "ark_nova"
+            ? <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity}/>
+            : <BrassPlayerPanel key={identity.seat} player={visiblePlayer as BrassPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
       })}</aside>
       <section className="board">
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? "等待当前模型完成…" : "对局已暂停"}</strong><span>{snapshot.pause_pending ? "返回的这一手会正常落盘，下一位不会开始思考。" : "牌桌停在安全的回合边界，点击“继续对局”即可恢复。"}</span></div>}
@@ -559,10 +685,10 @@ export default function Home() {
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}，请选择行动</h2></div><b>{snapshot.human_turn.legal_actions.length} 个合法选项</b></header>
           <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
             <h3>{ACTION_GROUPS[kind] || kind}<span>{actions.length}</span></h3>
-            <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div>
+            <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div>
           </section>)}</div>
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : <ArkNovaBoard view={arkView} players={snapshot.players}/>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : <BrassBoard view={brassView} players={snapshot.players}/>}
         {snapshot.status === "finished" && <div className="winner-banner"><span>WINNER</span><strong>{timeline.at(-1)?.event.rankings?.[0]?.player || "对局结束"}</strong><button onClick={() => { setSnapshot(null); setTimeline([]); }}>再来一局</button></div>}
       </section>
       <aside className="timeline">

@@ -3,7 +3,11 @@ import unittest
 
 from agentbga.mechanics import (
     ActionSpace,
+    ActionBudget,
     DecisionStep,
+    MarketTrack,
+    NetworkEdge,
+    SupplySource,
     adjacent_to_any,
     adjust_resources,
     advance_track,
@@ -12,10 +16,17 @@ from agentbga.mechanics import (
     axial_hex_neighbors,
     crossed_milestones,
     discounted_cost,
+    edge_adjacency,
+    eligible_sources,
     hidden_items,
     is_connected,
+    nearest_sources,
     payment_options,
     reset_track,
+    player_network_nodes,
+    reachable_nodes,
+    shortest_distances,
+    stable_metric_order,
     state_digest,
     transfer_resources,
     validate_resource_pool,
@@ -102,6 +113,64 @@ class MechanicsTests(unittest.TestCase):
              "remaining_plays": 1},
             DecisionStep(2, "choose_route", "route", remaining_plays=1).to_dict(),
         )
+
+    def test_action_budget_and_stable_metric_turn_order(self):
+        budget = ActionBudget.start(2)
+        self.assertEqual({"total": 2, "remaining": 2, "used": 0}, budget.to_dict())
+        budget = budget.spend()
+        self.assertEqual(1, budget.used)
+        self.assertFalse(budget.complete)
+        self.assertTrue(budget.spend().complete)
+        with self.assertRaisesRegex(ValueError, "exceeds"):
+            budget.spend(2)
+
+        self.assertEqual(
+            [2, 0, 1, 3],
+            stable_metric_order([2, 0, 1, 3], {0: 4, 1: 9, 2: 4, 3: 9}),
+        )
+        self.assertEqual(
+            [1, 3, 2, 0],
+            stable_metric_order([2, 0, 1, 3], {0: 4, 1: 9, 2: 4, 3: 9}, reverse=True),
+        )
+
+    def test_typed_network_supports_filters_distances_and_player_networks(self):
+        edges = [
+            NetworkEdge("canal-ab", "a", "b", "canal", owner=0),
+            NetworkEdge("rail-bc", "b", "c", "rail", owner=1),
+            NetworkEdge("closed-cd", "c", "d", "rail", owner=0, active=False),
+        ]
+        all_open = edge_adjacency(edges)
+        canals = edge_adjacency(edges, predicate=lambda edge: edge.kind == "canal")
+        self.assertEqual({"a", "b", "c"}, reachable_nodes(["a"], all_open))
+        self.assertEqual({"a", "b"}, reachable_nodes(["a"], canals))
+        self.assertEqual(2, shortest_distances(["a"], all_open)["c"])
+        self.assertEqual({"mine", "a", "b"}, player_network_nodes(["mine"], edges, 0))
+
+    def test_supply_candidates_leave_source_policy_to_the_game(self):
+        sources = [
+            SupplySource("coal-near", "coal", 2, "industry", owner=1, distance=1),
+            SupplySource("coal-far", "coal", 1, "industry", owner=0, distance=3),
+            SupplySource("empty", "coal", 0, "industry", distance=0),
+            SupplySource("iron", "iron", 2, "industry", distance=1),
+        ]
+        coal = eligible_sources(sources, resource="coal")
+        self.assertEqual(["coal-near", "coal-far"], [source.source_id for source in coal])
+        self.assertEqual(["coal-near"], [source.source_id for source in nearest_sources(coal)])
+        own = eligible_sources(sources, resource="coal", predicate=lambda source: source.owner == 0)
+        self.assertEqual(["coal-far"], [source.source_id for source in own])
+
+    def test_market_track_quotes_consumes_and_refills_without_game_policy(self):
+        market = MarketTrack(
+            prices=(1, 2, 3), occupied=[True, False, True],
+            purchase_order=(0, 1, 2), refill_order=(2, 1, 0), external_price=5,
+        )
+        self.assertEqual((1, 3, 5), market.quote(3).unit_prices)
+        paid = market.consume(2)
+        self.assertEqual(4, paid.total_price)
+        self.assertEqual([False, False, False], market.occupied)
+        earned = market.refill(2)
+        self.assertEqual((3, 2), earned.unit_prices)
+        self.assertEqual([False, True, True], market.occupied)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /<title>AgentBGA · Long-Horizon Game Arena<\/title>/);
   assert.match(html, /创建一桌.*璀璨宝石/);
   assert.match(html, /方舟动物园/);
+  assert.match(html, /伯明翰/);
   assert.match(html, /CONTROLLED CORE/);
   assert.match(html, /OpenAI 兼容/);
   assert.match(html, /Anthropic/);
@@ -37,6 +38,7 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /human_turn|submitHumanAction/);
   assert.match(source, /随机座次|movePlayer/);
   assert.match(source, /ArkNovaBoard/);
+  assert.match(source, /BrassBoard/);
   assert.match(source, /game_description\.runnable/);
   assert.match(source, /GEM_ORDER = \["red", "green", "white", "blue", "black", "gold"\]/);
   assert.match(source, /DevCard key=\{card\.id\} card=\{card\} reserved/);
