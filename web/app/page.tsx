@@ -2,8 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 
-type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "human" | "random";
-type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "deepseek" | "dashscope" | "zhipu" | "minimax";
+type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "dsh" | "human" | "random";
+type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "dsh" | "deepseek" | "dashscope" | "zhipu" | "minimax";
 type GameId = "splendor" | "ark_nova" | "brass_birmingham";
 type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string };
 type Card = { id: string; tier: number; bonus: string; points: number; cost: Record<string, number> };
@@ -99,6 +99,7 @@ const BACKENDS: Record<Backend, {label: string; url: string; key: string; model:
   pi: { label: "Pi", url: "https://api.openai.com/v1", key: "", model: "" },
   codex: { label: "Codex Harness", url: "https://api.openai.com/v1", key: "", model: "" },
   opencode: { label: "OpenCode Harness", url: "https://api.deepseek.com", key: "", model: "" },
+  dsh: { label: "DeepSeek Harness", url: "https://api.deepseek.com", key: "", model: "" },
   human: { label: "人类玩家", url: "", key: "", model: "" },
   random: { label: "随机基线", url: "", key: "", model: "" },
 };
@@ -108,6 +109,7 @@ const PROVIDERS: Record<Provider, {label: string; backend: Backend; url: string;
   pi: {label: "Pi", backend: "pi", url: "https://api.openai.com/v1", models: ["gpt-5.6"], note: "Pi 持久 session + AgentBGA 专用工具扩展；兼容自定义 OpenAI Endpoint"},
   codex: {label: "Codex", backend: "codex", url: "https://api.openai.com/v1", models: ["gpt-5.6", "gpt-5.6-terra", "gpt-5.3-codex"], note: "Codex 持久 session + 座位隔离 MCP；自定义 Endpoint 自动使用兼容协议"},
   opencode: {label: "OpenCode", backend: "opencode", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: "OpenCode 持久 session + 座位隔离 MCP"},
+  dsh: {label: "DeepSeek Harness", backend: "dsh", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: "DeepSeek Harness (dsh) headless + 座位隔离 MCP；每回合独立 session，workspace 笔记持久"},
   deepseek: {label: "DeepSeek 官方", backend: "openai", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: "官方按量付费 API"},
   dashscope: {label: "阿里云百炼", backend: "openai", url: "https://dashscope.aliyuncs.com/compatible-mode/v1", models: ["qwen3.7-plus", "qwen3.6-plus", "qwen3.5-flash", "qwen3.7-max"], note: "华北 2 按量付费，不是 Coding Plan"},
   zhipu: {label: "智谱开放平台", backend: "openai", url: "https://open.bigmodel.cn/api/paas/v4", models: ["glm-5.2", "glm-5", "glm-4.7"], note: "开放平台按量付费 Endpoint"},
@@ -118,7 +120,7 @@ function player(seed: number, backend: Backend = "openai"): PlayerForm {
   return { id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "custom", backend, model: "", base_url: BACKENDS[backend].url, api_key: "" };
 }
 
-function deepseekHarnessPlayer(seed: number, backend: "opencode" | "codex"): PlayerForm {
+function deepseekHarnessPlayer(seed: number, backend: "opencode" | "codex" | "dsh"): PlayerForm {
   return {
     id: crypto.randomUUID(), name: `Agent ${seed}`, provider: backend, backend,
     model: "deepseek-v4-flash", base_url: "https://api.deepseek.com", api_key: "",
@@ -635,7 +637,7 @@ export default function Home() {
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`将 ${p.name} 前移`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`将 ${p.name} 后移`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>选手名</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
         {!(["random", "human"] as Backend[]).includes(p.backend) && <>
-          <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>Harness / 服务商</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label="Agent Harness">{(["claude_code", "pi", "codex", "opencode"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label}</option>)}</optgroup><optgroup label="直连模型 API">{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label}</option>)}</optgroup></select></div>
+          <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>Harness / 服务商</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label="Agent Harness">{(["claude_code", "pi", "codex", "opencode", "dsh"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label}</option>)}</optgroup><optgroup label="直连模型 API">{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label}</option>)}</optgroup></select></div>
           <div className="field backend-field"><label htmlFor={`${p.id}-backend`}>运行方式</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).filter(([id]) => id !== "random").map(([id, b]) => <option key={id} value={id}>{b.label}</option>)}</select></div>
           <div className="field grow endpoint-field"><label htmlFor={`${p.id}-endpoint`}>Endpoint</label><input id={`${p.id}-endpoint`} value={p.base_url} onChange={e => updatePlayer(p.id, {provider: "custom", base_url: e.target.value})}/></div>
           <div className="field model-field"><label htmlFor={`${p.id}-model`}>模型名</label><input id={`${p.id}-model`} list={`${p.id}-models`} placeholder="可选择或输入 model-id" value={p.model} onChange={e => updatePlayer(p.id, {model: e.target.value})}/><datalist id={`${p.id}-models`}>{PROVIDERS[p.provider].models.map(model => <option key={model} value={model}/>)}</datalist></div>

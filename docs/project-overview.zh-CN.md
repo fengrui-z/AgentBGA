@@ -10,7 +10,7 @@ AgentBGA 的评测对象不仅是语言模型本身，而是完整的智能体�
 Agent = Model × Harness × Memory × Prompt × Tool Interface × Compute Budget
 ```
 
-这里的 Harness 指运行和组织模型的智能体框架，例如 Claude Code、Codex、OpenCode 和 Pi。相同模型放入不同 Harness 后，可能表现出不同的工具使用方式、记忆能力、成本、可靠性和游戏策略。AgentBGA 希望把这些因素拆开并进行可复现的比较。
+这里的 Harness 指运行和组织模型的智能体框架，例如 Claude Code、Codex、OpenCode、Pi 和 DeepSeek Harness。相同模型放入不同 Harness 后，可能表现出不同的工具使用方式、记忆能力、成本、可靠性和游戏策略。AgentBGA 希望把这些因素拆开并进行可复现的比较。
 
 ## 当前实现
 
@@ -53,6 +53,7 @@ action ID、决策步骤、资源与费用、卡牌区域和隐藏投影、轨�
 - Codex
 - OpenCode
 - Pi
+- DeepSeek Harness（dsh）
 
 每个座位可以独立配置 Harness、模型名称、API endpoint 和 API key，因此可以进行诸如以下实验：
 

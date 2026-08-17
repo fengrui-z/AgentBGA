@@ -19,7 +19,7 @@ class AgentError(RuntimeError):
     pass
 
 
-HARNESS_BACKENDS = frozenset({"claude", "pi", "codex", "opencode"})
+HARNESS_BACKENDS = frozenset({"claude", "pi", "codex", "opencode", "dsh"})
 HARNESS_REASONING_EFFORT = "max"
 
 
@@ -59,6 +59,7 @@ class PlayerConfig:
             "pi": ("https://api.openai.com/v1", "AGENTBGA_API_KEY"),
             "codex": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
             "opencode": (None, "DEEPSEEK_API_KEY"),
+            "dsh": ("https://api.deepseek.com", "DEEPSEEK_API_KEY"),
         }
         base_url, api_key_env = (None, None)
         if backend in defaults:

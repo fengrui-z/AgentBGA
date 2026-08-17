@@ -113,7 +113,7 @@ Example configuration:
 ```
 
 Supported `backend` values are `openai`, `anthropic`, `gemini`, `claude`, `pi`,
-`codex`, `opencode`, `random`, and `human`. Player names appear in streamed turns, persisted match metadata, and final
+`codex`, `opencode`, `dsh`, `random`, and `human`. Player names appear in streamed turns, persisted match metadata, and final
 rankings. Only the environment-variable name is persisted; its secret value is not.
 
 Keys are read only from the environment variable named by `--api-key-env`
@@ -173,15 +173,18 @@ intentionally refuses non-localhost binds because it accepts credentials.
 
 ### Harness-vs-harness matches
 
-Claude Code, Pi, Codex, and OpenCode can participate as persistent agent
-harnesses instead of as single API calls. In the web setup, choose one of these
-Harness presets, then enter only its Endpoint, API key, and model name. Each
-seat receives its own workspace and three seat-bound tools: `observe`,
-`legal_actions`, and `submit_action`. Claude Code, Codex, and OpenCode consume
-them over MCP; Pi receives equivalent native tools through a generated extension. A harness
-must submit exactly one current legal action before its turn can advance. Its
-session ID is reused across turns, so its own notes and conversation can support
-long-horizon plans without exposing another seat's hidden observation.
+Claude Code, Pi, Codex, OpenCode, and DeepSeek Harness can participate as
+persistent agent harnesses instead of as single API calls. In the web setup,
+choose one of these Harness presets, then enter only its Endpoint, API key, and
+model name. Each seat receives its own workspace and three seat-bound tools:
+`observe`, `legal_actions`, and `submit_action`. Claude Code, Codex, OpenCode,
+and DeepSeek Harness consume them over MCP; Pi receives equivalent native tools
+through a generated extension. A harness must submit exactly one current legal
+action before its turn can advance. Its session ID is reused across turns, so
+its own notes and conversation can support long-horizon plans without exposing
+another seat's hidden observation. DeepSeek Harness (`dsh`) runs its one-shot
+`headless` profile, so each turn is a fresh `dsh` session while the seat
+workspace keeps the agent's notes across turns.
 
 Configure API credentials in the shell, then run the included example:
 
@@ -194,17 +197,21 @@ export DEEPSEEK_API_KEY=...
 The default web table and this example compare the same model through two
 harnesses: seat 1 is OpenCode + `deepseek-v4-flash`, and seat 2 is Codex +
 `deepseek-v4-flash`. Both use `https://api.deepseek.com`; only the API-key
-fields need to be filled in on the web screen. AgentBGA fixes every harness at
-its highest reasoning setting for comparable quality-first runs: Claude Code
-uses `max`, Pi maps its `xhigh` level to provider effort `max`, Codex uses
-`model_reasoning_effort=max`, and OpenCode runs the generated `max` variant.
-The requested normalized value (`reasoning_effort: max`) is stored with each
-harness seat and controller-call metadata for reproducibility.
+fields need to be filled in on the web screen. A `dsh`-vs-OpenCode matchup is
+available via [examples/dsh-vs-opencode.json](examples/dsh-vs-opencode.json).
+AgentBGA fixes every harness at its highest reasoning setting for comparable
+quality-first runs: Claude Code uses `max`, Pi maps its `xhigh` level to
+provider effort `max`, Codex uses `model_reasoning_effort=max`, OpenCode runs
+the generated `max` variant, and DeepSeek Harness is configured with
+`reasoningEffort: max`. The requested normalized value (`reasoning_effort: max`)
+is stored with each harness seat and controller-call metadata for
+reproducibility.
 
-All four Harness presets are available in the web setup screen. The corresponding
-`claude`, `pi`, `codex`, or `opencode` executable is required. AgentBGA starts it with its
-JSON event modes, records redacted harness/tool events, and keeps API keys out of
-the database and emitted commands. Inspect an audit trail with:
+All five Harness presets are available in the web setup screen. The corresponding
+`claude`, `pi`, `codex`, `opencode`, or `dsh` executable is required. AgentBGA
+starts it with its JSON event modes, records redacted harness/tool events, and
+keeps API keys out of the database and emitted commands. Inspect an audit trail
+with:
 
 ```console
 ./agentbga match harness-events MATCH_ID --json
@@ -218,6 +225,21 @@ file writes, or a final JSON message cannot change the board by itself.
 `harness-events` is an administrator/research export: tool results can contain
 that seat's private observation. Harness prose/token streams remain live-only and
 are not persisted; API keys are redacted before any harness output is emitted.
+
+Every harness turn is also written as an ordered trace JSON file under
+`.agentbga/runs/MATCH_ID/_traces/seat-N/turn-XXXX.json`. Each file records the
+full decision sequence for that seat and state version: the `prompt` block
+(`user` message, `observation`, `legal_actions`), an ordered `steps` array
+(`assistant` content/reasoning chunks and `tool_call` entries with their
+`result`), the final `submission`, `latency_ms`, `session_id`, and `status`
+(`ok` / `error` / `no_submit`). Assistant prose is captured from the harness's
+streamed JSON output and redacted; tool results come from the authoritative
+seat-tool audit log. List trace files or export one turn with:
+
+```console
+./agentbga match traces MATCH_ID --json
+./agentbga match traces MATCH_ID --seat 0 --turn 7
+```
 
 For frontend development, run `./agentbga web` in one terminal and `npm run dev`
 inside `web/` in another, then open `http://127.0.0.1:3000`.
@@ -241,6 +263,8 @@ agentbga match events MATCH_ID --after 0 --jsonl
 agentbga match verify MATCH_ID --json
 agentbga match replay MATCH_ID --json
 agentbga match harness-events MATCH_ID --json
+agentbga match traces MATCH_ID --json
+agentbga match traces MATCH_ID --seat 0 --turn 7
 
 agentbga run --players 2 --controllers openai,random \
   --model YOUR_MODEL --base-url ENDPOINT --jsonl

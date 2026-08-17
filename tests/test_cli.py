@@ -61,9 +61,9 @@ class CLITests(unittest.TestCase):
                 "schema_version": "agentbga.players.v1",
                 "players": [
                     {"name": "Claude", "backend": "claude", "model": "claude-test"},
-                    {"name": "Pi", "backend": "pi", "model": "model-test"},
                     {"name": "Codex", "backend": "codex", "model": "gpt-test"},
                     {"name": "OpenCode", "backend": "opencode", "model": "deepseek/test"},
+                    {"name": "DeepSeek Harness", "backend": "dsh", "model": "deepseek-v4-flash"},
                 ],
             }))
             output = StringIO()
@@ -75,7 +75,7 @@ class CLITests(unittest.TestCase):
             self.assertEqual(0, code)
             result = json.loads(output.getvalue())
             self.assertEqual(
-                ["claude", "pi", "codex", "opencode"],
+                ["claude", "codex", "opencode", "dsh"],
                 [row["backend"] for row in result["data"]["players"]],
             )
 

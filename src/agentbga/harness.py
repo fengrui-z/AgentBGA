@@ -1,4 +1,4 @@
-"""External agent-harness controllers for Codex, OpenCode, and custom commands."""
+"""External agent-harness controllers for Codex, OpenCode, DeepSeek Harness, and custom commands."""
 
 from __future__ import annotations
 
@@ -17,6 +17,13 @@ from .agents import AgentError, PlayerConfig, StreamSink
 
 
 HarnessEventSink = Callable[[dict[str, Any]], None]
+
+
+def _version_key(version: Any) -> int:
+    try:
+        return int(version)
+    except (TypeError, ValueError):
+        return 0
 
 
 TURN_PROMPT = """You are seat {seat} in an AgentBGA {game} benchmark, at state version {version}.
@@ -87,9 +94,13 @@ class HarnessAgent:
         root = Path(runs_root) if runs_root else Path.cwd() / ".agentbga" / "runs"
         workspace = root / match_id / f"seat-{seat}-{config.backend}"
         runtime = root / "_runtime" / match_id / f"seat-{seat}"
+        trace_dir = root / "_traces" / match_id / f"seat-{seat}"
         workspace.mkdir(parents=True, exist_ok=True)
         runtime.mkdir(parents=True, exist_ok=True)
+        trace_dir.mkdir(parents=True, exist_ok=True)
         self.session = HarnessSession(match_id, seat, workspace, runtime)
+        self.trace_dir = trace_dir
+        self._trace_steps: list[dict[str, Any]] = []
         self.binary = shutil.which(config.backend)
         if not self.binary:
             raise AgentError(f"harness executable not found: {config.backend}")
@@ -141,10 +152,21 @@ class HarnessAgent:
             return [self.binary, "exec", *common, "--cd", str(self.session.workspace), prompt]
         if self.config.backend == "opencode":
             selected_model = model if "/" in model else f"agentbga/{model}"
+            supports_thinking = "deepseek" in (self.config.base_url or "").lower()
             command = [self.binary, "run", "--pure", "--format", "json", "--model", selected_model,
-                       "--variant", "max", "--thinking", "--dir", str(self.session.workspace)]
+                       "--variant", "max", "--dir", str(self.session.workspace)]
+            if supports_thinking:
+                command.append("--thinking")
             if self.session.session_id:
                 command.extend(["--session", self.session.session_id])
+            return [*command, prompt]
+        if self.config.backend == "dsh":
+            # DeepSeek Harness (dsh) one-shot profile. Each turn is a fresh
+            # headless session; the seat workspace persists notes across turns.
+            # The model, reasoning effort, seat MCP server, and headless-safe
+            # approval policy are composed through a per-turn cordis patch.
+            patch_path = str(self.session.workspace / "dsh-patch.yml")
+            command = [self.binary, "--profile", "headless", "--patch", patch_path]
             return [*command, prompt]
         raise AgentError(f"unsupported harness: {self.config.backend}")
 
@@ -198,9 +220,7 @@ class HarnessAgent:
                 target.mkdir(exist_ok=True)
                 env[variable] = str(target)
             if key:
-                env["DEEPSEEK_API_KEY"] = key
-            if self.config.base_url:
-                env["DEEPSEEK_BASE_URL"] = self.config.base_url
+                env[self.config.api_key_env or "DEEPSEEK_API_KEY"] = key
         elif self.config.backend == "claude":
             claude_config = self.session.workspace / ".claude-config"
             claude_config.mkdir(exist_ok=True)
@@ -222,6 +242,18 @@ class HarnessAgent:
             env["AGENTBGA_SEAT_CONTEXT"] = str(self.session.runtime / "turn-context.json")
             env["AGENTBGA_SEAT_SUBMISSION"] = str(self.session.runtime / "submission.json")
             env["AGENTBGA_SEAT_AUDIT"] = str(self.session.runtime / "tool-events.jsonl")
+        elif self.config.backend == "dsh":
+            dsh_home = self.session.workspace / ".dsh-home"
+            dsh_home.mkdir(exist_ok=True)
+            env["DSH_HOME"] = str(dsh_home)
+            # workspace-write confines file writes to the seat cwd; the patch
+            # forces approval policy to "never" so headless runs never block.
+            env["DSH_PERMISSION_MODE"] = "workspace-write"
+            env["DSH_TELEMETRY_MODE"] = "DISABLED"
+            if key:
+                env["DEEPSEEK_API_KEY"] = key
+            if self.config.base_url:
+                env["DEEPSEEK_BASE_URL"] = self.config.base_url
         if hasattr(self, "_pythonpath"):
             env["PYTHONPATH"] = self._pythonpath
         return env
@@ -311,6 +343,10 @@ class HarnessAgent:
             },
         }
         if provider_id and model_id:
+            supports_reasoning = "deepseek" in (self.config.base_url or "").lower()
+            variant: dict[str, Any] = {}
+            if supports_reasoning:
+                variant = {"reasoningEffort": "max", "thinking": {"type": "enabled"}}
             opencode_config["provider"] = {
                 provider_id: {
                     "npm": "@ai-sdk/openai" if self.config.wire_api == "responses" else "@ai-sdk/openai-compatible",
@@ -321,16 +357,52 @@ class HarnessAgent:
                     },
                     "models": {model_id: {
                         "name": model_id,
-                        "variants": {"max": {
-                            "reasoningEffort": "max",
-                            "thinking": {"type": "enabled"},
-                        }},
+                        "variants": {"max": variant},
                     }},
                 },
             }
         (self.session.workspace / "opencode.json").write_text(
             json.dumps(opencode_config, ensure_ascii=False, indent=2), encoding="utf-8",
         )
+        dsh_mcp_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
+        dsh_patch = (
+            "- id: agent-default-model\n"
+            "  config:\n"
+            "    provider: deepseek-official\n"
+            f"    model: {json.dumps(self.config.model or '')}\n"
+            "- id: llm-deepseek\n"
+            "  config:\n"
+            "    reasoningEffort: max\n"
+            "    thinking: enabled\n"
+            # dsh's permission preset table only ships (workspace-write, ask)
+            # and (danger-full-access, never). Override the table so workspace-write
+            # pairs with approval=never — headless runs must not block on approval —
+            # and set defaultPreset so session creation pins it without matching.
+            "- id: permission\n"
+            "  config:\n"
+            "    defaultPreset: workspace-write\n"
+            "    presets:\n"
+            "      read-only:\n"
+            "        sandbox: read-only\n"
+            "        approval: ask\n"
+            "      workspace-write:\n"
+            "        sandbox: workspace-write\n"
+            "        approval: never\n"
+            "      danger-full-access:\n"
+            "        sandbox: danger-full-access\n"
+            "        approval: never\n"
+            "- insert:\n"
+            "    - id: mcp-agentbga\n"
+            "      name: '@deepseek-ai/dsh-mcp-client'\n"
+            "      config:\n"
+            "        serverName: agentbga\n"
+            "        transport: stdio\n"
+            f"        command: {json.dumps(mcp_command[0])}\n"
+            f"        args: [{dsh_mcp_args}]\n"
+            "        env:\n"
+            f"          PYTHONPATH: {json.dumps(self._pythonpath)}\n"
+        )
+        (self.session.workspace / "dsh-patch.yml").write_text(dsh_patch, encoding="utf-8")
         self._codex_config_args = [
             "--config", "approval_policy=\"never\"",
             "--config", "sandbox_mode=\"workspace-write\"",
@@ -445,6 +517,7 @@ class HarnessAgent:
                         line = self._redact_text(line)
                         errors.append(line)
                         self._emit("harness_output", channel="stderr", delta=line + "\n")
+                        self._trace_steps.append({"role": "stderr", "text": line})
                         continue
                     line = self._redact_text(line)
                     output.append(line)
@@ -452,6 +525,7 @@ class HarnessAgent:
                         payload = json.loads(line)
                     except json.JSONDecodeError:
                         self._emit("harness_output", channel="content", delta=line + "\n")
+                        self._trace_steps.append({"role": "assistant", "channel": "content", "text": line})
                         continue
                     session_id = self._event_session_id(payload)
                     if session_id:
@@ -459,6 +533,10 @@ class HarnessAgent:
                     tool = self._tool_details(payload)
                     if tool:
                         self._emit("harness_tool_call", tool=tool[0], arguments=tool[1], raw_type=payload.get("type"))
+                        self._trace_steps.append({
+                            "role": "tool_call", "tool": tool[0],
+                            "arguments": tool[1], "result": None,
+                        })
                     text = self._event_text(payload)
                     if text:
                         assistant_event = payload.get("assistantMessageEvent") or {}
@@ -467,6 +545,7 @@ class HarnessAgent:
                             assistant_event.get("type") == "thinking_delta" or "thinking" in stream_delta
                         ) else "content"
                         self._emit("harness_output", channel=channel, delta=text)
+                        self._trace_steps.append({"role": "assistant", "channel": channel, "text": text})
             returncode = process.wait(timeout=2)
         finally:
             selector.close()
@@ -474,6 +553,78 @@ class HarnessAgent:
                 process.kill()
                 process.wait()
         return "\n".join(output), "\n".join(errors), returncode
+
+    def _write_trace(
+        self, *, prompt: str, observation: dict[str, Any],
+        legal: list[dict[str, Any]], version: Any, started: float,
+        status: str, action_id: str | None, error: str | None,
+    ) -> None:
+        """Persist one ordered per-turn trace: prompt → assistant/tool steps → submission."""
+        context_path = self.session.runtime / "turn-context.json"
+        audit_path = self.session.runtime / "tool-events.jsonl"
+        submission_path = self.session.runtime / "submission.json"
+        observation_snapshot = observation
+        legal_snapshot = [{"id": item["id"], **item["action"]} for item in legal]
+        executed: list[dict[str, Any]] = []
+        if audit_path.is_file():
+            for line in audit_path.read_text(encoding="utf-8").splitlines():
+                try:
+                    executed.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+        steps = list(self._trace_steps)
+        # Attach authoritative tool results from the audit log by matching tool
+        # name in encounter order; stream-parsed tool calls carry no result.
+        pending_by_tool: dict[str, list[dict[str, Any]]] = {}
+        for step in steps:
+            if step.get("role") == "tool_call":
+                pending_by_tool.setdefault(step["tool"], []).append(step)
+        for row in executed:
+            tool_name = row.get("tool")
+            queue = pending_by_tool.get(tool_name)
+            if queue:
+                queue.pop(0)["result"] = row.get("result")
+            else:
+                # A tool ran without a stream sighting (e.g. pi native tools);
+                # append it preserving execution order at the end.
+                steps.append({
+                    "role": "tool_call", "tool": tool_name,
+                    "arguments": row.get("arguments") or {}, "result": row.get("result"),
+                    "created_at": row.get("created_at"),
+                })
+        submission = None
+        if submission_path.is_file():
+            try:
+                submission = json.loads(submission_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                submission = None
+        trace = {
+            "schema_version": "agentbga.turn-trace.v1",
+            "match_id": self.session.match_id,
+            "seat": self.session.seat,
+            "player": self.config.name,
+            "backend": self.config.backend,
+            "model": self.config.model,
+            "reasoning_effort": self.config.reasoning_effort,
+            "version": version,
+            "session_id": self.session.session_id,
+            "latency_ms": round((time.monotonic() - started) * 1000, 3),
+            "status": status,
+            "error": error,
+            "prompt": {
+                "system": None,
+                "user": prompt,
+                "observation": observation_snapshot,
+                "legal_actions": legal_snapshot,
+            },
+            "steps": steps,
+            "submission": submission,
+            "trace_file": str(self.trace_dir / f"turn-{_version_key(version):04d}.json"),
+        }
+        target = self.trace_dir / f"turn-{_version_key(version):04d}.json"
+        target.write_text(
+            json.dumps(trace, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
+        )
 
     def choose(
         self, observation: dict[str, Any], legal: list[dict[str, Any]],
@@ -485,19 +636,35 @@ class HarnessAgent:
             version=observation.get("state_version", observation.get("turn_count")),
             game=observation.get("game", "board-game"),
         )
+        version = observation.get("state_version", observation.get("turn_count"))
         started = time.monotonic()
+        self._trace_steps = []
         raw, stderr, returncode = self._run(self._command(prompt))
         self._emit_tool_audit()
         if returncode != 0:
             detail = stderr[-1000:] or raw[-1000:]
             detail = self._redact_text(detail)
             self._emit("harness_error", error=detail, exit_code=returncode)
+            self._write_trace(
+                prompt=prompt, observation=observation, legal=legal, version=version,
+                started=started, status="error", action_id=None, error=detail,
+            )
             raise AgentError(f"{self.config.backend} harness exited {returncode}: {detail}")
-        if not submission_path.is_file():
+        submission = None
+        if submission_path.is_file():
+            submission = json.loads(submission_path.read_text(encoding="utf-8"))
+        action_id = submission.get("action_id") if submission else None
+        if action_id is None:
+            self._write_trace(
+                prompt=prompt, observation=observation, legal=legal, version=version,
+                started=started, status="no_submit", action_id=None, error=None,
+            )
             raise AgentError(f"{self.config.backend} harness finished without calling submit_action")
-        submission = json.loads(submission_path.read_text(encoding="utf-8"))
-        action_id = submission.get("action_id")
         if action_id not in {item["id"] for item in legal}:
+            self._write_trace(
+                prompt=prompt, observation=observation, legal=legal, version=version,
+                started=started, status="bad_action", action_id=action_id, error=None,
+            )
             raise AgentError("harness submitted an unknown or stale action ID")
         latency = round((time.monotonic() - started) * 1000, 3)
         metadata = {
@@ -509,6 +676,10 @@ class HarnessAgent:
         self._emit("harness_finished", action_id=action_id, latency_ms=latency,
                    session_id=self.session.session_id,
                    reasoning_effort=self.config.reasoning_effort)
+        self._write_trace(
+            prompt=prompt, observation=observation, legal=legal, version=version,
+            started=started, status="ok", action_id=action_id, error=None,
+        )
         return action_id, metadata
 
 
