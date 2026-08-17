@@ -206,7 +206,7 @@ class HarnessAgent:
             codex_home.mkdir(exist_ok=True)
             env["CODEX_HOME"] = str(codex_home)
             if key:
-                env["OPENAI_API_KEY"] = key
+                env[self.config.api_key_env or "OPENAI_API_KEY"] = key
             if self.config.base_url:
                 env["OPENAI_BASE_URL"] = self.config.base_url
         elif self.config.backend == "opencode":
@@ -365,20 +365,31 @@ class HarnessAgent:
             json.dumps(opencode_config, ensure_ascii=False, indent=2), encoding="utf-8",
         )
         dsh_mcp_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
+        dsh_api_key_env = self.config.api_key_env or "OPENAI_API_KEY"
+        dsh_base_url = (self.config.base_url or "https://api.deepseek.com").rstrip("/")
+        is_deepseek_native = "deepseek.com" in dsh_base_url.lower()
+        if is_deepseek_native:
+            llm_plugin_block = (
+                "- id: llm-deepseek\n"
+                "  config:\n"
+                "    reasoningEffort: max\n"
+                "    thinking: enabled\n"
+            )
+        else:
+            # Non-DeepSeek endpoint: use OpenAI-compatible adapter via dsh-llm-pi-ai.
+            llm_plugin_block = (
+                "- id: llm-pi-ai\n"
+                "  config:\n"
+                f"    baseURL: {json.dumps(dsh_base_url)}\n"
+                f"    apiKeyEnv: {json.dumps(dsh_api_key_env)}\n"
+            )
         dsh_patch = (
             "- id: agent-default-model\n"
             "  config:\n"
-            "    provider: deepseek-official\n"
+            f"    provider: {'deepseek-official' if is_deepseek_native else 'pi-ai'}\n"
             f"    model: {json.dumps(self.config.model or '')}\n"
-            "- id: llm-deepseek\n"
-            "  config:\n"
-            "    reasoningEffort: max\n"
-            "    thinking: enabled\n"
-            # dsh's permission preset table only ships (workspace-write, ask)
-            # and (danger-full-access, never). Override the table so workspace-write
-            # pairs with approval=never — headless runs must not block on approval —
-            # and set defaultPreset so session creation pins it without matching.
-            "- id: permission\n"
+            + llm_plugin_block
+            + "- id: permission\n"
             "  config:\n"
             "    defaultPreset: workspace-write\n"
             "    presets:\n"

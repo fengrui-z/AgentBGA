@@ -253,7 +253,6 @@ class HarnessTests(unittest.TestCase):
             config = PlayerConfig(**{**config.__dict__, "api_key": "seat-secret"})
             with mock.patch.dict(os.environ, {"SEAT_KEY": "old", "OTHER_TOKEN": "hidden", "PATH": "/bin"}, clear=True):
                 environment = HarnessAgent(config, "match", 0, runs_root=directory)._environment()
-            self.assertEqual("seat-secret", environment["OPENAI_API_KEY"])
             self.assertEqual("seat-secret", environment["SEAT_KEY"])
             self.assertNotIn("OTHER_TOKEN", environment)
             self.assertIn("seat-0-codex/.codex-home", environment["CODEX_HOME"])
