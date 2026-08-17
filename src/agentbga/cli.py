@@ -67,6 +67,12 @@ def build_parser() -> argparse.ArgumentParser:
             item.add_argument("--seat", type=int, required=True)
         add_db(item)
 
+    traces = match_sub.add_parser("traces", help="list or export per-turn harness trace files")
+    traces.add_argument("match_id")
+    traces.add_argument("--seat", type=int)
+    traces.add_argument("--turn", type=int, help="return the full trace for one seat+turn (requires --seat)")
+    add_db(traces)
+
     act = match_sub.add_parser("act")
     act.add_argument("match_id")
     act.add_argument("--seat", type=int, required=True)
@@ -231,6 +237,37 @@ def execute(args: argparse.Namespace) -> int:
             elif args.command == "harness-events":
                 version, _, _ = store.load(args.match_id)
                 emit(envelope(store.harness_events(args.match_id), match_id=args.match_id, version=version))
+            elif args.command == "traces":
+                version, _, _ = store.load(args.match_id)
+                root = Path.cwd() / ".agentbga" / "runs" / args.match_id / "_traces"
+                if args.turn is not None:
+                    if args.seat is None:
+                        raise ValueError("--turn requires --seat")
+                    target = root / f"seat-{args.seat}" / f"turn-{args.turn:04d}.json"
+                    if not target.is_file():
+                        raise FileNotFoundError(f"no trace file at {target}")
+                    emit(json.loads(target.read_text(encoding="utf-8")))
+                else:
+                    entries = []
+                    for seat_dir in sorted(root.glob("seat-*")) if root.is_dir() else []:
+                        seat = int(seat_dir.name.split("-")[1])
+                        if args.seat is not None and seat != args.seat:
+                            continue
+                        for trace_file in sorted(seat_dir.glob("turn-*.json")):
+                            try:
+                                trace = json.loads(trace_file.read_text(encoding="utf-8"))
+                            except (json.JSONDecodeError, OSError):
+                                continue
+                            entries.append({
+                                "seat": seat,
+                                "version": trace.get("version"),
+                                "status": trace.get("status"),
+                                "action_id": (trace.get("submission") or {}).get("action_id"),
+                                "latency_ms": trace.get("latency_ms"),
+                                "backend": trace.get("backend"),
+                                "file": str(trace_file),
+                            })
+                    emit(envelope(entries, match_id=args.match_id, version=version))
             elif args.command == "act":
                 version, state, _ = store.load(args.match_id)
                 game = store.game(args.match_id)

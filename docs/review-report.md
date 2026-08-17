@@ -24,7 +24,7 @@
 | **可复用机制内核** | `agentbga.mechanics` | ActionSpace、DecisionStep、资源账本、卡牌区域与隐藏投影、轨道、六边形/图拓扑、市场轨道、行动预算、稳定排序、排名 |
 | **CLI** | 完成 | `games` / `match`（create/observe/act/events/verify/replay/harness-events）/ `run` / `doctor` / `web` |
 | **模型控制器** | 完成 | OpenAI 兼容、Anthropic、Gemini 直连 API + random + human |
-| **Harness 控制器** | 完成 | Claude Code（MCP）、Pi（原生扩展）、Codex（MCP）、OpenCode（MCP），持久 session、独立工作区、统一三工具协议 |
+| **Harness 控制器** | 完成 | Claude Code（MCP）、Pi（原生扩展）、Codex（MCP）、OpenCode（MCP）、DeepSeek Harness（dsh，MCP），持久 session、独立工作区、统一三工具协议 |
 | **Web 实时桌台** | 完成 | 每座位独立配置、SSE 直播、人类 vs 智能体、回合边界暂停、国内模型服务预设（DeepSeek/阿里百炼/智谱/MiniMax） |
 | **持久化** | 完成 | SQLite（WAL）+ 事件溯源 + 快照 + 状态哈希 + 精确重放/校验 |
 

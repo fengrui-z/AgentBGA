@@ -1,0 +1,19 @@
+{
+  "schema_version": "agentbga.players.v1",
+  "players": [
+    {
+      "name": "Agent 1 · OpenCode + DeepSeek V4 Flash",
+      "backend": "opencode",
+      "model": "deepseek-v4-flash",
+      "base_url": "https://api.deepseek.com",
+      "api_key_env": "DEEPSEEK_API_KEY"
+    },
+    {
+      "name": "Agent 2 · OpenCode + MiMo V2 Pro",
+      "backend": "opencode",
+      "model": "mimo-v2.5-pro",
+      "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
+      "api_key_env": "XIAOMI_API_KEY"
+    }
+  ]
+}
