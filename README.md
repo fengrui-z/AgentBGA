@@ -5,8 +5,10 @@ act over long horizons. It is designed for both agent-vs-human and agent-vs-agen
 play. Every capability is exposed through a stable, machine-readable CLI and can
 also be wrapped as MCP tools.
 
-The playable game is **Splendor (base game, 2–4 players)**. A game-plugin registry
-now also exposes an **Ark Nova controlled core V2**: deterministic setup, multi-step
+The playable games are **Splendor (base game, 2–4 players)**,
+**Brass: Birmingham (playable beta, 2–4 players)**, and
+**Century: Spice Road (base game, 2–5 players)**. The game-plugin registry also
+exposes an **Ark Nova controlled core V2**: deterministic setup, multi-step
 turns, the five action cards, upgrades, Break resolution, partner-zoo discounts,
 donations, release projects, controlled effects and final objectives, seat-scoped
 hidden information, persistence/replay, CLI discovery, and a dedicated web renderer.
@@ -37,6 +39,16 @@ library are sufficient.
 
 ```console
 ./agentbga run --players 2 --controllers random,random --seed 42
+```
+
+Choose a game with `--game`; for example, a complete Century: Spice Road match is:
+
+```console
+./agentbga run \
+  --game century_spice_road \
+  --players 2 \
+  --controllers random,random \
+  --seed 42
 ```
 
 To run an LLM against a random baseline, provide an API key, endpoint, and model.

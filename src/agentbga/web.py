@@ -99,8 +99,13 @@ class MatchHub:
                 f"{game_id} is registered for development but is not runnable yet"
             )
         raw_players = payload.get("players")
-        if not isinstance(raw_players, list) or len(raw_players) not in (2, 3, 4):
-            raise ValueError("players must contain 2, 3, or 4 entries")
+        player_range = game_description.get("players", {})
+        minimum_players = int(player_range.get("minimum", 2))
+        maximum_players = int(player_range.get("maximum", 4))
+        if not isinstance(raw_players, list) or not minimum_players <= len(raw_players) <= maximum_players:
+            raise ValueError(
+                f"players must contain {minimum_players} to {maximum_players} entries"
+            )
         configs: list[PlayerConfig] = []
         for seat, raw in enumerate(raw_players):
             if not isinstance(raw, dict):
