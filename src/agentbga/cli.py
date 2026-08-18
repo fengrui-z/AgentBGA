@@ -105,7 +105,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--model", help="model name for all openai seats")
     run.add_argument("--base-url", default=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"))
     run.add_argument("--api-key-env", default="OPENAI_API_KEY")
-    run.add_argument("--max-turns", type=int, default=250)
+    run.add_argument("--max-turns", type=int, default=None,
+                     help="turn cap (default is selected by the game)")
     run.add_argument("--retries", type=int, default=1)
     run.add_argument("--fallback", choices=["random", "fail"], default="random")
     run.add_argument("--jsonl", action="store_true", help="stream every turn instead of only the result")

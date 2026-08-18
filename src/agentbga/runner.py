@@ -37,7 +37,7 @@ def run_match(
     model: str | None = None,
     base_url: str = "https://api.openai.com/v1",
     api_key_env: str = "OPENAI_API_KEY",
-    max_turns: int = 250,
+    max_turns: int | None = None,
     retries: int = 1,
     fallback: str = "random",
     sink: EventSink | None = None,
@@ -47,6 +47,8 @@ def run_match(
     version, state, _ = store.load(match_id)
     game = store.game(match_id)
     description = game.describe()
+    if max_turns is None:
+        max_turns = int(description.get("default_max_turns", 250))
     if not description.get("runnable", True):
         raise ValueError(
             f"{description['name']} is currently {description.get('implementation_status', 'unavailable')} "

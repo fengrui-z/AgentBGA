@@ -31,7 +31,7 @@ class WebTests(unittest.TestCase):
             finally:
                 server.shutdown()
                 server.server_close()
-            self.assertEqual(["splendor", "ark_nova", "brass_birmingham"],
+            self.assertEqual(["splendor", "ark_nova", "brass_birmingham", "century_spice_road"],
                              [game["id"] for game in response["games"]])
 
     def test_ark_nova_setup_snapshot_uses_game_renderer_contract(self):
@@ -75,6 +75,32 @@ class WebTests(unittest.TestCase):
             self.assertEqual("brass_birmingham", created["game"])
             self.assertEqual("playable_beta", created["game_description"]["implementation_status"])
             self.assertEqual("brass_birmingham", created["views"][0]["game"])
+            self.assertTrue(stopped.wait(2))
+
+    def test_century_setup_snapshot_uses_game_renderer_contract(self):
+        stopped = threading.Event()
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "century_spice_road", "seed": 42,
+                "players": [
+                    {"name": "Red", "backend": "random"},
+                    {"name": "Blue", "backend": "random"},
+                    {"name": "Green", "backend": "random"},
+                    {"name": "Gold", "backend": "random"},
+                    {"name": "Brown", "backend": "random"},
+                ],
+            })
+            self.assertEqual("century_spice_road", created["game"])
+            self.assertEqual("playable", created["game_description"]["implementation_status"])
+            self.assertEqual("century_spice_road", created["views"][0]["game"])
+            self.assertEqual(5, len(created["players"]))
+            self.assertEqual(6, len(created["views"][0]["merchant_market"]))
             self.assertTrue(stopped.wait(2))
 
     def test_ark_nova_controlled_core_requires_model_credentials_when_runnable(self):

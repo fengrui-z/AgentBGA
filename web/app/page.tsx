@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 
 type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "dsh" | "human" | "random";
 type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "dsh" | "deepseek" | "dashscope" | "zhipu" | "minimax";
-type GameId = "splendor" | "ark_nova" | "brass_birmingham";
+type GameId = "splendor" | "ark_nova" | "brass_birmingham" | "century_spice_road";
 type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string };
 type Card = { id: string; tier: number; bonus: string; points: number; cost: Record<string, number> };
 type PlayerView = {
@@ -63,12 +63,27 @@ type BrassView = {
   };
   players: BrassPlayerView[];
 };
+type SpiceName = "turmeric" | "saffron" | "cardamom" | "cinnamon";
+type SpicePool = Record<SpiceName, number>;
+type CenturyMerchant = {id: string; kind: "gain" | "upgrade" | "trade"; upgrades: number; input: SpicePool; output: SpicePool};
+type CenturyPoint = {id: string; points: number; cost: SpicePool};
+type CenturyPlayerView = {
+  seat: number; spices: SpicePool; hand: CenturyMerchant[]; played: CenturyMerchant[];
+  point_cards: CenturyPoint[]; coins: {gold: number; silver: number}; score: number;
+};
+type CenturyView = {
+  game: "century_spice_road"; rules_version: string; status: string; phase: string;
+  turn_count: number; active_seat: number; caravan_limit: number;
+  merchant_deck_count: number; merchant_market: {card: CenturyMerchant; spices: SpicePool}[];
+  point_deck_count: number; point_market: CenturyPoint[];
+  coins: {gold: number; silver: number; silver_position: number}; players: CenturyPlayerView[];
+};
 type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
 type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
   paused: boolean; pause_pending: boolean;
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
-  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | ArkView | BrassView)[];
+  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | ArkView | BrassView | CenturyView)[];
 };
 type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
@@ -90,6 +105,17 @@ const GEM_META: Record<string, {label: string; mark: string}> = {
   red: { label: "红宝石", mark: "●" }, green: { label: "祖母绿", mark: "⬟" },
   white: { label: "钻石", mark: "◇" }, blue: { label: "蓝宝石", mark: "◆" },
   black: { label: "玛瑙", mark: "⬢" }, gold: { label: "黄金", mark: "★" },
+};
+const SPICE_ORDER: SpiceName[] = ["turmeric", "saffron", "cardamom", "cinnamon"];
+const SPICE_META: Record<SpiceName, {label: string; short: string}> = {
+  turmeric: {label: "姜黄", short: "黄"}, saffron: {label: "藏红花", short: "红"},
+  cardamom: {label: "豆蔻", short: "绿"}, cinnamon: {label: "肉桂", short: "褐"},
+};
+const GAME_COPY: Record<GameId, {eyebrow: string; name: string; description: string; badge: string; note: string}> = {
+  splendor: {eyebrow: "SPLENDOR", name: "璀璨宝石", description: "配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；所有 Agent Harness 固定使用最高思考强度。", badge: "PLAYABLE", note: "完整基础版引擎"},
+  ark_nova: {eyebrow: "ARK NOVA", name: "方舟动物园", description: "在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。", badge: "CONTROLLED CORE V2", note: "升级 · 捐款 · 释放 · 效果系统"},
+  brass_birmingham: {eyebrow: "BRASS: BIRMINGHAM", name: "伯明翰", description: "测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。", badge: "PLAYABLE BETA", note: "产业 · 网络 · 双时代经济"},
+  century_spice_road: {eyebrow: "CENTURY: SPICE ROAD", name: "香料之路", description: "经营自己的商队：获取商人牌、升级或交换香料、争夺金币银币，并抢先完成高分订单。支持 2–5 名玩家。", badge: "CLASSIC BASE", note: "商人牌 · 香料引擎 · 订单竞速"},
 };
 const BACKENDS: Record<Backend, {label: string; url: string; key: string; model: string}> = {
   openai: { label: "OpenAI 兼容", url: "https://api.openai.com/v1", key: "", model: "" },
@@ -169,6 +195,59 @@ function PlayerPanel({player: p, identity, active}: {player: PlayerView; identit
   </section>;
 }
 
+function Spices({pool, compact = false}: {pool: Partial<SpicePool>; compact?: boolean}) {
+  return <span className={`spice-row ${compact ? "spice-row-compact" : ""}`}>{SPICE_ORDER.filter(spice => (pool[spice] ?? 0) > 0).map(spice =>
+    <i key={spice} className={`spice spice-${spice}`} title={SPICE_META[spice].label}><b>{SPICE_META[spice].short}</b><span>{pool[spice]}</span></i>
+  )}</span>;
+}
+
+function spiceText(pool: Record<string, unknown>) {
+  return SPICE_ORDER.filter(spice => Number(pool[spice] ?? 0) > 0)
+    .map(spice => `${SPICE_META[spice].label} × ${Number(pool[spice])}`).join("、");
+}
+
+function merchantText(card: CenturyMerchant) {
+  if (card.kind === "upgrade") return `升级 ${card.upgrades} 级`;
+  if (card.kind === "gain") return "获得香料";
+  return "重复交易";
+}
+
+function CenturyMerchantCard({card, small = false}: {card: CenturyMerchant; small?: boolean}) {
+  return <article className={`century-merchant-card merchant-${card.kind} ${small ? "century-card-small" : ""}`} title={card.id}>
+    <header><span>{card.kind === "gain" ? "HARVEST" : card.kind === "upgrade" ? "UPGRADE" : "TRADE"}</span><b>{card.kind === "upgrade" ? `↑${card.upgrades}` : "◆"}</b></header>
+    <strong>{merchantText(card)}</strong>
+    {card.kind === "trade" && <div className="century-trade"><Spices pool={card.input} compact/><em>→</em><Spices pool={card.output} compact/></div>}
+    {card.kind === "gain" && <Spices pool={card.output}/>}
+    {card.kind === "upgrade" && <div className="century-upgrade-path">黄 → 红 → 绿 → 褐</div>}
+  </article>;
+}
+
+function CenturyPointCard({card}: {card: CenturyPoint}) {
+  return <article className="century-point-card" title={card.id}><strong>{card.points}</strong><span>VP</span><Spices pool={card.cost} compact/></article>;
+}
+
+function CenturyPlayerPanel({player: p, identity, active}: {player: CenturyPlayerView; identity?: Snapshot["players"][number]; active: boolean}) {
+  const caravanTotal = Object.values(p.spices).reduce((sum, value) => sum + value, 0);
+  return <section className={`player-panel century-player-panel ${active ? "active-player" : ""}`}>
+    <header><div><span className="seat-label">座位 {p.seat + 1}</span><h3>{identity?.name || `玩家 ${p.seat + 1}`}</h3></div><div className="century-score"><strong>{p.score}</strong><span>VP</span></div></header>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}</div>
+    <div className="century-caravan"><header><span>商队香料</span><b>{caravanTotal}/10</b></header><Spices pool={p.spices}/></div>
+    <div className="century-assets"><span>金币 <b>{p.coins.gold}</b></span><span>银币 <b>{p.coins.silver}</b></span><span>订单 <b>{p.point_cards.length}</b></span></div>
+    <div className="century-hand-head"><span>可用商人牌</span><b>{p.hand.length}</b><small>已打出 {p.played.length}</small></div>
+    <div className="century-hand">{p.hand.map(card => <CenturyMerchantCard key={card.id} card={card} small/>)}{p.hand.length === 0 && <em>需要休息收回卡牌</em>}</div>
+  </section>;
+}
+
+function CenturyBoard({view}: {view?: CenturyView}) {
+  if (!view) return null;
+  return <div className="century-board">
+    <section className="century-status"><div><span>CENTURY · SPICE ROAD</span><h2>丝路香料市场</h2></div><p>获取商人牌构筑转化引擎，完成订单赚取声望。商队最多携带 {view.caravan_limit} 份香料。</p><code>{view.rules_version}</code></section>
+    <section className="century-point-market"><header><div><span>POINT CARDS</span><h3>订单市场</h3></div><b>牌库 {view.point_deck_count}</b></header><div>{view.point_market.map((card, index) => <div className="century-point-slot" key={card.id}>{index === 0 && view.coins.gold > 0 && <span className="century-coin coin-gold">金 × {view.coins.gold}</span>}{index === view.coins.silver_position && view.coins.silver > 0 && <span className="century-coin coin-silver">银 × {view.coins.silver}</span>}<CenturyPointCard card={card}/></div>)}</div></section>
+    <section className="century-merchant-market"><header><div><span>MERCHANT CARDS</span><h3>商路市场</h3></div><b>牌库 {view.merchant_deck_count}</b></header><div>{view.merchant_market.map((slot, index) => <div className="century-merchant-slot" key={slot.card.id}><span className="century-market-index">0{index + 1}</span><CenturyMerchantCard card={slot.card}/><div className="century-card-spices"><span>牌上香料</span><Spices pool={slot.spices} compact/></div></div>)}</div></section>
+    <section className="century-legend"><span><i className="spice spice-turmeric"/>姜黄 · 1</span><span><i className="spice spice-saffron"/>藏红花 · 2</span><span><i className="spice spice-cardamom"/>豆蔻 · 3</span><span><i className="spice spice-cinnamon"/>肉桂 · 4</span><small>界面仅使用结构化数值与原创色块，不包含出版商卡图。</small></section>
+  </div>;
+}
+
 function describeAction(item: Timeline, names: Record<number, string>) {
   const event = item.event;
   if (event.type === "agent_error") return `${event.player} 调用失败：${event.error}`;
@@ -195,6 +274,9 @@ function describeAction(item: Timeline, names: Record<number, string>) {
   if (action.type === "reserve_deck") return `${who} 从 ${action.tier} 阶牌库暗中预留一张牌`;
   if (action.type === "choose_noble") return `${who} 获得贵族 ${action.noble_id}`;
   if (action.type === "pass") return `${who} 无合法行动，跳过回合`;
+  if (["play_merchant", "acquire_merchant", "claim_point", "rest"].includes(String(action.type))) {
+    return `${who}：${humanActionText(action)}`;
+  }
   if (["choose_initial_hand", "select_action", "take_x_token", "draw_cards", "snap_card",
     "discard_card", "break_discard", "place_building", "play_animal", "association_task",
     "play_sponsor", "advance_break", "finish_action"].includes(String(action.type))) {
@@ -213,6 +295,19 @@ function humanActionText(action: Record<string, unknown>, brassView?: BrassView)
     if (Array.isArray(action.card_ids)) return `保留 ${action.card_ids.join("、")}`;
     return `保留 ${Number(action.kept_count ?? 0)} 张起始手牌`;
   }
+  if (action.type === "play_merchant") {
+    const details = action.repetitions !== undefined ? `，交易 ${action.repetitions} 次`
+      : Array.isArray(action.upgrades) ? `，升级 ${(action.upgrades as string[]).map(value => SPICE_META[value as SpiceName]?.label || value).join(" → ") || "0 级"}` : "";
+    const discarded = spiceText((action.discard ?? {}) as Record<string, unknown>);
+    return `打出 ${action.card_id}${details}${discarded ? `；丢弃 ${discarded}` : ""}`;
+  }
+  if (action.type === "acquire_merchant") {
+    const payment = Array.isArray(action.payment) ? action.payment.map(value => SPICE_META[value as SpiceName]?.label || value).join("、") : "";
+    const discarded = spiceText((action.discard ?? {}) as Record<string, unknown>);
+    return `获取市场第 ${Number(action.position) + 1} 张商人牌${payment ? `；放置 ${payment}` : "；免费"}${discarded ? `；丢弃 ${discarded}` : ""}`;
+  }
+  if (action.type === "claim_point") return `完成第 ${Number(action.position) + 1} 张订单（${action.point_id}）`;
+  if (action.type === "rest") return "休息并收回所有已打出的商人牌";
   if (action.type === "select_action" && action.action) return `选择 ${BRASS_ACTION_LABELS[String(action.action)] || String(action.action).toUpperCase()}行动`;
   if (action.type === "select_action") return `使用 ${ARK_ACTION_LABELS[String(action.action_card)] || action.action_card}，强度 ${action.strength}${action.x_tokens ? `（X +${action.x_tokens}）` : ""}`;
   if (action.type === "take_x_token") return `将 ${ARK_ACTION_LABELS[String(action.action_card)] || action.action_card} 移到 1 并获得 X token`;
@@ -287,6 +382,7 @@ const ACTION_GROUPS: Record<string, string> = {
   build_industry: "选择产业与城市", build_link: "铺设运河", select_network_count: "铁路数量",
   select_network_link: "选择铁路", take_resource: "选择资源来源", sell_industry: "出售产业",
   finish_sell: "结束出售", merchant_bonus_develop: "商人研发奖励", liquidate_industry: "变卖产业",
+  play_merchant: "打出商人牌", acquire_merchant: "获取商人牌", claim_point: "完成订单", rest: "休息",
 };
 
 function groupActions(actions: LegalAction[]) {
@@ -300,6 +396,7 @@ function groupActions(actions: LegalAction[]) {
 }
 
 const CARD_ACTION_TYPES = new Set(["buy_visible", "buy_reserved", "reserve_visible"]);
+const CENTURY_ACTION_TYPES = new Set(["play_merchant", "acquire_merchant", "claim_point", "rest"]);
 
 function findActionCard(action: Record<string, unknown>, view?: View) {
   const cardId = String(action.card_id ?? "");
@@ -325,6 +422,9 @@ function HumanActionChoice({item, view, brassView, disabled, submitting, onChoos
       {submitting && <i>提交中…</i>}
     </button>;
   }
+  if (CENTURY_ACTION_TYPES.has(kind)) return <button className={`century-action-choice century-action-${kind}`} disabled={disabled} onClick={onChoose} title={item.id}>
+    <span>{ACTION_GROUPS[kind]}</span><strong>{humanActionText(item.action)}</strong>{submitting && <i>提交中…</i>}
+  </button>;
   const card = CARD_ACTION_TYPES.has(kind) ? findActionCard(item.action, view) : undefined;
   if (!card) return <button disabled={disabled} onClick={onChoose}><strong>{humanActionText(item.action, brassView)}</strong><small>{item.id}{submitting ? " · 提交中…" : ""}</small></button>;
   const payment = tokenText((item.action.payment ?? item.action.return ?? {}) as Record<string, number>);
@@ -481,6 +581,8 @@ export default function Home() {
   const splendorView = snapshot?.game === "splendor" ? viewer as View : undefined;
   const arkView = snapshot?.game === "ark_nova" ? viewer as ArkView : undefined;
   const brassView = snapshot?.game === "brass_birmingham" ? viewer as BrassView : undefined;
+  const centuryView = snapshot?.game === "century_spice_road" ? viewer as CenturyView : undefined;
+  const maxPlayers = game === "century_spice_road" ? 5 : 4;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
 
   function updatePlayer(id: string, patch: Partial<PlayerForm>) {
@@ -519,6 +621,11 @@ export default function Home() {
     setPlayers(kind === "human" ? [humanPlayer(1), deepseekHarnessPlayer(2, "opencode")] : [
       deepseekHarnessPlayer(1, "opencode"), deepseekHarnessPlayer(2, "codex"),
     ]);
+  }
+
+  function selectGame(next: GameId) {
+    setGame(next);
+    if (next !== "century_spice_road") setPlayers(current => current.slice(0, 4));
   }
 
   function selectProvider(id: string, provider: Provider) {
@@ -625,14 +732,14 @@ export default function Home() {
 
   if (!snapshot) return <main className="setup-shell">
     <section className="hero">
-      <div className="eyebrow">AGENT BOARD GAME ARENA / {game === "splendor" ? "SPLENDOR" : game === "ark_nova" ? "ARK NOVA" : "BRASS: BIRMINGHAM"}</div>
+      <div className="eyebrow">AGENT BOARD GAME ARENA / {GAME_COPY[game].eyebrow}</div>
       <h1>把模型放上牌桌，<br/><i>看见</i>每一次决策。</h1>
-      <p>{game === "splendor" ? "配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；所有 Agent Harness 固定使用最高思考强度。" : game === "ark_nova" ? "在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。" : "测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。"}</p>
+      <p>{GAME_COPY[game].description}</p>
       <div className="hero-marks"><span>多游戏插件</span><span>座位隔离观察</span><span>{game === "ark_nova" ? "CONTROLLED CORE" : "完整对局引擎"}</span></div>
     </section>
     <section className="setup-card">
-      <div className="game-picker" role="group" aria-label="选择游戏"><button className={game === "splendor" ? "selected" : ""} onClick={() => setGame("splendor")}><span>PLAYABLE</span><b>璀璨宝石</b><small>完整基础版引擎</small></button><button className={game === "ark_nova" ? "selected" : ""} onClick={() => setGame("ark_nova")}><span>CONTROLLED CORE V2</span><b>方舟动物园</b><small>升级 · 捐款 · 释放 · 效果系统</small></button><button className={game === "brass_birmingham" ? "selected" : ""} onClick={() => setGame("brass_birmingham")}><span>PLAYABLE BETA</span><b>伯明翰</b><small>产业 · 网络 · 双时代经济</small></button></div>
-      <header><div><span>NEW TABLE</span><h2>创建一桌{game === "splendor" ? "璀璨宝石" : game === "ark_nova" ? "方舟动物园" : "伯明翰"}</h2></div><div className="matchup-presets"><button onClick={() => setMatchup("human")}>人类 vs Agent</button><button onClick={() => setMatchup("harness")}>Harness 对战</button><b>{players.length} PLAYERS</b></div></header>
+      <div className="game-picker" role="group" aria-label="选择游戏">{(Object.keys(GAME_COPY) as GameId[]).map(id => <button key={id} className={game === id ? "selected" : ""} onClick={() => selectGame(id)}><span>{GAME_COPY[id].badge}</span><b>{GAME_COPY[id].name}</b><small>{GAME_COPY[id].note}</small></button>)}</div>
+      <header><div><span>NEW TABLE</span><h2>创建一桌{GAME_COPY[game].name}</h2></div><div className="matchup-presets"><button onClick={() => setMatchup("human")}>人类 vs Agent</button><button onClick={() => setMatchup("harness")}>Harness 对战</button><b>{players.length} PLAYERS</b></div></header>
       <div className="players-config">{players.map((p, index) => <article className="player-config" key={p.id}>
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`将 ${p.name} 前移`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`将 ${p.name} 后移`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>选手名</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
@@ -648,8 +755,8 @@ export default function Home() {
         {players.length > 2 && <button className="remove" aria-label={`移除 ${p.name}`} onClick={() => setPlayers(x => x.filter(y => y.id !== p.id))}>×</button>}
       </article>)}</div>
       <div className="setup-actions">
-        <button className="add-player human-add" disabled={players.length >= 4} onClick={() => setPlayers(x => [...x, humanPlayer(x.length + 1)])}>＋ 添加人类</button>
-        <button className="add-player" disabled={players.length >= 4} onClick={() => setPlayers(x => [...x, player(x.length + 1, "random")])}>＋ 添加 AI / 基线</button>
+        <button className="add-player human-add" disabled={players.length >= maxPlayers} onClick={() => setPlayers(x => [...x, humanPlayer(x.length + 1)])}>＋ 添加人类</button>
+        <button className="add-player" disabled={players.length >= maxPlayers} onClick={() => setPlayers(x => [...x, player(x.length + 1, "random")])}>＋ 添加 AI / 基线</button>
         <button className="shuffle-order" onClick={shufflePlayers}>⤨ 随机座次</button>
         <div className="field mini"><label htmlFor="match-seed">Seed</label><input id="match-seed" inputMode="numeric" value={seed} onChange={e => setSeed(e.target.value)}/></div>
         <div className="field mini speed"><label htmlFor="match-speed">每步间隔 <b>{speed}ms</b></label><input id="match-speed" type="range" min="0" max="2000" step="50" value={speed} onChange={e => setSpeed(Number(e.target.value))}/></div>
@@ -657,13 +764,14 @@ export default function Home() {
       </div>
       {game === "ark_nova" && <div className="setup-scope-note"><b>受控核心 V2</b> 已支持行动升级、合作动物园折扣、捐款、释放动物、地图奖励、效果原语和终局目标；仍使用结构化研究卡池与示意 Map A，并非完整商业卡池复刻。</div>}
       {game === "brass_birmingham" && <div className="setup-scope-note"><b>PLAYABLE BETA</b> 支持官方人数牌组、产业板、市场、商人、Build/Sell/Develop、单双铁路、负收入变卖、双时代计分与完整回放；界面不包含出版商美术。</div>}
+      {game === "century_spice_road" && <div className="setup-scope-note"><b>CLASSIC BASE</b> 完整基础牌组数值、重复交易、升级、市场压香料、商队容量、金币银币、终局与计分均已接通；不包含出版商卡图。</div>}
       {error && <div className="error">{error}</div>}
     </section>
   </main>;
 
   return <main className="table-shell">
     <header className="table-header">
-      <div><span className="brand-mark">ABGA</span><strong>{snapshot.game_description.name} {snapshot.game === "splendor" ? "Live Table" : "Controlled Arena"}</strong></div>
+      <div><span className="brand-mark">ABGA</span><strong>{snapshot.game_description.name} {snapshot.game === "splendor" ? "Live Table" : snapshot.game === "century_spice_road" ? "Trade Arena" : "Controlled Arena"}</strong></div>
       <div className="match-meta"><span>对局 <code>{snapshot.match_id}</code></span><span>回合 <b>{snapshot.turn_count}</b>{snapshot.game === "ark_nova" && <> · 决策 <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span><span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? "已结束" : snapshot.paused ? (snapshot.pause_pending ? "等待暂停" : "已暂停") : "进行中"}</span></div>
       <div className="table-actions">
         <button className={`pause-button ${snapshot.paused ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? "处理中…" : snapshot.paused ? "▶ 继续对局" : "Ⅱ 暂停"}</button>
@@ -679,7 +787,9 @@ export default function Home() {
           ? <PlayerPanel key={identity.seat} player={visiblePlayer as PlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
           : snapshot.game === "ark_nova"
             ? <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity}/>
-            : <BrassPlayerPanel key={identity.seat} player={visiblePlayer as BrassPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
+            : snapshot.game === "brass_birmingham"
+              ? <BrassPlayerPanel key={identity.seat} player={visiblePlayer as BrassPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
+              : <CenturyPlayerPanel key={identity.seat} player={visiblePlayer as CenturyPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
       })}</aside>
       <section className="board">
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? "等待当前模型完成…" : "对局已暂停"}</strong><span>{snapshot.pause_pending ? "返回的这一手会正常落盘，下一位不会开始思考。" : "牌桌停在安全的回合边界，点击“继续对局”即可恢复。"}</span></div>}
@@ -690,7 +800,7 @@ export default function Home() {
             <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div>
           </section>)}</div>
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : <BrassBoard view={brassView} players={snapshot.players}/>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players}/> : <CenturyBoard view={centuryView}/>}
         {snapshot.status === "finished" && <div className="winner-banner"><span>WINNER</span><strong>{timeline.at(-1)?.event.rankings?.[0]?.player || "对局结束"}</strong><button onClick={() => { setSnapshot(null); setTimeline([]); }}>再来一局</button></div>}
       </section>
       <aside className="timeline">
