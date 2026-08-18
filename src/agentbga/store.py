@@ -245,7 +245,7 @@ class Store:
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (match_id, seat, player["name"], player["backend"], player.get("model"),
                      player.get("base_url"), player.get("api_key_env"),
-                     player["backend"] if player["backend"] in {"claude", "pi", "codex", "opencode", "dsh"} else None,
+                     player["backend"] if player["backend"] in {"claude", "pi", "codex", "opencode", "dsh", "minimal"} else None,
                      player.get("wire_api"), player.get("reasoning_effort")),
                 )
 
