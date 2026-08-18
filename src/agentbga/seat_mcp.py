@@ -30,6 +30,19 @@ TOOLS = [
             "required": ["action_id"], "additionalProperties": False,
         },
     },
+    {
+        "name": "read_notes",
+        "description": "Read your persistent strategy notes (survives across turns).",
+        "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
+    {
+        "name": "write_notes",
+        "description": "Replace your strategy notes with new content (survives across turns).",
+        "inputSchema": {
+            "type": "object", "properties": {"content": {"type": "string"}},
+            "required": ["content"], "additionalProperties": False,
+        },
+    },
 ]
 
 

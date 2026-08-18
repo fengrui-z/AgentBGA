@@ -8,6 +8,7 @@ from typing import Any, Callable
 
 from .agents import AgentError, HARNESS_BACKENDS, PlayerConfig, build_model_agent, random_choice
 from .harness import build_harness_agent
+from .minimal_harness import build_minimal_agent
 from .store import Store
 
 
@@ -77,9 +78,15 @@ def run_match(
             if sink:
                 sink(enriched)
 
-        model_agents[harness_seat] = build_harness_agent(
-            harness_config, match_id, harness_seat, event_sink=harness_sink,
-        )
+        if harness_config.backend == "minimal":
+            model_agents[harness_seat] = build_minimal_agent(
+                harness_config, match_id, harness_seat, event_sink=harness_sink,
+                game_id=game.game_id,
+            )
+        else:
+            model_agents[harness_seat] = build_harness_agent(
+                harness_config, match_id, harness_seat, event_sink=harness_sink,
+            )
 
     setup_decision_limit = state.get("player_count", 0) * 2
     while state["status"] == "active":

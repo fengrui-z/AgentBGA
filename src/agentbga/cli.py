@@ -151,7 +151,11 @@ def execute(args: argparse.Namespace) -> int:
                 key_required = player.backend not in {"random", "human"}
                 key_configured = not key_required or bool(os.environ.get(player.api_key_env or ""))
                 harness_required = player.backend in HARNESS_BACKENDS
-                harness_executable = not harness_required or bool(shutil.which(player.backend))
+                # "minimal" runs in-process (no external binary needed)
+                if player.backend == "minimal":
+                    harness_executable = True
+                else:
+                    harness_executable = not harness_required or bool(shutil.which(player.backend))
                 player_checks.append({
                     "seat": seat, **player.public_dict(),
                     "api_key_configured": key_configured,

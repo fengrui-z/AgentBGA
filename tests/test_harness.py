@@ -61,7 +61,7 @@ class HarnessTests(unittest.TestCase):
                 call_tool(path, "submit_action", {"action_id": "a-good"})
 
     def test_mcp_exposes_only_seat_tools(self):
-        self.assertEqual({"observe", "legal_actions", "submit_action"}, {tool["name"] for tool in TOOLS})
+        self.assertEqual({"observe", "legal_actions", "submit_action", "read_notes", "write_notes"}, {tool["name"] for tool in TOOLS})
 
     def test_mcp_stdio_initialize_and_tool_list(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -80,7 +80,7 @@ class HarnessTests(unittest.TestCase):
             )
             responses = [json.loads(line) for line in completed.stdout.splitlines()]
             self.assertEqual("agentbga-seat", responses[0]["result"]["serverInfo"]["name"])
-            self.assertEqual(3, len(responses[1]["result"]["tools"]))
+            self.assertEqual(5, len(responses[1]["result"]["tools"]))
 
     def test_harness_commands_resume_sessions(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", side_effect=lambda name: f"/bin/{name}"):
