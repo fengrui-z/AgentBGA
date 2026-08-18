@@ -97,7 +97,7 @@ class DirectGameAgent:
     backend = "minimal"
 
     def __init__(self, config: PlayerConfig, match_id: str, seat: int, *,
-                 timeout: float = 600, max_context_tokens: int = 100000,
+                 timeout: float = 600,
                  keep_recent: int = 10, runs_root: str | Path | None = None,
                  features: HarnessFeatures | None = None,
                  game_id: str | None = None):
@@ -105,7 +105,6 @@ class DirectGameAgent:
         self.match_id = match_id
         self.seat = seat
         self.timeout = timeout
-        self.max_context_tokens = max_context_tokens
         self.keep_recent = keep_recent
         self.features = features or HarnessFeatures.baseline()
         self.profile: GameProfile | None = get_profile(game_id) if game_id else None
@@ -142,15 +141,29 @@ class DirectGameAgent:
     # ── context compaction ──
 
     def _maybe_compact(self) -> None:
-        total = sum(_approx_tokens(m.get("content", "")) for m in self._messages if isinstance(m.get("content"), str))
-        if total <= self.max_context_tokens:
+        """Compact old messages when the semantic_compaction feature is enabled
+        and the conversation exceeds the LLM's context window.
+
+        Default behaviour (feature off): no compaction — context grows
+        unbounded until the LLM API itself rejects it. This is the true
+        baseline: zero harness intervention on context.
+        """
+        if not self.features.semantic_compaction:
             return
-        # Keep system + last keep_recent*4 messages (each turn ≈ 4 messages:
-        # user, assistant, tool, assistant).
-        keep = max(self.keep_recent * 4, 8)
+        # Accurate token estimate: include content + reasoning_content + tool_calls
+        total = 0
+        for m in self._messages:
+            total += _approx_tokens(m.get("content", "") or "")
+            total += _approx_tokens(m.get("reasoning_content", "") or "")
+            for tc in m.get("tool_calls", []):
+                total += _approx_tokens(tc.get("function", {}).get("arguments", ""))
+        # Default threshold: 100K (well within most LLM context windows)
+        if total <= 100000:
+            return
+        keep = max(self.keep_recent * 6, 12)
         if len(self._messages) <= keep:
             return
-        old = self._messages[1:-keep]  # skip system prompt
+        old = self._messages[1:-keep]
         compacted = self._summarize_turns(old)
         self._messages = [self._messages[0], {"role": "system", "content": compacted}] + self._messages[-keep:]
 
@@ -668,6 +681,7 @@ class DirectGameAgent:
 
         return {
             "content": "".join(content_parts),
+            "reasoning_content": "".join(reasoning_parts),
             "tool_calls": tool_calls,
             "usage": usage,
             "model": model_name,
@@ -749,7 +763,13 @@ class DirectGameAgent:
                 # Build the assistant message. If the LLM returned tool_calls,
                 # the message MUST include both content and tool_calls so that
                 # subsequent "tool" role messages are valid per the API spec.
+                # DeepSeek reasoning models put thinking in reasoning_content;
+                # storing it in the session lets the LLM see its own prior
+                # reasoning on subsequent turns (cross-turn memory).
                 assistant_msg: dict[str, Any] = {"role": "assistant", "content": response["content"]}
+                reasoning = response.get("reasoning_content", "")
+                if reasoning:
+                    assistant_msg["reasoning_content"] = reasoning
                 if response["tool_calls"]:
                     assistant_msg["tool_calls"] = [
                         {"id": tc.get("id", ""), "type": "function",
@@ -762,6 +782,11 @@ class DirectGameAgent:
                     self._trace_steps.append({
                         "role": "assistant", "channel": "content",
                         "text": response["content"],
+                    })
+                if reasoning:
+                    self._trace_steps.append({
+                        "role": "assistant", "channel": "reasoning",
+                        "text": reasoning,
                     })
 
                 tool_calls = response["tool_calls"]
