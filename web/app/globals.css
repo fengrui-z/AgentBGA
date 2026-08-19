@@ -15,6 +15,10 @@ button { cursor:pointer; }
 .hero h1 { margin:0; max-width:620px; font-family:Georgia,serif; font-weight:400; font-size:clamp(52px,6vw,92px); line-height:.95; letter-spacing:-.055em; }
 .hero h1 i { color:#f1c75b; font-weight:400; }
 .hero p { max-width:530px; margin:34px 0 48px; color:#d4e1db; font-size:16px; line-height:1.75; }
+.lang-toggle { position:absolute; top:24px; right:24px; z-index:5; border:2px solid var(--px-border); border-radius:0; background:var(--cream); color:var(--ink); padding:8px 14px; font:700 12px ui-monospace,monospace; letter-spacing:.06em; box-shadow:3px 3px 0 var(--px-shadow); transition:transform .1s; }
+.lang-toggle:hover { background:#f1c75b; }
+.lang-toggle:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--px-shadow); }
+.table-header .lang-toggle { position:static; box-shadow:2px 2px 0 var(--px-shadow); padding:8px 12px; }
 .hero-marks { display:flex; gap:8px; flex-wrap:wrap; }
 .hero-marks span { border:1px solid #55776d; border-radius:999px; padding:9px 14px; font-size:12px; }
 .setup-card { margin:auto; width:min(94%,920px); padding:48px 0; }
