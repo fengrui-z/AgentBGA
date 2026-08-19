@@ -5,7 +5,8 @@ import { useMemo, useRef, useState } from "react";
 type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "dsh" | "minimal" | "human" | "random";
 type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "dsh" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
 type GameId = "splendor" | "ark_nova" | "brass_birmingham" | "century_spice_road";
-type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string };
+type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "max" | "xhigh";
+type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string; reasoning_effort: ReasoningEffort };
 type Card = { id: string; tier: number; bonus: string; points: number; cost: Record<string, number> };
 type PlayerView = {
   seat: number; tokens: Record<string, number>; bonuses: Record<string, number>; score: number;
@@ -112,7 +113,7 @@ const SPICE_META: Record<SpiceName, {label: string; short: string}> = {
   cardamom: {label: "豆蔻", short: "绿"}, cinnamon: {label: "肉桂", short: "褐"},
 };
 const GAME_COPY: Record<GameId, {eyebrow: string; name: string; description: string; badge: string; note: string}> = {
-  splendor: {eyebrow: "SPLENDOR", name: "璀璨宝石", description: "配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；所有 Agent Harness 固定使用最高思考强度。", badge: "PLAYABLE", note: "完整基础版引擎"},
+  splendor: {eyebrow: "SPLENDOR", name: "璀璨宝石", description: "配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；每个 Agent Harness 都可独立设置思考强度。", badge: "PLAYABLE", note: "完整基础版引擎"},
   ark_nova: {eyebrow: "ARK NOVA", name: "方舟动物园", description: "在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。", badge: "CONTROLLED CORE V2", note: "升级 · 捐款 · 释放 · 效果系统"},
   brass_birmingham: {eyebrow: "BRASS: BIRMINGHAM", name: "伯明翰", description: "测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。", badge: "PLAYABLE BETA", note: "产业 · 网络 · 双时代经济"},
   century_spice_road: {eyebrow: "CENTURY: SPICE ROAD", name: "香料之路", description: "经营自己的商队：获取商人牌、升级或交换香料、争夺金币银币，并抢先完成高分订单。支持 2–5 名玩家。", badge: "CLASSIC BASE", note: "商人牌 · 香料引擎 · 订单竞速"},
@@ -130,11 +131,18 @@ const BACKENDS: Record<Backend, {label: string; url: string; key: string; model:
   human: { label: "人类玩家", url: "", key: "", model: "" },
   random: { label: "随机基线", url: "", key: "", model: "" },
 };
+const HARNESS_BACKENDS = new Set<Backend>(["claude", "pi", "codex", "opencode", "dsh", "minimal"]);
+const REASONING_OPTIONS: {value: ReasoningEffort; label: string}[] = [
+  {value: "none", label: "关闭"}, {value: "minimal", label: "Minimal"},
+  {value: "low", label: "Low"}, {value: "medium", label: "Medium"},
+  {value: "high", label: "High"}, {value: "max", label: "Max"},
+  {value: "xhigh", label: "XHigh"},
+];
 const PROVIDERS: Record<Provider, {label: string; backend: Backend; url: string; models: string[]; note: string}> = {
   custom: {label: "自定义 / 代理平台", backend: "openai", url: "", models: [], note: "手动填写协议、Endpoint 和模型 ID"},
   claude_code: {label: "Claude Code", backend: "claude", url: "https://api.anthropic.com", models: ["claude-sonnet-4-6", "claude-opus-4-6"], note: "Claude Code 持久 session + 座位隔离 MCP"},
   pi: {label: "Pi", backend: "pi", url: "https://api.openai.com/v1", models: ["gpt-5.6"], note: "Pi 持久 session + AgentBGA 专用工具扩展；兼容自定义 OpenAI Endpoint"},
-  codex: {label: "Codex", backend: "codex", url: "https://api.openai.com/v1", models: ["gpt-5.6", "gpt-5.6-terra", "gpt-5.3-codex"], note: "Codex 持久 session + 座位隔离 MCP；自定义 Endpoint 自动使用兼容协议"},
+  codex: {label: "Codex", backend: "codex", url: "https://api.openai.com/v1", models: ["gpt-5.6", "gpt-5.6-terra", "gpt-5.3-codex"], note: "Codex 持久 session + 座位隔离 MCP；自定义 Endpoint 必须支持 Responses API"},
   opencode: {label: "OpenCode", backend: "opencode", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: "OpenCode 持久 session + 座位隔离 MCP"},
   dsh: {label: "DeepSeek Harness", backend: "dsh", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: "DeepSeek Harness (dsh) headless + 座位隔离 MCP；每回合独立 session，workspace 笔记持久"},
   minimal: {label: "Minimal Harness", backend: "minimal", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: "纯 Python minimal harness；直接 LLM API + 5 工具；无外部进程，认知干预可配置"},
@@ -145,18 +153,27 @@ const PROVIDERS: Record<Provider, {label: string; backend: Backend; url: string;
 };
 
 function player(seed: number, backend: Backend = "openai"): PlayerForm {
-  return { id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "custom", backend, model: "", base_url: BACKENDS[backend].url, api_key: "" };
+  return { id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "custom", backend, model: "", base_url: BACKENDS[backend].url, api_key: "", reasoning_effort: "max" };
 }
 
-function deepseekHarnessPlayer(seed: number, backend: "opencode" | "codex" | "dsh" | "minimal"): PlayerForm {
+function deepseekHarnessPlayer(seed: number, backend: "opencode" | "dsh" | "minimal"): PlayerForm {
   return {
     id: crypto.randomUUID(), name: `Agent ${seed}`, provider: backend, backend,
     model: "deepseek-v4-flash", base_url: "https://api.deepseek.com", api_key: "",
+    reasoning_effort: "max",
+  };
+}
+
+function codexHarnessPlayer(seed: number): PlayerForm {
+  return {
+    id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "codex", backend: "codex",
+    model: "gpt-5.6", base_url: "https://api.openai.com/v1", api_key: "",
+    reasoning_effort: "max",
   };
 }
 
 function humanPlayer(seed: number): PlayerForm {
-  return {id: crypto.randomUUID(), name: seed === 1 ? "你" : `玩家 ${seed}`, provider: "custom", backend: "human", model: "", base_url: "", api_key: ""};
+  return {id: crypto.randomUUID(), name: seed === 1 ? "你" : `玩家 ${seed}`, provider: "custom", backend: "human", model: "", base_url: "", api_key: "", reasoning_effort: "max"};
 }
 
 function api(path: string) { return path; }
@@ -187,7 +204,7 @@ function PlayerPanel({player: p, identity, active}: {player: PlayerView; identit
       <div><span className="seat-label">座位 {p.seat + 1}</span><h3>{identity?.name || `Agent ${p.seat + 1}`}</h3></div>
       <div className="score"><strong>{p.score}</strong><span>声望</span></div>
     </header>
-    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>思考：最高</b>}</div>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>思考：{identity.reasoning_effort}</b>}</div>
     <div className="asset-row"><span className="asset-title">宝石</span><div>{GEM_ORDER.map(c => <Gem key={c} color={c} value={p.tokens[c]} compact />)}</div></div>
     <div className="asset-row"><span className="asset-title">引擎</span><div>{BONUS_ORDER.map(c => <Gem key={c} color={c} value={p.bonuses[c]} compact />)}</div></div>
     <div className="owned-head"><span>已购发展牌</span><b>{p.purchased_count}</b></div>
@@ -232,7 +249,7 @@ function CenturyPlayerPanel({player: p, identity, active}: {player: CenturyPlaye
   const caravanTotal = Object.values(p.spices).reduce((sum, value) => sum + value, 0);
   return <section className={`player-panel century-player-panel ${active ? "active-player" : ""}`}>
     <header><div><span className="seat-label">座位 {p.seat + 1}</span><h3>{identity?.name || `玩家 ${p.seat + 1}`}</h3></div><div className="century-score"><strong>{p.score}</strong><span>VP</span></div></header>
-    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}</div>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>思考：{identity.reasoning_effort}</b>}</div>
     <div className="century-caravan"><header><span>商队香料</span><b>{caravanTotal}/10</b></header><Spices pool={p.spices}/></div>
     <div className="century-assets"><span>金币 <b>{p.coins.gold}</b></span><span>银币 <b>{p.coins.silver}</b></span><span>订单 <b>{p.point_cards.length}</b></span></div>
     <div className="century-hand-head"><span>可用商人牌</span><b>{p.hand.length}</b><small>已打出 {p.played.length}</small></div>
@@ -459,7 +476,7 @@ function ArkZooMap({map}: {map: ArkMap}) {
 function ArkPlayerPanel({player: p, identity}: {player: ArkPlayerView; identity?: Snapshot["players"][number]}) {
   return <section className="player-panel ark-player-panel">
     <header><div><span className="seat-label">座位 {p.seat + 1}</span><h3>{identity?.name || `玩家 ${p.seat + 1}`}</h3></div><div className="ark-money"><strong>{p.money}</strong><span>₡</span></div></header>
-    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}</div>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>思考：{identity.reasoning_effort}</b>}</div>
     <div className="ark-mini-tracks"><span>吸引力 <b>{p.appeal}</b></span><span>保育 <b>{p.conservation}</b></span><span>声望 <b>{p.reputation}</b></span></div>
     <div className="ark-worker-row"><span>X TOKEN <b>{p.x_tokens}/5</b></span><span>协会工人 <b>{p.association_workers.active}</b> + {p.association_workers.reserve}</span></div>
     <div className="ark-actions">{[...p.action_cards].sort((a, b) => b.strength - a.strength).map(card => <div key={card.action} className={`ark-action action-${card.action}`}><b>{card.strength}</b><span>{ARK_ACTION_LABELS[card.action]}</span>{card.upgraded && <i>Ⅱ</i>}</div>)}</div>
@@ -508,7 +525,7 @@ function brassIncomeLevel(position: number) {
 function BrassPlayerPanel({player: p, identity, active}: {player: BrassPlayerView; identity?: Snapshot["players"][number]; active: boolean}) {
   return <section className={`player-panel brass-player-panel ${active ? "active-player" : ""}`}>
     <header><div><span className="seat-label">座位 {p.seat + 1}</span><h3>{identity?.name || `玩家 ${p.seat + 1}`}</h3></div><div className="brass-vp"><strong>{p.vp}</strong><span>VP</span></div></header>
-    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}</div>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>思考：{identity.reasoning_effort}</b>}</div>
     <div className="brass-economy"><span>现金 <b>£{p.money}</b></span><span>收入 <b>{brassIncomeLevel(p.income_position)}</b></span><span>本轮支出 <b>£{p.spent_this_round}</b></span></div>
     <div className="brass-hand"><span>手牌 <b>{p.hand_count}</b></span><span>万能地点 <b>{p.wild_cards.location}</b></span><span>万能产业 <b>{p.wild_cards.industry}</b></span></div>
     {p.hand.some(card => !card.hidden) && <div className="brass-hand-cards">{p.hand.map((card, index) => <span key={card.id || index} title={card.id}><b>{brassCardLabel(card)}</b><small>{card.id}</small></span>)}</div>}
@@ -566,7 +583,7 @@ export default function Home() {
   const [game, setGame] = useState<GameId>("splendor");
   const [players, setPlayers] = useState<PlayerForm[]>([
     deepseekHarnessPlayer(1, "opencode"),
-    deepseekHarnessPlayer(2, "codex"),
+    codexHarnessPlayer(2),
   ]);
   const [seed, setSeed] = useState("42");
   const [speed, setSpeed] = useState(650);
@@ -621,7 +638,7 @@ export default function Home() {
 
   function setMatchup(kind: "human" | "harness") {
     setPlayers(kind === "human" ? [humanPlayer(1), deepseekHarnessPlayer(2, "opencode")] : [
-      deepseekHarnessPlayer(1, "opencode"), deepseekHarnessPlayer(2, "codex"),
+      deepseekHarnessPlayer(1, "opencode"), codexHarnessPlayer(2),
     ]);
   }
 
@@ -636,6 +653,7 @@ export default function Home() {
       ...p, provider, backend: provider === "custom" ? p.backend : preset.backend,
       base_url: provider === "custom" ? p.base_url : preset.url,
       model: provider === "custom" ? p.model : preset.models[0],
+      reasoning_effort: preset.backend === "codex" && p.reasoning_effort === "none" ? "max" : p.reasoning_effort,
     } : p));
   }
 
@@ -650,6 +668,7 @@ export default function Home() {
           players: players.map(p => ({
             name: p.name, backend: p.backend, model: p.model,
             base_url: p.base_url, api_key: p.api_key,
+            ...(HARNESS_BACKENDS.has(p.backend) ? {reasoning_effort: p.reasoning_effort} : {}),
           })),
         }),
       });
@@ -751,6 +770,7 @@ export default function Home() {
           <div className="field grow endpoint-field"><label htmlFor={`${p.id}-endpoint`}>Endpoint</label><input id={`${p.id}-endpoint`} value={p.base_url} onChange={e => updatePlayer(p.id, {provider: "custom", base_url: e.target.value})}/></div>
           <div className="field model-field"><label htmlFor={`${p.id}-model`}>模型名</label><input id={`${p.id}-model`} list={`${p.id}-models`} placeholder="可选择或输入 model-id" value={p.model} onChange={e => updatePlayer(p.id, {model: e.target.value})}/><datalist id={`${p.id}-models`}>{PROVIDERS[p.provider].models.map(model => <option key={model} value={model}/>)}</datalist></div>
           <div className="field key-field"><label htmlFor={`${p.id}-key`}>API Key</label><input id={`${p.id}-key`} type="password" autoComplete="off" placeholder="仅在本次对局使用" value={p.api_key} onChange={e => updatePlayer(p.id, {api_key: e.target.value})}/></div>
+          {HARNESS_BACKENDS.has(p.backend) && <div className="field reasoning-field"><label htmlFor={`${p.id}-reasoning`}>Reasoning Effort</label><select id={`${p.id}-reasoning`} value={p.reasoning_effort} onChange={e => updatePlayer(p.id, {reasoning_effort: e.target.value as ReasoningEffort})}>{REASONING_OPTIONS.filter(option => p.backend !== "codex" || option.value !== "none").map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>}
           <div className="provider-note">{PROVIDERS[p.provider].note}</div>
         </>}
         {(["random", "human"] as Backend[]).includes(p.backend) && <div className="field manual-backend"><label htmlFor={`${p.id}-backend`}>运行方式</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).map(([id, b]) => <option key={id} value={id}>{b.label}</option>)}</select><small>{p.backend === "human" ? "轮到该座位时在牌桌上操作" : "无需 API，自动随机行动"}</small></div>}

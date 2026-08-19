@@ -32,7 +32,8 @@ button { cursor:pointer; }
 .player-config .endpoint-field { grid-column:2 / span 2; }
 .player-config .key-field { grid-column:2 / span 2; }
 .player-config .model-field { grid-column:4; }
-.provider-note { grid-column:4;align-self:center;color:#777b74;font-size:10px;line-height:1.4; }
+.player-config .reasoning-field { grid-column:4; }
+.provider-note { grid-column:2 / -1;align-self:center;color:#777b74;font-size:10px;line-height:1.4; }
 .manual-backend{grid-column:3 / span 2}.manual-backend small{color:#777;font-size:10px}
 .remove { position:absolute; right:0; top:32px; border:0; background:transparent; color:#8e9189; font-size:25px; }
 .setup-actions { display:flex; align-items:end; gap:14px; margin-top:25px; }
