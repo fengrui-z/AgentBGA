@@ -20,6 +20,7 @@ const STR: Record<Lang, Dict> = {
     f_model: "模型名", f_key: "API Key", f_seed: "Seed", f_speed: "每步间隔",
     og_harness: "Agent Harness", og_direct: "直连模型 API",
     ph_model: "可选择或输入 model-id", ph_key: "仅在本次对局使用",
+    ph_endpoint: "如 http://127.0.0.1:8000/v1（本地模型 / 网关）",
     add_human: "＋ 添加人类", add_ai: "＋ 添加 AI / 基线", shuffle: "⤨ 随机座次",
     start: "开始对局 →", starting: "正在入席…", err_start: "无法启动对局",
     human_note: "轮到该座位时在牌桌上操作", random_note: "无需 API，自动随机行动",
@@ -96,6 +97,7 @@ const STR: Record<Lang, Dict> = {
     f_model: "Model id", f_key: "API key", f_seed: "Seed", f_speed: "Step interval",
     og_harness: "Agent Harness", og_direct: "Direct model API",
     ph_model: "Pick or type model-id", ph_key: "Used for this match only",
+    ph_endpoint: "e.g. http://127.0.0.1:8000/v1 (local model / gateway)",
     add_human: "+ Add human", add_ai: "+ Add AI / baseline", shuffle: "⤨ Shuffle seats",
     start: "Start match →", starting: "Seating…", err_start: "Failed to start match",
     human_note: "Play at the table when it's this seat's turn", random_note: "No API needed, random actions",
@@ -285,7 +287,7 @@ const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: 
   random: { label: {zh: "随机基线", en: "Random baseline"}, url: "", key: "", model: "" },
 };
 const PROVIDERS: Record<Provider, {label: Record<Lang,string>; backend: Backend; url: string; models: string[]; note: Record<Lang,string>}> = {
-  custom: {label: {zh:"自定义 / 代理平台",en:"Custom / gateway"}, backend: "openai", url: "", models: [], note: {zh:"手动填写协议、Endpoint 和模型 ID",en:"Fill in protocol, endpoint and model ID manually"}},
+  custom: {label: {zh:"自定义 / 本地模型",en:"Custom / Local"}, backend: "openai", url: "", models: [], note: {zh:"网关代理、本地模型、特殊 endpoint：手动填 Endpoint + 模型 ID。运行时选对应的执行方式",en:"Gateway, local model, or special endpoint: enter endpoint + model ID. Pick the runtime separately"}},
   claude_code: {label: {zh:"Claude Code",en:"Claude Code"}, backend: "claude", url: "https://api.anthropic.com", models: ["claude-sonnet-4-6", "claude-opus-4-6"], note: {zh:"Claude Code 持久 session + 座位隔离 MCP",en:"Persistent session + seat-isolated MCP"}},
   pi: {label: {zh:"Pi",en:"Pi"}, backend: "pi", url: "https://api.openai.com/v1", models: ["gpt-5.6"], note: {zh:"Pi 持久 session + AgentBGA 专用工具扩展；兼容自定义 OpenAI Endpoint",en:"Persistent session + AgentBGA tool extension; any OpenAI-compatible endpoint"}},
   codex: {label: {zh:"Codex",en:"Codex"}, backend: "codex", url: "https://api.openai.com/v1", models: ["gpt-5.6", "gpt-5.6-terra", "gpt-5.3-codex"], note: {zh:"Codex 持久 session + 座位隔离 MCP；自定义 Endpoint 自动使用兼容协议",en:"Persistent session + seat-isolated MCP; custom endpoint auto-compatible"}},
@@ -962,7 +964,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         {!(["random", "human"] as Backend[]).includes(p.backend) && <>
           <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>{t("f_provider")}</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label={t("og_harness")}>{(["claude_code", "pi", "codex", "opencode", "dsh", "minimal"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup><optgroup label={t("og_direct")}>{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup></select></div>
           <div className="field backend-field"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).filter(([id]) => id !== "random").map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select></div>
-          <div className="field grow endpoint-field"><label htmlFor={`${p.id}-endpoint`}>{t("f_endpoint")}</label><input id={`${p.id}-endpoint`} value={p.base_url} onChange={e => updatePlayer(p.id, {provider: "custom", base_url: e.target.value})}/></div>
+          <div className="field grow endpoint-field"><label htmlFor={`${p.id}-endpoint`}>{t("f_endpoint")}</label><input id={`${p.id}-endpoint`} value={p.base_url} placeholder={t("ph_endpoint")} onChange={e => updatePlayer(p.id, {provider: "custom", base_url: e.target.value})}/></div>
           <div className="field model-field"><label htmlFor={`${p.id}-model`}>{t("f_model")}</label><input id={`${p.id}-model`} list={`${p.id}-models`} placeholder={t("ph_model")} value={p.model} onChange={e => updatePlayer(p.id, {model: e.target.value})}/><datalist id={`${p.id}-models`}>{PROVIDERS[p.provider].models.map(model => <option key={model} value={model}/>)}</datalist></div>
           <div className="field key-field"><label htmlFor={`${p.id}-key`}>{t("f_key")}</label><input id={`${p.id}-key`} type="password" autoComplete="off" placeholder={t("ph_key")} value={p.api_key} onChange={e => updatePlayer(p.id, {api_key: e.target.value})}/></div>
           <div className="provider-note">{PROVIDERS[p.provider].note[lang]}</div>
