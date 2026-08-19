@@ -88,7 +88,7 @@ type Snapshot = {
 type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
   type: string; player?: string; seat?: number; error?: string; turns?: number;
-  backend?: string; agent?: {latency_ms?: number}; action?: Record<string, unknown>;
+  backend?: string; agent?: {latency_ms?: number; action_latency_ms?: number; process_latency_ms?: number}; action?: Record<string, unknown>;
   rankings?: {player: string}[]; channel?: "reasoning" | "content"; delta?: string; attempt?: number; version?: number;
   harness?: string; tool?: string; arguments?: unknown; result?: unknown; action_id?: string;
 };
@@ -96,7 +96,7 @@ type Timeline = { seq: number; event: TimelineEvent; snapshot?: Snapshot };
 type ChatTurn = {
   key: string; seat: number; player: string; backend: string; attempt: number;
   reasoning: string; content: string; status: "thinking" | "done" | "error";
-  startedAt: number; latencyMs?: number;
+  startedAt: number; actionLatencyMs?: number; processLatencyMs?: number;
 };
 
 const GEM_ORDER = ["red", "green", "white", "blue", "black", "gold"] as const;
@@ -684,7 +684,8 @@ export default function Home() {
             const actual = current.length - 1 - index;
             return current.map((turn, i) => i === actual ? {...turn,
               status: event.type === "agent_error" ? "error" : "done",
-              latencyMs: event.agent?.latency_ms,
+              actionLatencyMs: event.agent?.action_latency_ms,
+              processLatencyMs: event.agent?.process_latency_ms ?? event.agent?.latency_ms,
               content: event.type === "agent_error" && !turn.content ? event.error || "调用失败" : turn.content,
             } : turn);
           });
@@ -808,14 +809,14 @@ export default function Home() {
       <aside className="timeline">
         <header><div><span>MODEL STREAM</span><h2>模型 Chat</h2></div><i className={snapshot.status === "active" && (!snapshot.paused || snapshot.pause_pending) ? "pulse" : ""}/></header>
         <div className="chat-list">{chat.length === 0 && <p className="waiting">{snapshot.game_description.runnable ? "等待模型开始思考…" : "当前里程碑不启动模型；这里将在行动状态机接通后显示思考、工具调用与回复。"}</p>}{chat.map(turn => <article className={`chat-turn chat-${turn.status}`} key={turn.key}>
-          <header><strong>{turn.player}</strong><span>{turn.backend} · 尝试 {turn.attempt}{turn.status === "thinking" ? " · 生成中" : turn.latencyMs ? ` · ${(turn.latencyMs / 1000).toFixed(1)}s` : ""}</span></header>
+          <header><strong>{turn.player}</strong><span>{turn.backend} · 尝试 {turn.attempt}{turn.status === "thinking" ? " · 生成中" : turn.processLatencyMs !== undefined ? ` · 行动 ${((turn.actionLatencyMs ?? turn.processLatencyMs) / 1000).toFixed(1)}s · 进程 ${(turn.processLatencyMs / 1000).toFixed(1)}s` : ""}</span></header>
           {turn.reasoning && <details open><summary>思考过程{turn.status === "done" ? " · 可折叠" : ""}</summary><pre>{turn.reasoning}</pre></details>}
           {turn.content && <div className="model-answer"><b>回复</b><pre>{turn.content}</pre></div>}
           {turn.status === "thinking" && <div className="typing"><i/><i/><i/></div>}
         </article>)}</div>
         <section className="action-drawer"><header><span>ACTIONS</span><strong>决策记录</strong><b>{timeline.filter(item => ["decision", "turn"].includes(item.event.type)).length}</b></header>
           <div>{[...timeline].reverse().filter(item => !["agent_started", "agent_finished"].includes(item.event.type)).slice(0, 40).map(item => <article key={item.seq} className={`event event-${item.event.type}`}>
-            <span>{String(item.seq + 1).padStart(3,"0")}</span><div><p>{describeAction(item, names)}</p>{item.event.backend && <small>{item.event.backend}{item.event.agent?.latency_ms ? ` · ${item.event.agent.latency_ms}ms` : ""}</small>}
+            <span>{String(item.seq + 1).padStart(3,"0")}</span><div><p>{describeAction(item, names)}</p>{item.event.backend && <small>{item.event.backend}{item.event.agent?.process_latency_ms !== undefined ? ` · action ${item.event.agent.action_latency_ms ?? "—"}ms · process ${item.event.agent.process_latency_ms}ms` : item.event.agent?.latency_ms ? ` · ${item.event.agent.latency_ms}ms` : ""}</small>}
               {item.event.tool && (item.event.arguments !== undefined || item.event.result !== undefined) && <details className="tool-payload"><summary>查看工具数据</summary><pre>{JSON.stringify(item.event.result ?? item.event.arguments, null, 2)}</pre></details>}
             </div>
           </article>)}</div>

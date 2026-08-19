@@ -228,6 +228,9 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("a-test", action_id)
             self.assertEqual("persistent-session", metadata["session_id"])
             self.assertEqual("max", metadata["reasoning_effort"])
+            self.assertIsNotNone(metadata["action_latency_ms"])
+            self.assertGreaterEqual(metadata["process_latency_ms"], 0)
+            self.assertEqual(metadata["process_latency_ms"], metadata["latency_ms"])
             self.assertEqual(3, len([event for event in events if event["type"] == "harness_tool_call"]))
             self.assertTrue((agent.session.workspace / ".codex" / "config.toml").is_file())
             self.assertIn('model_reasoning_effort = "max"', (agent.session.workspace / ".codex" / "config.toml").read_text())
@@ -290,6 +293,10 @@ class HarnessTests(unittest.TestCase):
             self.assertIn("seat 0", trace["prompt"]["user"])
             self.assertEqual("a-test", trace["prompt"]["legal_actions"][0]["id"])
             self.assertEqual("a-test", trace["submission"]["action_id"])
+            self.assertIsNotNone(trace["action_latency_ms"])
+            self.assertGreaterEqual(trace["process_latency_ms"], trace["action_latency_ms"])
+            self.assertEqual(trace["process_latency_ms"], trace["latency_ms"])
+            self.assertFalse(Path(trace["trace_file"]).is_absolute())
             # The observe and legal_actions tool calls were not sighted in the
             # stream, so they are appended from the audit log with results.
             tools_seen = [step for step in trace["steps"] if step.get("role") == "tool_call"]
@@ -320,6 +327,22 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("error", trace["status"])
             self.assertEqual("boom", trace["error"])
             self.assertIsNone(trace["submission"])
+
+    def test_harness_writes_trace_on_timeout(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/fake"):
+            config = PlayerConfig.from_dict({
+                "name": "Codex", "backend": "codex", "model": "gpt-test",
+            }, 0)
+            agent = HarnessAgent(config, "timeout-match", 0, runs_root=directory)
+            with mock.patch.object(agent, "_run", side_effect=AgentError("codex harness timed out after 1s")):
+                with self.assertRaisesRegex(AgentError, "timed out"):
+                    agent.choose({"turn_count": 2, "state_version": 2}, LEGAL)
+            trace_path = Path(directory) / "_traces" / "timeout-match" / "seat-0" / "turn-0002.json"
+            trace = json.loads(trace_path.read_text(encoding="utf-8"))
+            self.assertEqual("error", trace["status"])
+            self.assertIn("timed out", trace["error"])
+            self.assertGreaterEqual(trace["process_latency_ms"], 0)
+            self.assertFalse(Path(trace["trace_file"]).is_absolute())
 
 
 if __name__ == "__main__":

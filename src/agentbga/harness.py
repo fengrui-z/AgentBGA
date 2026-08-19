@@ -567,8 +567,9 @@ class HarnessAgent:
 
     def _write_trace(
         self, *, prompt: str, observation: dict[str, Any],
-        legal: list[dict[str, Any]], version: Any, started: float,
-        status: str, action_id: str | None, error: str | None,
+        legal: list[dict[str, Any]], version: Any,
+        status: str, error: str | None,
+        action_latency_ms: float | None, process_latency_ms: float,
     ) -> None:
         """Persist one ordered per-turn trace: prompt → assistant/tool steps → submission."""
         context_path = self.session.runtime / "turn-context.json"
@@ -619,7 +620,11 @@ class HarnessAgent:
             "reasoning_effort": self.config.reasoning_effort,
             "version": version,
             "session_id": self.session.session_id,
-            "latency_ms": round((time.monotonic() - started) * 1000, 3),
+            # Keep latency_ms as a compatibility alias for the total process
+            # latency while exposing time-to-action separately.
+            "latency_ms": process_latency_ms,
+            "action_latency_ms": action_latency_ms,
+            "process_latency_ms": process_latency_ms,
             "status": status,
             "error": error,
             "prompt": {
@@ -630,12 +635,31 @@ class HarnessAgent:
             },
             "steps": steps,
             "submission": submission,
-            "trace_file": str(self.trace_dir / f"turn-{_version_key(version):04d}.json"),
+            "trace_file": str(
+                (self.trace_dir / f"turn-{_version_key(version):04d}.json")
+                .relative_to(self.trace_dir.parents[2])
+            ),
         }
         target = self.trace_dir / f"turn-{_version_key(version):04d}.json"
         target.write_text(
             json.dumps(trace, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
         )
+
+    @staticmethod
+    def _action_latency_ms(submission_path: Path, started_wall: float) -> float | None:
+        """Measure time to accepted submit_action independently of CLI shutdown."""
+        if not submission_path.is_file():
+            return None
+        audit_path = submission_path.with_name("tool-events.jsonl")
+        if audit_path.is_file():
+            for line in audit_path.read_text(encoding="utf-8").splitlines():
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if row.get("tool") == "submit_action" and isinstance(row.get("created_at"), (int, float)):
+                    return round(max(0.0, row["created_at"] - started_wall) * 1000, 3)
+        return round(max(0.0, submission_path.stat().st_mtime - started_wall) * 1000, 3)
 
     def choose(
         self, observation: dict[str, Any], legal: list[dict[str, Any]],
@@ -649,8 +673,24 @@ class HarnessAgent:
         )
         version = observation.get("state_version", observation.get("turn_count"))
         started = time.monotonic()
+        started_wall = time.time()
         self._trace_steps = []
-        raw, stderr, returncode = self._run(self._command(prompt))
+        try:
+            raw, stderr, returncode = self._run(self._command(prompt))
+        except AgentError as error:
+            process_latency_ms = round((time.monotonic() - started) * 1000, 3)
+            action_latency_ms = self._action_latency_ms(submission_path, started_wall)
+            self._emit_tool_audit()
+            detail = self._redact_text(str(error))
+            self._emit("harness_error", error=detail)
+            self._write_trace(
+                prompt=prompt, observation=observation, legal=legal, version=version,
+                status="error", error=detail,
+                action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
+            )
+            raise
+        process_latency_ms = round((time.monotonic() - started) * 1000, 3)
+        action_latency_ms = self._action_latency_ms(submission_path, started_wall)
         self._emit_tool_audit()
         if returncode != 0:
             detail = stderr[-1000:] or raw[-1000:]
@@ -658,7 +698,8 @@ class HarnessAgent:
             self._emit("harness_error", error=detail, exit_code=returncode)
             self._write_trace(
                 prompt=prompt, observation=observation, legal=legal, version=version,
-                started=started, status="error", action_id=None, error=detail,
+                status="error", error=detail,
+                action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
             )
             raise AgentError(f"{self.config.backend} harness exited {returncode}: {detail}")
         submission = None
@@ -668,28 +709,35 @@ class HarnessAgent:
         if action_id is None:
             self._write_trace(
                 prompt=prompt, observation=observation, legal=legal, version=version,
-                started=started, status="no_submit", action_id=None, error=None,
+                status="no_submit", error=None,
+                action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
             )
             raise AgentError(f"{self.config.backend} harness finished without calling submit_action")
         if action_id not in {item["id"] for item in legal}:
             self._write_trace(
                 prompt=prompt, observation=observation, legal=legal, version=version,
-                started=started, status="bad_action", action_id=action_id, error=None,
+                status="bad_action", error=None,
+                action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
             )
             raise AgentError("harness submitted an unknown or stale action ID")
-        latency = round((time.monotonic() - started) * 1000, 3)
         metadata = {
             "backend": self.config.backend, "harness": self.config.backend,
             "model": self.config.model, "session_id": self.session.session_id,
             "reasoning_effort": self.config.reasoning_effort,
-            "latency_ms": latency,
+            "latency_ms": process_latency_ms,
+            "action_latency_ms": action_latency_ms,
+            "process_latency_ms": process_latency_ms,
         }
-        self._emit("harness_finished", action_id=action_id, latency_ms=latency,
+        self._emit("harness_finished", action_id=action_id,
+                   latency_ms=process_latency_ms,
+                   action_latency_ms=action_latency_ms,
+                   process_latency_ms=process_latency_ms,
                    session_id=self.session.session_id,
                    reasoning_effort=self.config.reasoning_effort)
         self._write_trace(
             prompt=prompt, observation=observation, legal=legal, version=version,
-            started=started, status="ok", action_id=action_id, error=None,
+            status="ok", error=None,
+            action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
         )
         return action_id, metadata
 
