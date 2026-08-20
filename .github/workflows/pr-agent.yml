@@ -1,0 +1,39 @@
+# PR-Agent: AI-powered PR review agent.
+# Docs: https://docs.pr-agent.ai/installation/github/
+#
+# On PR open/update: auto /describe + /review + /improve.
+# On PR comment: responds to /describe /review /improve /ask /update_changelog.
+
+name: PR-Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  pr_agent_job:
+    runs-on: ubuntu-latest
+    # Prevent bot-triggered loops.
+    if: ${{ github.event.sender.type != 'Bot' }}
+    steps:
+      - name: PR Agent action step
+        id: pragent
+        uses: the-pr-agent/pr-agent@main
+        env:
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Auto commands on PR open/update (set a value to "false" to disable).
+          github_action_config.auto_describe: "true"
+          github_action_config.auto_review: "true"
+          github_action_config.auto_improve: "true"
+          # Model override (default: GPT). To use a different litellm model, set:
+          # config.model: "deepseek/deepseek-chat"   # and set LITELLM env vars below
+          # LITELLM_MODEL: "deepseek/deepseek-chat"
+          # DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
