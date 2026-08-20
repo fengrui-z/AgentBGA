@@ -2,19 +2,22 @@
   "schema_version": "agentbga.players.v1",
   "players": [
     {
-      "name": "Agent 1 · OpenCode + DeepSeek V4 Flash",
+      "name": "Agent 1 · OpenCode + GPT-5.6",
       "backend": "opencode",
-      "model": "deepseek-v4-flash",
-      "base_url": "https://api.deepseek.com",
-      "api_key_env": "DEEPSEEK_API_KEY"
+      "model": "gpt-5.6",
+      "base_url": "https://api.openai.com/v1",
+      "api_key_env": "OPENAI_API_KEY",
+      "wire_api": "responses",
+      "reasoning_effort": "max"
     },
     {
-      "name": "Agent 2 · Codex + DeepSeek V4 Flash",
+      "name": "Agent 2 · Codex + GPT-5.6",
       "backend": "codex",
-      "model": "deepseek-v4-flash",
-      "base_url": "https://api.deepseek.com",
-      "api_key_env": "DEEPSEEK_API_KEY",
-      "wire_api": "chat"
+      "model": "gpt-5.6",
+      "base_url": "https://api.openai.com/v1",
+      "api_key_env": "OPENAI_API_KEY",
+      "wire_api": "responses",
+      "reasoning_effort": "max"
     }
   ]
 }

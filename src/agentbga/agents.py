@@ -21,6 +21,7 @@ class AgentError(RuntimeError):
 
 HARNESS_BACKENDS = frozenset({"claude", "pi", "codex", "opencode", "dsh", "minimal"})
 HARNESS_REASONING_EFFORT = "max"
+REASONING_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "max", "xhigh"})
 
 
 @dataclass(frozen=True)
@@ -38,7 +39,10 @@ class PlayerConfig:
 
     @classmethod
     def from_dict(cls, value: dict[str, Any], seat: int) -> "PlayerConfig":
-        allowed = {"name", "backend", "model", "base_url", "api_key_env", "wire_api"}
+        allowed = {
+            "name", "backend", "model", "base_url", "api_key_env", "wire_api",
+            "reasoning_effort",
+        }
         unknown = set(value) - allowed
         if unknown:
             raise ValueError(f"player {seat} has unknown fields: {', '.join(sorted(unknown))}")
@@ -66,6 +70,12 @@ class PlayerConfig:
         if backend in defaults:
             base_url, api_key_env = defaults[backend]
         selected_url = str(value.get("base_url") or base_url) if (value.get("base_url") or base_url) else None
+        if selected_url and backend in HARNESS_BACKENDS:
+            selected_url = selected_url.rstrip("/")
+            for endpoint_suffix in ("/chat/completions", "/responses"):
+                if selected_url.endswith(endpoint_suffix):
+                    selected_url = selected_url[:-len(endpoint_suffix)]
+                    break
         if selected_url:
             parsed = urllib.parse.urlsplit(selected_url)
             if parsed.scheme not in {"http", "https"} or not parsed.netloc:
@@ -76,8 +86,29 @@ class PlayerConfig:
         if selected_key_env and not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", selected_key_env):
             raise ValueError(f"player {seat} api_key_env must be an environment variable name")
         wire_api = value.get("wire_api")
+        if wire_api is None and backend == "codex":
+            wire_api = "responses"
         if wire_api is not None and wire_api not in {"responses", "chat"}:
             raise ValueError(f"player {seat} wire_api must be responses or chat")
+        if backend == "codex" and wire_api != "responses":
+            raise ValueError(f"player {seat} codex wire_api must be responses")
+        reasoning_effort = value.get("reasoning_effort")
+        if reasoning_effort is not None:
+            if backend not in HARNESS_BACKENDS:
+                raise ValueError(
+                    f"player {seat} reasoning_effort is only supported for harness backends"
+                )
+            if not isinstance(reasoning_effort, str) or reasoning_effort.lower() not in REASONING_EFFORTS:
+                choices = ", ".join(sorted(REASONING_EFFORTS))
+                raise ValueError(f"player {seat} reasoning_effort must be one of: {choices}")
+            reasoning_effort = reasoning_effort.lower()
+            if backend == "codex" and reasoning_effort == "none":
+                raise ValueError(
+                    f"player {seat} codex reasoning_effort cannot be none; "
+                    "Codex does not expose a no-reasoning effort"
+                )
+        elif backend in HARNESS_BACKENDS:
+            reasoning_effort = HARNESS_REASONING_EFFORT
         return cls(
             name=name,
             backend=backend,
@@ -85,7 +116,7 @@ class PlayerConfig:
             base_url=selected_url,
             api_key_env=selected_key_env,
             wire_api=str(wire_api) if wire_api else None,
-            reasoning_effort=HARNESS_REASONING_EFFORT if backend in HARNESS_BACKENDS else None,
+            reasoning_effort=reasoning_effort,
         )
 
     def public_dict(self) -> dict[str, Any]:

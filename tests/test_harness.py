@@ -23,10 +23,13 @@ class HarnessTests(unittest.TestCase):
         }, 0)
         opencode = PlayerConfig.from_dict({
             "name": "OpenCode + DeepSeek", "backend": "opencode",
-            "model": "deepseek/deepseek-chat", "base_url": "https://api.deepseek.com",
+            "model": "deepseek/deepseek-chat",
+            "base_url": "https://api.deepseek.com/v1/chat/completions/",
         }, 1)
         self.assertEqual("OPENAI_API_KEY", codex.api_key_env)
+        self.assertEqual("responses", codex.wire_api)
         self.assertEqual("DEEPSEEK_API_KEY", opencode.api_key_env)
+        self.assertEqual("https://api.deepseek.com/v1", opencode.base_url)
         claude = PlayerConfig.from_dict({
             "name": "Claude Code", "backend": "claude", "model": "claude-test",
         }, 2)
@@ -43,6 +46,32 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual("DEEPSEEK_API_KEY", dsh.api_key_env)
         self.assertEqual("https://api.deepseek.com", dsh.base_url)
         self.assertEqual("max", dsh.reasoning_effort)
+
+        configured = PlayerConfig.from_dict({
+            "name": "Configured", "backend": "opencode", "model": "deepseek-v4-flash",
+            "reasoning_effort": "medium",
+        }, 5)
+        self.assertEqual("medium", configured.reasoning_effort)
+        with self.assertRaisesRegex(ValueError, "reasoning_effort must be one of"):
+            PlayerConfig.from_dict({
+                "name": "Invalid", "backend": "codex", "model": "gpt-test",
+                "reasoning_effort": "extreme",
+            }, 6)
+        with self.assertRaisesRegex(ValueError, "codex wire_api must be responses"):
+            PlayerConfig.from_dict({
+                "name": "Legacy Codex", "backend": "codex", "model": "gpt-test",
+                "wire_api": "chat",
+            }, 6)
+        with self.assertRaisesRegex(ValueError, "cannot be none"):
+            PlayerConfig.from_dict({
+                "name": "No Reasoning Codex", "backend": "codex", "model": "gpt-test",
+                "reasoning_effort": "none",
+            }, 6)
+        with self.assertRaisesRegex(ValueError, "only supported for harness backends"):
+            PlayerConfig.from_dict({
+                "name": "Direct API", "backend": "openai", "model": "gpt-test",
+                "reasoning_effort": "high",
+            }, 6)
 
     def test_seat_tool_is_scoped_and_submit_is_single_use(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -91,18 +120,24 @@ class HarnessTests(unittest.TestCase):
             first_command = codex._command("turn")
             self.assertIn("workspace-write", first_command)
             self.assertNotIn("--ask-for-approval", first_command)
+            runtime_dir = os.path.relpath(codex.session.runtime, codex.session.workspace)
+            self.assertEqual(runtime_dir, first_command[first_command.index("--add-dir") + 1])
+            self.assertNotIn(str(codex.session.runtime), first_command)
             codex.session.session_id = "thread-1"
-            self.assertEqual("resume", codex._command("turn")[2])
+            resume_command = codex._command("turn")
+            self.assertEqual(runtime_dir, resume_command[resume_command.index("--add-dir") + 1])
+            self.assertLess(resume_command.index("--add-dir"), resume_command.index("resume"))
+            self.assertNotIn(str(codex.session.runtime), resume_command)
 
             opencode_config = PlayerConfig.from_dict({
                 "name": "OpenCode", "backend": "opencode", "model": "deepseek/test",
-                "base_url": "https://api.deepseek.com",
+                "base_url": "https://deepseek-proxy.example/v1", "reasoning_effort": "medium",
             }, 1)
             opencode = HarnessAgent(opencode_config, "match", 1, runs_root=directory)
             opencode.session.session_id = "session-1"
             command = opencode._command("turn")
             self.assertIn("--pure", command)
-            self.assertEqual("max", command[command.index("--variant") + 1])
+            self.assertEqual("medium", command[command.index("--variant") + 1])
             self.assertIn("--thinking", command)
             self.assertEqual("session-1", command[command.index("--session") + 1])
 
@@ -172,9 +207,44 @@ class HarnessTests(unittest.TestCase):
             configured = json.loads((opencode.session.workspace / "opencode.json").read_text())
             self.assertEqual("@ai-sdk/openai-compatible", configured["provider"]["agentbga"]["npm"])
             self.assertEqual("{env:CUSTOM_KEY}", configured["provider"]["agentbga"]["options"]["apiKey"])
-            # Non-DeepSeek endpoints get an empty variant (no reasoning_effort/thinking).
-            self.assertEqual({}, configured["provider"]["agentbga"]["models"]["custom-model"]["variants"]["max"])
+            # Reasoning is controlled explicitly, not inferred from the endpoint URL.
+            variant = configured["provider"]["agentbga"]["models"]["custom-model"]["variants"]["max"]
+            self.assertEqual("max", variant["reasoningEffort"])
             self.assertIn("agentbga/custom-model", opencode._command("turn"))
+
+            proxied_deepseek = HarnessAgent(PlayerConfig.from_dict({
+                "name": "OpenCode", "backend": "opencode", "model": "deepseek-v4-flash",
+                "base_url": "https://deepseek-proxy.example/compatible-mode/v1",
+                "reasoning_effort": "high",
+            }, 1), "match-three", 1, runs_root=directory)
+            proxied_deepseek._prepare_turn({"state_version": 1}, LEGAL)
+            proxied_config = json.loads((proxied_deepseek.session.workspace / "opencode.json").read_text())
+            proxied_variant = proxied_config["provider"]["agentbga"]["models"]["deepseek-v4-flash"]["variants"]["high"]
+            self.assertEqual("high", proxied_variant["reasoningEffort"])
+            self.assertEqual({"type": "enabled"}, proxied_variant["thinking"])
+            self.assertIn("--thinking", proxied_deepseek._command("turn"))
+
+            non_deepseek_url = HarnessAgent(PlayerConfig.from_dict({
+                "name": "OpenCode", "backend": "opencode", "model": "deepseek-v4-flash",
+                "base_url": "https://dashscope.example/compatible-mode/v1",
+                "reasoning_effort": "high",
+            }, 1), "match-five", 1, runs_root=directory)
+            non_deepseek_url._prepare_turn({"state_version": 1}, LEGAL)
+            non_deepseek_config = json.loads((non_deepseek_url.session.workspace / "opencode.json").read_text())
+            non_deepseek_variant = non_deepseek_config["provider"]["agentbga"]["models"]["deepseek-v4-flash"]["variants"]["high"]
+            self.assertNotIn("thinking", non_deepseek_variant)
+            self.assertIn("--thinking", non_deepseek_url._command("turn"))
+
+            no_reasoning = HarnessAgent(PlayerConfig.from_dict({
+                "name": "OpenCode", "backend": "opencode", "model": "deepseek-v4-flash",
+                "base_url": "https://deepseek-proxy.example/compatible-mode/v1",
+                "reasoning_effort": "none",
+            }, 1), "match-four", 1, runs_root=directory)
+            no_reasoning._prepare_turn({"state_version": 1}, LEGAL)
+            self.assertNotIn("--thinking", no_reasoning._command("turn"))
+            no_reasoning_config = json.loads((no_reasoning.session.workspace / "opencode.json").read_text())
+            no_reasoning_variant = no_reasoning_config["provider"]["agentbga"]["models"]["deepseek-v4-flash"]["variants"]["none"]
+            self.assertEqual({"type": "disabled"}, no_reasoning_variant["thinking"])
 
             dsh = HarnessAgent(PlayerConfig.from_dict({
                 "name": "DeepSeek Harness", "backend": "dsh", "model": "deepseek-v4-flash",
@@ -228,19 +298,23 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("a-test", action_id)
             self.assertEqual("persistent-session", metadata["session_id"])
             self.assertEqual("max", metadata["reasoning_effort"])
+            self.assertEqual("xhigh", metadata["native_reasoning_effort"])
             self.assertIsNotNone(metadata["action_latency_ms"])
             self.assertGreaterEqual(metadata["process_latency_ms"], 0)
             self.assertEqual(metadata["process_latency_ms"], metadata["latency_ms"])
             self.assertEqual(3, len([event for event in events if event["type"] == "harness_tool_call"]))
             self.assertTrue((agent.session.workspace / ".codex" / "config.toml").is_file())
-            self.assertIn('model_reasoning_effort = "max"', (agent.session.workspace / ".codex" / "config.toml").read_text())
-            self.assertIn('model_reasoning_effort="max"', agent._codex_config_args)
+            self.assertIn('model_reasoning_effort = "xhigh"', (agent.session.workspace / ".codex" / "config.toml").read_text())
+            self.assertIn('model_reasoning_effort="xhigh"', agent._codex_config_args)
             opencode_config = json.loads((agent.session.workspace / "opencode.json").read_text())
             self.assertEqual("deny", opencode_config["permission"]["*"])
             self.assertEqual("allow", opencode_config["permission"]["agentbga_*"])
             self.assertNotEqual(agent.session.workspace.parent, agent.session.runtime.parent)
             codex_command = agent._command("next turn")
-            self.assertIn(str(agent.session.runtime / "turn-context.json"), " ".join(codex_command))
+            self.assertIn("turn-context.json", " ".join(codex_command))
+            self.assertNotIn(directory, " ".join(codex_command))
+            displayed = agent._display_command([str(Path.home() / "bin" / "codex"), *codex_command])
+            self.assertNotIn(str(Path.home()), " ".join(displayed))
 
             (agent.session.runtime / "submission.json").unlink(missing_ok=True)
             with mock.patch.object(agent, "_run", return_value=("{}", "", 0)):
@@ -289,6 +363,7 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual(0, trace["seat"])
             self.assertEqual("trace-session", trace["session_id"])
             self.assertEqual("ok", trace["status"])
+            self.assertEqual("xhigh", trace["native_reasoning_effort"])
             self.assertIsNone(trace["error"])
             self.assertIn("seat 0", trace["prompt"]["user"])
             self.assertEqual("a-test", trace["prompt"]["legal_actions"][0]["id"])
