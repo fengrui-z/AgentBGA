@@ -244,7 +244,7 @@ type Snapshot = {
 type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
   type: string; player?: string; seat?: number; error?: string; turns?: number;
-  backend?: string; agent?: {latency_ms?: number}; action?: Record<string, unknown>;
+  backend?: string; agent?: {latency_ms?: number; action_latency_ms?: number; process_latency_ms?: number}; action?: Record<string, unknown>;
   rankings?: {player: string}[]; channel?: "reasoning" | "content"; delta?: string; attempt?: number; version?: number;
   harness?: string; tool?: string; arguments?: unknown; result?: unknown; action_id?: string;
 };
@@ -252,7 +252,7 @@ type Timeline = { seq: number; event: TimelineEvent; snapshot?: Snapshot };
 type ChatTurn = {
   key: string; seat: number; player: string; backend: string; attempt: number;
   reasoning: string; content: string; status: "thinking" | "done" | "error";
-  startedAt: number; latencyMs?: number;
+  startedAt: number; actionLatencyMs?: number; processLatencyMs?: number;
 };
 
 const GEM_ORDER = ["red", "green", "white", "blue", "black", "gold"] as const;
@@ -899,7 +899,8 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
             const actual = current.length - 1 - index;
             return current.map((turn, i) => i === actual ? {...turn,
               status: event.type === "agent_error" ? "error" : "done",
-              latencyMs: event.agent?.latency_ms,
+              actionLatencyMs: event.agent?.action_latency_ms,
+              processLatencyMs: event.agent?.process_latency_ms ?? event.agent?.latency_ms,
               content: event.type === "agent_error" && !turn.content ? event.error || "调用失败" : turn.content,
             } : turn);
           });
@@ -1025,14 +1026,14 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       <aside className="timeline">
         <header><div><span>{t("model_stream")}</span><h2>{t("chat_h")}</h2></div><i className={snapshot.status === "active" && (!snapshot.paused || snapshot.pause_pending) ? "pulse" : ""}/></header>
         <div className="chat-list">{chat.length === 0 && <p className="waiting">{snapshot.game_description.runnable ? t("waiting_model") : t("waiting_note")}</p>}{chat.map(turn => <article className={`chat-turn chat-${turn.status}`} key={turn.key}>
-          <header><strong>{turn.player}</strong><span>{turn.backend} · {t("attempt")} {turn.attempt}{turn.status === "thinking" ? ` · ${t("generating")}` : turn.latencyMs ? ` · ${(turn.latencyMs / 1000).toFixed(1)}s` : ""}</span></header>
+          <header><strong>{turn.player}</strong><span>{turn.backend} · {t("attempt")} {turn.attempt}{turn.status === "thinking" ? ` · ${t("generating")}` : turn.processLatencyMs !== undefined ? ` · ${lang === "zh" ? "行动" : "action"} ${((turn.actionLatencyMs ?? turn.processLatencyMs) / 1000).toFixed(1)}s · ${lang === "zh" ? "进程" : "process"} ${(turn.processLatencyMs / 1000).toFixed(1)}s` : ""}</span></header>
           {turn.reasoning && <details open><summary>{t("thinking")}{turn.status === "done" ? ` · ${t("collapsible")}` : ""}</summary><pre>{turn.reasoning}</pre></details>}
           {turn.content && <div className="model-answer"><b>{t("answer")}</b><pre>{turn.content}</pre></div>}
           {turn.status === "thinking" && <div className="typing"><i/><i/><i/></div>}
         </article>)}</div>
         <section className="action-drawer"><header><span>{t("actions")}</span><strong>{t("decision_log")}</strong><b>{timeline.filter(item => ["decision", "turn"].includes(item.event.type)).length}</b></header>
           <div>{[...timeline].reverse().filter(item => !["agent_started", "agent_finished"].includes(item.event.type)).slice(0, 40).map(item => <article key={item.seq} className={`event event-${item.event.type}`}>
-            <span>{String(item.seq + 1).padStart(3,"0")}</span><div><p>{describeAction(item, names, lang)}</p>{item.event.backend && <small>{item.event.backend}{item.event.agent?.latency_ms ? ` · ${item.event.agent.latency_ms}ms` : ""}</small>}
+            <span>{String(item.seq + 1).padStart(3,"0")}</span><div><p>{describeAction(item, names, lang)}</p>{item.event.backend && <small>{item.event.backend}{item.event.agent?.process_latency_ms !== undefined ? ` · ${lang === "zh" ? "行动" : "action"} ${item.event.agent.action_latency_ms ?? "—"}ms · ${lang === "zh" ? "进程" : "process"} ${item.event.agent.process_latency_ms}ms` : item.event.agent?.latency_ms ? ` · ${item.event.agent.latency_ms}ms` : ""}</small>}
               {item.event.tool && (item.event.arguments !== undefined || item.event.result !== undefined) && <details className="tool-payload"><summary>{t("view_tool")}</summary><pre>{JSON.stringify(item.event.result ?? item.event.arguments, null, 2)}</pre></details>}
             </div>
           </article>)}</div>

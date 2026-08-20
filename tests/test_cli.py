@@ -1,4 +1,4 @@
-from contextlib import redirect_stdout
+from contextlib import chdir, redirect_stdout
 from io import StringIO
 import json
 import os
@@ -11,6 +11,34 @@ from agentbga.cli import main
 
 
 class CLITests(unittest.TestCase):
+    def test_match_traces_reads_runtime_trace_layout(self):
+        with tempfile.TemporaryDirectory() as directory, chdir(directory):
+            database = Path(directory) / "match.sqlite3"
+            created_output = StringIO()
+            with redirect_stdout(created_output):
+                self.assertEqual(0, main([
+                    "match", "create", "--players", "2", "--seed", "9",
+                    "--db", str(database),
+                ]))
+            match_id = json.loads(created_output.getvalue())["data"]["match_id"]
+            trace_dir = Path(directory) / ".agentbga" / "runs" / "_traces" / match_id / "seat-0"
+            trace_dir.mkdir(parents=True)
+            (trace_dir / "turn-0000.json").write_text(json.dumps({
+                "version": 0, "status": "ok", "backend": "codex",
+                "action_latency_ms": 10, "process_latency_ms": 20,
+                "submission": {"action_id": "a-test"},
+            }))
+
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(0, main([
+                    "match", "traces", match_id, "--db", str(database),
+                ]))
+            rows = json.loads(output.getvalue())["data"]
+            self.assertEqual(1, len(rows))
+            self.assertEqual("a-test", rows[0]["action_id"])
+            self.assertFalse(Path(rows[0]["file"]).is_absolute())
+
     def test_games_describe_and_create_ark_nova_setup(self):
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "match.sqlite3"
