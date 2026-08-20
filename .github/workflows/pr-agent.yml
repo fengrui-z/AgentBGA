@@ -1,0 +1,39 @@
+# PR-Agent: AI-powered PR review agent.
+# Model: qwen3.7-plus via Alibaba DashScope (coding endpoint), OpenAI-compatible.
+# Docs: https://docs.pr-agent.ai/installation/github/
+
+name: PR-Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  pr_agent_job:
+    runs-on: ubuntu-latest
+    # Prevent bot-triggered loops.
+    if: ${{ github.event.sender.type != 'Bot' }}
+    steps:
+      - name: PR Agent action step
+        id: pragent
+        uses: the-pr-agent/pr-agent@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # DashScope (coding endpoint) via OpenAI-compatible API.
+          OPENAI__KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+          OPENAI__API_BASE: "https://coding.dashscope.aliyuncs.com/v1"
+          # Model routing: treat DashScope endpoint as an OpenAI-like API.
+          config.model: "openai/qwen3.7-plus"
+          config.fallback_models: "[\"openai/qwen3.7-plus\"]"
+          config.custom_model_max_tokens: "65536"
+          # Auto commands on PR open/update (set a value to "false" to disable).
+          github_action_config.auto_describe: "true"
+          github_action_config.auto_review: "true"
+          github_action_config.auto_improve: "true"
