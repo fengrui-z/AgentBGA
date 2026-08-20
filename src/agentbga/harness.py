@@ -349,14 +349,13 @@ class HarnessAgent:
         escaped_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
         provider = ""
         if self.config.base_url and self.config.base_url.rstrip("/") != "https://api.openai.com/v1":
-            default_wire_api = self.config.wire_api or "responses"
             provider = (
                 "model_provider = \"agentbga\"\n"
                 "[model_providers.agentbga]\n"
                 "name = \"AgentBGA seat provider\"\n"
                 f"base_url = {json.dumps(self.config.base_url.rstrip('/'))}\n"
                 f"env_key = {json.dumps(self.config.api_key_env or 'OPENAI_API_KEY')}\n"
-                f"wire_api = {json.dumps(default_wire_api)}\n"
+                "wire_api = \"responses\"\n"
                 "requires_openai_auth = false\n"
             )
         codex_reasoning = (
@@ -477,7 +476,7 @@ class HarnessAgent:
                 "--config", "model_providers.agentbga.name=\"AgentBGA seat provider\"",
                 "--config", f"model_providers.agentbga.base_url={json.dumps(self.config.base_url.rstrip('/'))}",
                 "--config", f"model_providers.agentbga.env_key={json.dumps(self.config.api_key_env or 'OPENAI_API_KEY')}",
-                "--config", f"model_providers.agentbga.wire_api={json.dumps(self.config.wire_api or 'responses')}",
+                "--config", "model_providers.agentbga.wire_api=\"responses\"",
                 "--config", "model_providers.agentbga.requires_openai_auth=false",
             ])
         return submission_path
