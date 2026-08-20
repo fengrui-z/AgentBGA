@@ -1,4 +1,4 @@
-"""External agent-harness controllers for Codex, OpenCode, DeepSeek Harness, and custom commands."""
+"""External agent-harness controllers for supported agent CLIs."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import selectors
 import shutil
+import sqlite3
 import subprocess
 import sys
 import time
@@ -168,6 +169,14 @@ class HarnessAgent:
             patch_path = str(self.session.workspace / "dsh-patch.yml")
             command = [self.binary, "--profile", "headless", "--patch", patch_path]
             return [*command, prompt]
+        if self.config.backend == "hermes":
+            command = [
+                self.binary, "chat", "--quiet", "--model", model,
+                "--ignore-rules", "--source", "tool",
+            ]
+            if self.session.session_id:
+                command.extend(["--resume", self.session.session_id])
+            return [*command, "--query", prompt]
         raise AgentError(f"unsupported harness: {self.config.backend}")
 
     def _redact_text(self, value: str) -> str:
@@ -254,6 +263,17 @@ class HarnessAgent:
                 env["DEEPSEEK_API_KEY"] = key
             if self.config.base_url:
                 env["DEEPSEEK_BASE_URL"] = self.config.base_url
+        elif self.config.backend == "hermes":
+            hermes_home = self.session.workspace / ".hermes-home"
+            hermes_home.mkdir(exist_ok=True)
+            env["HERMES_HOME"] = str(hermes_home)
+            env["HERMES_IGNORE_RULES"] = "1"
+            if key:
+                # Hermes' custom OpenAI-compatible provider reads this canonical
+                # variable even when AgentBGA received the key under another name.
+                env["OPENAI_API_KEY"] = key
+            if self.config.base_url:
+                env["OPENAI_BASE_URL"] = self.config.base_url
         if hasattr(self, "_pythonpath"):
             env["PYTHONPATH"] = self._pythonpath
         return env
@@ -413,6 +433,38 @@ class HarnessAgent:
             f"          PYTHONPATH: {json.dumps(self._pythonpath)}\n"
         )
         (self.session.workspace / "dsh-patch.yml").write_text(dsh_patch, encoding="utf-8")
+        hermes_home = self.session.workspace / ".hermes-home"
+        hermes_home.mkdir(exist_ok=True)
+        hermes_api_mode = ""
+        if self.config.wire_api:
+            api_mode = "codex_responses" if self.config.wire_api == "responses" else "chat_completions"
+            hermes_api_mode = f"  api_mode: {json.dumps(api_mode)}\n"
+        hermes_config = (
+            "model:\n"
+            f"  default: {json.dumps(self.config.model or '')}\n"
+            "  provider: custom\n"
+            f"  base_url: {json.dumps((self.config.base_url or '').rstrip('/'))}\n"
+            + hermes_api_mode
+            + "agent:\n"
+            "  reasoning_effort: max\n"
+            "  max_turns: 20\n"
+            "display:\n"
+            "  streaming: false\n"
+            "  turn_summary: false\n"
+            "platform_toolsets:\n"
+            "  cli:\n"
+            "    - agentbga\n"
+            "mcp_servers:\n"
+            "  agentbga:\n"
+            "    enabled: true\n"
+            f"    command: {json.dumps(mcp_command[0])}\n"
+            f"    args: [{escaped_args}]\n"
+            "    env:\n"
+            f"      PYTHONPATH: {json.dumps(self._pythonpath)}\n"
+            f"    timeout: {max(1, int(self.timeout))}\n"
+            "    connect_timeout: 60\n"
+        )
+        (hermes_home / "config.yaml").write_text(hermes_config, encoding="utf-8")
         self._codex_config_args = [
             "--config", "approval_policy=\"never\"",
             "--config", "sandbox_mode=\"workspace-write\"",
@@ -431,6 +483,25 @@ class HarnessAgent:
                 "--config", "model_providers.agentbga.requires_openai_auth=false",
             ])
         return submission_path
+
+    def _recover_hermes_session_id(self) -> None:
+        """Read the ID created by quiet Hermes CLI mode from its isolated state DB."""
+        if self.config.backend != "hermes" or self.session.session_id:
+            return
+        database = self.session.workspace / ".hermes-home" / "state.db"
+        if not database.is_file():
+            return
+        try:
+            with sqlite3.connect(database) as connection:
+                row = connection.execute(
+                    "SELECT id FROM sessions WHERE source = ? "
+                    "ORDER BY started_at DESC, id DESC LIMIT 1",
+                    ("tool",),
+                ).fetchone()
+        except sqlite3.Error:
+            return
+        if row and isinstance(row[0], str) and row[0]:
+            self.session.session_id = row[0]
 
     def _emit_tool_audit(self) -> None:
         path = self.session.runtime / "tool-events.jsonl"
@@ -650,6 +721,7 @@ class HarnessAgent:
         started = time.monotonic()
         self._trace_steps = []
         raw, stderr, returncode = self._run(self._command(prompt))
+        self._recover_hermes_session_id()
         self._emit_tool_audit()
         if returncode != 0:
             detail = stderr[-1000:] or raw[-1000:]

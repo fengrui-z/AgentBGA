@@ -25,6 +25,7 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, />Pi</);
   assert.match(html, />Codex</);
   assert.match(html, />OpenCode</);
+  assert.match(html, /Hermes Agent/);
   assert.match(html, /value="deepseek-v4-flash"/);
   assert.match(html, /value="https:\/\/api\.deepseek\.com"/);
   assert.match(html, /固定使用最高思考强度/);

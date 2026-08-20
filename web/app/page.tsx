@@ -158,8 +158,8 @@ function makeT(lang: Lang) {
 const LangCtx = createContext<Lang>("zh");
 const useLang = () => useContext(LangCtx);
 
-type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "dsh" | "minimal" | "human" | "random";
-type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "dsh" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
+type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
+type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
 type GameId = "splendor" | "ark_nova" | "brass_birmingham" | "century_spice_road";
 type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string };
 type Card = { id: string; tier: number; bonus: string; points: number; cost: Record<string, number> };
@@ -282,6 +282,7 @@ const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: 
   codex: { label: {zh: "Codex Harness", en: "Codex Harness"}, url: "https://api.openai.com/v1", key: "", model: "" },
   opencode: { label: {zh: "OpenCode Harness", en: "OpenCode Harness"}, url: "https://api.deepseek.com", key: "", model: "" },
   dsh: { label: {zh: "DeepSeek Harness", en: "DeepSeek Harness"}, url: "https://api.deepseek.com", key: "", model: "" },
+  hermes: { label: {zh: "Hermes Agent", en: "Hermes Agent"}, url: "https://api.deepseek.com", key: "", model: "" },
   minimal: { label: {zh: "Minimal Harness", en: "Minimal Harness"}, url: "https://api.deepseek.com", key: "", model: "" },
   human: { label: {zh: "人类玩家", en: "Human player"}, url: "", key: "", model: "" },
   random: { label: {zh: "随机基线", en: "Random baseline"}, url: "", key: "", model: "" },
@@ -293,6 +294,7 @@ const PROVIDERS: Record<Provider, {label: Record<Lang,string>; backend: Backend;
   codex: {label: {zh:"Codex",en:"Codex"}, backend: "codex", url: "https://api.openai.com/v1", models: ["gpt-5.6", "gpt-5.6-terra", "gpt-5.3-codex"], note: {zh:"Codex 持久 session + 座位隔离 MCP；自定义 Endpoint 自动使用兼容协议",en:"Persistent session + seat-isolated MCP; custom endpoint auto-compatible"}},
   opencode: {label: {zh:"OpenCode",en:"OpenCode"}, backend: "opencode", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"OpenCode 持久 session + 座位隔离 MCP",en:"Persistent session + seat-isolated MCP"}},
   dsh: {label: {zh:"DeepSeek Harness",en:"DeepSeek Harness"}, backend: "dsh", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"DeepSeek Harness (dsh) headless + 座位隔离 MCP；每回合独立 session，workspace 笔记持久",en:"dsh headless + seat-isolated MCP; fresh session each turn, workspace notes persist"}},
+  hermes: {label: {zh:"Hermes Agent",en:"Hermes Agent"}, backend: "hermes", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"Hermes Agent 持久 session + 独立 HERMES_HOME + 座位隔离 MCP",en:"Persistent session + isolated HERMES_HOME + seat-isolated MCP"}},
   minimal: {label: {zh:"Minimal Harness",en:"Minimal Harness"}, backend: "minimal", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"纯 Python minimal harness；直接 LLM API + 5 工具；无外部进程，认知干预可配置",en:"Pure-Python minimal harness; direct LLM API + 5 tools; no external process"}},
   deepseek: {label: {zh:"DeepSeek 官方",en:"DeepSeek official"}, backend: "openai", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"官方按量付费 API",en:"Official pay-as-you-go API"}},
   dashscope: {label: {zh:"阿里云百炼",en:"Alibaba Bailian"}, backend: "openai", url: "https://dashscope.aliyuncs.com/compatible-mode/v1", models: ["qwen3.7-plus", "qwen3.6-plus", "qwen3.5-flash", "qwen3.7-max"], note: {zh:"华北 2 按量付费，不是 Coding Plan",en:"North-China 2 pay-as-you-go, not Coding Plan"}},
@@ -304,7 +306,7 @@ function player(seed: number, backend: Backend = "openai"): PlayerForm {
   return { id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "custom", backend, model: "", base_url: BACKENDS[backend].url, api_key: "" };
 }
 
-function deepseekHarnessPlayer(seed: number, backend: "opencode" | "codex" | "dsh" | "minimal"): PlayerForm {
+function deepseekHarnessPlayer(seed: number, backend: "opencode" | "codex" | "dsh" | "hermes" | "minimal"): PlayerForm {
   return {
     id: crypto.randomUUID(), name: `Agent ${seed}`, provider: backend, backend,
     model: "deepseek-v4-flash", base_url: "https://api.deepseek.com", api_key: "",
@@ -962,7 +964,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`${p.name} ${t("move_up")}`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`${p.name} ${t("move_down")}`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>{t("f_name")}</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
         {!(["random", "human"] as Backend[]).includes(p.backend) && <>
-          <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>{t("f_provider")}</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label={t("og_harness")}>{(["claude_code", "pi", "codex", "opencode", "dsh", "minimal"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup><optgroup label={t("og_direct")}>{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup></select></div>
+          <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>{t("f_provider")}</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label={t("og_harness")}>{(["claude_code", "pi", "codex", "opencode", "dsh", "hermes", "minimal"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup><optgroup label={t("og_direct")}>{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup></select></div>
           <div className="field backend-field"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).filter(([id]) => id !== "random").map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select></div>
           <div className="field grow endpoint-field"><label htmlFor={`${p.id}-endpoint`}>{t("f_endpoint")}</label><input id={`${p.id}-endpoint`} value={p.base_url} placeholder={t("ph_endpoint")} onChange={e => updatePlayer(p.id, {provider: "custom", base_url: e.target.value})}/></div>
           <div className="field model-field"><label htmlFor={`${p.id}-model`}>{t("f_model")}</label><input id={`${p.id}-model`} list={`${p.id}-models`} placeholder={t("ph_model")} value={p.model} onChange={e => updatePlayer(p.id, {model: e.target.value})}/><datalist id={`${p.id}-models`}>{PROVIDERS[p.provider].models.map(model => <option key={model} value={model}/>)}</datalist></div>

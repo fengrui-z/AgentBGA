@@ -50,6 +50,7 @@ Each seat can use one of:
 | `opencode` | Harness | CLI + MCP, persistent session |
 | `codex` | Harness | CLI + MCP, persistent session |
 | `dsh` | Harness | DeepSeek Harness, headless profile |
+| `hermes` | Harness | Hermes Agent + MCP, isolated home, persistent session |
 | `claude` | Harness | Claude Code + MCP, persistent session |
 | `pi` | Harness | Pi + native TS extension, persistent session |
 | `minimal` | Harness | Pure Python, in-process, direct LLM + 5 tools |
@@ -57,6 +58,8 @@ Each seat can use one of:
 | `random` | — | Random baseline |
 
 All harness seats share a unified 5-tool interface: `observe`, `legal_actions`, `submit_action`, `read_notes`, `write_notes`. The `minimal` harness runs entirely in Python with zero external dependencies — no CLI, no MCP server, no Node.js.
+
+The `hermes` backend requires the `hermes` executable with MCP support. AgentBGA creates a seat-local `HERMES_HOME`, configures only the seat-scoped `agentbga` MCP server, and routes the configured OpenAI-compatible endpoint through Hermes' custom provider.
 
 Example harness match:
 

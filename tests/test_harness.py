@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -43,6 +44,12 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual("DEEPSEEK_API_KEY", dsh.api_key_env)
         self.assertEqual("https://api.deepseek.com", dsh.base_url)
         self.assertEqual("max", dsh.reasoning_effort)
+        hermes = PlayerConfig.from_dict({
+            "name": "Hermes Agent", "backend": "hermes", "model": "gpt-test",
+        }, 5)
+        self.assertEqual("OPENAI_API_KEY", hermes.api_key_env)
+        self.assertEqual("https://api.openai.com/v1", hermes.base_url)
+        self.assertEqual("max", hermes.reasoning_effort)
 
     def test_seat_tool_is_scoped_and_submit_is_single_use(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -142,6 +149,21 @@ class HarnessTests(unittest.TestCase):
             self.assertTrue((dsh.session.workspace / "dsh-patch.yml").is_file())
             self.assertEqual("turn", command[-1])
 
+            hermes_config = PlayerConfig.from_dict({
+                "name": "Hermes Agent", "backend": "hermes", "model": "gpt-test",
+            }, 5)
+            hermes = HarnessAgent(hermes_config, "match", 5, runs_root=directory)
+            command = hermes._command("turn")
+            self.assertEqual("chat", command[1])
+            self.assertIn("--quiet", command)
+            self.assertIn("--ignore-rules", command)
+            self.assertEqual("tool", command[command.index("--source") + 1])
+            self.assertEqual(["--query", "turn"], command[-2:])
+            self.assertNotIn("--resume", command)
+            hermes.session.session_id = "hermes-session"
+            command = hermes._command("next turn")
+            self.assertEqual("hermes-session", command[command.index("--resume") + 1])
+
     def test_claude_and_pi_generate_seat_tool_configuration(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", side_effect=lambda name: f"/bin/{name}"):
             for seat, backend, model in ((0, "claude", "claude-test"), (1, "pi", "model-test")):
@@ -194,6 +216,47 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("workspace-write", env["DSH_PERMISSION_MODE"])
             self.assertEqual("DISABLED", env["DSH_TELEMETRY_MODE"])
             self.assertIn("seat-0-dsh", env["DSH_HOME"])
+
+            hermes = HarnessAgent(PlayerConfig.from_dict({
+                "name": "Hermes Agent", "backend": "hermes", "model": "custom-model",
+                "base_url": "https://proxy.example/v1", "api_key_env": "CUSTOM_KEY",
+                "wire_api": "responses",
+            }, 1), "match-hermes", 1, runs_root=directory)
+            hermes._prepare_turn({"state_version": 1}, LEGAL)
+            hermes_yaml = (hermes.session.workspace / ".hermes-home" / "config.yaml").read_text()
+            self.assertIn('default: "custom-model"', hermes_yaml)
+            self.assertIn('base_url: "https://proxy.example/v1"', hermes_yaml)
+            self.assertIn('api_mode: "codex_responses"', hermes_yaml)
+            self.assertIn("reasoning_effort: max", hermes_yaml)
+            self.assertIn("platform_toolsets:\n  cli:\n    - agentbga", hermes_yaml)
+            self.assertIn("mcp_servers:\n  agentbga:", hermes_yaml)
+            self.assertIn("agentbga.seat_mcp", hermes_yaml)
+            hermes_with_key = PlayerConfig(**{**hermes.config.__dict__, "api_key": "seat-secret"})
+            hermes.config = hermes_with_key
+            with mock.patch.dict(os.environ, {"CUSTOM_KEY": "old", "OTHER_TOKEN": "hidden", "PATH": "/bin"}, clear=True):
+                environment = hermes._environment()
+            self.assertEqual("seat-secret", environment["CUSTOM_KEY"])
+            self.assertEqual("seat-secret", environment["OPENAI_API_KEY"])
+            self.assertEqual("https://proxy.example/v1", environment["OPENAI_BASE_URL"])
+            self.assertIn("seat-1-hermes/.hermes-home", environment["HERMES_HOME"])
+            self.assertNotIn("OTHER_TOKEN", environment)
+
+    def test_hermes_recovers_quiet_session_id_from_isolated_state(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/hermes"):
+            config = PlayerConfig.from_dict({
+                "name": "Hermes Agent", "backend": "hermes", "model": "gpt-test",
+            }, 0)
+            agent = HarnessAgent(config, "match", 0, runs_root=directory)
+            home = agent.session.workspace / ".hermes-home"
+            home.mkdir(exist_ok=True)
+            with sqlite3.connect(home / "state.db") as connection:
+                connection.execute("CREATE TABLE sessions (id TEXT, source TEXT, started_at REAL)")
+                connection.executemany(
+                    "INSERT INTO sessions VALUES (?, ?, ?)",
+                    [("interactive", "cli", 3), ("older-tool", "tool", 1), ("new-tool", "tool", 2)],
+                )
+            agent._recover_hermes_session_id()
+            self.assertEqual("new-tool", agent.session.session_id)
 
     def test_pi_json_events_stream_text_reasoning_and_session(self):
         self.assertEqual("hello", HarnessAgent._event_text({
