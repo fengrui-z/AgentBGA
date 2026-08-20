@@ -113,8 +113,35 @@ class HarnessAgent:
                 "seat": self.session.seat, "player": self.config.name, **payload,
             })
 
+    def _native_reasoning_effort(self) -> str:
+        """Translate the benchmark effort label to a harness-native value."""
+        requested = self.config.reasoning_effort or "max"
+        if self.config.backend in {"codex", "pi"} and requested == "max":
+            return "xhigh"
+        if self.config.backend == "claude" and requested == "xhigh":
+            return "max"
+        return requested
+
+    def _display_command(self, command: list[str]) -> list[str]:
+        """Redact secrets and user-specific absolute paths from persisted events."""
+        replacements = (
+            (str(self.session.runtime), "[RUNTIME]"),
+            (str(self.session.workspace), "."),
+            (str(Path.home()), "$HOME"),
+        )
+        safe: list[str] = []
+        for part in command:
+            value = self._redact_text(part)
+            for prefix, replacement in replacements:
+                value = value.replace(prefix, replacement)
+            safe.append(value)
+        return safe
+
     def _command(self, prompt: str) -> list[str]:
         model = self.config.model or ""
+        requested_effort = self.config.reasoning_effort or "max"
+        reasoning_effort = self._native_reasoning_effort()
+        reasoning_enabled = requested_effort != "none"
         if self.config.backend == "claude":
             allowed_tools = [
                 "mcp__agentbga__observe",
@@ -123,9 +150,14 @@ class HarnessAgent:
             ]
             command = [self.binary, "--print", "--output-format", "stream-json", "--verbose",
                        "--include-partial-messages", "--bare", "--strict-mcp-config",
-                       "--mcp-config", str(self.session.workspace / "claude-mcp.json"),
-                       "--model", model, "--effort", "max", "--permission-mode", "dontAsk",
-                       "--allowedTools", *allowed_tools, "--tools", ""]
+                       "--mcp-config", "claude-mcp.json",
+                       "--model", model]
+            if reasoning_enabled:
+                command.extend(["--effort", reasoning_effort])
+            command.extend([
+                "--permission-mode", "dontAsk", "--allowedTools", *allowed_tools,
+                "--tools", "",
+            ])
             if self.session.session_id:
                 command.extend(["--resume", self.session.session_id])
             # --tools accepts a variable number of values. Without the explicit
@@ -133,30 +165,34 @@ class HarnessAgent:
             return [*command, "--", prompt]
         if self.config.backend == "pi":
             command = [self.binary, "--mode", "json", "--provider", "agentbga",
-                       "--model", model, "--thinking", "xhigh",
+                       "--model", model, "--thinking",
+                       "off" if not reasoning_enabled else "xhigh" if reasoning_effort == "max" else reasoning_effort,
                        "--no-builtin-tools", "--no-context-files",
                        "--no-skills", "--no-prompt-templates", "--no-extensions",
-                       "--extension", str(self.session.workspace / "agentbga-tools.ts"),
-                       "--session-dir", str(self.session.workspace / ".pi-sessions")]
+                       "--extension", "agentbga-tools.ts",
+                       "--session-dir", ".pi-sessions"]
             if self.session.session_id:
                 command.extend(["--session", self.session.session_id])
             return [*command, prompt]
         if self.config.backend == "codex":
             overrides = getattr(self, "_codex_config_args", [])
+            runtime_dir = os.path.relpath(self.session.runtime, self.session.workspace)
             common = ["--model", model, "--json", "--sandbox", "workspace-write",
-                      "--skip-git-repo-check",
+                      "--add-dir", runtime_dir, "--skip-git-repo-check",
                       "--ignore-user-config", "--ignore-rules", *overrides]
             if self.session.session_id:
-                return [self.binary, "exec", "resume", "--model", model, "--json",
+                return [self.binary, "exec", "--add-dir", runtime_dir,
+                        "resume", "--model", model, "--json",
                         "--skip-git-repo-check", "--ignore-user-config", "--ignore-rules",
                         *overrides, self.session.session_id, prompt]
-            return [self.binary, "exec", *common, "--cd", str(self.session.workspace), prompt]
+            return [self.binary, "exec", *common, "--cd", ".", prompt]
         if self.config.backend == "opencode":
             selected_model = model if "/" in model else f"agentbga/{model}"
-            supports_thinking = "deepseek" in (self.config.base_url or "").lower()
             command = [self.binary, "run", "--pure", "--format", "json", "--model", selected_model,
-                       "--variant", "max", "--dir", str(self.session.workspace)]
-            if supports_thinking:
+                       "--variant", reasoning_effort, "--dir", "."]
+            # OpenCode's CLI flag controls whether reasoning blocks are shown;
+            # provider-specific request options are configured separately below.
+            if reasoning_enabled:
                 command.append("--thinking")
             if self.session.session_id:
                 command.extend(["--session", self.session.session_id])
@@ -166,8 +202,7 @@ class HarnessAgent:
             # headless session; the seat workspace persists notes across turns.
             # The model, reasoning effort, seat MCP server, and headless-safe
             # approval policy are composed through a per-turn cordis patch.
-            patch_path = str(self.session.workspace / "dsh-patch.yml")
-            command = [self.binary, "--profile", "headless", "--patch", patch_path]
+            command = [self.binary, "--profile", "headless", "--patch", "dsh-patch.yml"]
             return [*command, prompt]
         if self.config.backend == "hermes":
             command = [
@@ -300,7 +335,11 @@ class HarnessAgent:
         package_root = Path(__file__).resolve().parents[1]
         inherited = os.environ.get("PYTHONPATH")
         self._pythonpath = str(package_root) + (os.pathsep + inherited if inherited else "")
-        mcp_command = [sys.executable, "-m", "agentbga.seat_mcp", "--context", str(context_path)]
+        relative_context = os.path.relpath(context_path, self.session.workspace)
+        mcp_command = [sys.executable, "-m", "agentbga.seat_mcp", "--context", relative_context]
+        requested_effort = self.config.reasoning_effort or "max"
+        reasoning_effort = self._native_reasoning_effort()
+        reasoning_enabled = requested_effort != "none"
         claude_mcp = {"mcpServers": {"agentbga": {
             "type": "stdio", "command": mcp_command[0], "args": mcp_command[1:],
         }}}
@@ -315,7 +354,7 @@ class HarnessAgent:
             "baseUrl": self.config.base_url, "api": self.config.wire_api or "openai-completions",
             "apiKey": f"${pi_api_key_env}", "models": [{
                 "id": self.config.model,
-                "reasoning": True,
+                "reasoning": reasoning_enabled,
                 "thinkingLevelMap": {
                     "minimal": None, "low": None, "medium": None,
                     "high": "high", "xhigh": "max",
@@ -339,11 +378,15 @@ class HarnessAgent:
                 "wire_api = \"responses\"\n"
                 "requires_openai_auth = false\n"
             )
+        codex_reasoning = (
+            f"model_reasoning_effort = {json.dumps(reasoning_effort)}\n"
+            if reasoning_enabled else ""
+        )
         codex_config = (
             "approval_policy = \"never\"\n"
             "sandbox_mode = \"workspace-write\"\n"
             "web_search = \"disabled\"\n"
-            "model_reasoning_effort = \"max\"\n"
+            + codex_reasoning
             + provider
             + "[mcp_servers.agentbga]\n"
             f"command = {json.dumps(mcp_command[0])}\n"
@@ -362,10 +405,13 @@ class HarnessAgent:
             },
         }
         if provider_id and model_id:
-            supports_reasoning = "deepseek" in (self.config.base_url or "").lower()
             variant: dict[str, Any] = {}
-            if supports_reasoning:
-                variant = {"reasoningEffort": "max", "thinking": {"type": "enabled"}}
+            if reasoning_enabled:
+                variant = {"reasoningEffort": requested_effort}
+                if "deepseek" in (self.config.base_url or "").lower():
+                    variant["thinking"] = {"type": "enabled"}
+            elif "deepseek" in (self.config.base_url or "").lower():
+                variant["thinking"] = {"type": "disabled"}
             opencode_config["provider"] = {
                 provider_id: {
                     "npm": "@ai-sdk/openai" if self.config.wire_api == "responses" else "@ai-sdk/openai-compatible",
@@ -376,7 +422,7 @@ class HarnessAgent:
                     },
                     "models": {model_id: {
                         "name": model_id,
-                        "variants": {"max": variant},
+                        "variants": {requested_effort: variant},
                     }},
                 },
             }
@@ -391,8 +437,8 @@ class HarnessAgent:
             llm_plugin_block = (
                 "- id: llm-deepseek\n"
                 "  config:\n"
-                "    reasoningEffort: max\n"
-                "    thinking: enabled\n"
+                f"    reasoningEffort: {requested_effort}\n"
+                f"    thinking: {'enabled' if reasoning_enabled else 'disabled'}\n"
             )
         else:
             # Non-DeepSeek endpoint: use OpenAI-compatible adapter via dsh-llm-pi-ai.
@@ -446,7 +492,7 @@ class HarnessAgent:
             f"  base_url: {json.dumps((self.config.base_url or '').rstrip('/'))}\n"
             + hermes_api_mode
             + "agent:\n"
-            "  reasoning_effort: max\n"
+            f"  reasoning_effort: {json.dumps(requested_effort)}\n"
             "  max_turns: 20\n"
             "display:\n"
             "  streaming: false\n"
@@ -469,10 +515,13 @@ class HarnessAgent:
             "--config", "approval_policy=\"never\"",
             "--config", "sandbox_mode=\"workspace-write\"",
             "--config", "web_search=\"disabled\"",
-            "--config", "model_reasoning_effort=\"max\"",
             "--config", f"mcp_servers.agentbga.command={json.dumps(mcp_command[0])}",
             "--config", f"mcp_servers.agentbga.args=[{escaped_args}]",
         ]
+        if reasoning_enabled:
+            self._codex_config_args.extend([
+                "--config", f"model_reasoning_effort={json.dumps(reasoning_effort)}",
+            ])
         if provider:
             self._codex_config_args.extend([
                 "--config", "model_provider=\"agentbga\"",
@@ -568,7 +617,7 @@ class HarnessAgent:
         return str(name), arguments
 
     def _run(self, command: list[str]) -> tuple[str, str, int]:
-        safe_command = [part for part in command if part != self.config.api_key]
+        safe_command = self._display_command(command)
         self._emit("harness_started", command=safe_command, session_id=self.session.session_id)
         started = time.monotonic()
         process = subprocess.Popen(
@@ -637,8 +686,9 @@ class HarnessAgent:
 
     def _write_trace(
         self, *, prompt: str, observation: dict[str, Any],
-        legal: list[dict[str, Any]], version: Any, started: float,
-        status: str, action_id: str | None, error: str | None,
+        legal: list[dict[str, Any]], version: Any,
+        status: str, error: str | None,
+        action_latency_ms: float | None, process_latency_ms: float,
     ) -> None:
         """Persist one ordered per-turn trace: prompt → assistant/tool steps → submission."""
         context_path = self.session.runtime / "turn-context.json"
@@ -687,9 +737,14 @@ class HarnessAgent:
             "backend": self.config.backend,
             "model": self.config.model,
             "reasoning_effort": self.config.reasoning_effort,
+            "native_reasoning_effort": self._native_reasoning_effort(),
             "version": version,
             "session_id": self.session.session_id,
-            "latency_ms": round((time.monotonic() - started) * 1000, 3),
+            # Keep latency_ms as a compatibility alias for the total process
+            # latency while exposing time-to-action separately.
+            "latency_ms": process_latency_ms,
+            "action_latency_ms": action_latency_ms,
+            "process_latency_ms": process_latency_ms,
             "status": status,
             "error": error,
             "prompt": {
@@ -700,12 +755,31 @@ class HarnessAgent:
             },
             "steps": steps,
             "submission": submission,
-            "trace_file": str(self.trace_dir / f"turn-{_version_key(version):04d}.json"),
+            "trace_file": str(
+                (self.trace_dir / f"turn-{_version_key(version):04d}.json")
+                .relative_to(self.trace_dir.parents[2])
+            ),
         }
         target = self.trace_dir / f"turn-{_version_key(version):04d}.json"
         target.write_text(
             json.dumps(trace, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
         )
+
+    @staticmethod
+    def _action_latency_ms(submission_path: Path, started_wall: float) -> float | None:
+        """Measure time to accepted submit_action independently of CLI shutdown."""
+        if not submission_path.is_file():
+            return None
+        audit_path = submission_path.with_name("tool-events.jsonl")
+        if audit_path.is_file():
+            for line in audit_path.read_text(encoding="utf-8").splitlines():
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if row.get("tool") == "submit_action" and isinstance(row.get("created_at"), (int, float)):
+                    return round(max(0.0, row["created_at"] - started_wall) * 1000, 3)
+        return round(max(0.0, submission_path.stat().st_mtime - started_wall) * 1000, 3)
 
     def choose(
         self, observation: dict[str, Any], legal: list[dict[str, Any]],
@@ -719,9 +793,26 @@ class HarnessAgent:
         )
         version = observation.get("state_version", observation.get("turn_count"))
         started = time.monotonic()
+        started_wall = time.time()
         self._trace_steps = []
-        raw, stderr, returncode = self._run(self._command(prompt))
+        try:
+            raw, stderr, returncode = self._run(self._command(prompt))
+        except AgentError as error:
+            self._recover_hermes_session_id()
+            process_latency_ms = round((time.monotonic() - started) * 1000, 3)
+            action_latency_ms = self._action_latency_ms(submission_path, started_wall)
+            self._emit_tool_audit()
+            detail = self._redact_text(str(error))
+            self._emit("harness_error", error=detail)
+            self._write_trace(
+                prompt=prompt, observation=observation, legal=legal, version=version,
+                status="error", error=detail,
+                action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
+            )
+            raise
         self._recover_hermes_session_id()
+        process_latency_ms = round((time.monotonic() - started) * 1000, 3)
+        action_latency_ms = self._action_latency_ms(submission_path, started_wall)
         self._emit_tool_audit()
         if returncode != 0:
             detail = stderr[-1000:] or raw[-1000:]
@@ -729,7 +820,8 @@ class HarnessAgent:
             self._emit("harness_error", error=detail, exit_code=returncode)
             self._write_trace(
                 prompt=prompt, observation=observation, legal=legal, version=version,
-                started=started, status="error", action_id=None, error=detail,
+                status="error", error=detail,
+                action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
             )
             raise AgentError(f"{self.config.backend} harness exited {returncode}: {detail}")
         submission = None
@@ -739,28 +831,37 @@ class HarnessAgent:
         if action_id is None:
             self._write_trace(
                 prompt=prompt, observation=observation, legal=legal, version=version,
-                started=started, status="no_submit", action_id=None, error=None,
+                status="no_submit", error=None,
+                action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
             )
             raise AgentError(f"{self.config.backend} harness finished without calling submit_action")
         if action_id not in {item["id"] for item in legal}:
             self._write_trace(
                 prompt=prompt, observation=observation, legal=legal, version=version,
-                started=started, status="bad_action", action_id=action_id, error=None,
+                status="bad_action", error=None,
+                action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
             )
             raise AgentError("harness submitted an unknown or stale action ID")
-        latency = round((time.monotonic() - started) * 1000, 3)
         metadata = {
             "backend": self.config.backend, "harness": self.config.backend,
             "model": self.config.model, "session_id": self.session.session_id,
             "reasoning_effort": self.config.reasoning_effort,
-            "latency_ms": latency,
+            "native_reasoning_effort": self._native_reasoning_effort(),
+            "latency_ms": process_latency_ms,
+            "action_latency_ms": action_latency_ms,
+            "process_latency_ms": process_latency_ms,
         }
-        self._emit("harness_finished", action_id=action_id, latency_ms=latency,
+        self._emit("harness_finished", action_id=action_id,
+                   latency_ms=process_latency_ms,
+                   action_latency_ms=action_latency_ms,
+                   process_latency_ms=process_latency_ms,
                    session_id=self.session.session_id,
-                   reasoning_effort=self.config.reasoning_effort)
+                   reasoning_effort=self.config.reasoning_effort,
+                   native_reasoning_effort=self._native_reasoning_effort())
         self._write_trace(
             prompt=prompt, observation=observation, legal=legal, version=version,
-            started=started, status="ok", action_id=action_id, error=None,
+            status="ok", error=None,
+            action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
         )
         return action_id, metadata
 

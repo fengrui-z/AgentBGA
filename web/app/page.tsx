@@ -161,7 +161,8 @@ const useLang = () => useContext(LangCtx);
 type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
 type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
 type GameId = "splendor" | "ark_nova" | "brass_birmingham" | "century_spice_road";
-type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string };
+type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "max" | "xhigh";
+type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string; reasoning_effort: ReasoningEffort };
 type Card = { id: string; tier: number; bonus: string; points: number; cost: Record<string, number> };
 type PlayerView = {
   seat: number; tokens: Record<string, number>; bonuses: Record<string, number>; score: number;
@@ -244,7 +245,7 @@ type Snapshot = {
 type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
   type: string; player?: string; seat?: number; error?: string; turns?: number;
-  backend?: string; agent?: {latency_ms?: number}; action?: Record<string, unknown>;
+  backend?: string; agent?: {latency_ms?: number; action_latency_ms?: number; process_latency_ms?: number}; action?: Record<string, unknown>;
   rankings?: {player: string}[]; channel?: "reasoning" | "content"; delta?: string; attempt?: number; version?: number;
   harness?: string; tool?: string; arguments?: unknown; result?: unknown; action_id?: string;
 };
@@ -252,7 +253,7 @@ type Timeline = { seq: number; event: TimelineEvent; snapshot?: Snapshot };
 type ChatTurn = {
   key: string; seat: number; player: string; backend: string; attempt: number;
   reasoning: string; content: string; status: "thinking" | "done" | "error";
-  startedAt: number; latencyMs?: number;
+  startedAt: number; actionLatencyMs?: number; processLatencyMs?: number;
 };
 
 const GEM_ORDER = ["red", "green", "white", "blue", "black", "gold"] as const;
@@ -268,7 +269,7 @@ const SPICE_META: Record<SpiceName, {label: Record<Lang,string>; short: Record<L
   cardamom: {label: {zh:"豆蔻",en:"Cardamom"}, short: {zh:"绿",en:"C"}}, cinnamon: {label: {zh:"肉桂",en:"Cinnamon"}, short: {zh:"褐",en:"N"}},
 };
 const GAME_COPY: Record<GameId, {eyebrow: string; name: Record<Lang,string>; description: Record<Lang,string>; badge: string; note: Record<Lang,string>}> = {
-  splendor: {eyebrow: "SPLENDOR", name: {zh:"璀璨宝石",en:"Splendor"}, description: {zh:"配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；所有 Agent Harness 固定使用最高思考强度。",en:"Configure 2–4 model or human players. On your turn, pick a legal action at the table; all agent harnesses run at max reasoning."}, badge: "PLAYABLE", note: {zh:"完整基础版引擎",en:"Full base-game engine"}},
+  splendor: {eyebrow: "SPLENDOR", name: {zh:"璀璨宝石",en:"Splendor"}, description: {zh:"配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；每个 Agent Harness 都可独立设置思考强度。",en:"Configure 2–4 model or human players. On your turn, pick a legal action at the table; each agent harness can use its own reasoning effort."}, badge: "PLAYABLE", note: {zh:"完整基础版引擎",en:"Full base-game engine"}},
   ark_nova: {eyebrow: "ARK NOVA", name: {zh:"方舟动物园",en:"Ark Nova"}, description: {zh:"在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。",en:"Test multi-stage decisions in a controlled research-card pool: opening hand, five action cards, hex building, animal placement, association tasks and Break."}, badge: "CONTROLLED CORE V2", note: {zh:"升级 · 捐款 · 释放 · 效果系统",en:"Upgrades · donations · release · effect system"}},
   brass_birmingham: {eyebrow: "BRASS: BIRMINGHAM", name: {zh:"伯明翰",en:"Brass: Birmingham"}, description: {zh:"测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。",en:"Test long-term planning in a two-era economic network: industry building, resource sourcing, merchant selling, dynamic turn order and canal-to-rail transitions."}, badge: "PLAYABLE BETA", note: {zh:"产业 · 网络 · 双时代经济",en:"Industry · network · two-era economy"}},
   century_spice_road: {eyebrow: "CENTURY: SPICE ROAD", name: {zh:"香料之路",en:"Century: Spice Road"}, description: {zh:"经营自己的商队：获取商人牌、升级或交换香料、争夺金币银币，并抢先完成高分订单。支持 2–5 名玩家。",en:"Run your caravan: acquire merchant cards, upgrade or trade spices, race for gold and silver coins to fulfill high-score orders. 2–5 players."}, badge: "CLASSIC BASE", note: {zh:"商人牌 · 香料引擎 · 订单竞速",en:"Merchant cards · spice engine · order race"}},
@@ -287,11 +288,18 @@ const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: 
   human: { label: {zh: "人类玩家", en: "Human player"}, url: "", key: "", model: "" },
   random: { label: {zh: "随机基线", en: "Random baseline"}, url: "", key: "", model: "" },
 };
+const HARNESS_BACKENDS = new Set<Backend>(["claude", "pi", "codex", "opencode", "dsh", "hermes", "minimal"]);
+const REASONING_OPTIONS: {value: ReasoningEffort; label: Record<Lang,string>}[] = [
+  {value: "none", label: {zh: "关闭", en: "Off"}}, {value: "minimal", label: {zh: "Minimal", en: "Minimal"}},
+  {value: "low", label: {zh: "Low", en: "Low"}}, {value: "medium", label: {zh: "Medium", en: "Medium"}},
+  {value: "high", label: {zh: "High", en: "High"}}, {value: "max", label: {zh: "Max", en: "Max"}},
+  {value: "xhigh", label: {zh: "XHigh", en: "XHigh"}},
+];
 const PROVIDERS: Record<Provider, {label: Record<Lang,string>; backend: Backend; url: string; models: string[]; note: Record<Lang,string>}> = {
   custom: {label: {zh:"自定义 / 本地模型",en:"Custom / Local"}, backend: "openai", url: "", models: [], note: {zh:"网关代理、本地模型、特殊 endpoint：手动填 Endpoint + 模型 ID。运行时选对应的执行方式",en:"Gateway, local model, or special endpoint: enter endpoint + model ID. Pick the runtime separately"}},
   claude_code: {label: {zh:"Claude Code",en:"Claude Code"}, backend: "claude", url: "https://api.anthropic.com", models: ["claude-sonnet-4-6", "claude-opus-4-6"], note: {zh:"Claude Code 持久 session + 座位隔离 MCP",en:"Persistent session + seat-isolated MCP"}},
   pi: {label: {zh:"Pi",en:"Pi"}, backend: "pi", url: "https://api.openai.com/v1", models: ["gpt-5.6"], note: {zh:"Pi 持久 session + AgentBGA 专用工具扩展；兼容自定义 OpenAI Endpoint",en:"Persistent session + AgentBGA tool extension; any OpenAI-compatible endpoint"}},
-  codex: {label: {zh:"Codex",en:"Codex"}, backend: "codex", url: "https://api.openai.com/v1", models: ["gpt-5.6", "gpt-5.6-terra", "gpt-5.3-codex"], note: {zh:"Codex 持久 session + 座位隔离 MCP；自定义 Endpoint 自动使用兼容协议",en:"Persistent session + seat-isolated MCP; custom endpoint auto-compatible"}},
+  codex: {label: {zh:"Codex",en:"Codex"}, backend: "codex", url: "https://api.openai.com/v1", models: ["gpt-5.6", "gpt-5.6-terra", "gpt-5.3-codex"], note: {zh:"Codex 持久 session + 座位隔离 MCP；自定义 Endpoint 必须支持 Responses API",en:"Persistent session + seat-isolated MCP; custom endpoints must support the Responses API"}},
   opencode: {label: {zh:"OpenCode",en:"OpenCode"}, backend: "opencode", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"OpenCode 持久 session + 座位隔离 MCP",en:"Persistent session + seat-isolated MCP"}},
   dsh: {label: {zh:"DeepSeek Harness",en:"DeepSeek Harness"}, backend: "dsh", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"DeepSeek Harness (dsh) headless + 座位隔离 MCP；每回合独立 session，workspace 笔记持久",en:"dsh headless + seat-isolated MCP; fresh session each turn, workspace notes persist"}},
   hermes: {label: {zh:"Hermes Agent",en:"Hermes Agent"}, backend: "hermes", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"Hermes Agent 持久 session + 独立 HERMES_HOME + 座位隔离 MCP",en:"Persistent session + isolated HERMES_HOME + seat-isolated MCP"}},
@@ -303,18 +311,27 @@ const PROVIDERS: Record<Provider, {label: Record<Lang,string>; backend: Backend;
 };
 
 function player(seed: number, backend: Backend = "openai"): PlayerForm {
-  return { id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "custom", backend, model: "", base_url: BACKENDS[backend].url, api_key: "" };
+  return { id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "custom", backend, model: "", base_url: BACKENDS[backend].url, api_key: "", reasoning_effort: "max" };
 }
 
-function deepseekHarnessPlayer(seed: number, backend: "opencode" | "codex" | "dsh" | "hermes" | "minimal"): PlayerForm {
+function deepseekHarnessPlayer(seed: number, backend: "opencode" | "dsh" | "hermes" | "minimal"): PlayerForm {
   return {
     id: crypto.randomUUID(), name: `Agent ${seed}`, provider: backend, backend,
     model: "deepseek-v4-flash", base_url: "https://api.deepseek.com", api_key: "",
+    reasoning_effort: "max",
+  };
+}
+
+function codexHarnessPlayer(seed: number): PlayerForm {
+  return {
+    id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "codex", backend: "codex",
+    model: "gpt-5.6", base_url: "https://api.openai.com/v1", api_key: "",
+    reasoning_effort: "max",
   };
 }
 
 function humanPlayer(seed: number): PlayerForm {
-  return {id: crypto.randomUUID(), name: seed === 1 ? "你" : `玩家 ${seed}`, provider: "custom", backend: "human", model: "", base_url: "", api_key: ""};
+  return {id: crypto.randomUUID(), name: seed === 1 ? "你" : `玩家 ${seed}`, provider: "custom", backend: "human", model: "", base_url: "", api_key: "", reasoning_effort: "max"};
 }
 
 function api(path: string) { return path; }
@@ -347,7 +364,7 @@ function PlayerPanel({player: p, identity, active}: {player: PlayerView; identit
       <div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `Agent ${p.seat + 1}`}</h3></div>
       <div className="score"><strong>{p.score}</strong><span>{lang === "zh" ? "声望" : "pts"}</span></div>
     </header>
-    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{lang === "zh" ? "思考：最高" : "reasoning: max"}</b>}</div>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{lang === "zh" ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>
     <div className="asset-row"><span className="asset-title">{t("tokens")}</span><div>{GEM_ORDER.map(c => <Gem key={c} color={c} value={p.tokens[c]} compact />)}</div></div>
     <div className="asset-row"><span className="asset-title">{t("engine")}</span><div>{BONUS_ORDER.map(c => <Gem key={c} color={c} value={p.bonuses[c]} compact />)}</div></div>
     <div className="owned-head"><span>{lang === "zh" ? "已购发展牌" : "Purchased cards"}</span><b>{p.purchased_count}</b></div>
@@ -395,7 +412,7 @@ function CenturyPlayerPanel({player: p, identity, active}: {player: CenturyPlaye
   const caravanTotal = Object.values(p.spices).reduce((sum, value) => sum + value, 0);
   return <section className={`player-panel century-player-panel ${active ? "active-player" : ""}`}>
     <header><div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `${t("player_label")} ${p.seat + 1}`}</h3></div><div className="century-score"><strong>{p.score}</strong><span>VP</span></div></header>
-    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}</div>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{lang === "zh" ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>
     <div className="century-caravan"><header><span>{t("caravan_spice")}</span><b>{caravanTotal}/10</b></header><Spices pool={p.spices}/></div>
     <div className="century-assets"><span>{t("gold_coin")} <b>{p.coins.gold}</b></span><span>{t("silver_coin")} <b>{p.coins.silver}</b></span><span>{t("orders")} <b>{p.point_cards.length}</b></span></div>
     <div className="century-hand-head"><span>{t("avail_merchant")}</span><b>{p.hand.length}</b><small>{t("played")} {p.played.length}</small></div>
@@ -648,7 +665,7 @@ function ArkPlayerPanel({player: p, identity}: {player: ArkPlayerView; identity?
   const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
   return <section className="player-panel ark-player-panel">
     <header><div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `${t("player_label")} ${p.seat + 1}`}</h3></div><div className="ark-money"><strong>{p.money}</strong><span>₡</span></div></header>
-    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}</div>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{lang === "zh" ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>
     <div className="ark-mini-tracks"><span>{zh ? "吸引力" : "Appeal"} <b>{p.appeal}</b></span><span>{zh ? "保育" : "Conservation"} <b>{p.conservation}</b></span><span>{zh ? "声望" : "Reputation"} <b>{p.reputation}</b></span></div>
     <div className="ark-worker-row"><span>X TOKEN <b>{p.x_tokens}/5</b></span><span>{zh ? "协会工人" : "Assoc. workers"} <b>{p.association_workers.active}</b> + {p.association_workers.reserve}</span></div>
     <div className="ark-actions">{[...p.action_cards].sort((a, b) => b.strength - a.strength).map(card => <div key={card.action} className={`ark-action action-${card.action}`}><b>{card.strength}</b><span>{ARK_ACTION_LABELS[lang][card.action]}</span>{card.upgraded && <i>Ⅱ</i>}</div>)}</div>
@@ -703,7 +720,7 @@ function BrassPlayerPanel({player: p, identity, active}: {player: BrassPlayerVie
   const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
   return <section className={`player-panel brass-player-panel ${active ? "active-player" : ""}`}>
     <header><div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `${t("player_label")} ${p.seat + 1}`}</h3></div><div className="brass-vp"><strong>{p.vp}</strong><span>VP</span></div></header>
-    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}</div>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{lang === "zh" ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>
     <div className="brass-economy"><span>{zh ? "现金" : "Cash"} <b>£{p.money}</b></span><span>{zh ? "收入" : "Income"} <b>{brassIncomeLevel(p.income_position)}</b></span><span>{zh ? "本轮支出" : "Spent this round"} <b>£{p.spent_this_round}</b></span></div>
     <div className="brass-hand"><span>{t("hand")} <b>{p.hand_count}</b></span><span>{zh ? "万能地点" : "Wild location"} <b>{p.wild_cards.location}</b></span><span>{zh ? "万能产业" : "Wild industry"} <b>{p.wild_cards.industry}</b></span></div>
     {p.hand.some(card => !card.hidden) && <div className="brass-hand-cards">{p.hand.map((card, index) => <span key={card.id || index} title={card.id}><b>{brassCardLabel(card, lang)}</b><small>{card.id}</small></span>)}</div>}
@@ -783,7 +800,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const [game, setGame] = useState<GameId>("splendor");
   const [players, setPlayers] = useState<PlayerForm[]>([
     deepseekHarnessPlayer(1, "opencode"),
-    deepseekHarnessPlayer(2, "codex"),
+    codexHarnessPlayer(2),
   ]);
   const [seed, setSeed] = useState("42");
   const [speed, setSpeed] = useState(650);
@@ -838,7 +855,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
 
   function setMatchup(kind: "human" | "harness") {
     setPlayers(kind === "human" ? [humanPlayer(1), deepseekHarnessPlayer(2, "opencode")] : [
-      deepseekHarnessPlayer(1, "opencode"), deepseekHarnessPlayer(2, "codex"),
+      deepseekHarnessPlayer(1, "opencode"), codexHarnessPlayer(2),
     ]);
   }
 
@@ -853,6 +870,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       ...p, provider, backend: provider === "custom" ? p.backend : preset.backend,
       base_url: provider === "custom" ? p.base_url : preset.url,
       model: provider === "custom" ? p.model : preset.models[0],
+      reasoning_effort: preset.backend === "codex" && p.reasoning_effort === "none" ? "max" : p.reasoning_effort,
     } : p));
   }
 
@@ -867,6 +885,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
           players: players.map(p => ({
             name: p.name, backend: p.backend, model: p.model,
             base_url: p.base_url, api_key: p.api_key,
+            ...(HARNESS_BACKENDS.has(p.backend) ? {reasoning_effort: p.reasoning_effort} : {}),
           })),
         }),
       });
@@ -901,7 +920,8 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
             const actual = current.length - 1 - index;
             return current.map((turn, i) => i === actual ? {...turn,
               status: event.type === "agent_error" ? "error" : "done",
-              latencyMs: event.agent?.latency_ms,
+              actionLatencyMs: event.agent?.action_latency_ms,
+              processLatencyMs: event.agent?.process_latency_ms ?? event.agent?.latency_ms,
               content: event.type === "agent_error" && !turn.content ? event.error || "调用失败" : turn.content,
             } : turn);
           });
@@ -969,6 +989,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
           <div className="field grow endpoint-field"><label htmlFor={`${p.id}-endpoint`}>{t("f_endpoint")}</label><input id={`${p.id}-endpoint`} value={p.base_url} placeholder={t("ph_endpoint")} onChange={e => updatePlayer(p.id, {provider: "custom", base_url: e.target.value})}/></div>
           <div className="field model-field"><label htmlFor={`${p.id}-model`}>{t("f_model")}</label><input id={`${p.id}-model`} list={`${p.id}-models`} placeholder={t("ph_model")} value={p.model} onChange={e => updatePlayer(p.id, {model: e.target.value})}/><datalist id={`${p.id}-models`}>{PROVIDERS[p.provider].models.map(model => <option key={model} value={model}/>)}</datalist></div>
           <div className="field key-field"><label htmlFor={`${p.id}-key`}>{t("f_key")}</label><input id={`${p.id}-key`} type="password" autoComplete="off" placeholder={t("ph_key")} value={p.api_key} onChange={e => updatePlayer(p.id, {api_key: e.target.value})}/></div>
+          {HARNESS_BACKENDS.has(p.backend) && <div className="field reasoning-field"><label htmlFor={`${p.id}-reasoning`}>Reasoning Effort</label><select id={`${p.id}-reasoning`} value={p.reasoning_effort} onChange={e => updatePlayer(p.id, {reasoning_effort: e.target.value as ReasoningEffort})}>{REASONING_OPTIONS.filter(option => p.backend !== "codex" || option.value !== "none").map(option => <option key={option.value} value={option.value}>{option.label[lang]}</option>)}</select></div>}
           <div className="provider-note">{PROVIDERS[p.provider].note[lang]}</div>
         </>}
         {(["random", "human"] as Backend[]).includes(p.backend) && <div className="field manual-backend"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select><small>{p.backend === "human" ? t("human_note") : t("random_note")}</small></div>}
@@ -1027,14 +1048,14 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       <aside className="timeline">
         <header><div><span>{t("model_stream")}</span><h2>{t("chat_h")}</h2></div><i className={snapshot.status === "active" && (!snapshot.paused || snapshot.pause_pending) ? "pulse" : ""}/></header>
         <div className="chat-list">{chat.length === 0 && <p className="waiting">{snapshot.game_description.runnable ? t("waiting_model") : t("waiting_note")}</p>}{chat.map(turn => <article className={`chat-turn chat-${turn.status}`} key={turn.key}>
-          <header><strong>{turn.player}</strong><span>{turn.backend} · {t("attempt")} {turn.attempt}{turn.status === "thinking" ? ` · ${t("generating")}` : turn.latencyMs ? ` · ${(turn.latencyMs / 1000).toFixed(1)}s` : ""}</span></header>
+          <header><strong>{turn.player}</strong><span>{turn.backend} · {t("attempt")} {turn.attempt}{turn.status === "thinking" ? ` · ${t("generating")}` : turn.processLatencyMs !== undefined ? ` · ${lang === "zh" ? "行动" : "action"} ${((turn.actionLatencyMs ?? turn.processLatencyMs) / 1000).toFixed(1)}s · ${lang === "zh" ? "进程" : "process"} ${(turn.processLatencyMs / 1000).toFixed(1)}s` : ""}</span></header>
           {turn.reasoning && <details open><summary>{t("thinking")}{turn.status === "done" ? ` · ${t("collapsible")}` : ""}</summary><pre>{turn.reasoning}</pre></details>}
           {turn.content && <div className="model-answer"><b>{t("answer")}</b><pre>{turn.content}</pre></div>}
           {turn.status === "thinking" && <div className="typing"><i/><i/><i/></div>}
         </article>)}</div>
         <section className="action-drawer"><header><span>{t("actions")}</span><strong>{t("decision_log")}</strong><b>{timeline.filter(item => ["decision", "turn"].includes(item.event.type)).length}</b></header>
           <div>{[...timeline].reverse().filter(item => !["agent_started", "agent_finished"].includes(item.event.type)).slice(0, 40).map(item => <article key={item.seq} className={`event event-${item.event.type}`}>
-            <span>{String(item.seq + 1).padStart(3,"0")}</span><div><p>{describeAction(item, names, lang)}</p>{item.event.backend && <small>{item.event.backend}{item.event.agent?.latency_ms ? ` · ${item.event.agent.latency_ms}ms` : ""}</small>}
+            <span>{String(item.seq + 1).padStart(3,"0")}</span><div><p>{describeAction(item, names, lang)}</p>{item.event.backend && <small>{item.event.backend}{item.event.agent?.process_latency_ms !== undefined ? ` · ${lang === "zh" ? "行动" : "action"} ${item.event.agent.action_latency_ms ?? "—"}ms · ${lang === "zh" ? "进程" : "process"} ${item.event.agent.process_latency_ms}ms` : item.event.agent?.latency_ms ? ` · ${item.event.agent.latency_ms}ms` : ""}</small>}
               {item.event.tool && (item.event.arguments !== undefined || item.event.result !== undefined) && <details className="tool-payload"><summary>{t("view_tool")}</summary><pre>{JSON.stringify(item.event.result ?? item.event.arguments, null, 2)}</pre></details>}
             </div>
           </article>)}</div>

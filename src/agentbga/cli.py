@@ -244,7 +244,7 @@ def execute(args: argparse.Namespace) -> int:
                 emit(envelope(store.harness_events(args.match_id), match_id=args.match_id, version=version))
             elif args.command == "traces":
                 version, _, _ = store.load(args.match_id)
-                root = Path.cwd() / ".agentbga" / "runs" / args.match_id / "_traces"
+                root = Path.cwd() / ".agentbga" / "runs" / "_traces" / args.match_id
                 if args.turn is not None:
                     if args.seat is None:
                         raise ValueError("--turn requires --seat")
@@ -269,8 +269,10 @@ def execute(args: argparse.Namespace) -> int:
                                 "status": trace.get("status"),
                                 "action_id": (trace.get("submission") or {}).get("action_id"),
                                 "latency_ms": trace.get("latency_ms"),
+                                "action_latency_ms": trace.get("action_latency_ms"),
+                                "process_latency_ms": trace.get("process_latency_ms", trace.get("latency_ms")),
                                 "backend": trace.get("backend"),
-                                "file": str(trace_file),
+                                "file": str(trace_file.relative_to(Path.cwd())),
                             })
                     emit(envelope(entries, match_id=args.match_id, version=version))
             elif args.command == "act":

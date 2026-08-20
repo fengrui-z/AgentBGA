@@ -176,22 +176,25 @@ class WebTests(unittest.TestCase):
             def fake_run(_store, _match_id, players, sink, turn_gate):
                 seen["key"] = players[0].api_key
                 seen["public"] = players[0].public_dict()
+                seen["reasoning_effort"] = players[0].reasoning_effort
                 captured.set()
                 sink({"type": "agent_stream", "version": 0, "seat": 0, "player": "API",
-                      "backend": "openai", "attempt": 1, "channel": "reasoning", "delta": "thinking"})
+                      "backend": "codex", "attempt": 1, "channel": "reasoning", "delta": "thinking"})
                 sink({"type": "match_failed", "error": "test stop"})
 
             with mock.patch("agentbga.web.run_match", side_effect=fake_run):
                 created = MatchHub(db).create({
                     "players": [
-                        {"name": "API", "backend": "openai", "model": "m",
-                         "base_url": "https://example.test/v1", "api_key": "top-secret"},
+                        {"name": "API", "backend": "codex", "model": "m",
+                         "base_url": "https://example.test/v1", "api_key": "top-secret",
+                         "reasoning_effort": "low"},
                         {"name": "Baseline", "backend": "random"},
                     ]
                 })
                 self.assertTrue(captured.wait(2))
 
             self.assertEqual("top-secret", seen["key"])
+            self.assertEqual("low", seen["reasoning_effort"])
             self.assertNotIn("api_key", seen["public"])
             store = Store(db)
             try:

@@ -28,13 +28,14 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /Hermes Agent/);
   assert.match(html, /value="deepseek-v4-flash"/);
   assert.match(html, /value="https:\/\/api\.deepseek\.com"/);
-  assert.match(html, /固定使用最高思考强度/);
+  assert.match(html, /独立设置思考强度/);
+  assert.match(html, /Reasoning Effort/);
   assert.match(html, /人类 vs Agent/);
   assert.match(html, /添加人类/);
   assert.match(html, /type="password"/);
   const source = await readFile(new URL("app/page.tsx", root), "utf8");
   assert.match(source, /deepseekHarnessPlayer\(1, "opencode"\)/);
-  assert.match(source, /deepseekHarnessPlayer\(2, "codex"\)/);
+  assert.match(source, /codexHarnessPlayer\(2\)/);
   assert.match(source, /MODEL STREAM|模型 Chat/);
   assert.match(source, /暂停|继续对局/);
   assert.match(source, /human_turn|submitHumanAction/);
