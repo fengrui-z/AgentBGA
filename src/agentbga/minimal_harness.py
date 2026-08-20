@@ -289,13 +289,19 @@ class DirectGameAgent:
         lines.append(f"=== Turn {turn} | You: {my_score}pts | Opponent: {opp_score}pts ===")
 
         # My resources
-        token_str = " ".join(f"{k[:1].upper()}:{v}" for k, v in sorted(tokens.items()) if v)
-        bonus_str = " ".join(f"{k[:1].upper()}={v}" for k, v in sorted(bonuses.items()) if v)
+        # Use the canonical color names shown in legal actions and raw observations.
+        # Initials are ambiguous for Splendor because both blue and black start with B.
+        token_str = " ".join(f"{color}:{count}" for color, count in sorted(tokens.items()) if count)
+        bonus_str = " ".join(f"{color}={count}" for color, count in sorted(bonuses.items()) if count)
         lines.append(f"Tokens: {token_str or 'none'}")
         lines.append(f"Bonuses: {bonus_str or 'none'} ({my.get('purchased_count', 0)} cards)")
 
         # Opponent summary (visible only)
-        opp_bonus_str = " ".join(f"{k[:1].upper()}={v}" for k, v in sorted(opp.get("bonuses", {}).items()) if v)
+        opp_bonus_str = " ".join(
+            f"{color}={count}"
+            for color, count in sorted(opp.get("bonuses", {}).items())
+            if count
+        )
         lines.append(f"Opponent: {opp.get('purchased_count', 0)} cards (bonuses: {opp_bonus_str or 'none'})")
 
         # What can I buy right now?
