@@ -261,6 +261,7 @@ floor 保存有序 items；items 可以是瓷砖 ID 或 `START_MARKER`。普通�
   "round": 1,
   "turn_count": 0,
   "active_seat": 0,
+  "round_start_seat": 0,
   "shuffle_count": 0,
   "bag": ["... internal tile ids ..."],
   "lid": [],
@@ -297,6 +298,7 @@ floor 保存有序 items；items 可以是瓷砖 ID 或 `START_MARKER`。普通�
 说明：
 
 - `turn_count` 每完成一次 `draft_tiles` 增加 1；自动 wall-tiling 不增加 turn。
+- `round_start_seat` 记录本轮首家，用于起始玩家标记始终无人领取的规则边界。
 - Azul v1 不需要 `decision_count`，Runner 会自然使用 `turn_count`。
 - `phase` 只使用 `factory_offer` 和 `finished`，不制造无玩家选择的 scoring phase。
 - `wall[row][column]` 保存放入该格的 tile ID 或 `None`。
@@ -687,10 +689,11 @@ emit match_finished with rankings
 
 1. `round += 1`；
 2. active seat 设为 `start_marker_holder_seat`；
-3. 把 marker 重新标记为在 center，并清空 `start_marker_holder_seat`；
-4. 必要时把 lid 洗回 bag；
-5. 依序补满 factories；
-6. 生成 `round_started`。
+3. `round_start_seat` 设为同一 seat；
+4. 把 marker 重新标记为在 center，并清空 `start_marker_holder_seat`；
+5. 必要时把 lid 洗回 bag；
+6. 依序补满 factories；
+7. 生成 `round_started`。
 
 ## 12. 事件 schema
 
@@ -707,6 +710,7 @@ emit match_finished with rankings
 | `tiles_drafted` | 从 source 取砖 | seat, source, color, count |
 | `factory_remainder_moved` | 工厂余砖进入 center | source, counts |
 | `start_player_marker_taken` | 首次从 center 选砖 | seat, floor_position/overflow |
+| `start_player_marker_retained` | 整轮中央区未收到瓷砖 | seat, reason |
 | `tiles_placed` | 放入 pattern/floor | seat, destination, color, placed, floor, lid |
 | `wall_tile_scored` | 完成线铺墙 | seat, line, color, row, column, points |
 | `floor_penalty_applied` | 玩家本轮 floor 结算 | seat, item_count, penalty, score_before, score_after |
@@ -841,7 +845,9 @@ Azul 没有玩家之间的隐藏信息，但未来 bag 顺序仍是 admin-only �
 为避免 UI 和模型各自重建规则，observation 应自描述墙颜色和 line capacity，但不要
 包含长篇自然语言规则。
 
-## 15. 起始玩家标记的满 floor 边界
+## 15. 起始玩家标记边界
+
+### 15.1 满 floor
 
 规则书要求首次从 center 取砖的玩家把 marker 放到 floor 最左侧空位，但没有清楚描述
 该玩家的七个 floor 位置在此之前已经全部占满的情况。这一状态在数字实现中可达，必须
@@ -864,6 +870,19 @@ Azul 没有玩家之间的隐藏信息，但未来 bag 顺序仍是 admin-only �
 3. 提升 `RULES_VERSION`；
 4. 更新 golden replay hash。
 
+### 15.2 整轮中央区没有瓷砖
+
+所有 factory 都是单色时，玩家可以依次取空每个 factory，而不产生任何余砖进入 center。
+此时 marker 没有合法的随砖领取者，但回合仍必须能够确定下一轮首家。
+
+默认裁决 `AZUL-RULE-EDGE-002`：
+
+- 状态显式保存 `round_start_seat`；
+- 若 round resolution 时 marker 仍在 center，且没有 floor/holder owner，则本轮首家保留 marker；
+- 设置 `center_has_start_marker = false` 和 `start_marker_holder_seat = round_start_seat`；
+- 生成 `start_player_marker_retained`，reason 为 `center_received_no_tiles`；
+- 若对局继续，正常把 marker 放回 center，并以该 seat 开始下一轮。
+
 ## 16. `validate_state` 不变式
 
 每次 `new_game` 和成功 `apply_action` 后调用。至少验证：
@@ -880,6 +899,7 @@ Azul 没有玩家之间的隐藏信息，但未来 bag 顺序仍是 admin-only �
 - turn_count >= 0；
 - shuffle_count >= 0；
 - active seat 在范围内。
+- round start seat 在范围内。
 
 ### 16.2 瓷砖守恒
 
@@ -1290,6 +1310,7 @@ def action(state, seat=0, **expected):
 - `test_start_marker_owner_becomes_next_round_first_player`
 - `test_start_marker_is_not_put_in_lid`
 - `test_full_floor_marker_edge_001`
+- `test_round_with_no_center_tiles_retains_the_round_start_player`
 
 ### 20.5 Bag refill
 

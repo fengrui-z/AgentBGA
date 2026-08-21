@@ -64,6 +64,40 @@ class AzulTests(unittest.TestCase):
         self.assertEqual(before_lid + expected_overflow, len(state["lid"]))
         self.assertIn("start_player_marker_taken", [event["type"] for event in events])
 
+    def test_round_with_no_center_tiles_retains_the_round_start_player(self):
+        state = azul.new_game(2, 10)
+        state["round"] = 2
+        state["active_seat"] = 1
+        state["round_start_seat"] = 1
+        all_tiles = list(azul.TILES)
+        chosen = []
+        drafts = []
+        for factory, color in zip(state["factories"], azul.COLORS, strict=True):
+            tiles = [tile for tile in all_tiles if azul.TILES[tile] == color][:4]
+            factory["tiles"] = tiles
+            chosen.extend(tiles)
+            drafts.append((factory["id"], color))
+        state["bag"] = [tile for tile in all_tiles if tile not in chosen]
+        state["lid"] = []
+        state["center"] = []
+        azul.validate_state(state)
+
+        events = []
+        for source, color in drafts:
+            state, events = azul.apply_action(state, state["active_seat"], {
+                "type": "draft_tiles",
+                "source": source,
+                "color": color,
+                "destination": "floor",
+            })
+
+        self.assertEqual(3, state["round"])
+        self.assertEqual(1, state["active_seat"])
+        self.assertEqual(1, state["round_start_seat"])
+        self.assertTrue(state["center_has_start_marker"])
+        self.assertIn("start_player_marker_retained", [event["type"] for event in events])
+        azul.validate_state(state)
+
     def test_wall_placement_scoring_covers_isolated_and_crossing_connections(self):
         wall = [[None for _ in range(5)] for _ in range(5)]
         wall[2][2] = "placed"

@@ -183,7 +183,7 @@ type AzulPlayerView = {
 };
 type AzulView = {
   game: "azul"; rules_version: string; implementation_status: string; status: string; phase: string;
-  round: number; turn_count: number; active_seat: number; bag_count: number; lid_count: number;
+  round: number; turn_count: number; active_seat: number; round_start_seat: number; bag_count: number; lid_count: number;
   center_has_start_marker: boolean; start_marker_holder_seat: number | null;
   factories: {id: string; tiles: AzulCounts}[]; center: AzulCounts;
   wall_pattern: AzulColor[][]; players: AzulPlayerView[];
@@ -758,7 +758,7 @@ function ArkZooMap({map}: {map: ArkMap}) {
 }
 
 function ArkPlayerPanel({player: p, identity}: {player: ArkPlayerView; identity?: Snapshot["players"][number]}) {
-  const lang = useLang(); const t = makeT(lang);
+  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
   return <section className="player-panel ark-player-panel">
     <header><div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `${t("player_label")} ${p.seat + 1}`}</h3></div><div className="ark-money"><strong>{p.money}</strong><span>₡</span></div></header>
     <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{lang === "zh" ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>

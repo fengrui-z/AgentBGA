@@ -161,6 +161,7 @@ def new_game(
         "round": 1,
         "turn_count": 0,
         "active_seat": 0,
+        "round_start_seat": 0,
         "shuffle_count": 0,
         "bag": bag,
         "lid": [],
@@ -410,7 +411,15 @@ def _resolve_round(state: dict[str, Any], events: list[dict[str, Any]]) -> None:
                 raise AssertionError("start marker has multiple owners")
             next_start = marker_seat
     if next_start is None:
-        raise AssertionError("round ended without a start-marker owner")
+        if not state["center_has_start_marker"]:
+            raise AssertionError("round ended without a start-marker owner")
+        next_start = state["round_start_seat"]
+        state["center_has_start_marker"] = False
+        events.append(domain_event(
+            "start_player_marker_retained",
+            seat=next_start,
+            reason="center_received_no_tiles",
+        ))
     state["start_marker_holder_seat"] = next_start
     events.append(domain_event("round_finished", round=state["round"]))
 
@@ -428,6 +437,7 @@ def _resolve_round(state: dict[str, Any], events: list[dict[str, Any]]) -> None:
 
     state["round"] += 1
     state["active_seat"] = next_start
+    state["round_start_seat"] = next_start
     state["center_has_start_marker"] = True
     state["start_marker_holder_seat"] = None
     _fill_factories(state, events)
@@ -590,6 +600,7 @@ def observe(state: dict[str, Any], seat: int) -> dict[str, Any]:
         "round": state["round"],
         "turn_count": state["turn_count"],
         "active_seat": state["active_seat"],
+        "round_start_seat": state["round_start_seat"],
         "bag_count": len(state["bag"]),
         "lid_count": len(state["lid"]),
         "center_has_start_marker": state["center_has_start_marker"],
@@ -628,6 +639,12 @@ def validate_state(state: dict[str, Any]) -> None:
         raise AssertionError("invalid Azul seed")
     if not isinstance(state.get("active_seat"), int) or not 0 <= state["active_seat"] < players:
         raise AssertionError("invalid Azul active seat")
+    if (
+        not isinstance(state.get("round_start_seat"), int)
+        or isinstance(state["round_start_seat"], bool)
+        or not 0 <= state["round_start_seat"] < players
+    ):
+        raise AssertionError("invalid Azul round start seat")
 
     factories = state.get("factories", [])
     expected_ids = [f"factory-{index:02d}" for index in range(1, FACTORY_COUNTS[players] + 1)]
