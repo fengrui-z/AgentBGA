@@ -6,6 +6,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from unittest import mock
 
@@ -133,11 +134,182 @@ class HarnessTests(unittest.TestCase):
 
             (workspace / "strategy-notes.md").unlink()
             (workspace / "strategy-notes.md").symlink_to(outside)
-            with self.assertRaisesRegex(ValueError, "trusted notes root"):
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
                 call_tool(context, "read_notes", notes_root=workspace)
-            with self.assertRaisesRegex(ValueError, "trusted notes root"):
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
                 call_tool(context, "write_notes", {"content": "escape"}, notes_root=workspace)
             self.assertEqual("host secret", outside.read_text())
+
+    def test_notes_descriptor_cannot_be_redirected_after_atomic_open(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runtime = root / "runtime"
+            workspace = root / "workspace"
+            runtime.mkdir()
+            workspace.mkdir()
+            outside = root / "outside.txt"
+            outside.write_text("host secret", encoding="utf-8")
+            context = runtime / "turn-context.json"
+            context.write_text(json.dumps({
+                "schema_version": "agentbga.seat-context.v1", "match_id": "m", "seat": 0,
+                "version": 1, "observation": {}, "legal_actions": [],
+            }))
+            notes = workspace / "strategy-notes.md"
+            notes.write_text("safe notes", encoding="utf-8")
+            original = notes.stat()
+            real_fstat = os.fstat
+            swapped = False
+
+            def swap_after_open(descriptor):
+                nonlocal swapped
+                metadata = real_fstat(descriptor)
+                if not swapped and (metadata.st_dev, metadata.st_ino) == (
+                    original.st_dev, original.st_ino,
+                ):
+                    notes.unlink()
+                    notes.symlink_to(outside)
+                    swapped = True
+                return metadata
+
+            with mock.patch("agentbga.seat_tool.os.fstat", side_effect=swap_after_open):
+                self.assertEqual(
+                    "safe notes", call_tool(context, "read_notes", notes_root=workspace),
+                )
+            self.assertTrue(swapped)
+            self.assertTrue(notes.is_symlink())
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
+
+            notes.unlink()
+            notes.write_text("old notes", encoding="utf-8")
+            original = notes.stat()
+            swapped = False
+            with mock.patch("agentbga.seat_tool.os.fstat", side_effect=swap_after_open):
+                result = call_tool(
+                    context, "write_notes", {"content": "replacement"}, notes_root=workspace,
+                )
+            self.assertTrue(result["saved"])
+            self.assertTrue(swapped)
+            self.assertTrue(notes.is_symlink())
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
+
+    def test_notes_resist_concurrent_symlink_replacement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runtime = root / "runtime"
+            workspace = root / "workspace"
+            runtime.mkdir()
+            workspace.mkdir()
+            outside = root / "outside.txt"
+            outside.write_text("host secret", encoding="utf-8")
+            context = runtime / "turn-context.json"
+            context.write_text(json.dumps({
+                "schema_version": "agentbga.seat-context.v1", "match_id": "m", "seat": 0,
+                "version": 1, "observation": {}, "legal_actions": [],
+            }))
+            notes = workspace / "strategy-notes.md"
+            notes.write_text("safe", encoding="utf-8")
+            stop = threading.Event()
+            started = threading.Event()
+            swaps = 0
+
+            def replace_entry():
+                nonlocal swaps
+                link = workspace / "notes-link.tmp"
+                regular = workspace / "notes-regular.tmp"
+                while not stop.is_set():
+                    link.unlink(missing_ok=True)
+                    link.symlink_to(outside)
+                    os.replace(link, notes)
+                    regular.write_text("safe", encoding="utf-8")
+                    os.replace(regular, notes)
+                    swaps += 1
+                    started.set()
+
+            attacker = threading.Thread(target=replace_entry)
+            attacker.start()
+            try:
+                self.assertTrue(started.wait(timeout=2))
+                for index in range(200):
+                    try:
+                        call_tool(
+                            context, "write_notes", {"content": f"safe-{index}"},
+                            notes_root=workspace,
+                        )
+                    except (OSError, ValueError):
+                        # Hostile replacement may deny an operation, but must
+                        # never redirect its descriptor outside the workspace.
+                        pass
+            finally:
+                stop.set()
+                attacker.join(timeout=2)
+            self.assertFalse(attacker.is_alive())
+            self.assertGreater(swaps, 0)
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
+
+    @unittest.skipUnless(hasattr(os, "link"), "hard links are required")
+    def test_notes_reject_hard_links_and_non_regular_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runtime = root / "runtime"
+            workspace = root / "workspace"
+            runtime.mkdir()
+            workspace.mkdir()
+            outside = root / "outside.txt"
+            outside.write_text("host secret", encoding="utf-8")
+            context = runtime / "turn-context.json"
+            context.write_text(json.dumps({
+                "schema_version": "agentbga.seat-context.v1", "match_id": "m", "seat": 0,
+                "version": 1, "observation": {}, "legal_actions": [],
+            }))
+            notes = workspace / "strategy-notes.md"
+            os.link(outside, notes)
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "read_notes", notes_root=workspace)
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "write_notes", {"content": "escape"}, notes_root=workspace)
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
+
+            notes.unlink()
+            notes.mkdir()
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "read_notes", notes_root=workspace)
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "write_notes", {"content": "escape"}, notes_root=workspace)
+
+            if hasattr(os, "mkfifo"):
+                notes.rmdir()
+                os.mkfifo(notes)
+                with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                    call_tool(context, "read_notes", notes_root=workspace)
+                with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                    call_tool(context, "write_notes", {"content": "escape"}, notes_root=workspace)
+
+    def test_runtime_outputs_reject_symlink_escape(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runtime = root / "runtime"
+            runtime.mkdir()
+            outside = root / "outside.txt"
+            outside.write_text("host secret", encoding="utf-8")
+            context = runtime / "turn-context.json"
+            context.write_text(json.dumps({
+                "schema_version": "agentbga.seat-context.v1", "match_id": "m", "seat": 0,
+                "version": 1, "observation": {"viewer_seat": 0},
+                "legal_actions": [{"id": "a-good", "type": "pass"}],
+            }))
+
+            audit = runtime / "tool-events.jsonl"
+            audit.symlink_to(outside)
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "observe")
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
+
+            audit.unlink()
+            submission = runtime / "submission.json"
+            submission.symlink_to(outside)
+            with self.assertRaisesRegex(ValueError, "already been submitted"):
+                call_tool(context, "submit_action", {"action_id": "a-good"})
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
 
     def test_mcp_stdio_initialize_and_tool_list(self):
         with tempfile.TemporaryDirectory() as directory:
