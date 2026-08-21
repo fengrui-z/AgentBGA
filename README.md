@@ -49,7 +49,7 @@ Each seat can use one of:
 | `gemini` | Direct API | Google Gemini generateContent |
 | `opencode` | Harness | CLI + MCP, persistent session |
 | `codex` | Harness | CLI + MCP, persistent session |
-| `dsh` | Harness | DeepSeek Harness, headless profile |
+| `dsh` | Harness | DeepSeek Harness, cold-start resumable headless profile |
 | `hermes` | Harness | Hermes Agent + MCP, isolated home, persistent session |
 | `claude` | Harness | Claude Code + MCP, persistent session |
 | `pi` | Harness | Pi + native TS extension, persistent session |
@@ -60,6 +60,16 @@ Each seat can use one of:
 All harness seats share a unified 5-tool interface: `observe`, `legal_actions`, `submit_action`, `read_notes`, `write_notes`. The `minimal` harness runs entirely in Python with zero external dependencies — no CLI, no MCP server, no Node.js.
 
 The `hermes` backend requires the `hermes` executable with MCP support. AgentBGA creates a seat-local `HERMES_HOME`, configures only the seat-scoped `agentbga` MCP server, and routes the configured OpenAI-compatible endpoint through Hermes' custom provider.
+
+Every harness backend assigns match memory to `(match_id, seat)`. In a learning series,
+memory is instead assigned to `(series_id, participant_id)`, so a competitor keeps its
+own session while seats rotate and can never inherit an opponent's private context. DSh
+uses a cold-start resumable runner; the other harnesses restore their native session from
+the same participant workspace. Series execution does not add a post-match review turn.
+
+```json
+{"backend":"dsh","model":"deepseek-v4-flash","series_id":"anneal-20","participant_id":"learner"}
+```
 
 Example harness match:
 
@@ -78,7 +88,45 @@ Every harness turn is saved as a structured JSON trace:
 ./agentbga match harness-events MATCH_ID --json      # tool call audit trail
 ```
 
-Trace files live under `.agentbga/runs/MATCH_ID/_traces/seat-N/turn-XXXX.json` and record the full decision sequence: prompt, assistant reasoning/content, tool calls with results, and the final submission.
+Trace files live under `.agentbga/runs/_traces/MATCH_ID/seat-N/turn-XXXX.json` and record the full decision sequence: prompt, assistant reasoning/content, tool calls with results, and the final submission. Traces also record the participant, stable session scope, resume count, and any DSh compaction events.
+
+## Experiments and result artifacts
+
+An experiment manifest schedules one of three reproducible evaluation modes:
+
+- `duel`: two competitors, paired seeds, and both seat orders; no cross-match memory.
+- `tournament`: every configured 2-, 3-, or 4-player combination, with every cyclic
+  seat rotation; no cross-match memory.
+- `series`: a two-player sequence with alternating seats. One or both competitors may
+  retain memory across the series; independent replicates never share memory.
+
+```console
+./agentbga experiment validate --config examples/experiment-duel.json
+./agentbga experiment run --config examples/experiment-duel.json \
+  --out .agentbga/experiments/duel-001
+```
+
+Runnable examples are provided in
+[`examples/experiment-duel.json`](examples/experiment-duel.json),
+[`examples/experiment-tournament.json`](examples/experiment-tournament.json), and
+[`examples/experiment-series-one-sided.json`](examples/experiment-series-one-sided.json).
+
+Every run writes cumulative `agentbga.results.v1` documents atomically. `latest.json`
+is refreshed after every configured batch, `results-000020.json` is an immutable
+checkpoint, and `final.json` is the complete artifact. Set `results.emit_every` to `1`
+for every match or to `N` for every N matches. The format is defined by
+[`schemas/results-v1.schema.json`](schemas/results-v1.schema.json).
+
+Trusted upload credentials may be embedded at generation time without putting the token
+in the experiment manifest:
+
+```json
+{"results":{"emit_every":20,"submission_token_env":"AGENTBGA_RESULTS_TOKEN"}}
+```
+
+The resulting file contains `submission.token`; its integrity digest deliberately covers
+only the benchmark data, not the transport credential. A receiving service must validate
+and discard the token before storing the artifact.
 
 ## CLI
 
@@ -93,6 +141,8 @@ agentbga match events MATCH_ID --jsonl
 agentbga match verify MATCH_ID --json
 agentbga match replay MATCH_ID --json
 agentbga match traces MATCH_ID --json
+agentbga experiment validate --config EXPERIMENT.json
+agentbga experiment run --config EXPERIMENT.json --out RESULTS_DIR
 agentbga web --port 8765
 ```
 

@@ -15,6 +15,7 @@ import time
 from typing import Any, Callable
 
 from .agents import AgentError, PlayerConfig, StreamSink
+from .memory import memory_identity, stable_session_id
 
 
 HarnessEventSink = Callable[[dict[str, Any]], None]
@@ -81,6 +82,9 @@ class HarnessSession:
     workspace: Path
     runtime: Path
     session_id: str | None = None
+    scope: str | None = None
+    scope_id: str | None = None
+    resume_count: int | None = None
 
 
 class HarnessAgent:
@@ -93,18 +97,32 @@ class HarnessAgent:
         self.timeout = timeout
         self.event_sink = event_sink
         root = Path(runs_root) if runs_root else Path.cwd() / ".agentbga" / "runs"
-        workspace = root / match_id / f"seat-{seat}-{config.backend}"
+        self.runs_root = root
+        identity = memory_identity(root, config, match_id, seat)
+        workspace = identity.workspace
         runtime = root / "_runtime" / match_id / f"seat-{seat}"
         trace_dir = root / "_traces" / match_id / f"seat-{seat}"
         workspace.mkdir(parents=True, exist_ok=True)
         runtime.mkdir(parents=True, exist_ok=True)
         trace_dir.mkdir(parents=True, exist_ok=True)
-        self.session = HarnessSession(match_id, seat, workspace, runtime)
+        session_id = stable_session_id(identity) if config.backend == "dsh" else None
+        self.session = HarnessSession(
+            match_id, seat, workspace, runtime, session_id,
+            identity.scope, identity.scope_id, 0,
+        )
+        self.participant_id = identity.participant_id
+        self._session_owner_key = identity.owner_key
+        self._dsh_home = workspace / ".dsh-home"
+        self._dsh_state_path = self._dsh_home / "agentbga-session.json"
+        self._dsh_metadata_path = runtime / "dsh-turn-metadata.json"
+        self._dsh_turn_metadata: dict[str, Any] = {}
+        self._session_state_path = workspace / "agentbga-harness-session.json"
         self.trace_dir = trace_dir
         self._trace_steps: list[dict[str, Any]] = []
         self.binary = shutil.which(config.backend)
         if not self.binary:
             raise AgentError(f"harness executable not found: {config.backend}")
+        self._load_harness_session_state()
 
     def _emit(self, event_type: str, **payload: Any) -> None:
         if self.event_sink:
@@ -198,10 +216,8 @@ class HarnessAgent:
                 command.extend(["--session", self.session.session_id])
             return [*command, prompt]
         if self.config.backend == "dsh":
-            # DeepSeek Harness (dsh) one-shot profile. Each turn is a fresh
-            # headless session; the seat workspace persists notes across turns.
-            # The model, reasoning effort, seat MCP server, and headless-safe
-            # approval policy are composed through a per-turn cordis patch.
+            # The process is still one-shot, but the overlay replaces DSh's
+            # random-session runner with AgentBGA's create-or-resume driver.
             command = [self.binary, "--profile", "headless", "--patch", "dsh-patch.yml"]
             return [*command, prompt]
         if self.config.backend == "hermes":
@@ -287,9 +303,8 @@ class HarnessAgent:
             env["AGENTBGA_SEAT_SUBMISSION"] = str(self.session.runtime / "submission.json")
             env["AGENTBGA_SEAT_AUDIT"] = str(self.session.runtime / "tool-events.jsonl")
         elif self.config.backend == "dsh":
-            dsh_home = self.session.workspace / ".dsh-home"
-            dsh_home.mkdir(exist_ok=True)
-            env["DSH_HOME"] = str(dsh_home)
+            self._dsh_home.mkdir(parents=True, exist_ok=True)
+            env["DSH_HOME"] = str(self._dsh_home)
             # workspace-write confines file writes to the seat cwd; the patch
             # forces approval policy to "never" so headless runs never block.
             env["DSH_PERMISSION_MODE"] = "workspace-write"
@@ -321,6 +336,8 @@ class HarnessAgent:
         audit_path = self.session.runtime / "tool-events.jsonl"
         submission_path.unlink(missing_ok=True)
         audit_path.unlink(missing_ok=True)
+        self._dsh_metadata_path.unlink(missing_ok=True)
+        self._dsh_turn_metadata = {}
         context = {
             "schema_version": "agentbga.seat-context.v1",
             "match_id": self.session.match_id,
@@ -328,6 +345,7 @@ class HarnessAgent:
             "version": observation.get("state_version", observation.get("turn_count")),
             "observation": observation,
             "legal_actions": [{"id": item["id"], **item["action"]} for item in legal],
+            "notes_path": str(self.session.workspace / "strategy-notes.md"),
         }
         context_path.write_text(
             json.dumps(context, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
@@ -430,6 +448,8 @@ class HarnessAgent:
             json.dumps(opencode_config, ensure_ascii=False, indent=2), encoding="utf-8",
         )
         dsh_mcp_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
+        dsh_runner = Path(__file__).with_name("dsh_resumable_runner.mjs").resolve().as_uri()
+        dsh_owner_key = self._session_owner_key
         dsh_api_key_env = self.config.api_key_env or "OPENAI_API_KEY"
         dsh_base_url = (self.config.base_url or "https://api.deepseek.com").rstrip("/")
         is_deepseek_native = "deepseek.com" in dsh_base_url.lower()
@@ -454,6 +474,8 @@ class HarnessAgent:
             f"    provider: {'deepseek-official' if is_deepseek_native else 'pi-ai'}\n"
             f"    model: {json.dumps(self.config.model or '')}\n"
             + llm_plugin_block
+            + "- id: headless-runner\n"
+            "  disabled: true\n"
             + "- id: permission\n"
             "  config:\n"
             "    defaultPreset: workspace-write\n"
@@ -468,6 +490,15 @@ class HarnessAgent:
             "        sandbox: danger-full-access\n"
             "        approval: never\n"
             "- insert:\n"
+            "    - id: agentbga-resumable-runner\n"
+            f"      name: {json.dumps(dsh_runner)}\n"
+            "      inject: [headlessStartup]\n"
+            "      config:\n"
+            "        task: !!js ctx.headlessStartup.task\n"
+            f"        sessionId: {json.dumps(self.session.session_id)}\n"
+            f"        ownerKey: {json.dumps(dsh_owner_key, ensure_ascii=False)}\n"
+            f"        statePath: {json.dumps(str(self._dsh_state_path))}\n"
+            f"        metadataPath: {json.dumps(str(self._dsh_metadata_path))}\n"
             "    - id: mcp-agentbga\n"
             "      name: '@deepseek-ai/dsh-mcp-client'\n"
             "      config:\n"
@@ -551,6 +582,54 @@ class HarnessAgent:
             return
         if row and isinstance(row[0], str) and row[0]:
             self.session.session_id = row[0]
+
+    def _load_harness_session_state(self) -> None:
+        if self.config.backend == "dsh" or not self._session_state_path.is_file():
+            return
+        try:
+            state = json.loads(self._session_state_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return
+        if state.get("owner_key") != self._session_owner_key:
+            raise AgentError("harness session state belongs to a different participant")
+        session_id = state.get("session_id")
+        if isinstance(session_id, str) and session_id:
+            self.session.session_id = session_id
+        resume_count = state.get("resume_count")
+        if isinstance(resume_count, int) and resume_count >= 0:
+            self.session.resume_count = resume_count
+
+    def _save_harness_session_state(self) -> None:
+        if self.config.backend == "dsh" or not self.session.session_id:
+            return
+        previous = self.session.resume_count or 0
+        self.session.resume_count = previous + (1 if self._session_state_path.is_file() else 0)
+        temporary = self._session_state_path.with_suffix(".tmp")
+        temporary.write_text(json.dumps({
+            "schema_version": "agentbga.harness-session.v1",
+            "owner_key": self._session_owner_key,
+            "session_id": self.session.session_id,
+            "resume_count": self.session.resume_count,
+        }, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        temporary.replace(self._session_state_path)
+
+    def _recover_dsh_turn_metadata(self) -> None:
+        """Load the resumable runner's authoritative per-invocation metadata."""
+        if self.config.backend != "dsh" or not self._dsh_metadata_path.is_file():
+            return
+        try:
+            metadata = json.loads(self._dsh_metadata_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return
+        if not isinstance(metadata, dict):
+            return
+        session_id = metadata.get("sessionId")
+        if session_id and session_id != self.session.session_id:
+            raise AgentError("DSh runner returned metadata for a different session")
+        self._dsh_turn_metadata = metadata
+        resume_count = metadata.get("resumeCount")
+        if isinstance(resume_count, int) and resume_count >= 0:
+            self.session.resume_count = resume_count
 
     def _emit_tool_audit(self) -> None:
         path = self.session.runtime / "tool-events.jsonl"
@@ -689,6 +768,7 @@ class HarnessAgent:
         legal: list[dict[str, Any]], version: Any,
         status: str, error: str | None,
         action_latency_ms: float | None, process_latency_ms: float,
+        trace_kind: str = "turn",
     ) -> None:
         """Persist one ordered per-turn trace: prompt → assistant/tool steps → submission."""
         context_path = self.session.runtime / "turn-context.json"
@@ -740,6 +820,15 @@ class HarnessAgent:
             "native_reasoning_effort": self._native_reasoning_effort(),
             "version": version,
             "session_id": self.session.session_id,
+            "session_scope": self.session.scope,
+            "session_scope_id": self.session.scope_id,
+            "participant_id": self.participant_id,
+            "session_resumed": self._dsh_turn_metadata.get("resumed"),
+            "session_resume_count": self.session.resume_count,
+            "compaction_events": self._dsh_turn_metadata.get("compactionEvents", []),
+            "compaction_event_count_total": self._dsh_turn_metadata.get(
+                "compactionEventCountTotal"
+            ),
             # Keep latency_ms as a compatibility alias for the total process
             # latency while exposing time-to-action separately.
             "latency_ms": process_latency_ms,
@@ -756,11 +845,11 @@ class HarnessAgent:
             "steps": steps,
             "submission": submission,
             "trace_file": str(
-                (self.trace_dir / f"turn-{_version_key(version):04d}.json")
+                (self.trace_dir / f"{trace_kind}-{_version_key(version):04d}.json")
                 .relative_to(self.trace_dir.parents[2])
             ),
         }
-        target = self.trace_dir / f"turn-{_version_key(version):04d}.json"
+        target = self.trace_dir / f"{trace_kind}-{_version_key(version):04d}.json"
         target.write_text(
             json.dumps(trace, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
         )
@@ -794,11 +883,14 @@ class HarnessAgent:
         version = observation.get("state_version", observation.get("turn_count"))
         started = time.monotonic()
         started_wall = time.time()
+        turn_resumed = bool(self.session.session_id)
         self._trace_steps = []
         try:
             raw, stderr, returncode = self._run(self._command(prompt))
         except AgentError as error:
             self._recover_hermes_session_id()
+            self._recover_dsh_turn_metadata()
+            self._save_harness_session_state()
             process_latency_ms = round((time.monotonic() - started) * 1000, 3)
             action_latency_ms = self._action_latency_ms(submission_path, started_wall)
             self._emit_tool_audit()
@@ -811,6 +903,8 @@ class HarnessAgent:
             )
             raise
         self._recover_hermes_session_id()
+        self._recover_dsh_turn_metadata()
+        self._save_harness_session_state()
         process_latency_ms = round((time.monotonic() - started) * 1000, 3)
         action_latency_ms = self._action_latency_ms(submission_path, started_wall)
         self._emit_tool_audit()
@@ -847,6 +941,15 @@ class HarnessAgent:
             "model": self.config.model, "session_id": self.session.session_id,
             "reasoning_effort": self.config.reasoning_effort,
             "native_reasoning_effort": self._native_reasoning_effort(),
+            "session_scope": self.session.scope,
+            "session_scope_id": self.session.scope_id,
+            "participant_id": self.participant_id,
+            "session_resumed": self._dsh_turn_metadata.get("resumed", turn_resumed),
+            "session_resume_count": self.session.resume_count,
+            "compaction_events": self._dsh_turn_metadata.get("compactionEvents", []),
+            "compaction_event_count_total": self._dsh_turn_metadata.get(
+                "compactionEventCountTotal"
+            ),
             "latency_ms": process_latency_ms,
             "action_latency_ms": action_latency_ms,
             "process_latency_ms": process_latency_ms,
@@ -864,6 +967,7 @@ class HarnessAgent:
             action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
         )
         return action_id, metadata
+
 
 
 def build_harness_agent(config: PlayerConfig, match_id: str, seat: int,

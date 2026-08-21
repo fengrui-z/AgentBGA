@@ -1,0 +1,48 @@
+{
+  "schema_version": "agentbga.experiment.v1",
+  "experiment_id": "four-model-round-robin",
+  "mode": "tournament",
+  "games": ["splendor", "brass_birmingham", "century_spice_road", "ark_nova"],
+  "competitors": [
+    {
+      "id": "deepseek-dsh",
+      "player": {
+        "name": "DeepSeek / DSh",
+        "backend": "dsh",
+        "model": "deepseek-v4p",
+        "api_key_env": "DEEPSEEK_API_KEY"
+      }
+    },
+    {
+      "id": "glm-opencode",
+      "player": {
+        "name": "GLM / OpenCode",
+        "backend": "opencode",
+        "model": "zhipu/glm-5.2",
+        "api_key_env": "ZHIPU_API_KEY"
+      }
+    },
+    {
+      "id": "kimi-pi",
+      "player": {
+        "name": "Kimi / Pi",
+        "backend": "pi",
+        "model": "kimi-k2.7-code",
+        "base_url": "https://api.example.com/v1",
+        "api_key_env": "KIMI_API_KEY"
+      }
+    },
+    {
+      "id": "qwen-hermes",
+      "player": {
+        "name": "Qwen / Hermes",
+        "backend": "hermes",
+        "model": "qwen3.8-max",
+        "base_url": "https://api.example.com/v1",
+        "api_key_env": "QWEN_API_KEY"
+      }
+    }
+  ],
+  "schedule": {"seeds": [201, 202, 203], "player_counts": [2, 3, 4]},
+  "results": {"emit_every": 20}
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": "agentbga.experiment.v1",
+  "experiment_id": "mimo-pro-vs-deepseek-duel",
+  "mode": "duel",
+  "games": ["splendor", "century_spice_road"],
+  "competitors": [
+    {
+      "id": "mimo-pro-minimal",
+      "player": {
+        "name": "MiMo 2.5 Pro / Minimal",
+        "backend": "minimal",
+        "model": "mimo-v2.5-pro",
+        "base_url": "https://api.example.com/v1",
+        "api_key_env": "MIMO_API_KEY"
+      }
+    },
+    {
+      "id": "deepseek-dsh",
+      "player": {
+        "name": "DeepSeek V4P / DSh",
+        "backend": "dsh",
+        "model": "deepseek-v4p",
+        "api_key_env": "DEEPSEEK_API_KEY"
+      }
+    }
+  ],
+  "schedule": {"seeds": [101, 102, 103, 104, 105]},
+  "results": {"emit_every": 2, "submission_token_env": "AGENTBGA_RESULTS_TOKEN"}
+}

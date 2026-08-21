@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -47,6 +48,16 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual("DEEPSEEK_API_KEY", dsh.api_key_env)
         self.assertEqual("https://api.deepseek.com", dsh.base_url)
         self.assertEqual("max", dsh.reasoning_effort)
+        series = PlayerConfig.from_dict({
+            "name": "DSh series", "backend": "dsh", "model": "deepseek-v4-flash",
+            "series_id": "anneal-20",
+        }, 5)
+        self.assertEqual("anneal-20", series.series_id)
+        opencode_series = PlayerConfig.from_dict({
+            "name": "OpenCode series", "backend": "opencode", "model": "test",
+            "series_id": "anneal-20", "participant_id": "opencode-player",
+        }, 5)
+        self.assertEqual("opencode-player", opencode_series.participant_id)
         hermes = PlayerConfig.from_dict({
             "name": "Hermes Agent", "backend": "hermes", "model": "gpt-test",
         }, 5)
@@ -183,6 +194,7 @@ class HarnessTests(unittest.TestCase):
             self.assertIn("--patch", command)
             self.assertTrue((dsh.session.workspace / "dsh-patch.yml").is_file())
             self.assertEqual("turn", command[-1])
+            self.assertTrue(dsh.session.session_id.startswith("session-agentbga-match-"))
 
             hermes_config = PlayerConfig.from_dict({
                 "name": "Hermes Agent", "backend": "hermes", "model": "gpt-test",
@@ -280,6 +292,11 @@ class HarnessTests(unittest.TestCase):
             self.assertIn("defaultPreset: workspace-write", patch)
             self.assertIn("approval: never", patch)
             self.assertIn("@deepseek-ai/dsh-mcp-client", patch)
+            self.assertIn("- id: headless-runner\n  disabled: true", patch)
+            self.assertIn("agentbga-resumable-runner", patch)
+            self.assertIn("dsh_resumable_runner.mjs", patch)
+            self.assertIn("sessionId:", patch)
+            self.assertIn("ownerKey:", patch)
             self.assertIn("serverName: agentbga", patch)
             env = dsh._environment()
             self.assertEqual("https://api.deepseek.com", env["DEEPSEEK_BASE_URL"])
@@ -310,6 +327,76 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("https://proxy.example/v1", environment["OPENAI_BASE_URL"])
             self.assertIn("seat-1-hermes/.hermes-home", environment["HERMES_HOME"])
             self.assertNotIn("OTHER_TOKEN", environment)
+
+    def test_dsh_session_keys_isolate_seats_and_reset_between_matches(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "shutil.which", return_value="/bin/dsh"
+        ):
+            config = PlayerConfig.from_dict({
+                "name": "DSh", "backend": "dsh", "model": "deepseek-v4-flash",
+            }, 0)
+            match_a_seat_0 = HarnessAgent(config, "match-a", 0, runs_root=directory)
+            match_a_seat_1 = HarnessAgent(config, "match-a", 1, runs_root=directory)
+            match_b_seat_0 = HarnessAgent(config, "match-b", 0, runs_root=directory)
+
+            self.assertNotEqual(
+                match_a_seat_0.session.session_id, match_a_seat_1.session.session_id
+            )
+            self.assertNotEqual(match_a_seat_0._dsh_home, match_a_seat_1._dsh_home)
+            self.assertNotEqual(
+                match_a_seat_0.session.session_id, match_b_seat_0.session.session_id
+            )
+            self.assertNotEqual(match_a_seat_0._dsh_home, match_b_seat_0._dsh_home)
+            self.assertEqual("match", match_a_seat_0.session.scope)
+
+    def test_dsh_series_key_follows_participant_across_seats(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "shutil.which", return_value="/bin/dsh"
+        ):
+            config = PlayerConfig.from_dict({
+                "name": "DSh", "backend": "dsh", "model": "deepseek-v4-flash",
+                "series_id": "anneal-20", "participant_id": "learner",
+            }, 0)
+            other_config = PlayerConfig.from_dict({
+                "name": "Other DSh", "backend": "dsh", "model": "deepseek-v4-flash",
+                "series_id": "anneal-20", "participant_id": "opponent",
+            }, 1)
+            first = HarnessAgent(config, "match-01", 0, runs_root=directory)
+            second = HarnessAgent(config, "match-02", 1, runs_root=directory)
+            other_seat = HarnessAgent(other_config, "match-02", 0, runs_root=directory)
+
+            self.assertEqual(first.session.session_id, second.session.session_id)
+            self.assertEqual(first.session.workspace, second.session.workspace)
+            self.assertEqual(first._dsh_home, second._dsh_home)
+            self.assertNotEqual(first.session.session_id, other_seat.session.session_id)
+            self.assertEqual("series", first.session.scope)
+            self.assertEqual("anneal-20", first.session.scope_id)
+
+    def test_non_dsh_series_restores_native_session_id(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "shutil.which", return_value="/bin/opencode"
+        ):
+            config = PlayerConfig.from_dict({
+                "name": "OpenCode", "backend": "opencode", "model": "test",
+                "series_id": "series-one", "participant_id": "learner",
+            }, 0)
+            first = HarnessAgent(config, "match-01", 0, runs_root=directory)
+            first.session.session_id = "native-session"
+            first._save_harness_session_state()
+            resumed = HarnessAgent(config, "match-02", 1, runs_root=directory)
+            self.assertEqual("native-session", resumed.session.session_id)
+            self.assertEqual(first.session.workspace, resumed.session.workspace)
+            self.assertEqual("learner", resumed.participant_id)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is required for the DSh runner unit test")
+    def test_dsh_resumable_runner_create_resume_and_compaction(self):
+        completed = subprocess.run(
+            [shutil.which("node"), "--test", str(Path(__file__).with_name(
+                "dsh_resumable_runner.test.mjs"
+            ))],
+            text=True, capture_output=True,
+        )
+        self.assertEqual(0, completed.returncode, completed.stdout + completed.stderr)
 
     def test_hermes_recovers_quiet_session_id_from_isolated_state(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/hermes"):

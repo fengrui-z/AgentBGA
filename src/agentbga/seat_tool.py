@@ -44,10 +44,11 @@ def call_tool(context_path: Path, tool: str, arguments: dict[str, Any] | None = 
             raise ValueError("an action has already been submitted for this turn")
         submission.write_text(json.dumps(result, separators=(",", ":")), encoding="utf-8")
     elif tool == "read_notes":
-        notes_path = context_path.parent / "strategy-notes.md"
+        notes_path = Path(context.get("notes_path") or context_path.parent / "strategy-notes.md")
         result = notes_path.read_text(encoding="utf-8") if notes_path.exists() else ""
     elif tool == "write_notes":
-        notes_path = context_path.parent / "strategy-notes.md"
+        notes_path = Path(context.get("notes_path") or context_path.parent / "strategy-notes.md")
+        notes_path.parent.mkdir(parents=True, exist_ok=True)
         notes_path.write_text(str(arguments.get("content", "")), encoding="utf-8")
         result = {"saved": True, "bytes": len(arguments.get("content", ""))}
     else:

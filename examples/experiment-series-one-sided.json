@@ -1,0 +1,35 @@
+{
+  "schema_version": "agentbga.experiment.v1",
+  "experiment_id": "one-sided-adaptation-20",
+  "mode": "series",
+  "games": ["splendor"],
+  "competitors": [
+    {
+      "id": "learner",
+      "player": {
+        "name": "DeepSeek learner / DSh",
+        "backend": "dsh",
+        "model": "deepseek-v4p",
+        "api_key_env": "DEEPSEEK_API_KEY"
+      },
+      "memory": {"scope": "series"}
+    },
+    {
+      "id": "fresh-control",
+      "player": {
+        "name": "MiMo fresh control / Minimal",
+        "backend": "minimal",
+        "model": "mimo-v2.5-pro",
+        "base_url": "https://api.example.com/v1",
+        "api_key_env": "MIMO_API_KEY"
+      },
+      "memory": {"scope": "match"}
+    }
+  ],
+  "series": {"length": 20, "replicates": 3},
+  "schedule": {
+    "seeds": [301, 302, 303, 304, 305, 306, 307, 308, 309, 310,
+              311, 312, 313, 314, 315, 316, 317, 318, 319, 320]
+  },
+  "results": {"emit_every": 20}
+}

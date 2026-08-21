@@ -24,6 +24,7 @@ from .agents import AgentError, PlayerConfig, StreamSink
 from .seat_tool import call_tool as _seat_call_tool
 from .harness_features import HarnessFeatures
 from .game_profile import GameProfile, detect_phase, group_actions, get_profile
+from .memory import memory_identity, stable_session_id
 
 
 MINIMAL_SYSTEM = (
@@ -111,13 +112,19 @@ class DirectGameAgent:
         self._prev_observation: dict[str, Any] | None = None
         self._journal: list[dict[str, Any]] = []
         root = Path(runs_root) if runs_root else Path.cwd() / ".agentbga" / "runs"
-        self.workspace = root / match_id / f"seat-{seat}-minimal"
+        identity = memory_identity(root, config, match_id, seat)
+        self.workspace = identity.workspace
         self.runtime = root / "_runtime" / match_id / f"seat-{seat}"
         self.trace_dir = root / "_traces" / match_id / f"seat-{seat}"
         self.workspace.mkdir(parents=True, exist_ok=True)
         self.runtime.mkdir(parents=True, exist_ok=True)
         self.trace_dir.mkdir(parents=True, exist_ok=True)
         self.session_path = self.workspace / "session.json"
+        self.notes_path = self.workspace / "strategy-notes.md"
+        self.session_id = stable_session_id(identity)
+        self.session_scope = identity.scope
+        self.session_scope_id = identity.scope_id
+        self.participant_id = identity.participant_id
         self._messages: list[dict[str, Any]] = []
         self._trace_steps: list[dict[str, Any]] = []
         self._load_session()
@@ -209,7 +216,7 @@ class DirectGameAgent:
             phase = detect_phase(turn, score, self.profile)
 
             # Inject strategy notes (plan tracking)
-            notes_path = self.runtime / "strategy-notes.md"
+            notes_path = self.notes_path
             if self.features.plan_tracking and notes_path.exists():
                 notes = notes_path.read_text(encoding="utf-8")
                 if notes.strip():
@@ -711,7 +718,10 @@ class DirectGameAgent:
             "player": self.config.name, "backend": "minimal",
             "model": self.config.model,
             "reasoning_effort": self.config.reasoning_effort,
-            "version": version, "session_id": None,
+            "version": version, "session_id": self.session_id,
+            "session_scope": self.session_scope,
+            "session_scope_id": self.session_scope_id,
+            "participant_id": self.participant_id,
             "latency_ms": round((time.monotonic() - started) * 1000, 3),
             "status": status, "error": error,
             "prompt": {"system": MINIMAL_SYSTEM, "user": None},
@@ -745,6 +755,7 @@ class DirectGameAgent:
             "version": version,
             "observation": observation,
             "legal_actions": [{"id": item["id"], **item["action"]} for item in legal],
+            "notes_path": str(self.notes_path),
         }
         context_path.write_text(
             json.dumps(context, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
@@ -865,8 +876,11 @@ class DirectGameAgent:
         latency = round((time.monotonic() - started) * 1000, 3)
         metadata = {
             "backend": "minimal", "harness": "minimal",
-            "model": self.config.model, "session_id": None,
+            "model": self.config.model, "session_id": self.session_id,
             "reasoning_effort": self.config.reasoning_effort,
+            "session_scope": self.session_scope,
+            "session_scope_id": self.session_scope_id,
+            "participant_id": self.participant_id,
             "latency_ms": latency,
         }
         return action_id, metadata
