@@ -65,7 +65,9 @@ Every harness backend assigns match memory to `(match_id, seat)`. In a learning 
 memory is instead assigned to `(series_id, participant_id)`, so a competitor keeps its
 own session while seats rotate and can never inherit an opponent's private context. DSh
 uses a cold-start resumable runner; the other harnesses restore their native session from
-the same participant workspace. Series execution does not add a post-match review turn.
+the same participant workspace. Experiment runs add an internal `run_id` namespace, so
+rerunning the same manifest starts with clean memory. Series execution does not add a
+post-match review turn.
 
 ```json
 {"backend":"dsh","model":"deepseek-v4-flash","series_id":"anneal-20","participant_id":"learner"}
@@ -98,7 +100,9 @@ An experiment manifest schedules one of three reproducible evaluation modes:
 - `tournament`: every configured 2-, 3-, or 4-player combination, with every cyclic
   seat rotation; no cross-match memory.
 - `series`: a two-player sequence with alternating seats. One or both competitors may
-  retain memory across the series; independent replicates never share memory.
+  retain memory across the series; independent replicates never share memory. Replicate
+  starting seats alternate for odd-length series, and generated replicate seeds occupy
+  disjoint ranges while each result retains its original `base_seed`.
 
 ```console
 ./agentbga experiment validate --config examples/experiment-duel.json

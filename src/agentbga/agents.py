@@ -37,6 +37,7 @@ class PlayerConfig:
     reasoning_effort: str | None = None
     series_id: str | None = None
     participant_id: str | None = None
+    memory_namespace: str | None = field(default=None, repr=False)
     api_key: str | None = field(default=None, repr=False, compare=False)
 
     @classmethod
@@ -148,7 +149,8 @@ class PlayerConfig:
         )
 
     def public_dict(self) -> dict[str, Any]:
-        return {key: value for key, value in asdict(self).items() if value is not None and key != "api_key"}
+        private = {"api_key", "memory_namespace"}
+        return {key: value for key, value in asdict(self).items() if value is not None and key not in private}
 
 
 StreamSink = Callable[[str, str], None]

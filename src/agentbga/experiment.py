@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 import hashlib
 import itertools
@@ -21,6 +21,8 @@ from .store import Store
 EXPERIMENT_SCHEMA = "agentbga.experiment.v1"
 RESULTS_SCHEMA = "agentbga.results.v1"
 MODES = frozenset({"duel", "tournament", "series"})
+SQLITE_INTEGER_MIN = -(2**63)
+SQLITE_INTEGER_MAX = 2**63 - 1
 
 
 @dataclass(frozen=True)
@@ -39,6 +41,7 @@ class ScheduledMatch:
     series_id: str | None = None
     series_replicate: int | None = None
     series_game_index: int | None = None
+    base_seed: int | None = None
 
 
 def _identifier(value: Any, label: str) -> str:
@@ -133,8 +136,14 @@ def _seeds(schedule: dict[str, Any], default_count: int = 5) -> list[int]:
     raw = schedule.get("seeds")
     if raw is None:
         raw = list(range(1, default_count + 1))
-    if not isinstance(raw, list) or not raw or any(not isinstance(seed, int) for seed in raw):
+    if not isinstance(raw, list) or not raw or any(
+        not isinstance(seed, int) or isinstance(seed, bool) for seed in raw
+    ):
         raise ValueError("schedule.seeds must be a non-empty integer array")
+    if len(set(raw)) != len(raw):
+        raise ValueError("schedule.seeds must not contain duplicates")
+    if any(seed < SQLITE_INTEGER_MIN or seed > SQLITE_INTEGER_MAX for seed in raw):
+        raise ValueError("schedule.seeds must fit SQLite signed 64-bit integers")
     return raw
 
 
@@ -194,25 +203,35 @@ def schedule_experiment(value: dict[str, Any]) -> list[ScheduledMatch]:
         base_seeds = _seeds(schedule, length)
         if len(base_seeds) < length:
             raise ValueError("series schedule needs at least series.length seeds")
+        selected_seeds = base_seeds[:length]
+        seed_stride = max(selected_seeds) - min(selected_seeds) + 1
         experiment_id = value["experiment_id"]
         for game in games:
             for replicate in range(1, replicates + 1):
                 series_id = f"{experiment_id}:{game}:r{replicate}"
                 for index in range(length):
-                    seats = tuple(competitors if index % 2 == 0 else reversed(competitors))
-                    # Replicates share the same base schedule shape but receive
-                    # disjoint deterministic seeds.
-                    seed = base_seeds[index] + (replicate - 1) * 1_000_000
+                    reverse_order = (index + replicate - 1) % 2 == 1
+                    seats = tuple(reversed(competitors)) if reverse_order else tuple(competitors)
+                    # Use disjoint numeric intervals derived from the complete
+                    # input range. Unlike a fixed offset, this is collision-free
+                    # for every accepted set of unique signed integer seeds.
+                    base_seed = selected_seeds[index]
+                    seed = base_seed + (replicate - 1) * seed_stride
+                    if seed < SQLITE_INTEGER_MIN or seed > SQLITE_INTEGER_MAX:
+                        raise ValueError("series replicate seeds exceed SQLite signed 64-bit range")
                     append(
                         game, seed, seats, series_id=series_id,
                         series_replicate=replicate, series_game_index=index + 1,
+                        base_seed=base_seed,
                     )
     else:
         raise ValueError(f"unsupported experiment mode: {mode}")
     return matches
 
 
-def _player_for_match(competitor: Competitor, series_id: str | None) -> PlayerConfig:
+def _player_for_match(
+    competitor: Competitor, series_id: str | None, memory_namespace: str | None = None,
+) -> PlayerConfig:
     value = dict(competitor.player)
     backend = str(value.get("backend", "")).lower()
     if backend in HARNESS_BACKENDS:
@@ -221,7 +240,10 @@ def _player_for_match(competitor: Competitor, series_id: str | None) -> PlayerCo
             value["series_id"] = series_id
         else:
             value.pop("series_id", None)
-    return PlayerConfig.from_dict(value, 0)
+    config = PlayerConfig.from_dict(value, 0)
+    if competitor.memory_scope == "series" and memory_namespace:
+        config = replace(config, memory_namespace=memory_namespace)
+    return config
 
 
 def _utc_now() -> str:
@@ -303,7 +325,7 @@ def run_experiment(
         try:
             players = []
             for seat, competitor in enumerate(scheduled.competitors):
-                player = _player_for_match(competitor, scheduled.series_id)
+                player = _player_for_match(competitor, scheduled.series_id, run_id)
                 players.append(player)
                 participants.append({
                     "participant_id": competitor.id,
@@ -332,6 +354,7 @@ def run_experiment(
                 "series_id": scheduled.series_id,
                 "series_replicate": scheduled.series_replicate,
                 "series_game_index": scheduled.series_game_index,
+                "base_seed": scheduled.base_seed,
                 "result": result,
             }
         except Exception as error:
@@ -348,6 +371,7 @@ def run_experiment(
                 "series_id": scheduled.series_id,
                 "series_replicate": scheduled.series_replicate,
                 "series_game_index": scheduled.series_game_index,
+                "base_seed": scheduled.base_seed,
                 "error": str(error),
             }
         finally:

@@ -110,6 +110,35 @@ class HarnessTests(unittest.TestCase):
     def test_mcp_exposes_only_seat_tools(self):
         self.assertEqual({"observe", "legal_actions", "submit_action", "read_notes", "write_notes"}, {tool["name"] for tool in TOOLS})
 
+    def test_notes_ignore_mutable_context_path_and_reject_symlink_escape(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runtime = root / "runtime"
+            workspace = root / "workspace"
+            runtime.mkdir()
+            workspace.mkdir()
+            outside = root / "outside.txt"
+            outside.write_text("host secret", encoding="utf-8")
+            context = runtime / "turn-context.json"
+            context.write_text(json.dumps({
+                "schema_version": "agentbga.seat-context.v1", "match_id": "m", "seat": 0,
+                "version": 1, "observation": {}, "legal_actions": [],
+                "notes_path": str(outside),
+            }))
+
+            self.assertEqual("", call_tool(context, "read_notes", notes_root=workspace))
+            call_tool(context, "write_notes", {"content": "safe"}, notes_root=workspace)
+            self.assertEqual("safe", (workspace / "strategy-notes.md").read_text())
+            self.assertEqual("host secret", outside.read_text())
+
+            (workspace / "strategy-notes.md").unlink()
+            (workspace / "strategy-notes.md").symlink_to(outside)
+            with self.assertRaisesRegex(ValueError, "trusted notes root"):
+                call_tool(context, "read_notes", notes_root=workspace)
+            with self.assertRaisesRegex(ValueError, "trusted notes root"):
+                call_tool(context, "write_notes", {"content": "escape"}, notes_root=workspace)
+            self.assertEqual("host secret", outside.read_text())
+
     def test_mcp_stdio_initialize_and_tool_list(self):
         with tempfile.TemporaryDirectory() as directory:
             context = Path(directory) / "turn-context.json"
@@ -122,7 +151,8 @@ class HarnessTests(unittest.TestCase):
                 json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}),
             ]) + "\n"
             completed = subprocess.run(
-                [sys.executable, "-m", "agentbga.seat_mcp", "--context", str(context)],
+                [sys.executable, "-m", "agentbga.seat_mcp", "--context", str(context),
+                 "--notes-root", directory],
                 input=requests, text=True, capture_output=True, check=True,
             )
             responses = [json.loads(line) for line in completed.stdout.splitlines()]
@@ -383,10 +413,19 @@ class HarnessTests(unittest.TestCase):
             first = HarnessAgent(config, "match-01", 0, runs_root=directory)
             first.session.session_id = "native-session"
             first._save_harness_session_state()
+            self.assertEqual(0, first.session.resume_count)
             resumed = HarnessAgent(config, "match-02", 1, runs_root=directory)
             self.assertEqual("native-session", resumed.session.session_id)
             self.assertEqual(first.session.workspace, resumed.session.workspace)
             self.assertEqual("learner", resumed.participant_id)
+            self.assertEqual(0, resumed.session.resume_count)
+
+            resumed._save_harness_session_state(resumed=True)
+            self.assertEqual(1, resumed.session.resume_count)
+            reloaded = HarnessAgent(config, "match-03", 0, runs_root=directory)
+            self.assertEqual(1, reloaded.session.resume_count)
+            reloaded._save_harness_session_state()
+            self.assertEqual(1, reloaded.session.resume_count)
 
     @unittest.skipUnless(shutil.which("node"), "Node.js is required for the DSh runner unit test")
     def test_dsh_resumable_runner_create_resume_and_compaction(self):
@@ -470,6 +509,12 @@ class HarnessTests(unittest.TestCase):
             with mock.patch.object(agent, "_run", return_value=("{}", "", 0)):
                 with self.assertRaisesRegex(AgentError, "without calling submit_action"):
                     agent.choose({"turn_count": 1, "state_version": 1}, LEGAL)
+            self.assertEqual(1, agent.session.resume_count)
+            resumed_trace = json.loads(
+                (agent.trace_dir / "turn-0001.json").read_text(encoding="utf-8")
+            )
+            self.assertTrue(resumed_trace["session_resumed"])
+            self.assertEqual(1, resumed_trace["session_resume_count"])
 
     def test_harness_environment_does_not_inherit_unrelated_secrets(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/codex"):
@@ -543,6 +588,7 @@ class HarnessTests(unittest.TestCase):
                 "name": "Codex", "backend": "codex", "model": "gpt-test",
             }, 0)
             agent = HarnessAgent(config, "err-match", 0, runs_root=directory)
+            agent.session.session_id = "existing-session"
             with mock.patch.object(agent, "_run", return_value=("", "boom", 1)):
                 with self.assertRaisesRegex(AgentError, "exited 1"):
                     agent.choose({"turn_count": 0, "state_version": 0}, LEGAL)
@@ -552,6 +598,8 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("error", trace["status"])
             self.assertEqual("boom", trace["error"])
             self.assertIsNone(trace["submission"])
+            self.assertTrue(trace["session_resumed"])
+            self.assertEqual(0, trace["session_resume_count"])
 
     def test_harness_writes_trace_on_timeout(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/fake"):

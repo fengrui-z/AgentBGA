@@ -345,7 +345,6 @@ class HarnessAgent:
             "version": observation.get("state_version", observation.get("turn_count")),
             "observation": observation,
             "legal_actions": [{"id": item["id"], **item["action"]} for item in legal],
-            "notes_path": str(self.session.workspace / "strategy-notes.md"),
         }
         context_path.write_text(
             json.dumps(context, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
@@ -354,7 +353,10 @@ class HarnessAgent:
         inherited = os.environ.get("PYTHONPATH")
         self._pythonpath = str(package_root) + (os.pathsep + inherited if inherited else "")
         relative_context = os.path.relpath(context_path, self.session.workspace)
-        mcp_command = [sys.executable, "-m", "agentbga.seat_mcp", "--context", relative_context]
+        mcp_command = [
+            sys.executable, "-m", "agentbga.seat_mcp", "--context", relative_context,
+            "--notes-root", ".",
+        ]
         requested_effort = self.config.reasoning_effort or "max"
         reasoning_effort = self._native_reasoning_effort()
         reasoning_enabled = requested_effort != "none"
@@ -599,11 +601,15 @@ class HarnessAgent:
         if isinstance(resume_count, int) and resume_count >= 0:
             self.session.resume_count = resume_count
 
-    def _save_harness_session_state(self) -> None:
+    def _save_harness_session_state(self, *, resumed: bool = False) -> None:
         if self.config.backend == "dsh" or not self.session.session_id:
             return
         previous = self.session.resume_count or 0
-        self.session.resume_count = previous + (1 if self._session_state_path.is_file() else 0)
+        # Count a resume only when this turn was actually launched with a
+        # native session ID and the harness process completed successfully.
+        # File existence is not evidence of a resume: a stale or newly written
+        # state file may exist even when no restore path ran.
+        self.session.resume_count = previous + int(resumed)
         temporary = self._session_state_path.with_suffix(".tmp")
         temporary.write_text(json.dumps({
             "schema_version": "agentbga.harness-session.v1",
@@ -768,7 +774,7 @@ class HarnessAgent:
         legal: list[dict[str, Any]], version: Any,
         status: str, error: str | None,
         action_latency_ms: float | None, process_latency_ms: float,
-        trace_kind: str = "turn",
+        trace_kind: str = "turn", session_resumed: bool | None = None,
     ) -> None:
         """Persist one ordered per-turn trace: prompt → assistant/tool steps → submission."""
         context_path = self.session.runtime / "turn-context.json"
@@ -823,7 +829,7 @@ class HarnessAgent:
             "session_scope": self.session.scope,
             "session_scope_id": self.session.scope_id,
             "participant_id": self.participant_id,
-            "session_resumed": self._dsh_turn_metadata.get("resumed"),
+            "session_resumed": self._dsh_turn_metadata.get("resumed", session_resumed),
             "session_resume_count": self.session.resume_count,
             "compaction_events": self._dsh_turn_metadata.get("compactionEvents", []),
             "compaction_event_count_total": self._dsh_turn_metadata.get(
@@ -900,15 +906,16 @@ class HarnessAgent:
                 prompt=prompt, observation=observation, legal=legal, version=version,
                 status="error", error=detail,
                 action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
+                session_resumed=turn_resumed,
             )
             raise
         self._recover_hermes_session_id()
         self._recover_dsh_turn_metadata()
-        self._save_harness_session_state()
         process_latency_ms = round((time.monotonic() - started) * 1000, 3)
         action_latency_ms = self._action_latency_ms(submission_path, started_wall)
         self._emit_tool_audit()
         if returncode != 0:
+            self._save_harness_session_state()
             detail = stderr[-1000:] or raw[-1000:]
             detail = self._redact_text(detail)
             self._emit("harness_error", error=detail, exit_code=returncode)
@@ -916,8 +923,10 @@ class HarnessAgent:
                 prompt=prompt, observation=observation, legal=legal, version=version,
                 status="error", error=detail,
                 action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
+                session_resumed=turn_resumed,
             )
             raise AgentError(f"{self.config.backend} harness exited {returncode}: {detail}")
+        self._save_harness_session_state(resumed=turn_resumed)
         submission = None
         if submission_path.is_file():
             submission = json.loads(submission_path.read_text(encoding="utf-8"))
@@ -927,6 +936,7 @@ class HarnessAgent:
                 prompt=prompt, observation=observation, legal=legal, version=version,
                 status="no_submit", error=None,
                 action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
+                session_resumed=turn_resumed,
             )
             raise AgentError(f"{self.config.backend} harness finished without calling submit_action")
         if action_id not in {item["id"] for item in legal}:
@@ -934,6 +944,7 @@ class HarnessAgent:
                 prompt=prompt, observation=observation, legal=legal, version=version,
                 status="bad_action", error=None,
                 action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
+                session_resumed=turn_resumed,
             )
             raise AgentError("harness submitted an unknown or stale action ID")
         metadata = {
@@ -965,6 +976,7 @@ class HarnessAgent:
             prompt=prompt, observation=observation, legal=legal, version=version,
             status="ok", error=None,
             action_latency_ms=action_latency_ms, process_latency_ms=process_latency_ms,
+            session_resumed=turn_resumed,
         )
         return action_id, metadata
 

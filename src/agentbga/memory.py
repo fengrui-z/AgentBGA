@@ -30,7 +30,14 @@ def memory_identity(
     scope = "series" if config.series_id else "match"
     scope_id = config.series_id or match_id
     participant_id = config.participant_id or f"seat-{seat}"
-    scope_digest = _digest(f"{scope}\0{scope_id}")
+    # Experiment runners supply a private run namespace so repeating an
+    # otherwise identical manifest cannot inherit an earlier run's history.
+    # Standalone/manual series retain their explicitly requested series key.
+    memory_scope_id = (
+        f"{config.memory_namespace}\0{scope_id}"
+        if config.memory_namespace else scope_id
+    )
+    scope_digest = _digest(f"{scope}\0{memory_scope_id}")
     participant_digest = _digest(participant_id, 12)
     if scope == "series":
         workspace = (
@@ -42,6 +49,7 @@ def memory_identity(
     owner_key = json.dumps({
         "scope": scope,
         "id": scope_id,
+        "namespace": config.memory_namespace,
         "participant_id": participant_id,
         "backend": config.backend,
     }, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
