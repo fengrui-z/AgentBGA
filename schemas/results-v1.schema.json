@@ -41,6 +41,7 @@
           "series_id": {"type": ["string", "null"]},
           "series_replicate": {"type": ["integer", "null"]},
           "series_game_index": {"type": ["integer", "null"]},
+          "base_seed": {"type": ["integer", "null"]},
           "result": {"type": "object"},
           "error": {"type": "string"}
         },

@@ -66,7 +66,7 @@ def _reply(request_id: Any, result: Any = None, error: dict[str, Any] | None = N
     print(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), flush=True)
 
 
-def serve(context_path: Path) -> None:
+def serve(context_path: Path, notes_root: Path) -> None:
     while True:
         request: dict[str, Any] = {}
         try:
@@ -91,7 +91,10 @@ def serve(context_path: Path) -> None:
                 _reply(request_id, {"tools": TOOLS})
             elif method == "tools/call":
                 params = request.get("params") or {}
-                result = call_tool(context_path, params.get("name", ""), params.get("arguments") or {})
+                result = call_tool(
+                    context_path, params.get("name", ""), params.get("arguments") or {},
+                    notes_root=notes_root,
+                )
                 _reply(request_id, {
                     "content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}],
                     "structuredContent": {"data": result},
@@ -108,8 +111,9 @@ def serve(context_path: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--context", required=True)
+    parser.add_argument("--notes-root", required=True)
     args = parser.parse_args(argv)
-    serve(Path(args.context).resolve())
+    serve(Path(args.context).resolve(), Path(args.notes_root))
     return 0
 
 

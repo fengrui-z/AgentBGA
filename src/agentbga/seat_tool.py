@@ -22,7 +22,24 @@ def _audit(context_path: Path, tool: str, arguments: dict[str, Any], result: Any
         stream.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 
-def call_tool(context_path: Path, tool: str, arguments: dict[str, Any] | None = None) -> Any:
+def _notes_path(notes_root: Path | None) -> Path:
+    if notes_root is None:
+        raise ValueError("persistent notes require a trusted notes root")
+    root = notes_root.resolve(strict=True)
+    candidate = root / "strategy-notes.md"
+    # Resolve an existing symlink before every access. The MCP process runs
+    # outside the model sandbox, so following a link outside this root would
+    # turn read_notes/write_notes into an arbitrary host-file primitive.
+    resolved = candidate.resolve(strict=False)
+    if resolved.parent != root:
+        raise ValueError("strategy notes must remain inside the trusted notes root")
+    return resolved
+
+
+def call_tool(
+    context_path: Path, tool: str, arguments: dict[str, Any] | None = None, *,
+    notes_root: Path | None = None,
+) -> Any:
     arguments = arguments or {}
     context = _load(context_path)
     if tool == "observe":
@@ -44,11 +61,10 @@ def call_tool(context_path: Path, tool: str, arguments: dict[str, Any] | None = 
             raise ValueError("an action has already been submitted for this turn")
         submission.write_text(json.dumps(result, separators=(",", ":")), encoding="utf-8")
     elif tool == "read_notes":
-        notes_path = Path(context.get("notes_path") or context_path.parent / "strategy-notes.md")
+        notes_path = _notes_path(notes_root)
         result = notes_path.read_text(encoding="utf-8") if notes_path.exists() else ""
     elif tool == "write_notes":
-        notes_path = Path(context.get("notes_path") or context_path.parent / "strategy-notes.md")
-        notes_path.parent.mkdir(parents=True, exist_ok=True)
+        notes_path = _notes_path(notes_root)
         notes_path.write_text(str(arguments.get("content", "")), encoding="utf-8")
         result = {"saved": True, "bytes": len(arguments.get("content", ""))}
     else:

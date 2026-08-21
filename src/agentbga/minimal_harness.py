@@ -586,7 +586,7 @@ class DirectGameAgent:
         if name == "legal_actions" and legal is not None and self.profile:
             return self._format_legal_actions(legal, observation or {})
         context_path = self.runtime / "turn-context.json"
-        return _seat_call_tool(context_path, name, arguments)
+        return _seat_call_tool(context_path, name, arguments, notes_root=self.workspace)
 
     # ── LLM API call (OpenAI-compatible) ──
 
@@ -755,7 +755,6 @@ class DirectGameAgent:
             "version": version,
             "observation": observation,
             "legal_actions": [{"id": item["id"], **item["action"]} for item in legal],
-            "notes_path": str(self.notes_path),
         }
         context_path.write_text(
             json.dumps(context, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
