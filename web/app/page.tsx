@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 
 // ── i18n ─────────────────────────────────────────────────────────────
 type Lang = "zh" | "en";
@@ -437,7 +438,7 @@ function tokenText(tokens: Record<string, number>, lang: Lang) {
 }
 
 function describeAction(item: Timeline, names: Record<number, string>, lang: Lang) {
-  const t = makeT(lang); const event = item.event; const zh = lang === "zh";
+  const event = item.event; const zh = lang === "zh";
   if (event.type === "agent_error") return zh ? `${event.player} 调用失败：${event.error}` : `${event.player} call failed: ${event.error}`;
   if (event.type === "match_failed") return zh ? `对局中止：${event.error}` : `Match aborted: ${event.error}`;
   if (event.type === "match_finished") return zh ? `对局结束，共 ${event.turns} 回合` : `Match finished, ${event.turns} turns`;
@@ -762,7 +763,7 @@ function SplendorBoard({view}: {view?: View}) {
 }
 
 function ArkNovaBoard({view, players}: {view?: ArkView; players: Snapshot["players"]}) {
-  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
+  const lang = useLang(); const t = makeT(lang);
   if (!view) return null;
   return <div className="ark-board">
     <section className="ark-milestone"><div><span>{t("ark_eyebrow")}</span><h2>{view.phase === "initial_hand_selection" ? t("ark_phase_select") : t("ark_phase_play")}</h2></div><p>{t("ark_phase_note")}</p><code>{view.rules_version}</code></section>
@@ -781,7 +782,9 @@ export default function Home() {
   const [lang, setLang] = useState<Lang>("zh");
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("abga-lang") : null;
-    if (saved === "zh" || saved === "en") setLang(saved);
+    const timer = (saved === "zh" || saved === "en")
+      ? window.setTimeout(() => setLang(saved), 0) : undefined;
+    return () => { if (timer !== undefined) window.clearTimeout(timer); };
   }, []);
   function toggleLang() {
     setLang(current => {
@@ -972,6 +975,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   if (!snapshot) return <main className="setup-shell">
     <section className="hero">
       <button className="lang-toggle" onClick={toggleLang} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
+      <Link className="arena-link" href="/arena">{zh ? "查看 Arena 天梯 →" : "View Arena ratings →"}</Link>
       <div className="eyebrow">{t("hero_eyebrow")} / {GAME_COPY[game].eyebrow}</div>
       <h1>{t("hero_title_a")}<br/><i>{t("hero_title_b")}</i>{t("hero_title_c")}</h1>
       <p>{GAME_COPY[game].description[lang]}</p>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AgentBGA · Long-Horizon Game Arena",
+  title: {default: "AgentBGA · Long-Horizon Game Arena", template: "%s · AgentBGA"},
   description: "Configure humans and model harnesses, then inspect their board-game decisions live.",
   icons: {icon: "/favicon.svg"},
 };

@@ -14,6 +14,9 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
+  vars: process.env.RESULT_SUBMISSION_TOKENS
+    ? { RESULT_SUBMISSION_TOKENS: process.env.RESULT_SUBMISSION_TOKENS }
+    : {},
   d1_databases: d1
     ? [
         {
@@ -46,7 +49,7 @@ export default defineConfig(async () => {
   return {
     server: {
       ...(isCodexSeatbeltSandbox ? { watch: { useFsEvents: false, usePolling: true } } : {}),
-      proxy: { "/api": "http://127.0.0.1:8765" },
+      proxy: { "/api/matches": "http://127.0.0.1:8765" },
     },
     plugins: [
       vinext(),

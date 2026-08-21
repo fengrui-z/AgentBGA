@@ -67,3 +67,18 @@ test("static export has all assets needed by the Python server", async () => {
   await Promise.all(refs.map(path => access(path)));
   await access(new URL("dist/client/index.rsc", root));
 });
+
+test("results arena and trusted ingest worker are included", async () => {
+  const html = await readFile(new URL("dist/client/arena.html", root), "utf8");
+  assert.match(html, /GLOBAL RATINGS/);
+  assert.match(html, /综合排名/);
+  assert.match(html, /提交 results JSON/);
+  assert.match(html, /归一化多人 Elo/);
+
+  const worker = await readFile(new URL("worker/results.ts", root), "utf8");
+  assert.match(worker, /RESULT_SUBMISSION_TOKENS/);
+  assert.match(worker, /delete stored\.submission/);
+  assert.match(worker, /content digest does not match artifact/);
+  assert.match(worker, /result_id collision with different content/);
+  assert.match(worker, /K_FACTOR = 32/);
+});
