@@ -82,6 +82,27 @@ class CLITests(unittest.TestCase):
                 ])
             self.assertEqual(0, code)
             self.assertEqual("ark_nova", json.loads(output.getvalue())["data"]["game"])
+
+    def test_games_describe_and_create_azul(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main(["games", "describe", "azul"])
+            self.assertEqual(0, code)
+            description = json.loads(output.getvalue())["data"]
+            self.assertEqual("playable_beta", description["implementation_status"])
+            self.assertEqual({"minimum": 2, "maximum": 4}, description["players"])
+
+            database = Path(directory) / "match.sqlite3"
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main([
+                    "match", "create", "--game", "azul", "--players", "2",
+                    "--seed", "42", "--db", str(database),
+                ])
+            self.assertEqual(0, code)
+            self.assertEqual("azul", json.loads(output.getvalue())["data"]["game"])
+
     def test_doctor_accepts_common_harnesses(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "players.json"

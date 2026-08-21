@@ -5,6 +5,7 @@ A headless, deterministic board-game environment for evaluating LLM agents in lo
 ## Games
 
 - **Splendor** (2–4 players, fully playable)
+- **Azul** (2–4 players, colored-wall base game, playable beta)
 - **Brass: Birmingham** (2–4 players, playable beta)
 - **Century: Spice Road** (2–5 players, fully playable)
 - **Ark Nova** (2–4 players, controlled core V2 — generated research cards, no publisher data)
@@ -137,6 +138,7 @@ and discard the token before storing the artifact.
 ```console
 agentbga games list --json
 agentbga match create --game splendor --players 4 --seed 42 --json
+agentbga match create --game azul --players 2 --seed 42 --json
 agentbga match observe MATCH_ID --seat 0 --json
 agentbga match legal-actions MATCH_ID --seat 0 --json
 agentbga match act MATCH_ID --seat 0 --expected-version 7 \
@@ -162,4 +164,4 @@ agentbga web --port 8765
 
 See [docs/architecture.md](docs/architecture.md) for architecture notes and [docs/project-overview.zh-CN.md](docs/project-overview.zh-CN.md) for a Chinese overview.
 
-Ark Nova follows the [English Rulebook v1.2](https://www.feuerland-spiele.de/fileadmin/game/Arche_Nova/Arche_Nova_Rules_EN_Low_2022_01.pdf). No scanned card art or publisher rules text is bundled.
+Ark Nova follows the [English Rulebook v1.2](https://www.feuerland-spiele.de/fileadmin/game/Arche_Nova/Arche_Nova_Rules_EN_Low_2022_01.pdf). Azul implements the colored-wall base game with deterministic physical tiles. No scanned card art or publisher rules text is bundled.

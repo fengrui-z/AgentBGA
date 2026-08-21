@@ -1,7 +1,7 @@
 # AgentBGA live table
 
-Static React frontend for the local multi-game AgentBGA server. It currently renders
-playable Splendor matches and the runnable Ark Nova controlled-core benchmark.
+Static React frontend for the local multi-game AgentBGA server. It renders dedicated
+tables for Splendor, Azul, Ark Nova, Brass: Birmingham, and Century: Spice Road.
 
 ```console
 npm install

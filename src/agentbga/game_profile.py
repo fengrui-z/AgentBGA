@@ -153,6 +153,56 @@ SPLENDOR_PROFILE = GameProfile(
 )
 
 
+# ── Azul profile ──
+AZUL_PROFILE = GameProfile(
+    game_id="azul",
+    game_name="Azul",
+    total_expected_turns=90,
+    endgame_score_threshold=60,
+    resource_categories={"tiles": "shared_draft", "floor": "penalty"},
+    engine_component_name="pattern lines feeding permanent wall placements",
+    scoring_dimensions=["wall adjacency", "completed rows", "completed columns", "completed colors"],
+    action_meta_types={"draft_tiles": META_BUILD},
+    observation_schema={
+        "factories": "shared_resources",
+        "center": "shared_resources",
+        "players": "self_state",
+        "wall_pattern": "spatial",
+        "bag_count": "meta",
+        "lid_count": "meta",
+        "rankings": "meta",
+    },
+    turn_structure="single_action",
+    hidden_info_types=[],
+    has_spatial=True,
+    spatial_summary_method="grid",
+    has_card_abilities=False,
+    ability_summary_depth="none",
+    early_strategy=(
+        "Fill short pattern lines efficiently while watching which colors opponents need. "
+        "Avoid taking unnecessary floor penalties just to complete a weak placement."
+    ),
+    mid_strategy=(
+        "Build intersecting horizontal and vertical groups for adjacency points. Track the "
+        "remaining supply and use factory remainders to shape the center offer."
+    ),
+    late_strategy=(
+        "Control when a horizontal row completes and calculate endgame bonuses. Prefer moves "
+        "that preserve the score lead after floor penalties and row-count tiebreaking."
+    ),
+    capability_weights={
+        CAP_ENGINE: 1,
+        CAP_RESOURCE: 3,
+        CAP_OPPONENT: 3,
+        CAP_PHASE: 2,
+        CAP_PLANNING: 2,
+        CAP_PERCEPTION: 2,
+        CAP_ENDGAME: 3,
+        CAP_COMBO: 2,
+    },
+)
+
+
 # ── Ark Nova profile ──
 ARK_NOVA_PROFILE = GameProfile(
     game_id="ark_nova",
@@ -293,6 +343,7 @@ BRASS_PROFILE = GameProfile(
 
 _PROFILES: dict[str, GameProfile] = {
     "splendor": SPLENDOR_PROFILE,
+    "azul": AZUL_PROFILE,
     "ark_nova": ARK_NOVA_PROFILE,
     "brass_birmingham": BRASS_PROFILE,
 }

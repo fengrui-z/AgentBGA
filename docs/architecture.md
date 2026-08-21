@@ -37,6 +37,7 @@ flowchart LR
   MCP --> APP
   APP --> REG["Game registry"]
   REG --> SPL["Splendor rules plugin"]
+  REG --> AZUL["Azul rules plugin"]
   REG --> ARK["Ark Nova rules plugin"]
   REG --> BRASS["Brass: Birmingham rules plugin"]
   APP --> STORE["SQLite event store + snapshots"]
@@ -154,7 +155,7 @@ shared concepts only after the second game exposes genuine commonality.
 
 ### 3.1 Reusable mechanics kernel
 
-Splendor and the Ark Nova controlled core now provide that second-game evidence.
+Splendor, Azul, and the Ark Nova controlled core provide cross-game evidence.
 Their shared mechanisms live in `agentbga.mechanics`; game rules remain in the
 plugins. The distinction is intentional:
 
@@ -162,9 +163,11 @@ plugins. The distinction is intentional:
 flowchart TB
   APP["Match service / CLI / MCP"] --> CONTRACT["GamePlugin contract"]
   CONTRACT --> SPL["Splendor policies"]
+  CONTRACT --> AZUL["Azul policies"]
   CONTRACT --> ARK["Ark Nova policies"]
   CONTRACT --> FUTURE["Future game policies"]
   SPL --> KERNEL["Reusable mechanics kernel"]
+  AZUL --> KERNEL
   ARK --> KERNEL
   FUTURE --> KERNEL
   KERNEL --> ACTIONS["ActionSpace / DecisionStep"]
@@ -194,7 +197,8 @@ and Break resolution; Splendor owns reservation limits and noble eligibility;
 Brass: Birmingham owns market sourcing, canal/rail eras, card permission, and
 network access.  Brass also contributes reusable action-budget, stable turn-order,
 typed-network, candidate-supply, and price-track primitives without moving those
-game-specific policies into the kernel.
+game-specific policies into the kernel. Azul owns factory drafting, pattern-line
+legality, wall adjacency, floor penalties, start-marker flow, and tile conservation.
 
 This separation is also an evaluation design. Cross-game analytics can compare
 semantic events such as resources spent, cards acquired, track movement, and

@@ -160,7 +160,7 @@ const useLang = () => useContext(LangCtx);
 
 type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
 type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
-type GameId = "splendor" | "ark_nova" | "brass_birmingham" | "century_spice_road";
+type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road";
 type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "max" | "xhigh";
 type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string; reasoning_effort: ReasoningEffort };
 type Card = { id: string; tier: number; bonus: string; points: number; cost: Record<string, number> };
@@ -173,6 +173,20 @@ type View = {
   game: "splendor"; status: string; active_seat: number; turn_count: number; phase: string; bank: Record<string, number>;
   market: Record<string, Card[]>; deck_counts: Record<string, number>; players: PlayerView[];
   available_nobles: {id: string; points: number; required: Record<string, number>}[];
+};
+type AzulColor = "blue" | "yellow" | "red" | "black" | "white";
+type AzulCounts = Record<AzulColor, number>;
+type AzulPlayerView = {
+  seat: number; score: number; completed_rows: number; floor: string[];
+  pattern_lines: {line: number; capacity: number; color: AzulColor | null; count: number; complete: boolean}[];
+  wall: {color: AzulColor; occupied: boolean}[][];
+};
+type AzulView = {
+  game: "azul"; rules_version: string; implementation_status: string; status: string; phase: string;
+  round: number; turn_count: number; active_seat: number; round_start_seat: number; bag_count: number; lid_count: number;
+  center_has_start_marker: boolean; start_marker_holder_seat: number | null;
+  factories: {id: string; tiles: AzulCounts}[]; center: AzulCounts;
+  wall_pattern: AzulColor[][]; players: AzulPlayerView[];
 };
 type ArkCard = {id?: string; card_type?: string; tags?: string[]; implementation?: string; hidden?: true};
 type ArkActionCard = {action: string; strength: number; upgraded: boolean; tokens: string[]};
@@ -240,7 +254,7 @@ type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
   paused: boolean; pause_pending: boolean;
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
-  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | ArkView | BrassView | CenturyView)[];
+  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView)[];
 };
 type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
@@ -268,8 +282,15 @@ const SPICE_META: Record<SpiceName, {label: Record<Lang,string>; short: Record<L
   turmeric: {label: {zh:"姜黄",en:"Turmeric"}, short: {zh:"黄",en:"T"}}, saffron: {label: {zh:"藏红花",en:"Saffron"}, short: {zh:"红",en:"S"}},
   cardamom: {label: {zh:"豆蔻",en:"Cardamom"}, short: {zh:"绿",en:"C"}}, cinnamon: {label: {zh:"肉桂",en:"Cinnamon"}, short: {zh:"褐",en:"N"}},
 };
+const AZUL_COLORS: AzulColor[] = ["blue", "yellow", "red", "black", "white"];
+const AZUL_FLOOR_PENALTIES = [-1, -1, -2, -2, -2, -3, -3] as const;
+const AZUL_META: Record<AzulColor, Record<Lang, string>> = {
+  blue: {zh: "蓝色", en: "Blue"}, yellow: {zh: "黄色", en: "Yellow"}, red: {zh: "红色", en: "Red"},
+  black: {zh: "黑色", en: "Black"}, white: {zh: "白色", en: "White"},
+};
 const GAME_COPY: Record<GameId, {eyebrow: string; name: Record<Lang,string>; description: Record<Lang,string>; badge: string; note: Record<Lang,string>}> = {
   splendor: {eyebrow: "SPLENDOR", name: {zh:"璀璨宝石",en:"Splendor"}, description: {zh:"配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；每个 Agent Harness 都可独立设置思考强度。",en:"Configure 2–4 model or human players. On your turn, pick a legal action at the table; each agent harness can use its own reasoning effort."}, badge: "PLAYABLE", note: {zh:"完整基础版引擎",en:"Full base-game engine"}},
+  azul: {eyebrow: "AZUL", name: {zh:"花砖物语",en:"Azul"}, description: {zh:"从工厂展示区或中央区选取同色花砖，规划图案线并铺设墙面；兼顾相邻计分、地板罚分与终局时机。",en:"Draft one color from factories or the center, fill pattern lines and tile your wall while balancing adjacency, floor penalties and endgame timing."}, badge: "PLAYABLE BETA", note: {zh:"选砖 · 拼墙 · 空间规划",en:"Draft · tile · spatial planning"}},
   ark_nova: {eyebrow: "ARK NOVA", name: {zh:"方舟动物园",en:"Ark Nova"}, description: {zh:"在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。",en:"Test multi-stage decisions in a controlled research-card pool: opening hand, five action cards, hex building, animal placement, association tasks and Break."}, badge: "CONTROLLED CORE V2", note: {zh:"升级 · 捐款 · 释放 · 效果系统",en:"Upgrades · donations · release · effect system"}},
   brass_birmingham: {eyebrow: "BRASS: BIRMINGHAM", name: {zh:"伯明翰",en:"Brass: Birmingham"}, description: {zh:"测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。",en:"Test long-term planning in a two-era economic network: industry building, resource sourcing, merchant selling, dynamic turn order and canal-to-rail transitions."}, badge: "PLAYABLE BETA", note: {zh:"产业 · 网络 · 双时代经济",en:"Industry · network · two-era economy"}},
   century_spice_road: {eyebrow: "CENTURY: SPICE ROAD", name: {zh:"香料之路",en:"Century: Spice Road"}, description: {zh:"经营自己的商队：获取商人牌、升级或交换香料、争夺金币银币，并抢先完成高分订单。支持 2–5 名玩家。",en:"Run your caravan: acquire merchant cards, upgrade or trade spices, race for gold and silver coins to fulfill high-score orders. 2–5 players."}, badge: "CLASSIC BASE", note: {zh:"商人牌 · 香料引擎 · 订单竞速",en:"Merchant cards · spice engine · order race"}},
@@ -431,13 +452,63 @@ function CenturyBoard({view}: {view?: CenturyView}) {
   </div>;
 }
 
+function AzulTile({color, count}: {color: AzulColor; count?: number}) {
+  const lang = useLang();
+  return <i className={`azul-tile azul-${color}`} title={AZUL_META[color][lang]}>{count && count > 1 ? <b>{count}</b> : null}</i>;
+}
+
+function AzulPlayerPanel({player: p, identity, active, holdsStartMarker = false}: {player: AzulPlayerView; identity?: Snapshot["players"][number]; active: boolean; holdsStartMarker?: boolean}) {
+  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
+  return <section className={`player-panel azul-player-panel ${active ? "active-player" : ""}`}>
+    <header><div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `${t("player_label")} ${p.seat + 1}`}</h3></div><div className="azul-score"><strong>{p.score}</strong><span>{zh ? "分" : "pts"}</span></div></header>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{zh ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>
+    <div className="azul-player-board">{p.pattern_lines.map((line, row) => <div className="azul-player-board-row" key={line.line}>
+      <span className="azul-line-number">{line.line}</span>
+      <div className="azul-pattern-line" aria-label={`${zh ? "图案线" : "Pattern line"} ${line.line}`}>{Array.from({length: line.capacity}, (_, index) => line.color && index >= line.capacity - line.count ? <AzulTile key={index} color={line.color}/> : <i key={index} className="azul-tile empty"/>)}</div>
+      <i className="azul-row-divider" aria-hidden="true"/>
+      <div className="azul-wall-row" aria-label={`${zh ? "墙面行" : "Wall row"} ${line.line}`}>{p.wall[row].map((cell, column) => <i key={`${row}-${column}`} className={`azul-wall-cell azul-${cell.color} ${cell.occupied ? "occupied" : ""}`}><span/></i>)}</div>
+    </div>)}</div>
+    <div className="azul-floor">
+      <div className="azul-floor-heading"><span>{zh ? "地板线" : "Floor line"}</span><b>{zh ? `完成行 ${p.completed_rows}` : `${p.completed_rows} rows`}</b></div>
+      <div className="azul-floor-track">{AZUL_FLOOR_PENALTIES.map((penalty, index) => {
+        const item = p.floor[index];
+        return <span className={`azul-floor-slot ${item ? "occupied" : ""}`} key={index} title={`${zh ? "罚分" : "Penalty"} ${penalty}`}>
+          <small>{penalty}</small>
+          {item === "start-player-marker" ? <i className="azul-marker">1</i> : item ? <AzulTile color={item as AzulColor}/> : <i className="azul-floor-empty"/>}
+        </span>;
+      })}</div>
+      {holdsStartMarker && <div className="azul-marker-overflow"><i className="azul-marker">1</i><span>{zh ? "地板已满；仍持有起始玩家标记，不追加罚分" : "Floor full; holds start marker with no extra penalty"}</span></div>}
+    </div>
+  </section>;
+}
+
+function AzulOffer({counts, expanded = false}: {counts: AzulCounts; expanded?: boolean}) {
+  const tiles = expanded
+    ? AZUL_COLORS.flatMap(color => Array.from({length: counts[color]}, (_, index) => ({color, key: `${color}-${index}`})))
+    : AZUL_COLORS.filter(color => counts[color] > 0).map(color => ({color, key: color}));
+  return <div className={`azul-offer ${expanded ? "azul-offer-expanded" : ""}`}>{tiles.map(tile =>
+    <AzulTile key={tile.key} color={tile.color} count={expanded ? undefined : counts[tile.color]}/>
+  )}</div>;
+}
+
+function AzulBoard({view}: {view?: AzulView}) {
+  const lang = useLang(); const zh = lang === "zh";
+  if (!view) return null;
+  return <div className="azul-board">
+    <section className="azul-status"><div><span>AZUL · COLORED WALL</span><h2>{zh ? `第 ${view.round} 轮 · 工厂展示阶段` : `Round ${view.round} · Factory offer`}</h2></div><p>{zh ? "选择一个来源中的一种颜色；工厂余砖自动移入中央区。" : "Choose one color from one source; factory remainders move to the center."}</p><code>{view.rules_version}</code></section>
+    <section className="azul-factories"><header><div><span>FACTORY DISPLAYS</span><h3>{zh ? "工厂展示区" : "Factories"}</h3></div><b>{zh ? `袋中 ${view.bag_count} · 盒盖 ${view.lid_count}` : `Bag ${view.bag_count} · Lid ${view.lid_count}`}</b></header><div>{view.factories.map((factory, index) => <article key={factory.id}><span>0{index + 1}</span><AzulOffer counts={factory.tiles} expanded/></article>)}</div></section>
+    <section className="azul-center"><header><span>CENTER</span><h3>{zh ? "中央区" : "Center"}</h3></header>{view.center_has_start_marker && <i className="azul-marker">1</i>}<AzulOffer counts={view.center}/>{view.start_marker_holder_seat !== null && <small>{zh ? `起始标记：座位 ${view.start_marker_holder_seat + 1}` : `Start marker: seat ${view.start_marker_holder_seat + 1}`}</small>}</section>
+    <section className="azul-legend">{AZUL_COLORS.map(color => <span key={color}><AzulTile color={color}/>{AZUL_META[color][lang]}</span>)}<small>{zh ? "原创 CSS 花砖，不包含出版商美术。" : "Original CSS tiles; no publisher artwork."}</small></section>
+  </div>;
+}
+
 function tokenText(tokens: Record<string, number>, lang: Lang) {
   return GEM_ORDER.filter(color => (tokens[color] ?? 0) > 0)
     .map(color => `${GEM_META[color]?.label[lang] || color} × ${tokens[color]}`).join(lang === "zh" ? "、" : ", ");
 }
 
 function describeAction(item: Timeline, names: Record<number, string>, lang: Lang) {
-  const t = makeT(lang); const event = item.event; const zh = lang === "zh";
+  const event = item.event; const zh = lang === "zh";
   if (event.type === "agent_error") return zh ? `${event.player} 调用失败：${event.error}` : `${event.player} call failed: ${event.error}`;
   if (event.type === "match_failed") return zh ? `对局中止：${event.error}` : `Match aborted: ${event.error}`;
   if (event.type === "match_finished") return zh ? `对局结束，共 ${event.turns} 回合` : `Match finished, ${event.turns} turns`;
@@ -461,6 +532,7 @@ function describeAction(item: Timeline, names: Record<number, string>, lang: Lan
   if (action.type === "reserve_visible") return zh ? `${who} 预留公开牌 ${action.card_id}` : `${who} reserves visible card ${action.card_id}`;
   if (action.type === "reserve_deck") return zh ? `${who} 从 ${action.tier} 阶牌库暗中预留一张牌` : `${who} reserves a card from tier ${action.tier} deck`;
   if (action.type === "choose_noble") return zh ? `${who} 获得贵族 ${action.noble_id}` : `${who} gains noble ${action.noble_id}`;
+  if (action.type === "draft_tiles") return `${who}${zh ? "：" : ": "}${humanActionText(action, lang)}`;
   if (action.type === "pass") return zh ? `${who} 无合法行动，跳过回合` : `${who} has no legal move, passing`;
   if (["play_merchant", "acquire_merchant", "claim_point", "rest"].includes(String(action.type))) {
     return `${who}${zh ? "：" : ": "}${humanActionText(action, lang)}`;
@@ -476,6 +548,12 @@ function describeAction(item: Timeline, names: Record<number, string>, lang: Lan
 function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?: BrassView) {
   const zh = lang === "zh"; const L = BRASS_INDUSTRY_LABELS[lang]; const BL = BRASS_ACTION_LABELS[lang];
   const sep = zh ? "、" : ", ";
+  if (action.type === "draft_tiles") {
+    const color = AZUL_META[String(action.color) as AzulColor]?.[lang] || String(action.color);
+    const source = action.source === "center" ? (zh ? "中央区" : "center") : (zh ? `工厂 ${String(action.source).replace("factory-", "")}` : `factory ${String(action.source).replace("factory-", "")}`);
+    const destination = action.destination === "floor" ? (zh ? "地板线" : "floor") : (zh ? `图案线 ${String(action.destination).replace("pattern-line-", "")}` : `pattern line ${String(action.destination).replace("pattern-line-", "")}`);
+    return zh ? `从${source}选取${color}，放到${destination}` : `Take ${color} from ${source} to ${destination}`;
+  }
   if (action.type === "choose_initial_hand") {
     if (Array.isArray(action.card_ids)) return zh ? `保留 ${action.card_ids.join("、")}` : `Keep ${action.card_ids.join(", ")}`;
     return zh ? `保留 ${Number(action.kept_count ?? 0)} 张起始手牌` : `Keep ${Number(action.kept_count ?? 0)} starting cards`;
@@ -571,6 +649,7 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
     select_network_link: "选择铁路", take_resource: "选择资源来源", sell_industry: "出售产业",
     finish_sell: "结束出售", merchant_bonus_develop: "商人研发奖励", liquidate_industry: "变卖产业",
     play_merchant: "打出商人牌", acquire_merchant: "获取商人牌", claim_point: "完成订单", rest: "休息",
+    draft_tiles: "选取并放置花砖",
   },
   en: {
     buy_visible: "Buy visible card", buy_reserved: "Buy reserved card", take_tokens: "Take gems",
@@ -586,6 +665,7 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
     select_network_link: "Choose rail link", take_resource: "Choose resource source", sell_industry: "Sell industry",
     finish_sell: "End sell", merchant_bonus_develop: "Merchant develop bonus", liquidate_industry: "Liquidate industry",
     play_merchant: "Play merchant card", acquire_merchant: "Acquire merchant card", claim_point: "Complete order", rest: "Rest",
+    draft_tiles: "Draft and place tiles",
   },
 };
 
@@ -640,6 +720,22 @@ function HumanActionChoice({item, view, brassView, disabled, submitting, onChoos
     {payment && <small>{kind === "reserve_visible" ? (zh ? "归还" : "Return") : (zh ? "支付" : "Pay")}{zh ? "：" : ": "}{payment}</small>}
     {submitting && <i>{zh ? "提交中…" : "Submitting…"}</i>}
   </button>;
+}
+
+function AzulActionPicker({actions, disabled, submitting, onChoose}: {actions: LegalAction[]; disabled: boolean; submitting: string; onChoose: (item: LegalAction) => void}) {
+  const lang = useLang(); const zh = lang === "zh";
+  const sources = useMemo(() => [...new Set(actions.map(item => String(item.action.source)))], [actions]);
+  const [selectedSource, setSelectedSource] = useState("");
+  const source = sources.includes(selectedSource) ? selectedSource : sources[0] || "";
+  const colors = AZUL_COLORS.filter(color => actions.some(item => item.action.source === source && item.action.color === color));
+  const [selectedColor, setSelectedColor] = useState<AzulColor | "">("");
+  const color = colors.includes(selectedColor as AzulColor) ? selectedColor : colors[0] || "";
+  const choices = actions.filter(item => item.action.source === source && item.action.color === color);
+  return <div className="azul-action-picker">
+    <div><span>1 · {zh ? "来源" : "Source"}</span>{sources.map(value => <button key={value} className={source === value ? "selected" : ""} onClick={() => {setSelectedSource(value); setSelectedColor("");}} disabled={disabled}>{value === "center" ? (zh ? "中央区" : "Center") : `${zh ? "工厂" : "Factory"} ${value.replace("factory-", "")}`}</button>)}</div>
+    <div><span>2 · {zh ? "颜色" : "Color"}</span>{colors.map(value => <button key={value} className={color === value ? "selected" : ""} onClick={() => setSelectedColor(value)} disabled={disabled}><AzulTile color={value}/>{AZUL_META[value][lang]}</button>)}</div>
+    <div><span>3 · {zh ? "放置位置" : "Destination"}</span>{choices.map(item => <button key={item.id} onClick={() => onChoose(item)} disabled={disabled}>{item.action.destination === "floor" ? (zh ? "地板线" : "Floor") : `${zh ? "图案线" : "Pattern line"} ${String(item.action.destination).replace("pattern-line-", "")}`}{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>)}</div>
+  </div>;
 }
 
 const ARK_ACTION_LABELS: Record<Lang, Record<string, string>> = {
@@ -762,7 +858,7 @@ function SplendorBoard({view}: {view?: View}) {
 }
 
 function ArkNovaBoard({view, players}: {view?: ArkView; players: Snapshot["players"]}) {
-  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
+  const lang = useLang(); const t = makeT(lang);
   if (!view) return null;
   return <div className="ark-board">
     <section className="ark-milestone"><div><span>{t("ark_eyebrow")}</span><h2>{view.phase === "initial_hand_selection" ? t("ark_phase_select") : t("ark_phase_play")}</h2></div><p>{t("ark_phase_note")}</p><code>{view.rules_version}</code></section>
@@ -781,6 +877,8 @@ export default function Home() {
   const [lang, setLang] = useState<Lang>("zh");
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("abga-lang") : null;
+    // Restoring a browser preference is an intentional client-only synchronization.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved === "zh" || saved === "en") setLang(saved);
   }, []);
   function toggleLang() {
@@ -815,6 +913,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const humanSeat = snapshot?.human_turn?.seat ?? snapshot?.players.find(player => player.backend === "human")?.seat ?? 0;
   const viewer = snapshot?.views[humanSeat];
   const splendorView = snapshot?.game === "splendor" ? viewer as View : undefined;
+  const azulView = snapshot?.game === "azul" ? viewer as AzulView : undefined;
   const arkView = snapshot?.game === "ark_nova" ? viewer as ArkView : undefined;
   const brassView = snapshot?.game === "brass_birmingham" ? viewer as BrassView : undefined;
   const centuryView = snapshot?.game === "century_spice_road" ? viewer as CenturyView : undefined;
@@ -1004,6 +1103,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         <button className="start" disabled={starting} onClick={startMatch}>{starting ? t("starting") : t("start")}</button>
       </div>
       {game === "ark_nova" && <div className="setup-scope-note"><b>{GAME_COPY.ark_nova.badge}</b> {zh ? "已支持行动升级、合作动物园折扣、捐款、释放动物、地图奖励、效果原语和终局目标；仍使用结构化研究卡池与示意 Map A，并非完整商业卡池复刻。" : "Supports action upgrades, partner-zoo discounts, donations, animal release, map rewards, effect primitives, final objectives; uses a structured research-card pool and schematic Map A, not the full commercial pool."}</div>}
+      {game === "azul" && <div className="setup-scope-note"><b>{GAME_COPY.azul.badge}</b> {zh ? "支持彩色墙基础版、100 枚具名花砖、工厂与中央区选砖、图案线、地板罚分、相邻计分、终局奖励和确定性回放；不包含灰墙玩法、扩展或出版商美术。" : "Supports the colored-wall base game, 100 identity-safe tiles, factory/center drafting, pattern lines, floor penalties, adjacency scoring, endgame bonuses and deterministic replay; no gray wall, expansions or publisher artwork."}</div>}
       {game === "brass_birmingham" && <div className="setup-scope-note"><b>{GAME_COPY.brass_birmingham.badge}</b> {zh ? "支持官方人数牌组、产业板、市场、商人、Build/Sell/Develop、单双铁路、负收入变卖、双时代计分与完整回放；界面不包含出版商美术。" : "Supports official player counts, industry board, markets, merchants, Build/Sell/Develop, single/double rail, negative-income liquidation, two-era scoring and full replay; no publisher artwork."}</div>}
       {game === "century_spice_road" && <div className="setup-scope-note"><b>{GAME_COPY.century_spice_road.badge}</b> {zh ? "完整基础牌组数值、重复交易、升级、市场压香料、商队容量、金币银币、终局与计分均已接通；不包含出版商卡图。" : "Full base-set values, repeat trades, upgrades, market spice, caravan capacity, gold/silver coins, endgame and scoring wired up; no publisher artwork."}</div>}
       {error && <div className="error">{error}</div>}
@@ -1027,6 +1127,8 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         const visiblePlayer = viewer?.players[identity.seat];
         return snapshot.game === "splendor"
           ? <PlayerPanel key={identity.seat} player={visiblePlayer as PlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
+          : snapshot.game === "azul"
+            ? <AzulPlayerPanel key={identity.seat} player={visiblePlayer as AzulPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat} holdsStartMarker={azulView?.start_marker_holder_seat === identity.seat}/>
           : snapshot.game === "ark_nova"
             ? <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity}/>
             : snapshot.game === "brass_birmingham"
@@ -1037,12 +1139,12 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? t("pause_pending") : t("paused")}</strong><span>{snapshot.pause_pending ? t("pause_pending_desc") : t("paused_desc")}</span></div>}
         {snapshot.human_turn && <section className="human-turn" aria-live="polite">
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}{t("pick_action")}</h2></div><b>{snapshot.human_turn.legal_actions.length} {t("legal_opts")}</b></header>
-          <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
+          {snapshot.game === "azul" ? <AzulActionPicker actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
             <h3>{ACTION_GROUPS[lang][kind] || kind}<span>{actions.length}</span></h3>
             <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div>
-          </section>)}</div>
+          </section>)}</div>}
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players}/> : <CenturyBoard view={centuryView}/>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players}/> : <CenturyBoard view={centuryView}/>}
         {snapshot.status === "finished" && <div className="winner-banner"><span>{t("winner")}</span><strong>{timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong><button onClick={() => { setSnapshot(null); setTimeline([]); }}>{t("play_again")}</button></div>}
       </section>
       <aside className="timeline">

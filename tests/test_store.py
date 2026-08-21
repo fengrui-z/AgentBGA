@@ -34,6 +34,19 @@ class StoreTests(unittest.TestCase):
             self.assertEqual(0, replay[-1]["version"])
             store.close()
 
+    def test_create_act_and_replay_azul(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = Store(Path(directory) / "test.sqlite3")
+            match_id, version, state = store.create(2, 42, "azul")
+            self.assertEqual("azul", store.game_id(match_id))
+            action = store.game(match_id).legal_actions(state, 0)[0]["action"]
+            version, state, events = store.act(match_id, 0, version, action)
+            self.assertEqual(1, version)
+            self.assertEqual("action_accepted", events[0]["type"])
+            self.assertEqual(store.game(match_id).state_hash(state),
+                             store.replay(match_id)[-1]["state_hash"])
+            store.close()
+
     def test_ark_nova_random_controllers_finish_and_replay_controlled_core(self):
         with tempfile.TemporaryDirectory() as directory:
             store = Store(Path(directory) / "test.sqlite3")
