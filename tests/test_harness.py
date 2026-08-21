@@ -1,10 +1,12 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import sqlite3
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from unittest import mock
 
@@ -47,6 +49,16 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual("DEEPSEEK_API_KEY", dsh.api_key_env)
         self.assertEqual("https://api.deepseek.com", dsh.base_url)
         self.assertEqual("max", dsh.reasoning_effort)
+        series = PlayerConfig.from_dict({
+            "name": "DSh series", "backend": "dsh", "model": "deepseek-v4-flash",
+            "series_id": "anneal-20",
+        }, 5)
+        self.assertEqual("anneal-20", series.series_id)
+        opencode_series = PlayerConfig.from_dict({
+            "name": "OpenCode series", "backend": "opencode", "model": "test",
+            "series_id": "anneal-20", "participant_id": "opencode-player",
+        }, 5)
+        self.assertEqual("opencode-player", opencode_series.participant_id)
         hermes = PlayerConfig.from_dict({
             "name": "Hermes Agent", "backend": "hermes", "model": "gpt-test",
         }, 5)
@@ -99,6 +111,206 @@ class HarnessTests(unittest.TestCase):
     def test_mcp_exposes_only_seat_tools(self):
         self.assertEqual({"observe", "legal_actions", "submit_action", "read_notes", "write_notes"}, {tool["name"] for tool in TOOLS})
 
+    def test_notes_ignore_mutable_context_path_and_reject_symlink_escape(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runtime = root / "runtime"
+            workspace = root / "workspace"
+            runtime.mkdir()
+            workspace.mkdir()
+            outside = root / "outside.txt"
+            outside.write_text("host secret", encoding="utf-8")
+            context = runtime / "turn-context.json"
+            context.write_text(json.dumps({
+                "schema_version": "agentbga.seat-context.v1", "match_id": "m", "seat": 0,
+                "version": 1, "observation": {}, "legal_actions": [],
+                "notes_path": str(outside),
+            }))
+
+            self.assertEqual("", call_tool(context, "read_notes", notes_root=workspace))
+            call_tool(context, "write_notes", {"content": "safe"}, notes_root=workspace)
+            self.assertEqual("safe", (workspace / "strategy-notes.md").read_text())
+            self.assertEqual("host secret", outside.read_text())
+
+            (workspace / "strategy-notes.md").unlink()
+            (workspace / "strategy-notes.md").symlink_to(outside)
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "read_notes", notes_root=workspace)
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "write_notes", {"content": "escape"}, notes_root=workspace)
+            self.assertEqual("host secret", outside.read_text())
+
+    def test_notes_descriptor_cannot_be_redirected_after_atomic_open(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runtime = root / "runtime"
+            workspace = root / "workspace"
+            runtime.mkdir()
+            workspace.mkdir()
+            outside = root / "outside.txt"
+            outside.write_text("host secret", encoding="utf-8")
+            context = runtime / "turn-context.json"
+            context.write_text(json.dumps({
+                "schema_version": "agentbga.seat-context.v1", "match_id": "m", "seat": 0,
+                "version": 1, "observation": {}, "legal_actions": [],
+            }))
+            notes = workspace / "strategy-notes.md"
+            notes.write_text("safe notes", encoding="utf-8")
+            original = notes.stat()
+            real_fstat = os.fstat
+            swapped = False
+
+            def swap_after_open(descriptor):
+                nonlocal swapped
+                metadata = real_fstat(descriptor)
+                if not swapped and (metadata.st_dev, metadata.st_ino) == (
+                    original.st_dev, original.st_ino,
+                ):
+                    notes.unlink()
+                    notes.symlink_to(outside)
+                    swapped = True
+                return metadata
+
+            with mock.patch("agentbga.seat_tool.os.fstat", side_effect=swap_after_open):
+                self.assertEqual(
+                    "safe notes", call_tool(context, "read_notes", notes_root=workspace),
+                )
+            self.assertTrue(swapped)
+            self.assertTrue(notes.is_symlink())
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
+
+            notes.unlink()
+            notes.write_text("old notes", encoding="utf-8")
+            original = notes.stat()
+            swapped = False
+            with mock.patch("agentbga.seat_tool.os.fstat", side_effect=swap_after_open):
+                result = call_tool(
+                    context, "write_notes", {"content": "replacement"}, notes_root=workspace,
+                )
+            self.assertTrue(result["saved"])
+            self.assertTrue(swapped)
+            self.assertTrue(notes.is_symlink())
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
+
+    def test_notes_resist_concurrent_symlink_replacement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runtime = root / "runtime"
+            workspace = root / "workspace"
+            runtime.mkdir()
+            workspace.mkdir()
+            outside = root / "outside.txt"
+            outside.write_text("host secret", encoding="utf-8")
+            context = runtime / "turn-context.json"
+            context.write_text(json.dumps({
+                "schema_version": "agentbga.seat-context.v1", "match_id": "m", "seat": 0,
+                "version": 1, "observation": {}, "legal_actions": [],
+            }))
+            notes = workspace / "strategy-notes.md"
+            notes.write_text("safe", encoding="utf-8")
+            stop = threading.Event()
+            started = threading.Event()
+            swaps = 0
+
+            def replace_entry():
+                nonlocal swaps
+                link = workspace / "notes-link.tmp"
+                regular = workspace / "notes-regular.tmp"
+                while not stop.is_set():
+                    link.unlink(missing_ok=True)
+                    link.symlink_to(outside)
+                    os.replace(link, notes)
+                    regular.write_text("safe", encoding="utf-8")
+                    os.replace(regular, notes)
+                    swaps += 1
+                    started.set()
+
+            attacker = threading.Thread(target=replace_entry)
+            attacker.start()
+            try:
+                self.assertTrue(started.wait(timeout=2))
+                for index in range(200):
+                    try:
+                        call_tool(
+                            context, "write_notes", {"content": f"safe-{index}"},
+                            notes_root=workspace,
+                        )
+                    except (OSError, ValueError):
+                        # Hostile replacement may deny an operation, but must
+                        # never redirect its descriptor outside the workspace.
+                        pass
+            finally:
+                stop.set()
+                attacker.join(timeout=2)
+            self.assertFalse(attacker.is_alive())
+            self.assertGreater(swaps, 0)
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
+
+    @unittest.skipUnless(hasattr(os, "link"), "hard links are required")
+    def test_notes_reject_hard_links_and_non_regular_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runtime = root / "runtime"
+            workspace = root / "workspace"
+            runtime.mkdir()
+            workspace.mkdir()
+            outside = root / "outside.txt"
+            outside.write_text("host secret", encoding="utf-8")
+            context = runtime / "turn-context.json"
+            context.write_text(json.dumps({
+                "schema_version": "agentbga.seat-context.v1", "match_id": "m", "seat": 0,
+                "version": 1, "observation": {}, "legal_actions": [],
+            }))
+            notes = workspace / "strategy-notes.md"
+            os.link(outside, notes)
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "read_notes", notes_root=workspace)
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "write_notes", {"content": "escape"}, notes_root=workspace)
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
+
+            notes.unlink()
+            notes.mkdir()
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "read_notes", notes_root=workspace)
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "write_notes", {"content": "escape"}, notes_root=workspace)
+
+            if hasattr(os, "mkfifo"):
+                notes.rmdir()
+                os.mkfifo(notes)
+                with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                    call_tool(context, "read_notes", notes_root=workspace)
+                with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                    call_tool(context, "write_notes", {"content": "escape"}, notes_root=workspace)
+
+    def test_runtime_outputs_reject_symlink_escape(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runtime = root / "runtime"
+            runtime.mkdir()
+            outside = root / "outside.txt"
+            outside.write_text("host secret", encoding="utf-8")
+            context = runtime / "turn-context.json"
+            context.write_text(json.dumps({
+                "schema_version": "agentbga.seat-context.v1", "match_id": "m", "seat": 0,
+                "version": 1, "observation": {"viewer_seat": 0},
+                "legal_actions": [{"id": "a-good", "type": "pass"}],
+            }))
+
+            audit = runtime / "tool-events.jsonl"
+            audit.symlink_to(outside)
+            with self.assertRaisesRegex(ValueError, "single-link regular file"):
+                call_tool(context, "observe")
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
+
+            audit.unlink()
+            submission = runtime / "submission.json"
+            submission.symlink_to(outside)
+            with self.assertRaisesRegex(ValueError, "already been submitted"):
+                call_tool(context, "submit_action", {"action_id": "a-good"})
+            self.assertEqual("host secret", outside.read_text(encoding="utf-8"))
+
     def test_mcp_stdio_initialize_and_tool_list(self):
         with tempfile.TemporaryDirectory() as directory:
             context = Path(directory) / "turn-context.json"
@@ -111,7 +323,8 @@ class HarnessTests(unittest.TestCase):
                 json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}),
             ]) + "\n"
             completed = subprocess.run(
-                [sys.executable, "-m", "agentbga.seat_mcp", "--context", str(context)],
+                [sys.executable, "-m", "agentbga.seat_mcp", "--context", str(context),
+                 "--notes-root", directory],
                 input=requests, text=True, capture_output=True, check=True,
             )
             responses = [json.loads(line) for line in completed.stdout.splitlines()]
@@ -183,6 +396,7 @@ class HarnessTests(unittest.TestCase):
             self.assertIn("--patch", command)
             self.assertTrue((dsh.session.workspace / "dsh-patch.yml").is_file())
             self.assertEqual("turn", command[-1])
+            self.assertTrue(dsh.session.session_id.startswith("session-agentbga-match-"))
 
             hermes_config = PlayerConfig.from_dict({
                 "name": "Hermes Agent", "backend": "hermes", "model": "gpt-test",
@@ -280,6 +494,11 @@ class HarnessTests(unittest.TestCase):
             self.assertIn("defaultPreset: workspace-write", patch)
             self.assertIn("approval: never", patch)
             self.assertIn("@deepseek-ai/dsh-mcp-client", patch)
+            self.assertIn("- id: headless-runner\n  disabled: true", patch)
+            self.assertIn("agentbga-resumable-runner", patch)
+            self.assertIn("dsh_resumable_runner.mjs", patch)
+            self.assertIn("sessionId:", patch)
+            self.assertIn("ownerKey:", patch)
             self.assertIn("serverName: agentbga", patch)
             env = dsh._environment()
             self.assertEqual("https://api.deepseek.com", env["DEEPSEEK_BASE_URL"])
@@ -310,6 +529,85 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("https://proxy.example/v1", environment["OPENAI_BASE_URL"])
             self.assertIn("seat-1-hermes/.hermes-home", environment["HERMES_HOME"])
             self.assertNotIn("OTHER_TOKEN", environment)
+
+    def test_dsh_session_keys_isolate_seats_and_reset_between_matches(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "shutil.which", return_value="/bin/dsh"
+        ):
+            config = PlayerConfig.from_dict({
+                "name": "DSh", "backend": "dsh", "model": "deepseek-v4-flash",
+            }, 0)
+            match_a_seat_0 = HarnessAgent(config, "match-a", 0, runs_root=directory)
+            match_a_seat_1 = HarnessAgent(config, "match-a", 1, runs_root=directory)
+            match_b_seat_0 = HarnessAgent(config, "match-b", 0, runs_root=directory)
+
+            self.assertNotEqual(
+                match_a_seat_0.session.session_id, match_a_seat_1.session.session_id
+            )
+            self.assertNotEqual(match_a_seat_0._dsh_home, match_a_seat_1._dsh_home)
+            self.assertNotEqual(
+                match_a_seat_0.session.session_id, match_b_seat_0.session.session_id
+            )
+            self.assertNotEqual(match_a_seat_0._dsh_home, match_b_seat_0._dsh_home)
+            self.assertEqual("match", match_a_seat_0.session.scope)
+
+    def test_dsh_series_key_follows_participant_across_seats(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "shutil.which", return_value="/bin/dsh"
+        ):
+            config = PlayerConfig.from_dict({
+                "name": "DSh", "backend": "dsh", "model": "deepseek-v4-flash",
+                "series_id": "anneal-20", "participant_id": "learner",
+            }, 0)
+            other_config = PlayerConfig.from_dict({
+                "name": "Other DSh", "backend": "dsh", "model": "deepseek-v4-flash",
+                "series_id": "anneal-20", "participant_id": "opponent",
+            }, 1)
+            first = HarnessAgent(config, "match-01", 0, runs_root=directory)
+            second = HarnessAgent(config, "match-02", 1, runs_root=directory)
+            other_seat = HarnessAgent(other_config, "match-02", 0, runs_root=directory)
+
+            self.assertEqual(first.session.session_id, second.session.session_id)
+            self.assertEqual(first.session.workspace, second.session.workspace)
+            self.assertEqual(first._dsh_home, second._dsh_home)
+            self.assertNotEqual(first.session.session_id, other_seat.session.session_id)
+            self.assertEqual("series", first.session.scope)
+            self.assertEqual("anneal-20", first.session.scope_id)
+
+    def test_non_dsh_series_restores_native_session_id(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "shutil.which", return_value="/bin/opencode"
+        ):
+            config = PlayerConfig.from_dict({
+                "name": "OpenCode", "backend": "opencode", "model": "test",
+                "series_id": "series-one", "participant_id": "learner",
+            }, 0)
+            first = HarnessAgent(config, "match-01", 0, runs_root=directory)
+            first.session.session_id = "native-session"
+            first._save_harness_session_state()
+            self.assertEqual(0, first.session.resume_count)
+            resumed = HarnessAgent(config, "match-02", 1, runs_root=directory)
+            self.assertEqual("native-session", resumed.session.session_id)
+            self.assertEqual(first.session.workspace, resumed.session.workspace)
+            self.assertEqual("learner", resumed.participant_id)
+            self.assertEqual(0, resumed.session.resume_count)
+
+            resumed._save_harness_session_state(resumed=True)
+            self.assertEqual(1, resumed.session.resume_count)
+            reloaded = HarnessAgent(config, "match-03", 0, runs_root=directory)
+            self.assertEqual(1, reloaded.session.resume_count)
+            reloaded._save_harness_session_state()
+            self.assertEqual(1, reloaded.session.resume_count)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is required for the DSh runner unit test")
+    def test_dsh_resumable_runner_create_resume_and_compaction(self):
+        completed = subprocess.run(
+            [shutil.which("node"), "--test", str(Path(__file__).with_name(
+                "dsh_resumable_runner.test.mjs"
+            ))],
+            text=True, capture_output=True,
+        )
+        self.assertEqual(0, completed.returncode, completed.stdout + completed.stderr)
 
     def test_hermes_recovers_quiet_session_id_from_isolated_state(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/hermes"):
@@ -383,6 +681,12 @@ class HarnessTests(unittest.TestCase):
             with mock.patch.object(agent, "_run", return_value=("{}", "", 0)):
                 with self.assertRaisesRegex(AgentError, "without calling submit_action"):
                     agent.choose({"turn_count": 1, "state_version": 1}, LEGAL)
+            self.assertEqual(1, agent.session.resume_count)
+            resumed_trace = json.loads(
+                (agent.trace_dir / "turn-0001.json").read_text(encoding="utf-8")
+            )
+            self.assertTrue(resumed_trace["session_resumed"])
+            self.assertEqual(1, resumed_trace["session_resume_count"])
 
     def test_harness_environment_does_not_inherit_unrelated_secrets(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/codex"):
@@ -456,6 +760,7 @@ class HarnessTests(unittest.TestCase):
                 "name": "Codex", "backend": "codex", "model": "gpt-test",
             }, 0)
             agent = HarnessAgent(config, "err-match", 0, runs_root=directory)
+            agent.session.session_id = "existing-session"
             with mock.patch.object(agent, "_run", return_value=("", "boom", 1)):
                 with self.assertRaisesRegex(AgentError, "exited 1"):
                     agent.choose({"turn_count": 0, "state_version": 0}, LEGAL)
@@ -465,6 +770,8 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("error", trace["status"])
             self.assertEqual("boom", trace["error"])
             self.assertIsNone(trace["submission"])
+            self.assertTrue(trace["session_resumed"])
+            self.assertEqual(0, trace["session_resume_count"])
 
     def test_harness_writes_trace_on_timeout(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/fake"):

@@ -35,13 +35,16 @@ class PlayerConfig:
     api_key_env: str | None = None
     wire_api: str | None = None
     reasoning_effort: str | None = None
+    series_id: str | None = None
+    participant_id: str | None = None
+    memory_namespace: str | None = field(default=None, repr=False)
     api_key: str | None = field(default=None, repr=False, compare=False)
 
     @classmethod
     def from_dict(cls, value: dict[str, Any], seat: int) -> "PlayerConfig":
         allowed = {
             "name", "backend", "model", "base_url", "api_key_env", "wire_api",
-            "reasoning_effort",
+            "reasoning_effort", "series_id", "participant_id",
         }
         unknown = set(value) - allowed
         if unknown:
@@ -110,6 +113,29 @@ class PlayerConfig:
                 )
         elif backend in HARNESS_BACKENDS:
             reasoning_effort = HARNESS_REASONING_EFFORT
+        series_id = value.get("series_id")
+        if series_id is not None:
+            if backend not in HARNESS_BACKENDS:
+                raise ValueError(
+                    f"player {seat} series_id is supported only by harness backends"
+                )
+            if not isinstance(series_id, str) or not series_id.strip():
+                raise ValueError(f"player {seat} series_id must be a non-empty string")
+            series_id = series_id.strip()
+        participant_id = value.get("participant_id")
+        if participant_id is not None:
+            if backend not in HARNESS_BACKENDS:
+                raise ValueError(
+                    f"player {seat} participant_id is supported only by harness backends"
+                )
+            if not isinstance(participant_id, str) or not re.fullmatch(
+                r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}", participant_id
+            ):
+                raise ValueError(
+                    f"player {seat} participant_id must use 1-128 letters, digits, '.', '_', ':', or '-'"
+                )
+        if series_id and not participant_id:
+            participant_id = f"seat-{seat}"
         return cls(
             name=name,
             backend=backend,
@@ -118,10 +144,13 @@ class PlayerConfig:
             api_key_env=selected_key_env,
             wire_api=str(wire_api) if wire_api else None,
             reasoning_effort=reasoning_effort,
+            series_id=series_id,
+            participant_id=participant_id,
         )
 
     def public_dict(self) -> dict[str, Any]:
-        return {key: value for key, value in asdict(self).items() if value is not None and key != "api_key"}
+        private = {"api_key", "memory_namespace"}
+        return {key: value for key, value in asdict(self).items() if value is not None and key not in private}
 
 
 StreamSink = Callable[[str, str], None]

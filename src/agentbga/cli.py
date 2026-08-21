@@ -14,6 +14,7 @@ from typing import Any
 from . import __version__
 from .agents import AgentError, HARNESS_BACKENDS, load_players_config
 from .game import GameRuleError
+from .experiment import load_experiment, run_experiment, schedule_experiment
 from .registry import game_ids, get_game, list_games
 from .runner import run_match
 from .store import ConflictError, MatchNotFound, Store
@@ -112,6 +113,19 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--jsonl", action="store_true", help="stream every turn instead of only the result")
     add_db(run)
 
+    experiment = commands.add_parser("experiment", help="validate or run reproducible experiment manifests")
+    experiment_sub = experiment.add_subparsers(dest="command", required=True)
+    experiment_validate = experiment_sub.add_parser("validate")
+    experiment_validate.add_argument("--config", required=True)
+    experiment_validate.add_argument("--json", action="store_true", help=argparse.SUPPRESS)
+    experiment_run = experiment_sub.add_parser("run")
+    experiment_run.add_argument("--config", required=True)
+    experiment_run.add_argument("--out", required=True)
+    experiment_run.add_argument("--max-turns", type=int)
+    experiment_run.add_argument("--retries", type=int, default=1)
+    experiment_run.add_argument("--fallback", choices=["random", "fail"], default="fail")
+    experiment_run.add_argument("--json", action="store_true", help=argparse.SUPPRESS)
+
     doctor = commands.add_parser("doctor", help="check local and endpoint configuration")
     doctor.add_argument("--base-url", default=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"))
     doctor.add_argument("--api-key-env", default="OPENAI_API_KEY")
@@ -137,6 +151,28 @@ def _load_action(raw: str) -> dict[str, Any]:
 
 
 def execute(args: argparse.Namespace) -> int:
+    if args.group == "experiment":
+        manifest = load_experiment(args.config)
+        if args.command == "validate":
+            schedule = schedule_experiment(manifest)
+            emit(envelope({
+                "experiment_id": manifest["experiment_id"],
+                "mode": manifest["mode"],
+                "scheduled_matches": len(schedule),
+            }))
+        else:
+            result = run_experiment(
+                manifest, args.out, max_turns=args.max_turns,
+                retries=args.retries, fallback=args.fallback,
+            )
+            emit(envelope({
+                "experiment_id": result["experiment_id"],
+                "run_id": result["run_id"],
+                "summary": result["summary"],
+                "results_file": str(Path(args.out) / "final.json"),
+            }))
+        return 0
+
     if args.group == "games":
         data = list_games() if args.command == "list" else get_game(args.game).describe()
         emit(envelope(data))

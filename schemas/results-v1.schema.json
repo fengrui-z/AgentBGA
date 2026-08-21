@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentbga.dev/schemas/results-v1.schema.json",
+  "title": "AgentBGA Results v1",
+  "type": "object",
+  "required": [
+    "schema_version", "experiment_id", "run_id", "mode", "generated_at",
+    "complete", "summary", "matches", "integrity"
+  ],
+  "properties": {
+    "schema_version": {"const": "agentbga.results.v1"},
+    "experiment_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "run_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "mode": {"enum": ["duel", "tournament", "series"]},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "complete": {"type": "boolean"},
+    "summary": {
+      "type": "object",
+      "required": ["scheduled_matches", "reported_matches", "completed_matches", "failed_matches"],
+      "properties": {
+        "scheduled_matches": {"type": "integer", "minimum": 1},
+        "reported_matches": {"type": "integer", "minimum": 0},
+        "completed_matches": {"type": "integer", "minimum": 0},
+        "failed_matches": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "matches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["result_id", "ordinal", "status", "game", "seed", "player_count", "participants"],
+        "properties": {
+          "result_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "ordinal": {"type": "integer", "minimum": 1},
+          "status": {"enum": ["ok", "error"]},
+          "game": {"type": "string", "minLength": 1},
+          "seed": {"type": "integer"},
+          "player_count": {"type": "integer", "minimum": 2, "maximum": 4},
+          "participants": {"type": "array", "minItems": 2, "maxItems": 4},
+          "series_id": {"type": ["string", "null"]},
+          "series_replicate": {"type": ["integer", "null"]},
+          "series_game_index": {"type": ["integer", "null"]},
+          "base_seed": {"type": ["integer", "null"]},
+          "result": {"type": "object"},
+          "error": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "submission": {
+      "type": "object",
+      "required": ["token"],
+      "properties": {"token": {"type": "string", "minLength": 1}},
+      "additionalProperties": false
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["algorithm", "content_digest"],
+      "properties": {
+        "algorithm": {"const": "sha256"},
+        "content_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
