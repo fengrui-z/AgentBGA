@@ -160,7 +160,7 @@ const useLang = () => useContext(LangCtx);
 
 type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
 type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
-type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road";
+type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road" | "seven_wonders";
 type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "max" | "xhigh";
 type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string; reasoning_effort: ReasoningEffort };
 type Card = { id: string; tier: number; bonus: string; points: number; cost: Record<string, number> };
@@ -249,12 +249,34 @@ type CenturyView = {
   point_deck_count: number; point_market: CenturyPoint[];
   coins: {gold: number; silver: number; silver_position: number}; players: CenturyPlayerView[];
 };
+type SevenResource = "wood" | "stone" | "clay" | "ore" | "glass" | "papyrus" | "cloth";
+type SevenCard = {
+  id: string; name: string; age: number; color: "brown" | "gray" | "blue" | "yellow" | "red" | "green" | "purple";
+  minimum_players: number; cost: Record<SevenResource, number>; coin_cost: number;
+  production: SevenResource[][]; points: number; military: number; science: string | null; effect: string | null;
+};
+type SevenStage = {
+  stage: number; built: boolean; cost: Record<SevenResource, number>; points?: number; coins?: number;
+  military?: number; science_wild?: number; special?: string; production?: SevenResource[][];
+};
+type SevenPlayerView = {
+  seat: number; coins: number; wonder: string; wonder_name: string; wonder_side: "day" | "night";
+  starting_resource: SevenResource; wonder_stages: SevenStage[]; city: SevenCard[];
+  military_strength: number; military_tokens: number[]; score: number;
+  score_breakdown: Record<string, number>; hand_count: number; hand: (SevenCard | {hidden: true})[];
+  choice_submitted: boolean;
+};
+type SevenView = {
+  game: "seven_wonders"; rules_version: string; viewer_seat: number; status: string; phase: string; age: number; pick: number;
+  turn_count: number; decision_count: number; active_seat: number; pass_direction: "left" | "right";
+  discard_count: number; pending_choice_seats: number[]; players: SevenPlayerView[];
+};
 type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
 type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
   paused: boolean; pause_pending: boolean;
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
-  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView)[];
+  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView)[];
 };
 type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
@@ -294,6 +316,7 @@ const GAME_COPY: Record<GameId, {eyebrow: string; name: Record<Lang,string>; des
   ark_nova: {eyebrow: "ARK NOVA", name: {zh:"方舟动物园",en:"Ark Nova"}, description: {zh:"在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。",en:"Test multi-stage decisions in a controlled research-card pool: opening hand, five action cards, hex building, animal placement, association tasks and Break."}, badge: "CONTROLLED CORE V2", note: {zh:"升级 · 捐款 · 释放 · 效果系统",en:"Upgrades · donations · release · effect system"}},
   brass_birmingham: {eyebrow: "BRASS: BIRMINGHAM", name: {zh:"伯明翰",en:"Brass: Birmingham"}, description: {zh:"测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。",en:"Test long-term planning in a two-era economic network: industry building, resource sourcing, merchant selling, dynamic turn order and canal-to-rail transitions."}, badge: "PLAYABLE BETA", note: {zh:"产业 · 网络 · 双时代经济",en:"Industry · network · two-era economy"}},
   century_spice_road: {eyebrow: "CENTURY: SPICE ROAD", name: {zh:"香料之路",en:"Century: Spice Road"}, description: {zh:"经营自己的商队：获取商人牌、升级或交换香料、争夺金币银币，并抢先完成高分订单。支持 2–5 名玩家。",en:"Run your caravan: acquire merchant cards, upgrade or trade spices, race for gold and silver coins to fulfill high-score orders. 2–5 players."}, badge: "CLASSIC BASE", note: {zh:"商人牌 · 香料引擎 · 订单竞速",en:"Merchant cards · spice engine · order race"}},
+  seven_wonders: {eyebrow: "7 WONDERS", name: {zh:"七大奇迹",en:"7 Wonders"}, description: {zh:"在三个时代中密封选牌并传递手牌，通过生产、贸易、军事、科技与奇迹建设塑造古代文明。支持 3–7 名玩家。",en:"Draft sealed choices across three Ages, passing hands while developing production, trade, military, science and a Wonder. 3–7 players."}, badge: "SECOND EDITION BASE", note: {zh:"轮抽 · 邻城贸易 · 七维计分",en:"Draft · neighbor trade · seven-part scoring"}},
 };
 const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: string; model: string}> = {
   openai: { label: {zh: "OpenAI 兼容", en: "OpenAI-compatible"}, url: "https://api.openai.com/v1", key: "", model: "" },
@@ -449,6 +472,50 @@ function CenturyBoard({view}: {view?: CenturyView}) {
     <section className="century-point-market"><header><div><span>{t("point_cards")}</span><h3>{t("order_market")}</h3></div><b>{t("deck_label")} {view.point_deck_count}</b></header><div>{view.point_market.map((card, index) => <div className="century-point-slot" key={card.id}>{index === 0 && view.coins.gold > 0 && <span className="century-coin coin-gold">{t("gold_coin")} × {view.coins.gold}</span>}{index === view.coins.silver_position && view.coins.silver > 0 && <span className="century-coin coin-silver">{t("silver_coin")} × {view.coins.silver}</span>}<CenturyPointCard card={card}/></div>)}</div></section>
     <section className="century-merchant-market"><header><div><span>{t("merchant_cards")}</span><h3>{t("trade_market")}</h3></div><b>{t("deck_label")} {view.merchant_deck_count}</b></header><div>{view.merchant_market.map((slot, index) => <div className="century-merchant-slot" key={slot.card.id}><span className="century-market-index">0{index + 1}</span><CenturyMerchantCard card={slot.card}/><div className="century-card-spices"><span>{t("card_spice")}</span><Spices pool={slot.spices} compact/></div></div>)}</div></section>
     <section className="century-legend"><span><i className="spice spice-turmeric"/>{SPICE_META.turmeric.label[lang]} · 1</span><span><i className="spice spice-saffron"/>{SPICE_META.saffron.label[lang]} · 2</span><span><i className="spice spice-cardamom"/>{SPICE_META.cardamom.label[lang]} · 3</span><span><i className="spice spice-cinnamon"/>{SPICE_META.cinnamon.label[lang]} · 4</span><small>{t("century_legend_note")}</small></section>
+  </div>;
+}
+
+const SEVEN_RESOURCE_MARKS: Record<SevenResource, string> = {
+  wood: "W", stone: "S", clay: "C", ore: "O", glass: "G", papyrus: "P", cloth: "L",
+};
+
+function SevenCost({cost}: {cost: Record<SevenResource, number>}) {
+  return <span className="seven-cost">{(Object.keys(SEVEN_RESOURCE_MARKS) as SevenResource[]).filter(resource => cost[resource] > 0).map(resource =>
+    <i key={resource} className={`seven-resource resource-${resource}`}>{SEVEN_RESOURCE_MARKS[resource]}{cost[resource] > 1 ? <b>{cost[resource]}</b> : null}</i>
+  )}</span>;
+}
+
+function SevenCardTile({card}: {card: SevenCard}) {
+  return <article className={`seven-card seven-${card.color}`} title={card.id}>
+    <header><span>AGE {card.age}</span><b>{card.points || (card.military ? `⚔${card.military}` : card.science ? "SCI" : "·")}</b></header>
+    <strong>{card.name}</strong>
+    <SevenCost cost={card.cost}/>
+  </article>;
+}
+
+function SevenPlayerPanel({player: p, identity, active}: {player: SevenPlayerView; identity?: Snapshot["players"][number]; active: boolean}) {
+  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
+  const colors = ["brown", "gray", "blue", "yellow", "red", "green", "purple"] as const;
+  return <section className={`player-panel seven-player-panel ${active ? "active-player" : ""}`}>
+    <header><div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `${t("player_label")} ${p.seat + 1}`}</h3></div><div className="seven-score"><strong>{p.score}</strong><span>VP</span></div></header>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}</div>
+    <div className="seven-wonder-name"><span>{p.wonder_name} · {p.wonder_side.toUpperCase()}</span><b>{SEVEN_RESOURCE_MARKS[p.starting_resource]}</b></div>
+    <div className="seven-stages">{p.wonder_stages.map(stage => <i key={stage.stage} className={stage.built ? "built" : ""}><small>{stage.stage}</small><b>{stage.built ? "◆" : "◇"}</b></i>)}</div>
+    <div className="seven-city-counts">{colors.map(color => <span key={color} className={`seven-${color}`}><b>{p.city.filter(card => card.color === color).length}</b><small>{color}</small></span>)}</div>
+    <div className="seven-assets"><span>{zh ? "金币" : "Coins"} <b>{p.coins}</b></span><span>{zh ? "军力" : "Military"} <b>{p.military_strength}</b></span><span>{zh ? "手牌" : "Hand"} <b>{p.hand_count}</b></span>{p.choice_submitted && <em>{zh ? "已密封提交" : "Choice sealed"}</em>}</div>
+  </section>;
+}
+
+function SevenBoard({view}: {view?: SevenView}) {
+  const lang = useLang(); const zh = lang === "zh";
+  if (!view) return null;
+  const viewer = view.players.find(player => player.seat === view.viewer_seat) ?? view.players[0];
+  const visibleHand = viewer.hand.filter((card): card is SevenCard => !("hidden" in card));
+  return <div className="seven-board">
+    <section className="seven-status"><div><span>7 WONDERS · BASE GAME</span><h2>{zh ? `时代 ${view.age} · 第 ${view.pick} 轮选牌` : `Age ${view.age} · Pick ${view.pick}`}</h2></div><p>{zh ? `手牌向${view.pass_direction === "left" ? "左" : "右"}传递；选择在所有座位提交前保持密封。` : `Hands pass ${view.pass_direction}; choices remain sealed until all seats submit.`}</p><code>{view.rules_version}</code></section>
+    <section className="seven-draft-track"><div>{[1,2,3].map(age => <span key={age} className={age === view.age ? "active" : age < view.age ? "done" : ""}>AGE {age}</span>)}</div><b>{zh ? `弃牌 ${view.discard_count}` : `Discard ${view.discard_count}`}</b><small>{zh ? `已提交 ${view.pending_choice_seats.length}/${view.players.length}` : `Sealed ${view.pending_choice_seats.length}/${view.players.length}`}</small></section>
+    <section className="seven-hand"><header><div><span>DRAFT HAND</span><h3>{zh ? `座位 ${viewer.seat + 1} 的当前选择` : `Seat ${viewer.seat + 1} current choice`}</h3></div><b>{visibleHand.length || viewer.hand_count} {zh ? "张" : "cards"}</b></header><div>{visibleHand.map(card => <SevenCardTile key={card.id} card={card}/>)}{!visibleHand.length && <em>{zh ? "该手牌对当前观察者隐藏" : "This hand is hidden from the current viewer"}</em>}</div></section>
+    <section className="seven-cities"><header><span>CITY TABLEAUS</span><h3>{zh ? "文明发展概览" : "Civilization overview"}</h3></header><div>{view.players.map(player => <article key={player.seat}><strong>{player.wonder_name}</strong><span>{player.city.length} {zh ? "建筑" : "buildings"}</span><b>{player.score} VP</b></article>)}</div></section>
   </div>;
 }
 
@@ -619,6 +686,15 @@ function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?
   if (action.type === "finish_sell") return zh ? "结束出售行动" : "End sell action";
   if (action.type === "merchant_bonus_develop") return zh ? `商人奖励研发 ${action.industry}` : `Merchant develop bonus ${action.industry}`;
   if (action.type === "liquidate_industry") return zh ? `变卖 ${action.industry_id}，获得 £${action.value}` : `Liquidate ${action.industry_id}, gain £${action.value}`;
+  if (action.type === "build_card") {
+    const payment = action.payment as Record<string, number> | undefined;
+    const paid = payment ? Object.values(payment).reduce((sum, value) => sum + Number(value), 0) : 0;
+    return zh ? `建造 ${action.card_id}${action.free_source ? `（${action.free_source} 免费）` : `（支付 ${paid} 金币）`}` : `Build ${action.card_id}${action.free_source ? ` (free: ${action.free_source})` : ` (pay ${paid} coins)`}`;
+  }
+  if (action.type === "build_wonder") return zh ? `用 ${action.card_id} 建造奇迹第 ${action.stage} 阶段` : `Use ${action.card_id} for Wonder stage ${action.stage}`;
+  if (action.type === "sell_card") return zh ? `出售 ${action.card_id}，获得 3 金币` : `Sell ${action.card_id} for 3 coins`;
+  if (action.type === "build_discard") return zh ? `从弃牌堆免费建造 ${action.card_id}` : `Build ${action.card_id} from discard for free`;
+  if (action.type === "skip_discard") return zh ? "跳过弃牌堆建造" : "Skip discard construction";
   if (action.type === "take_tokens") {
     const taken = tokenText((action.take ?? {}) as Record<string, number>, lang);
     const returned = tokenText((action.return ?? {}) as Record<string, number>, lang);
@@ -650,6 +726,8 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
     finish_sell: "结束出售", merchant_bonus_develop: "商人研发奖励", liquidate_industry: "变卖产业",
     play_merchant: "打出商人牌", acquire_merchant: "获取商人牌", claim_point: "完成订单", rest: "休息",
     draft_tiles: "选取并放置花砖",
+    build_card: "建造建筑", build_wonder: "建造奇迹", sell_card: "出售卡牌",
+    build_discard: "墓园建造", skip_discard: "跳过墓园建造",
   },
   en: {
     buy_visible: "Buy visible card", buy_reserved: "Buy reserved card", take_tokens: "Take gems",
@@ -666,6 +744,8 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
     finish_sell: "End sell", merchant_bonus_develop: "Merchant develop bonus", liquidate_industry: "Liquidate industry",
     play_merchant: "Play merchant card", acquire_merchant: "Acquire merchant card", claim_point: "Complete order", rest: "Rest",
     draft_tiles: "Draft and place tiles",
+    build_card: "Construct building", build_wonder: "Construct Wonder", sell_card: "Sell card",
+    build_discard: "Build from discard", skip_discard: "Skip discard build",
   },
 };
 
@@ -917,7 +997,8 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const arkView = snapshot?.game === "ark_nova" ? viewer as ArkView : undefined;
   const brassView = snapshot?.game === "brass_birmingham" ? viewer as BrassView : undefined;
   const centuryView = snapshot?.game === "century_spice_road" ? viewer as CenturyView : undefined;
-  const maxPlayers = game === "century_spice_road" ? 5 : 4;
+  const sevenView = snapshot?.game === "seven_wonders" ? viewer as SevenView : undefined;
+  const maxPlayers = game === "seven_wonders" ? 7 : game === "century_spice_road" ? 5 : 4;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
 
   function updatePlayer(id: string, patch: Partial<PlayerForm>) {
@@ -953,14 +1034,21 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   }
 
   function setMatchup(kind: "human" | "harness") {
-    setPlayers(kind === "human" ? [humanPlayer(1), deepseekHarnessPlayer(2, "opencode")] : [
+    const selected = kind === "human" ? [humanPlayer(1), deepseekHarnessPlayer(2, "opencode")] : [
       deepseekHarnessPlayer(1, "opencode"), codexHarnessPlayer(2),
-    ]);
+    ];
+    if (game === "seven_wonders") selected.push(player(3, "random"));
+    setPlayers(selected);
   }
 
   function selectGame(next: GameId) {
     setGame(next);
-    if (next !== "century_spice_road") setPlayers(current => current.slice(0, 4));
+    const maximum = next === "seven_wonders" ? 7 : next === "century_spice_road" ? 5 : 4;
+    setPlayers(current => {
+      const selected = current.slice(0, maximum);
+      while (next === "seven_wonders" && selected.length < 3) selected.push(player(selected.length + 1, "random"));
+      return selected;
+    });
   }
 
   function selectProvider(id: string, provider: Provider) {
@@ -1106,6 +1194,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       {game === "azul" && <div className="setup-scope-note"><b>{GAME_COPY.azul.badge}</b> {zh ? "支持彩色墙基础版、100 枚具名花砖、工厂与中央区选砖、图案线、地板罚分、相邻计分、终局奖励和确定性回放；不包含灰墙玩法、扩展或出版商美术。" : "Supports the colored-wall base game, 100 identity-safe tiles, factory/center drafting, pattern lines, floor penalties, adjacency scoring, endgame bonuses and deterministic replay; no gray wall, expansions or publisher artwork."}</div>}
       {game === "brass_birmingham" && <div className="setup-scope-note"><b>{GAME_COPY.brass_birmingham.badge}</b> {zh ? "支持官方人数牌组、产业板、市场、商人、Build/Sell/Develop、单双铁路、负收入变卖、双时代计分与完整回放；界面不包含出版商美术。" : "Supports official player counts, industry board, markets, merchants, Build/Sell/Develop, single/double rail, negative-income liquidation, two-era scoring and full replay; no publisher artwork."}</div>}
       {game === "century_spice_road" && <div className="setup-scope-note"><b>{GAME_COPY.century_spice_road.badge}</b> {zh ? "完整基础牌组数值、重复交易、升级、市场压香料、商队容量、金币银币、终局与计分均已接通；不包含出版商卡图。" : "Full base-set values, repeat trades, upgrades, market spice, caravan capacity, gold/silver coins, endgame and scoring wired up; no publisher artwork."}</div>}
+      {game === "seven_wonders" && <div className="setup-scope-note"><b>{GAME_COPY.seven_wonders.badge}</b> {zh ? "支持 148 张基础牌、日/夜双面奇迹、密封同步选牌、邻城贸易、链式建造、军事、科技、商会与七类计分；不包含扩展或出版商美术。" : "Supports all 148 base cards, Day/Night Wonders, sealed simultaneous drafting, neighbor trade, chains, military, science, guilds and seven-part scoring; no expansions or publisher artwork."}</div>}
       {error && <div className="error">{error}</div>}
     </section>
   </main>;
@@ -1133,7 +1222,9 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
             ? <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity}/>
             : snapshot.game === "brass_birmingham"
               ? <BrassPlayerPanel key={identity.seat} player={visiblePlayer as BrassPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
-              : <CenturyPlayerPanel key={identity.seat} player={visiblePlayer as CenturyPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
+              : snapshot.game === "century_spice_road"
+                ? <CenturyPlayerPanel key={identity.seat} player={visiblePlayer as CenturyPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
+                : <SevenPlayerPanel key={identity.seat} player={visiblePlayer as SevenPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
       })}</aside>
       <section className="board">
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? t("pause_pending") : t("paused")}</strong><span>{snapshot.pause_pending ? t("pause_pending_desc") : t("paused_desc")}</span></div>}
@@ -1144,7 +1235,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
             <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div>
           </section>)}</div>}
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players}/> : <CenturyBoard view={centuryView}/>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView}/>}
         {snapshot.status === "finished" && <div className="winner-banner"><span>{t("winner")}</span><strong>{timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong><button onClick={() => { setSnapshot(null); setTimeline([]); }}>{t("play_again")}</button></div>}
       </section>
       <aside className="timeline">

@@ -9,6 +9,7 @@ A headless, deterministic board-game environment for evaluating LLM agents in lo
 - **Brass: Birmingham** (2–4 players, playable beta)
 - **Century: Spice Road** (2–5 players, fully playable)
 - **Ark Nova** (2–4 players, controlled core V2 — generated research cards, no publisher data)
+- **7 Wonders** (3–7 players, complete Second Edition base rules, Day/Night Wonders)
 
 ## Quick start
 
@@ -139,6 +140,7 @@ and discard the token before storing the artifact.
 agentbga games list --json
 agentbga match create --game splendor --players 4 --seed 42 --json
 agentbga match create --game azul --players 2 --seed 42 --json
+agentbga match create --game seven_wonders --players 3 --seed 42 --json
 agentbga match observe MATCH_ID --seat 0 --json
 agentbga match legal-actions MATCH_ID --seat 0 --json
 agentbga match act MATCH_ID --seat 0 --expected-version 7 \
@@ -156,6 +158,7 @@ agentbga web --port 8765
 
 - Deterministic, seeded game engines with exact replay and state verification.
 - Strict per-seat observations — hidden information cannot leak.
+- Simultaneous-choice games use frozen observations, parallel agent calls, and a reveal barrier.
 - Event-sourced matches with SQLite persistence.
 - API keys are never written to disk, events, or logs.
 - Reproducible evaluation across models, harnesses, seeds, and seat order.

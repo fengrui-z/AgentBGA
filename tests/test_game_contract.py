@@ -21,6 +21,7 @@ class RegisteredGameContractTests(unittest.TestCase):
 
             def setup(self, players, seed, config=None): ...
             def observe(self, state, seat): ...
+            def decision_seats(self, state): ...
             def legal_actions(self, state, seat): ...
             def apply_action(self, state, seat, action): ...
             def rankings(self, state): ...
@@ -34,8 +35,9 @@ class RegisteredGameContractTests(unittest.TestCase):
         for game_id in game_ids():
             with self.subTest(game=game_id):
                 plugin = get_game(game_id)
-                first = plugin.setup(2, 4242)
-                second = plugin.setup(2, 4242)
+                players = plugin.describe()["players"]["minimum"]
+                first = plugin.setup(players, 4242)
+                second = plugin.setup(players, 4242)
                 self.assertEqual(first, second)
                 self.assertEqual(plugin.state_hash(first), plugin.state_hash(second))
                 plugin.validate_state(first)
@@ -53,13 +55,18 @@ class RegisteredGameContractTests(unittest.TestCase):
                 self.assertEqual("action_accepted", events[0]["type"])
                 plugin.validate_state(next_state)
 
-    def test_wrong_seat_never_receives_legal_actions(self):
+    def test_only_current_decision_seats_receive_legal_actions(self):
         for game_id in game_ids():
             with self.subTest(game=game_id):
                 plugin = get_game(game_id)
-                state = plugin.setup(2, 1)
-                wrong_seat = (state["active_seat"] + 1) % state["player_count"]
-                self.assertEqual([], plugin.legal_actions(state, wrong_seat))
+                state = plugin.setup(plugin.describe()["players"]["minimum"], 1)
+                decision_seats = plugin.decision_seats(state)
+                self.assertTrue(decision_seats)
+                for seat in range(state["player_count"]):
+                    if seat in decision_seats:
+                        self.assertTrue(plugin.legal_actions(state, seat))
+                    else:
+                        self.assertEqual([], plugin.legal_actions(state, seat))
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-from . import ark_nova, azul, brass_birmingham, century_spice_road, splendor
+from . import ark_nova, azul, brass_birmingham, century_spice_road, seven_wonders, splendor
 from .game import GamePlugin
 
 
@@ -28,6 +28,17 @@ class _ModulePlugin:
 
     def legal_actions(self, state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
         return self.module.legal_actions(state, seat)
+
+    def decision_seats(self, state: dict[str, Any]) -> list[int]:
+        """Return the seats that may decide from the same state snapshot.
+
+        Most games have exactly one active seat.  Games with sealed simultaneous
+        choices can opt in by exposing ``decision_seats`` from their module.
+        """
+        handler = getattr(self.module, "decision_seats", None)
+        if handler is None:
+            return [state["active_seat"]] if state.get("status") == "active" else []
+        return list(handler(state))
 
     def apply_action(
         self, state: dict[str, Any], seat: int, action: dict[str, Any],
@@ -86,6 +97,7 @@ _REGISTRY = GameRegistry((
     _ModulePlugin(ark_nova, "ark_nova"),
     _ModulePlugin(brass_birmingham, "brass_birmingham"),
     _ModulePlugin(century_spice_road, "century_spice_road"),
+    _ModulePlugin(seven_wonders, "seven_wonders"),
 ))
 
 

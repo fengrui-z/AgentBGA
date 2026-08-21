@@ -339,6 +339,67 @@ BRASS_PROFILE = GameProfile(
 )
 
 
+# ── 7 Wonders profile ──
+SEVEN_WONDERS_PROFILE = GameProfile(
+    game_id="seven_wonders",
+    game_name="7 Wonders",
+    total_expected_turns=18,
+    endgame_score_threshold=45,
+    resource_categories={
+        "common_resources": "production",
+        "rare_resources": "production",
+        "coins": "currency",
+        "military": "competition",
+    },
+    engine_component_name="city tableau and constructed Wonder stages",
+    scoring_dimensions=[
+        "wonder", "treasure", "military", "civil", "commercial", "science", "guilds",
+    ],
+    action_meta_types={
+        "build_card": META_BUILD,
+        "build_wonder": META_BUILD,
+        "sell_card": META_ACQUIRE,
+        "build_discard": META_BUILD,
+        "skip_discard": META_SETUP,
+    },
+    observation_schema={
+        "players": "opponents",
+        "hand": "hidden_self",
+        "discard_count": "meta",
+        "rankings": "meta",
+        "pass_direction": "meta",
+    },
+    turn_structure="multi_step",
+    hidden_info_types=["draft_hands", "sealed_choices", "discarded_cards"],
+    has_spatial=False,
+    spatial_summary_method="none",
+    has_card_abilities=True,
+    ability_summary_depth="full",
+    early_strategy=(
+        "Establish flexible production and watch both neighbors' resources before committing "
+        "to expensive Wonder stages or a narrow science plan."
+    ),
+    mid_strategy=(
+        "Exploit chains and trade discounts while tracking the passing direction. Balance "
+        "engine growth against military breakpoints and cards your next neighbor needs."
+    ),
+    late_strategy=(
+        "Calculate direct points, guild exposure, science sets, military outcomes, and coin "
+        "tiebreaks. Deny high-value cards when selling or burying them is efficient."
+    ),
+    capability_weights={
+        CAP_ENGINE: 3,
+        CAP_RESOURCE: 3,
+        CAP_OPPONENT: 3,
+        CAP_PHASE: 3,
+        CAP_PLANNING: 3,
+        CAP_PERCEPTION: 2,
+        CAP_ENDGAME: 3,
+        CAP_COMBO: 3,
+    },
+)
+
+
 # ── Registry ──
 
 _PROFILES: dict[str, GameProfile] = {
@@ -346,6 +407,7 @@ _PROFILES: dict[str, GameProfile] = {
     "azul": AZUL_PROFILE,
     "ark_nova": ARK_NOVA_PROFILE,
     "brass_birmingham": BRASS_PROFILE,
+    "seven_wonders": SEVEN_WONDERS_PROFILE,
 }
 
 
