@@ -1,0 +1,25 @@
+{
+  "schema_version": "agentbga.three-game-test.v1",
+  "tournament_id": "three-game-random-smoke",
+  "participants": [
+    {"id": "random-a", "player": {"name": "Random A", "backend": "random"}},
+    {"id": "random-b", "player": {"name": "Random B", "backend": "random"}},
+    {"id": "random-c", "player": {"name": "Random C", "backend": "random"}},
+    {"id": "random-d", "player": {"name": "Random D", "backend": "random"}},
+    {"id": "random-e", "player": {"name": "Random E", "backend": "random"}},
+    {"id": "random-f", "player": {"name": "Random F", "backend": "random"}}
+  ],
+  "schedule": {
+    "appearances_per_condition": 2,
+    "base_seed": 20260822,
+    "games": {
+      "splendor": [2, 3, 4],
+      "seven_wonders": [3, 4],
+      "brass_birmingham": [2, 3, 4]
+    }
+  },
+  "run": {
+    "retries": 0,
+    "fallback": "fail"
+  }
+}

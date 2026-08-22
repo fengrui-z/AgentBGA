@@ -123,6 +123,34 @@ checkpoint, and `final.json` is the complete artifact. Set `results.emit_every` 
 for every match or to `N` for every N matches. The format is defined by
 [`schemas/results-v1.schema.json`](schemas/results-v1.schema.json).
 
+### Three-game tournament smoke test
+
+The dependency-free example runner covers Splendor and Brass: Birmingham at 2/3/4
+players and 7 Wonders at 3/4 players. It generates equal appearances per condition
+inside every game/player-count stratum and writes complete match rows plus an
+order-independent, multiplayer Bradley-Terry Elo leaderboard:
+
+```console
+PYTHONPATH=src python3 examples/three_game_tournament.py run \
+  --config examples/three-game-test-random.json \
+  --out .agentbga/three-game-smoke
+```
+
+Replace the random participants in the example config with model/harness player
+objects for API-backed tests. `matches.jsonl` is the append-only source result;
+`leaderboard.csv` and `summary.json` contain Elo, pairwise win score (PWS), average
+rank, first-place credit, and failure exposure. Re-score an existing run without
+calling any model:
+
+```console
+PYTHONPATH=src python3 examples/three_game_tournament.py score \
+  --results .agentbga/three-game-smoke/matches.jsonl
+```
+
+For the 12-condition local DashScope + MiMo pilot, including safe environment-variable
+handling and provider-specific Claude Code endpoints, see
+[`docs/local-provider-pilot.zh-CN.md`](docs/local-provider-pilot.zh-CN.md).
+
 Trusted upload credentials may be embedded at generation time without putting the token
 in the experiment manifest:
 
