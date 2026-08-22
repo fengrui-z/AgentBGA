@@ -9,15 +9,15 @@ Codex、GPT-5.6 Sol/Luna、Kimi 与其他尚未配置 endpoint 的模型。
 
 - 固定 Minimal 比较 6 个模型：Qwen 3.8 Max、DeepSeek V4 Flash 0731、
   DeepSeek V4 Pro 0813、GLM-5.2、MiMo V2.5 Pro、MiMo V2.5。
-- 固定 DeepSeek V4 Pro 0813 比较 Direct API、Minimal、OpenCode、DSh、
-  Claude Code、Hermes。
-- 增加典型组合 MiMo V2.5 Pro × Claude Code。
+- 固定 DeepSeek V4 Pro 0813 比较 Minimal、OpenCode、DSh、Claude Code、Hermes。
+- 增加典型组合 MiMo V2.5 Pro × Claude Code 和 GLM-5.2 × Claude Code。
+- Pilot 不包含 Direct API 座位。
 
 注意：这里明确使用 `glm-5.2`，不使用 GLM-5.3。
 
 ## Endpoint 规则
 
-| Provider | Claude Code | 其他 Harness 与 Direct API | 密钥变量 |
+| Provider | Claude Code | 其他 Harness | 密钥变量 |
 |---|---|---|---|
 | DashScope | `https://dashscope.aliyuncs.com/compatible-mode/apps/anthropic` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `DASHSCOPE_API_KEY` |
 | MiMo Token Plan | `https://token-plan-cn.xiaomimimo.com/anthropic` | `https://token-plan-cn.xiaomimimo.com/v1` | `MIMO_API_KEY` |

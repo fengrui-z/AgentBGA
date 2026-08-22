@@ -45,6 +45,11 @@ class ThreeGameTournamentTests(unittest.TestCase):
         self.assertIn("deepseek-v4-pro-0813", models)
         self.assertNotIn("deepseek-v4-pro0813", models)
         self.assertNotIn("codex", {row["backend"] for row in players})
+        self.assertNotIn("openai", {row["backend"] for row in players})
+        self.assertIn(
+            ("glm-5.2", "claude"),
+            {(row["model"], row["backend"]) for row in players},
+        )
         for player in players:
             endpoint = player["base_url"]
             if player["backend"] == "claude":
