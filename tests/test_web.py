@@ -57,6 +57,12 @@ class WebTests(unittest.TestCase):
             self.assertEqual("seven_wonders", created["views"][0]["game"])
             self.assertEqual(3, len(created["players"]))
             self.assertEqual(7, created["views"][0]["players"][0]["hand_count"])
+            self.assertEqual([[], [], []], created["views"][0]["players"][0]["military_tokens_by_age"])
+            for seat, view in enumerate(created["views"]):
+                self.assertTrue(all("hidden" not in card for card in view["players"][seat]["hand"]))
+                for other in range(3):
+                    if other != seat:
+                        self.assertTrue(all(card == {"hidden": True} for card in view["players"][other]["hand"]))
             self.assertTrue(stopped.wait(2))
 
     def test_azul_setup_snapshot_uses_game_renderer_contract(self):

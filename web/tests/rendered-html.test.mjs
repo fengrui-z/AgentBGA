@@ -51,6 +51,10 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /BrassBoard/);
   assert.match(source, /CenturyBoard/);
   assert.match(source, /SevenBoard/);
+  assert.match(source, /SevenSpectatorHands/);
+  assert.match(source, /SevenPassRoutes/);
+  assert.match(source, /sevenSpectatorViews/);
+  assert.match(source, /!snapshot\.players\.some\(player => player\.backend === "human"\)/);
   assert.match(source, /century_spice_road/);
   assert.match(source, /game_description\.runnable/);
   assert.match(source, /GEM_ORDER = \["red", "green", "white", "blue", "black", "gold"\]/);

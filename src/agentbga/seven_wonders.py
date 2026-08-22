@@ -21,8 +21,8 @@ from .mechanics import ActionSpace, action_accepted, assign_competition_ranks, s
 
 RULES_VERSION = "second-edition-base-1.0"
 RESOURCES = ("wood", "stone", "clay", "ore", "glass", "papyrus", "cloth")
-COMMON = frozenset(RESOURCES[:4])
-RARE = frozenset(RESOURCES[4:])
+COMMON = RESOURCES[:4]
+RARE = RESOURCES[4:]
 COLORS = ("brown", "gray", "blue", "yellow", "red", "green", "purple")
 SCIENCE = ("compass", "gear", "tablet")
 WONDER_NAMES = ("giza", "alexandria", "olympia", "babylon", "halikarnassos", "ephesus", "rhodos")
@@ -272,6 +272,93 @@ def card_catalog() -> dict[str, dict[str, Any]]:
 CARDS = card_catalog()
 
 
+CHAIN_TO: dict[str, list[str]] = {
+    name: sorted({
+        candidate["name"] for candidate in CARDS.values()
+        if name in candidate["chain_from"]
+    })
+    for name in {card["name"] for card in CARDS.values()}
+}
+
+
+EFFECT_BENEFITS: dict[str, list[dict[str, Any]]] = {
+    "coins_5": [{"type": "coins", "amount": 5}],
+    "discount_rare": [{
+        "type": "trade_discount", "directions": ["left", "right"],
+        "resources": list(RARE), "coin_cost": 1,
+    }],
+    "discount_left_common": [{
+        "type": "trade_discount", "directions": ["left"],
+        "resources": list(COMMON), "coin_cost": 1,
+    }],
+    "discount_right_common": [{
+        "type": "trade_discount", "directions": ["right"],
+        "resources": list(COMMON), "coin_cost": 1,
+    }],
+    "coins_neighbor_brown": [{
+        "type": "coins_per_card", "scope": ["self", "left", "right"],
+        "color": "brown", "amount": 1,
+    }],
+    "coins_neighbor_gray": [{
+        "type": "coins_per_card", "scope": ["self", "left", "right"],
+        "color": "gray", "amount": 2,
+    }],
+    "score_yellow": [
+        {"type": "coins_per_card", "scope": ["self"], "color": "yellow", "amount": 1},
+        {"type": "points_per_card", "scope": ["self"], "color": "yellow", "amount": 1},
+    ],
+    "score_brown": [
+        {"type": "coins_per_card", "scope": ["self"], "color": "brown", "amount": 1},
+        {"type": "points_per_card", "scope": ["self"], "color": "brown", "amount": 1},
+    ],
+    "score_gray": [
+        {"type": "coins_per_card", "scope": ["self"], "color": "gray", "amount": 2},
+        {"type": "points_per_card", "scope": ["self"], "color": "gray", "amount": 2},
+    ],
+    "score_red": [
+        {"type": "coins_per_card", "scope": ["self"], "color": "red", "amount": 3},
+        {"type": "points_per_card", "scope": ["self"], "color": "red", "amount": 1},
+    ],
+    "score_stages": [
+        {"type": "coins_per_stage", "scope": ["self"], "amount": 3},
+        {"type": "points_per_stage", "scope": ["self"], "amount": 1},
+    ],
+    "guild_workers": [{
+        "type": "points_per_card", "scope": ["left", "right"],
+        "color": "brown", "amount": 1,
+    }],
+    "guild_craftsmens": [{
+        "type": "points_per_card", "scope": ["left", "right"],
+        "color": "gray", "amount": 2,
+    }],
+    "guild_magistrates": [{
+        "type": "points_per_card", "scope": ["left", "right"],
+        "color": "blue", "amount": 1,
+    }],
+    "guild_traders": [{
+        "type": "points_per_card", "scope": ["left", "right"],
+        "color": "yellow", "amount": 1,
+    }],
+    "guild_builders": [{
+        "type": "points_per_stage", "scope": ["self", "left", "right"], "amount": 1,
+    }],
+    "guild_spies": [{
+        "type": "points_per_card", "scope": ["left", "right"],
+        "color": "red", "amount": 1,
+    }],
+    "guild_philosophers": [{
+        "type": "points_per_card", "scope": ["left", "right"],
+        "color": "green", "amount": 1,
+    }],
+    "guild_decorators": [{"type": "points_if_wonder_complete", "amount": 7}],
+    "guild_scientists": [{"type": "science_wild", "amount": 1}],
+    "guild_shipowners": [{
+        "type": "points_per_card", "scope": ["self"],
+        "colors": ["brown", "gray", "purple"], "amount": 1,
+    }],
+}
+
+
 def describe() -> dict[str, Any]:
     return {
         "id": "seven_wonders",
@@ -386,6 +473,7 @@ def new_game(players: int, seed: int, config: dict[str, Any] | None = None) -> d
             {
                 "seat": seat, "coins": 3, "wonder": wonders[seat], "wonder_side": sides[seat],
                 "wonder_stages": [], "city": [], "military_tokens": [],
+                "military_tokens_by_age": [[], [], []],
                 "free_first_age_used": [], "free_last_age_used": [],
             }
             for seat in range(players)
@@ -466,12 +554,12 @@ def _trade_price(state: dict[str, Any], seat: int, direction: str, resource: str
 
 def _payment_plans(
     state: dict[str, Any], seat: int, cost: dict[str, int], coin_cost: int = 0,
-) -> list[dict[str, int]]:
+) -> list[dict[str, Any]]:
     required = [resource for resource in RESOURCES for _ in range(cost.get(resource, 0))]
     local_units = _production_units(state, seat, tradeable=False)
     left_units = _production_units(state, _left(state, seat), tradeable=True)
     right_units = _production_units(state, _right(state, seat), tradeable=True)
-    plans: set[tuple[int, int, int]] = set()
+    plans: dict[tuple[Any, ...], dict[str, Any]] = {}
     for assignments in product(("self", "left", "right"), repeat=len(required)):
         requests = {source: Counter() for source in ("self", "left", "right")}
         for resource, source in zip(required, assignments, strict=True):
@@ -487,11 +575,28 @@ def _payment_plans(
         right = sum(amount * _trade_price(state, seat, "right", resource)
                     for resource, amount in requests["right"].items())
         if coin_cost + left + right <= state["players"][seat]["coins"]:
-            plans.add((coin_cost, left, right))
-    return [
-        {"bank": bank, "left": left, "right": right}
-        for bank, left, right in sorted(plans, key=lambda item: (sum(item), item))
-    ]
+            left_resources = tuple(sorted(requests["left"].items()))
+            right_resources = tuple(sorted(requests["right"].items()))
+            key = (coin_cost, left, right, left_resources, right_resources)
+            purchases = []
+            for direction, neighbor, coins, resources in (
+                ("left", _left(state, seat), left, requests["left"]),
+                ("right", _right(state, seat), right, requests["right"]),
+            ):
+                if resources:
+                    purchases.append({
+                        "direction": direction, "seat": neighbor, "coins": coins,
+                        "resources": dict(sorted(resources.items())),
+                    })
+            plans[key] = {
+                "payment": {"bank": coin_cost, "left": left, "right": right},
+                "purchases": purchases,
+            }
+    ordered = [plans[key] for key in sorted(plans, key=lambda item: (sum(item[:3]), item))]
+    if not ordered:
+        return []
+    minimum = sum(ordered[0]["payment"].values())
+    return [plan for plan in ordered if sum(plan["payment"].values()) == minimum]
 
 
 def _free_sources(state: dict[str, Any], seat: int, card: dict[str, Any]) -> list[str]:
@@ -516,19 +621,21 @@ def _actions_for_card(state: dict[str, Any], seat: int, card_id: str) -> list[di
     card = CARDS[card_id]
     actions: list[dict[str, Any]] = [{"type": "sell_card", "card_id": card_id}]
     if card["name"] not in _city_names(state, seat):
-        for source in _free_sources(state, seat, card):
+        free_sources = _free_sources(state, seat, card)
+        for source in free_sources:
             actions.append({"type": "build_card", "card_id": card_id, "free_source": source,
-                            "payment": {"bank": 0, "left": 0, "right": 0}})
-        for payment in _payment_plans(state, seat, card["cost"], card["coin_cost"]):
-            actions.append({"type": "build_card", "card_id": card_id, "payment": payment})
+                            "payment": {"bank": 0, "left": 0, "right": 0}, "purchases": []})
+        if not free_sources:
+            for plan in _payment_plans(state, seat, card["cost"], card["coin_cost"]):
+                actions.append({"type": "build_card", "card_id": card_id, **plan})
     player = state["players"][seat]
     stages = WONDERS[player["wonder"]][player["wonder_side"]]
     stage_index = len(player["wonder_stages"])
     if stage_index < len(stages):
-        for payment in _payment_plans(state, seat, stages[stage_index]["cost"]):
+        for plan in _payment_plans(state, seat, stages[stage_index]["cost"]):
             actions.append({
                 "type": "build_wonder", "card_id": card_id,
-                "stage": stage_index + 1, "payment": payment,
+                "stage": stage_index + 1, **plan,
             })
     return actions
 
@@ -718,6 +825,8 @@ def _end_age(state: dict[str, Any], events: list[dict[str, Any]]) -> None:
         winner, loser = (seat, other) if strengths[seat] > strengths[other] else (other, seat)
         state["players"][winner]["military_tokens"].append(victory)
         state["players"][loser]["military_tokens"].append(-1)
+        state["players"][winner]["military_tokens_by_age"][state["age"] - 1].append(victory)
+        state["players"][loser]["military_tokens_by_age"][state["age"] - 1].append(-1)
         events.append({
             "type": "military_conflict", "age": state["age"],
             "winner": winner, "loser": loser, "victory_points": victory,
@@ -846,6 +955,37 @@ def _science_score(counts: Counter[str], wilds: int) -> int:
     return best
 
 
+def _guild_card_points(state: dict[str, Any], seat: int, card: dict[str, Any]) -> int:
+    effect = card.get("effect")
+    neighbors = (_left(state, seat), _right(state, seat))
+    color_by_guild = {
+        "guild_workers": ("brown", 1), "guild_craftsmens": ("gray", 2),
+        "guild_magistrates": ("blue", 1), "guild_traders": ("yellow", 1),
+        "guild_spies": ("red", 1), "guild_philosophers": ("green", 1),
+    }
+    if effect in color_by_guild:
+        color, value = color_by_guild[effect]
+        return value * sum(_card_count(state, other, color) for other in neighbors)
+    if effect == "guild_builders":
+        return sum(len(state["players"][other]["wonder_stages"])
+                   for other in (seat, *neighbors))
+    if effect == "guild_decorators":
+        player = state["players"][seat]
+        total = len(WONDERS[player["wonder"]][player["wonder_side"]])
+        return 7 if len(player["wonder_stages"]) == total else 0
+    if effect == "guild_shipowners":
+        return sum(_card_count(state, seat, color) for color in ("brown", "gray", "purple"))
+    if effect == "guild_scientists":
+        player = state["players"][seat]
+        city = [CARDS[card_id] for card_id in player["city"]]
+        counts = Counter(candidate["science"] for candidate in city if candidate["science"])
+        stages = WONDERS[player["wonder"]][player["wonder_side"]][:len(player["wonder_stages"])]
+        wilds = sum(stage.get("science_wild", 0) for stage in stages)
+        wilds += sum(candidate["effect"] == "guild_scientists" for candidate in city)
+        return _science_score(counts, wilds) - _science_score(counts, max(0, wilds - 1))
+    return 0
+
+
 def score_breakdown(state: dict[str, Any], seat: int) -> dict[str, int]:
     player = state["players"][seat]
     city = [CARDS[card_id] for card_id in player["city"]]
@@ -868,23 +1008,8 @@ def score_breakdown(state: dict[str, Any], seat: int) -> dict[str, int]:
         elif effect == "score_stages":
             yellow += len(player["wonder_stages"])
         elif effect and effect.startswith("guild_"):
-            neighbors = (_left(state, seat), _right(state, seat))
-            color_by_guild = {
-                "guild_workers": ("brown", 1), "guild_craftsmens": ("gray", 2),
-                "guild_magistrates": ("blue", 1), "guild_traders": ("yellow", 1),
-                "guild_spies": ("red", 1), "guild_philosophers": ("green", 1),
-            }
-            if effect in color_by_guild:
-                color, value = color_by_guild[effect]
-                guild += value * sum(_card_count(state, other, color) for other in neighbors)
-            elif effect == "guild_builders":
-                guild += sum(len(state["players"][other]["wonder_stages"])
-                             for other in (seat, *neighbors))
-            elif effect == "guild_decorators":
-                total = len(WONDERS[player["wonder"]][player["wonder_side"]])
-                guild += 7 if len(player["wonder_stages"]) == total else 0
-            elif effect == "guild_shipowners":
-                guild += sum(_card_count(state, seat, color) for color in ("brown", "gray", "purple"))
+            if effect != "guild_scientists":
+                guild += _guild_card_points(state, seat, card)
     result = {
         "wonder": sum(stage.get("points", 0) for stage in stages),
         "treasure": player["coins"] // 3,
@@ -914,8 +1039,75 @@ def rankings(state: dict[str, Any]) -> list[dict[str, Any]]:
     )
 
 
+def _direct_benefits(values: dict[str, Any]) -> list[dict[str, Any]]:
+    benefits: list[dict[str, Any]] = []
+    for options in values.get("production", []):
+        benefits.append({"type": "production", "resources": list(options)})
+    for field, kind in (
+        ("points", "points"), ("coins", "coins"), ("military", "military"),
+        ("science_wild", "science_wild"),
+    ):
+        if values.get(field):
+            benefits.append({"type": kind, "amount": values[field]})
+    if values.get("science"):
+        benefits.append({"type": "science", "symbol": values["science"]})
+    if values.get("special"):
+        benefits.append({"type": "special", "effect": values["special"]})
+    return benefits
+
+
 def _card_view(card_id: str) -> dict[str, Any]:
-    return deepcopy(CARDS[card_id])
+    card = deepcopy(CARDS[card_id])
+    benefits = _direct_benefits(card)
+    benefits.extend(deepcopy(EFFECT_BENEFITS.get(card.get("effect"), [])))
+    card["benefits"] = benefits
+    card["chain_to"] = CHAIN_TO.get(card["name"], [])
+    return card
+
+
+def _city_card_view(state: dict[str, Any], seat: int, card_id: str) -> dict[str, Any]:
+    card = _card_view(card_id)
+    if card["color"] == "purple":
+        card["current_points"] = _guild_card_points(state, seat, CARDS[card_id])
+    return card
+
+
+def _resource_units_view(state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
+    player = state["players"][seat]
+    wonder = WONDERS[player["wonder"]]
+    units = [{
+        "source_type": "wonder_start", "source_id": player["wonder"],
+        "source_name": wonder["name"],
+        "options": [wonder["starting_resource"]], "tradeable": True,
+    }]
+    for card_id in player["city"]:
+        card = CARDS[card_id]
+        for index, options in enumerate(card["production"]):
+            units.append({
+                "source_type": "card", "source_id": card_id,
+                "source_name": card["name"], "unit": index + 1,
+                "source_color": card["color"],
+                "options": list(options), "tradeable": card["color"] in ("brown", "gray"),
+            })
+        for benefit in EFFECT_BENEFITS.get(card.get("effect"), []):
+            if benefit["type"] == "trade_discount":
+                units.append({
+                    "source_type": "card", "source_id": card_id,
+                    "source_name": card["name"], "source_color": card["color"],
+                    "kind": "trade_discount", "directions": list(benefit["directions"]),
+                    "options": list(benefit["resources"]), "tradeable": False,
+                })
+    stages = wonder[player["wonder_side"]]
+    for stage_index, stage in enumerate(stages[:len(player["wonder_stages"])]):
+        for unit_index, options in enumerate(stage.get("production", [])):
+            units.append({
+                "source_type": "wonder_stage",
+                "source_id": f"{player['wonder']}-{player['wonder_side']}-{stage_index + 1}",
+                "source_name": f"{wonder['name']} stage {stage_index + 1}",
+                "stage": stage_index + 1, "unit": unit_index + 1,
+                "options": list(options), "tradeable": False,
+            })
+    return units
 
 
 def observe(state: dict[str, Any], seat: int) -> dict[str, Any]:
@@ -930,12 +1122,18 @@ def observe(state: dict[str, Any], seat: int) -> dict[str, Any]:
             "wonder_side": player["wonder_side"],
             "starting_resource": WONDERS[player["wonder"]]["starting_resource"],
             "wonder_stages": [
-                {**deepcopy(stage), "stage": index + 1, "built": index < len(player["wonder_stages"])}
+                {
+                    **deepcopy(stage), "stage": index + 1,
+                    "built": index < len(player["wonder_stages"]),
+                    "benefits": _direct_benefits(stage),
+                }
                 for index, stage in enumerate(stages)
             ],
-            "city": [_card_view(card_id) for card_id in player["city"]],
+            "city": [_city_card_view(state, player["seat"], card_id) for card_id in player["city"]],
+            "resource_units": _resource_units_view(state, player["seat"]),
             "military_strength": _military_strength(state, player["seat"]),
             "military_tokens": list(player["military_tokens"]),
+            "military_tokens_by_age": [list(tokens) for tokens in player["military_tokens_by_age"]],
             "score": score(state, player["seat"]),
             "score_breakdown": score_breakdown(state, player["seat"]),
             "hand_count": len(state["hands"][player["seat"]]),
@@ -988,6 +1186,16 @@ def validate_state(state: dict[str, Any]) -> None:
             raise AssertionError("coins cannot be negative")
         if any(token not in (-1, 1, 3, 5) for token in player["military_tokens"]):
             raise AssertionError("invalid military token")
+        tokens_by_age = player.get("military_tokens_by_age")
+        if (not isinstance(tokens_by_age, list) or len(tokens_by_age) != 3
+                or any(not isinstance(tokens, list) for tokens in tokens_by_age)):
+            raise AssertionError("invalid military token age groups")
+        if [token for tokens in tokens_by_age for token in tokens] != player["military_tokens"]:
+            raise AssertionError("military token age groups do not match tokens")
+        for age, tokens in enumerate(tokens_by_age, start=1):
+            allowed = {-1, {1: 1, 2: 3, 3: 5}[age]}
+            if len(tokens) > 2 or any(token not in allowed for token in tokens):
+                raise AssertionError("military token is assigned to the wrong age")
         names = [CARDS[card_id]["name"] for card_id in player["city"]]
         if len(names) != len(set(names)):
             raise AssertionError("a city cannot contain duplicate building names")

@@ -112,6 +112,10 @@ class SevenWondersTests(unittest.TestCase):
             and item["action"]["card_id"] == baths
             and item["action"]["payment"] == {"bank": 0, "left": 2, "right": 0}
         )
+        self.assertEqual([{
+            "direction": "left", "seat": 2, "coins": 2,
+            "resources": {"stone": 1},
+        }], build["purchases"])
         state, _ = seven.apply_action(state, 0, build)
         for seat in (1, 2):
             state, _ = seven.apply_action(
@@ -122,12 +126,184 @@ class SevenWondersTests(unittest.TestCase):
         # Two trade Coins plus the three Coins from that neighbor's simultaneous sale.
         self.assertEqual(8, state["players"][2]["coins"])
 
+    def test_trade_plans_keep_left_and_right_neighbor_choices_distinct(self):
+        state = seven.new_game(3, 19, {
+            "wonders": ["olympia", "alexandria", "giza"], "wonder_sides": "day",
+        })
+        self._move_to_city(state, "age1-stone-pit-3", 1)
+        self._move_to_hand(state, "age1-baths-3", 0)
+        seven.validate_state(state)
+
+        builds = [
+            item["action"] for item in seven.legal_actions(state, 0)
+            if item["action"]["type"] == "build_card"
+            and item["action"]["card_id"] == "age1-baths-3"
+        ]
+        purchases = {
+            (action["purchases"][0]["direction"], action["purchases"][0]["seat"])
+            for action in builds if action["purchases"]
+        }
+        self.assertEqual({("left", 2), ("right", 1)}, purchases)
+
+    def test_trade_plans_hide_strictly_more_expensive_alternatives(self):
+        state = seven.new_game(3, 31, {
+            "wonders": ["olympia", "alexandria", "giza"], "wonder_sides": "day",
+        })
+        self._move_to_city(state, "age1-east-trading-post-3", 0)
+        self._move_to_city(state, "age1-stone-pit-3", 1)
+        self._move_to_hand(state, "age1-baths-3", 0)
+        seven.validate_state(state)
+
+        builds = [
+            item["action"] for item in seven.legal_actions(state, 0)
+            if item["action"]["type"] == "build_card"
+            and item["action"]["card_id"] == "age1-baths-3"
+        ]
+        self.assertEqual(1, len(builds))
+        self.assertEqual({"bank": 0, "left": 0, "right": 1}, builds[0]["payment"])
+        self.assertEqual("right", builds[0]["purchases"][0]["direction"])
+
+    def test_self_sufficient_builds_hide_unnecessary_neighbor_purchases(self):
+        state = seven.new_game(3, 23, {
+            "wonders": ["giza", "babylon", "alexandria"], "wonder_sides": "day",
+        })
+        self._move_to_city(state, "age1-stone-pit-3", 1)
+        self._move_to_city(state, "age2-sawmill-3", 0)
+        self._move_to_hand(state, "age1-baths-3", 0)
+        seven.validate_state(state)
+
+        legal = [item["action"] for item in seven.legal_actions(state, 0)]
+        baths_builds = [
+            action for action in legal
+            if action["type"] == "build_card" and action["card_id"] == "age1-baths-3"
+        ]
+        wonder_builds = [action for action in legal if action["type"] == "build_wonder"]
+        self.assertEqual(1, len(baths_builds))
+        self.assertFalse(baths_builds[0]["purchases"])
+        self.assertTrue(wonder_builds)
+        self.assertTrue(all(not action["purchases"] for action in wonder_builds))
+
+    def test_free_chain_build_hides_paid_neighbor_purchase_plans(self):
+        state = seven.new_game(3, 29, {
+            "wonders": ["alexandria", "giza", "babylon"], "wonder_sides": "day",
+        })
+        self._move_to_city(state, "age1-marketplace-3", 0)
+        self._move_to_city(state, "age2-sawmill-3", 2)
+        self._move_to_hand(state, "age2-caravansery-3", 0)
+        state["players"][0]["coins"] = 10
+        seven.validate_state(state)
+
+        builds = [
+            item["action"] for item in seven.legal_actions(state, 0)
+            if item["action"]["type"] == "build_card"
+            and item["action"]["card_id"] == "age2-caravansery-3"
+        ]
+        self.assertEqual(1, len(builds))
+        self.assertEqual("chain", builds[0]["free_source"])
+        self.assertEqual({"bank": 0, "left": 0, "right": 0}, builds[0]["payment"])
+        self.assertEqual([], builds[0]["purchases"])
+
+    def test_observation_describes_cards_wonder_stages_and_resource_sources(self):
+        state = seven.new_game(3, 13, {
+            "wonders": ["alexandria", "giza", "babylon"], "wonder_sides": "day",
+        })
+        self._move_to_city(state, "age1-clay-pit-3", 0)
+        self._move_to_city(state, "age1-east-trading-post-3", 0)
+        self._move_to_hand(state, "age1-baths-3", 0)
+        seven.validate_state(state)
+
+        player = seven.observe(state, 0)["players"][0]
+        self.assertEqual("glass", player["starting_resource"])
+        self.assertIn({
+            "source_type": "wonder_start", "source_id": "alexandria",
+            "source_name": "Alexandria", "options": ["glass"], "tradeable": True,
+        }, player["resource_units"])
+        clay_pit = next(
+            unit for unit in player["resource_units"]
+            if unit["source_id"] == "age1-clay-pit-3"
+        )
+        self.assertEqual(["ore", "clay"], clay_pit["options"])
+        self.assertEqual("brown", clay_pit["source_color"])
+        self.assertTrue(clay_pit["tradeable"])
+        trading_post = next(
+            unit for unit in player["resource_units"]
+            if unit["source_id"] == "age1-east-trading-post-3"
+        )
+        self.assertEqual("trade_discount", trading_post["kind"])
+        self.assertEqual("yellow", trading_post["source_color"])
+        self.assertEqual(["right"], trading_post["directions"])
+        self.assertEqual(list(seven.COMMON), trading_post["options"])
+
+        stage_two = player["wonder_stages"][1]
+        self.assertEqual([{
+            "type": "production", "resources": list(seven.COMMON),
+        }], stage_two["benefits"])
+        baths = next(card for card in player["hand"] if card.get("name") == "Baths")
+        self.assertIn({"type": "points", "amount": 3}, baths["benefits"])
+        self.assertIn("Aqueduct", baths["chain_to"])
+
     def test_science_scores_squares_and_complete_sets(self):
         state = seven.new_game(3, 5)
         for card_id in ("age1-apothecary-3", "age1-workshop-3", "age1-scriptorium-3"):
             self._move_to_city(state, card_id)
         seven.validate_state(state)
         self.assertEqual(10, seven.score_breakdown(state, 0)["science"])
+
+    def test_military_tokens_keep_their_age_when_conflicts_tie(self):
+        state = seven.new_game(3, 43, {
+            "wonders": ["alexandria", "giza", "babylon"], "wonder_sides": "day",
+        })
+        self._move_to_city(state, "age1-stockade-3", 0)
+        self._move_to_city(state, "age1-guard-tower-3", 1)
+        for hand in state["hands"]:
+            state["discard"].extend(hand)
+            hand.clear()
+
+        events = []
+        seven._end_age(state, events)
+        self.assertEqual([[1], [], []], state["players"][0]["military_tokens_by_age"])
+        self.assertEqual([[1], [], []], state["players"][1]["military_tokens_by_age"])
+        self.assertEqual([[-1, -1], [], []], state["players"][2]["military_tokens_by_age"])
+
+        self._move_to_city(state, "age1-barracks-3", 2)
+        for hand in state["hands"]:
+            state["discard"].extend(hand)
+            hand.clear()
+        seven._end_age(state, events)
+        observed = seven.observe(state, 0)["players"]
+        self.assertEqual([[1], [], []], observed[0]["military_tokens_by_age"])
+        self.assertEqual([[1], [], []], observed[1]["military_tokens_by_age"])
+        self.assertEqual([[-1, -1], [], []], observed[2]["military_tokens_by_age"])
+        seven.validate_state(state)
+
+    def test_observation_reports_each_guild_cards_current_points(self):
+        state = seven.new_game(3, 37, {
+            "wonders": ["alexandria", "giza", "babylon"], "wonder_sides": "day",
+        })
+        self._move_to_city(state, "age3-magistrates-guild-3", 0)
+        self._move_to_city(state, "age1-altar-3", 1)
+        self._move_to_city(state, "age1-baths-3", 2)
+        seven.validate_state(state)
+
+        guild = next(
+            card for card in seven.observe(state, 0)["players"][0]["city"]
+            if card["id"] == "age3-magistrates-guild-3"
+        )
+        self.assertEqual(2, guild["current_points"])
+        self.assertEqual(2, seven.score_breakdown(state, 0)["guilds"])
+
+        science_state = seven.new_game(3, 41, {
+            "wonders": ["alexandria", "giza", "babylon"], "wonder_sides": "day",
+        })
+        self._move_to_city(science_state, "age3-scientists-guild-3", 0)
+        self._move_to_city(science_state, "age1-apothecary-3", 0)
+        seven.validate_state(science_state)
+        scientists = next(
+            card for card in seven.observe(science_state, 0)["players"][0]["city"]
+            if card["id"] == "age3-scientists-guild-3"
+        )
+        self.assertEqual(3, scientists["current_points"])
+        self.assertEqual(4, seven.score_breakdown(science_state, 0)["science"])
 
     def test_halikarnassos_stage_enters_free_discard_build_phase(self):
         state = seven.new_game(3, 11, {
