@@ -8,6 +8,7 @@ import unittest
 import urllib.request
 from unittest import mock
 
+from agentbga.agents import PlayerConfig
 from agentbga.store import Store
 from agentbga.web import MatchHub, WebHandler, serve
 
@@ -31,8 +32,38 @@ class WebTests(unittest.TestCase):
             finally:
                 server.shutdown()
                 server.server_close()
-            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "century_spice_road"],
+            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "century_spice_road", "seven_wonders"],
                              [game["id"] for game in response["games"]])
+
+    def test_seven_wonders_setup_snapshot_uses_game_renderer_contract(self):
+        stopped = threading.Event()
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "seven_wonders", "seed": 42,
+                "players": [
+                    {"name": "Giza", "backend": "random"},
+                    {"name": "Babylon", "backend": "random"},
+                    {"name": "Rhodos", "backend": "random"},
+                ],
+            })
+            self.assertEqual("seven_wonders", created["game"])
+            self.assertEqual("playable", created["game_description"]["implementation_status"])
+            self.assertEqual("seven_wonders", created["views"][0]["game"])
+            self.assertEqual(3, len(created["players"]))
+            self.assertEqual(7, created["views"][0]["players"][0]["hand_count"])
+            self.assertEqual([[], [], []], created["views"][0]["players"][0]["military_tokens_by_age"])
+            for seat, view in enumerate(created["views"]):
+                self.assertTrue(all("hidden" not in card for card in view["players"][seat]["hand"]))
+                for other in range(3):
+                    if other != seat:
+                        self.assertTrue(all(card == {"hidden": True} for card in view["players"][other]["hand"]))
+            self.assertTrue(stopped.wait(2))
 
     def test_azul_setup_snapshot_uses_game_renderer_contract(self):
         stopped = threading.Event()
@@ -344,6 +375,44 @@ class WebTests(unittest.TestCase):
                 submitted = hub.submit_human_action(created["match_id"], 0, 0, "a-human")
                 self.assertIsNone(submitted["human_turn"])
                 self.assertTrue(completed.wait(2))
+
+    def test_multiple_human_seats_can_wait_on_the_same_snapshot(self):
+        hub = MatchHub()
+        match_id = "simultaneous-humans"
+        with hub.condition:
+            record = {
+                "events": [], "snapshot": {"match_id": match_id}, "running": True,
+                "paused": False, "at_pause_gate": False,
+                "human_pending": {}, "human_submissions": {},
+            }
+            record["snapshot"] = hub._with_runtime(record["snapshot"], record)
+            hub.matches[match_id] = record
+
+        configs = [
+            PlayerConfig.from_dict({"name": f"Human {seat}", "backend": "human"}, seat)
+            for seat in range(2)
+        ]
+        results: dict[int, str] = {}
+
+        def wait_for(seat):
+            results[seat] = hub._wait_for_human_action(
+                match_id, configs, seat, 4, {"viewer_seat": seat},
+                [{"id": f"a-{seat}", "action": {"type": "pass"}}],
+            )
+
+        threads = [threading.Thread(target=wait_for, args=(seat,)) for seat in range(2)]
+        for thread in threads:
+            thread.start()
+        deadline = time.monotonic() + 2
+        while len(hub.get(match_id)["human_turns"]) < 2 and time.monotonic() < deadline:
+            time.sleep(0.01)
+
+        self.assertEqual([0, 1], [item["seat"] for item in hub.get(match_id)["human_turns"]])
+        hub.submit_human_action(match_id, 1, 4, "a-1")
+        hub.submit_human_action(match_id, 0, 4, "a-0")
+        for thread in threads:
+            thread.join(timeout=2)
+        self.assertEqual({0: "a-0", 1: "a-1"}, results)
 
     def test_http_health_and_static_page(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -11,6 +11,20 @@ from agentbga.cli import main
 
 
 class CLITests(unittest.TestCase):
+    def test_seven_wonders_cli_accepts_seven_players(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "match.sqlite3"
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main([
+                    "match", "create", "--game", "seven_wonders", "--players", "7",
+                    "--seed", "17", "--db", str(database),
+                ])
+            self.assertEqual(0, code)
+            created = json.loads(output.getvalue())["data"]
+            self.assertEqual("seven_wonders", created["game"])
+            self.assertEqual(7, created["players"])
+
     def test_match_traces_reads_runtime_trace_layout(self):
         with tempfile.TemporaryDirectory() as directory, chdir(directory):
             database = Path(directory) / "match.sqlite3"

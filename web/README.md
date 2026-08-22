@@ -1,7 +1,8 @@
 # AgentBGA live table
 
 Static React frontend for the local multi-game AgentBGA server. It renders dedicated
-tables for Splendor, Azul, Ark Nova, Brass: Birmingham, and Century: Spice Road.
+tables for Splendor, Azul, Ark Nova, Brass: Birmingham, Century: Spice Road,
+and 7 Wonders.
 
 ```console
 npm install

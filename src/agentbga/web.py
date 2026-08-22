@@ -51,13 +51,19 @@ class MatchHub:
 
     @staticmethod
     def _with_runtime(snapshot: dict[str, Any], record: dict[str, Any]) -> dict[str, Any]:
+        pending_humans = sorted(
+            record.get("human_pending", {}).values(), key=lambda item: item["seat"],
+        )
         return {
             **snapshot,
             "paused": bool(record["paused"]),
             "pause_pending": bool(
                 record["paused"] and record["running"] and not record["at_pause_gate"]
             ),
-            "human_turn": record.get("human_pending"),
+            # Keep the singular field for the current UI and expose the full
+            # simultaneous set for multi-client interfaces.
+            "human_turn": pending_humans[0] if pending_humans else None,
+            "human_turns": pending_humans,
         }
 
     def _append_locked(
@@ -83,8 +89,8 @@ class MatchHub:
                 record["running"] = False
                 record["paused"] = False
                 record["at_pause_gate"] = False
-                record["human_pending"] = None
-                record["human_submission"] = None
+                record["human_pending"] = {}
+                record["human_submissions"] = {}
             self._append_locked(record, event, snapshot)
             self.condition.notify_all()
 
@@ -142,7 +148,7 @@ class MatchHub:
             record = {
                 "events": [], "snapshot": snapshot, "running": bool(game_description.get("runnable", True)),
                 "paused": False, "at_pause_gate": False,
-                "human_pending": None, "human_submission": None,
+                "human_pending": {}, "human_submissions": {},
             }
             record["snapshot"] = self._with_runtime(snapshot, record)
             self.matches[match_id] = record
@@ -199,8 +205,8 @@ class MatchHub:
                 "version": version,
                 "legal_actions": legal,
             }
-            record["human_pending"] = pending
-            record["human_submission"] = None
+            record["human_pending"][seat] = pending
+            record["human_submissions"].pop(seat, None)
             snapshot = self._with_runtime(record["snapshot"], record)
             self._append_locked(record, {
                 "type": "human_turn_started", "match_id": match_id,
@@ -208,10 +214,9 @@ class MatchHub:
                 "legal_action_count": len(legal),
             }, snapshot)
             self.condition.notify_all()
-            while record["running"] and record["human_submission"] is None:
+            while record["running"] and seat not in record["human_submissions"]:
                 self.condition.wait()
-            action_id = record["human_submission"]
-            record["human_submission"] = None
+            action_id = record["human_submissions"].pop(seat, None)
             if not isinstance(action_id, str):
                 raise RuntimeError("match stopped before the human submitted an action")
             return action_id
@@ -225,16 +230,19 @@ class MatchHub:
             record = self.matches[match_id]
             if not record["running"]:
                 raise ValueError("match is no longer running")
-            pending = record.get("human_pending")
-            if not pending:
+            pending_by_seat = record.get("human_pending", {})
+            if not pending_by_seat:
                 raise ValueError("match is not waiting for a human action")
-            if pending["seat"] != seat or pending["version"] != expected_version:
+            pending = pending_by_seat.get(seat)
+            if pending is None:
+                raise ValueError("human turn is stale or belongs to another seat")
+            if pending["version"] != expected_version:
                 raise ValueError("human turn is stale or belongs to another seat")
             legal_ids = {item["id"] for item in pending["legal_actions"]}
             if action_id not in legal_ids:
                 raise ValueError("action_id is not legal for the current human turn")
-            record["human_submission"] = action_id
-            record["human_pending"] = None
+            record["human_submissions"][seat] = action_id
+            del record["human_pending"][seat]
             snapshot = self._with_runtime(record["snapshot"], record)
             self._append_locked(record, {
                 "type": "human_action_submitted", "match_id": match_id,

@@ -160,7 +160,7 @@ const useLang = () => useContext(LangCtx);
 
 type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
 type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
-type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road";
+type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road" | "seven_wonders";
 type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "max" | "xhigh";
 type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string; reasoning_effort: ReasoningEffort };
 type Card = { id: string; tier: number; bonus: string; points: number; cost: Record<string, number> };
@@ -249,12 +249,48 @@ type CenturyView = {
   point_deck_count: number; point_market: CenturyPoint[];
   coins: {gold: number; silver: number; silver_position: number}; players: CenturyPlayerView[];
 };
+type SevenResource = "wood" | "stone" | "clay" | "ore" | "glass" | "papyrus" | "cloth";
+type SevenBenefit = {
+  type: string; amount?: number; resources?: SevenResource[]; directions?: ("left" | "right")[];
+  scope?: ("self" | "left" | "right")[]; color?: SevenCard["color"]; colors?: SevenCard["color"][];
+  coin_cost?: number; symbol?: string; effect?: string;
+};
+type SevenCard = {
+  id: string; name: string; age: number; color: "brown" | "gray" | "blue" | "yellow" | "red" | "green" | "purple";
+  minimum_players: number; cost: Record<SevenResource, number>; coin_cost: number;
+  production: SevenResource[][]; points: number; military: number; science: string | null; effect: string | null;
+  chain_from: string[]; chain_to: string[]; benefits: SevenBenefit[]; current_points?: number;
+};
+type SevenStage = {
+  stage: number; built: boolean; cost: Record<SevenResource, number>; points?: number; coins?: number;
+  military?: number; science_wild?: number; special?: string; production?: SevenResource[][]; benefits: SevenBenefit[];
+};
+type SevenResourceUnit = {
+  source_type: "wonder_start" | "card" | "wonder_stage"; source_id: string; source_name: string;
+  options: SevenResource[]; tradeable: boolean; source_color?: SevenCard["color"];
+  kind?: "production" | "trade_discount"; directions?: ("left" | "right")[]; stage?: number; unit?: number;
+};
+type SevenPurchase = {
+  direction: "left" | "right"; seat: number; coins: number; resources: Partial<Record<SevenResource, number>>;
+};
+type SevenPlayerView = {
+  seat: number; coins: number; wonder: string; wonder_name: string; wonder_side: "day" | "night";
+  starting_resource: SevenResource; wonder_stages: SevenStage[]; city: SevenCard[];
+  military_strength: number; military_tokens: number[]; military_tokens_by_age: number[][]; score: number;
+  score_breakdown: Record<string, number>; hand_count: number; hand: (SevenCard | {hidden: true})[];
+  choice_submitted: boolean; resource_units: SevenResourceUnit[];
+};
+type SevenView = {
+  game: "seven_wonders"; rules_version: string; viewer_seat: number; status: string; phase: string; age: number; pick: number;
+  turn_count: number; decision_count: number; active_seat: number; pass_direction: "left" | "right";
+  discard_count: number; pending_choice_seats: number[]; players: SevenPlayerView[];
+};
 type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
 type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
   paused: boolean; pause_pending: boolean;
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
-  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView)[];
+  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView)[];
 };
 type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
@@ -294,6 +330,7 @@ const GAME_COPY: Record<GameId, {eyebrow: string; name: Record<Lang,string>; des
   ark_nova: {eyebrow: "ARK NOVA", name: {zh:"方舟动物园",en:"Ark Nova"}, description: {zh:"在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。",en:"Test multi-stage decisions in a controlled research-card pool: opening hand, five action cards, hex building, animal placement, association tasks and Break."}, badge: "CONTROLLED CORE V2", note: {zh:"升级 · 捐款 · 释放 · 效果系统",en:"Upgrades · donations · release · effect system"}},
   brass_birmingham: {eyebrow: "BRASS: BIRMINGHAM", name: {zh:"伯明翰",en:"Brass: Birmingham"}, description: {zh:"测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。",en:"Test long-term planning in a two-era economic network: industry building, resource sourcing, merchant selling, dynamic turn order and canal-to-rail transitions."}, badge: "PLAYABLE BETA", note: {zh:"产业 · 网络 · 双时代经济",en:"Industry · network · two-era economy"}},
   century_spice_road: {eyebrow: "CENTURY: SPICE ROAD", name: {zh:"香料之路",en:"Century: Spice Road"}, description: {zh:"经营自己的商队：获取商人牌、升级或交换香料、争夺金币银币，并抢先完成高分订单。支持 2–5 名玩家。",en:"Run your caravan: acquire merchant cards, upgrade or trade spices, race for gold and silver coins to fulfill high-score orders. 2–5 players."}, badge: "CLASSIC BASE", note: {zh:"商人牌 · 香料引擎 · 订单竞速",en:"Merchant cards · spice engine · order race"}},
+  seven_wonders: {eyebrow: "7 WONDERS", name: {zh:"七大奇迹",en:"7 Wonders"}, description: {zh:"在三个时代中密封选牌并传递手牌，通过生产、贸易、军事、科技与奇迹建设塑造古代文明。支持 3–7 名玩家。",en:"Draft sealed choices across three Ages, passing hands while developing production, trade, military, science and a Wonder. 3–7 players."}, badge: "SECOND EDITION BASE", note: {zh:"轮抽 · 邻城贸易 · 七维计分",en:"Draft · neighbor trade · seven-part scoring"}},
 };
 const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: string; model: string}> = {
   openai: { label: {zh: "OpenAI 兼容", en: "OpenAI-compatible"}, url: "https://api.openai.com/v1", key: "", model: "" },
@@ -449,6 +486,293 @@ function CenturyBoard({view}: {view?: CenturyView}) {
     <section className="century-point-market"><header><div><span>{t("point_cards")}</span><h3>{t("order_market")}</h3></div><b>{t("deck_label")} {view.point_deck_count}</b></header><div>{view.point_market.map((card, index) => <div className="century-point-slot" key={card.id}>{index === 0 && view.coins.gold > 0 && <span className="century-coin coin-gold">{t("gold_coin")} × {view.coins.gold}</span>}{index === view.coins.silver_position && view.coins.silver > 0 && <span className="century-coin coin-silver">{t("silver_coin")} × {view.coins.silver}</span>}<CenturyPointCard card={card}/></div>)}</div></section>
     <section className="century-merchant-market"><header><div><span>{t("merchant_cards")}</span><h3>{t("trade_market")}</h3></div><b>{t("deck_label")} {view.merchant_deck_count}</b></header><div>{view.merchant_market.map((slot, index) => <div className="century-merchant-slot" key={slot.card.id}><span className="century-market-index">0{index + 1}</span><CenturyMerchantCard card={slot.card}/><div className="century-card-spices"><span>{t("card_spice")}</span><Spices pool={slot.spices} compact/></div></div>)}</div></section>
     <section className="century-legend"><span><i className="spice spice-turmeric"/>{SPICE_META.turmeric.label[lang]} · 1</span><span><i className="spice spice-saffron"/>{SPICE_META.saffron.label[lang]} · 2</span><span><i className="spice spice-cardamom"/>{SPICE_META.cardamom.label[lang]} · 3</span><span><i className="spice spice-cinnamon"/>{SPICE_META.cinnamon.label[lang]} · 4</span><small>{t("century_legend_note")}</small></section>
+  </div>;
+}
+
+const SEVEN_RESOURCE_META: Record<SevenResource, {symbol: string; label: Record<Lang, string>}> = {
+  wood: {symbol: "🪵", label: {zh: "木材", en: "Wood"}}, stone: {symbol: "🪨", label: {zh: "石材", en: "Stone"}},
+  clay: {symbol: "🧱", label: {zh: "黏土", en: "Clay"}}, ore: {symbol: "💎", label: {zh: "矿石", en: "Ore"}},
+  glass: {symbol: "🫙", label: {zh: "玻璃", en: "Glass"}}, papyrus: {symbol: "📜", label: {zh: "莎草纸", en: "Papyrus"}},
+  cloth: {symbol: "🧵", label: {zh: "织物", en: "Textile"}},
+};
+const SEVEN_COLOR_LABELS: Record<SevenCard["color"], Record<Lang, string>> = {
+  brown: {zh:"原材料",en:"Raw material"}, gray: {zh:"制成品",en:"Manufactured good"}, blue: {zh:"市政",en:"Civilian"},
+  yellow: {zh:"商业",en:"Commercial"}, red: {zh:"军事",en:"Military"}, green: {zh:"科技",en:"Scientific"}, purple: {zh:"协会",en:"Guild"},
+};
+const SEVEN_COLOR_ORDER: SevenCard["color"][] = ["brown", "gray", "blue", "yellow", "red", "green", "purple"];
+const SEVEN_SCIENCE_LABELS: Record<string, Record<Lang, string>> = {
+  compass: {zh:"罗盘",en:"Compass"}, gear: {zh:"齿轮",en:"Gear"}, tablet: {zh:"石板",en:"Tablet"},
+};
+const SEVEN_SCIENCE_SYMBOLS: Record<string, string> = {compass: "🧭", tablet: "🗿", gear: "⚙️"};
+const SEVEN_SPECIAL_LABELS: Record<string, Record<Lang, string>> = {
+  free_first_color: {zh:"每种颜色的第一张牌免费",en:"First card of each color is free"},
+  free_first_age: {zh:"每个时代第一张牌免费",en:"First card of each Age is free"},
+  free_last_age: {zh:"每个时代最后一张牌免费",en:"Last card of each Age is free"},
+  play_seventh: {zh:"每个时代可打出第七张牌",en:"Play the seventh card each Age"},
+  build_discard: {zh:"从弃牌堆免费建造一张牌",en:"Build one discarded card for free"},
+};
+const SEVEN_SPECIAL_SYMBOLS: Record<string, string> = {
+  free_first_color: "🎨✨", free_first_age: "🌅✨", free_last_age: "🌇✨", play_seventh: "7", build_discard: "♻️🏛️",
+};
+
+function SevenResourceIcon({resource, count = 1}: {resource: SevenResource; count?: number}) {
+  const lang = useLang();
+  const meta = SEVEN_RESOURCE_META[resource];
+  return <i title={meta.label[lang]} aria-label={`${meta.label[lang]}${count > 1 ? ` × ${count}` : ""}`} className={`seven-resource resource-${resource}`}><span aria-hidden="true">{meta.symbol}</span>{count > 1 ? <b aria-hidden="true">{count}</b> : null}</i>;
+}
+
+function SevenResourceOptions({resources}: {resources: SevenResource[]}) {
+  const lang = useLang();
+  return <span className="seven-resource-options" title={resources.map(resource => SEVEN_RESOURCE_META[resource].label[lang]).join(" / ")}>
+    {resources.map((resource, index) => <span key={`${resource}-${index}`}>{index > 0 && <em>/</em>}<SevenResourceIcon resource={resource}/></span>)}
+  </span>;
+}
+
+function SevenCost({cost, coins = 0}: {cost: Record<SevenResource, number>; coins?: number}) {
+  const lang = useLang();
+  const resources = (Object.keys(SEVEN_RESOURCE_META) as SevenResource[]).filter(resource => cost[resource] > 0);
+  return <span className="seven-cost">{resources.map(resource => <SevenResourceIcon key={resource} resource={resource} count={cost[resource]}/>)}{coins > 0 && <i className="seven-coin-cost" title={lang === "zh" ? `${coins} 金币` : `${coins} coins`} aria-label={lang === "zh" ? `${coins} 金币` : `${coins} coins`}><span aria-hidden="true">💰</span><b aria-hidden="true">{coins}</b></i>}{!resources.length && !coins && <i className="seven-free-cost" title={lang === "zh" ? "免费" : "Free"} aria-label={lang === "zh" ? "免费" : "Free"}>✨</i>}</span>;
+}
+
+function sevenScopeText(scope: SevenBenefit["scope"], lang: Lang) {
+  const zh = lang === "zh";
+  return (scope || []).map(item => item === "self" ? (zh ? "自己" : "your city") : item === "left" ? (zh ? "左邻" : "left neighbor") : (zh ? "右邻" : "right neighbor")).join(zh ? "、" : " + ");
+}
+
+function sevenBenefitText(benefit: SevenBenefit, lang: Lang) {
+  const zh = lang === "zh"; const amount = benefit.amount ?? 1;
+  const color = benefit.color ? SEVEN_COLOR_LABELS[benefit.color][lang] : (benefit.colors || []).map(value => SEVEN_COLOR_LABELS[value][lang]).join("/");
+  const scope = sevenScopeText(benefit.scope, lang);
+  if (benefit.type === "points") return zh ? `${amount} 胜利点` : `${amount} victory points`;
+  if (benefit.type === "coins") return zh ? `${amount} 金币` : `${amount} coins`;
+  if (benefit.type === "military") return zh ? `${amount} 军力` : `${amount} military shields`;
+  if (benefit.type === "science") return SEVEN_SCIENCE_LABELS[benefit.symbol || ""]?.[lang] || String(benefit.symbol);
+  if (benefit.type === "science_wild") return zh ? `${amount} 个任意科技符号` : `${amount} wild science symbol`;
+  if (benefit.type === "trade_discount") {
+    const direction = (benefit.directions || []).map(value => value === "left" ? (zh ? "左邻" : "left") : (zh ? "右邻" : "right")).join(zh ? "、" : " + ");
+    const resources = (benefit.resources || []).map(value => SEVEN_RESOURCE_META[value].label[lang]).join("/");
+    return zh ? `向${direction}购买${resources}时每个 ${benefit.coin_cost} 金币` : `Buy ${resources} from ${direction} for ${benefit.coin_cost} coin each`;
+  }
+  if (benefit.type === "coins_per_card") return zh ? `${scope}每张${color}牌：${amount} 金币` : `${amount} coin per ${color} card in ${scope}`;
+  if (benefit.type === "points_per_card") return zh ? `${scope}每张${color}牌：${amount} 分` : `${amount} point per ${color} card in ${scope}`;
+  if (benefit.type === "coins_per_stage") return zh ? `${scope}每个奇迹阶段：${amount} 金币` : `${amount} coins per Wonder stage in ${scope}`;
+  if (benefit.type === "points_per_stage") return zh ? `${scope}每个奇迹阶段：${amount} 分` : `${amount} point per Wonder stage in ${scope}`;
+  if (benefit.type === "points_if_wonder_complete") return zh ? `完成全部奇迹阶段：${amount} 分` : `${amount} points if Wonder is complete`;
+  if (benefit.type === "special") return SEVEN_SPECIAL_LABELS[benefit.effect || ""]?.[lang] || String(benefit.effect);
+  return benefit.type;
+}
+
+function SevenScopeGlyphs({scope}: {scope: SevenBenefit["scope"]}) {
+  return <span className="seven-effect-scope" aria-hidden="true">{(scope || []).map(item => <i key={item}>{item === "self" ? "●" : item === "left" ? "←" : "→"}</i>)}</span>;
+}
+
+function SevenColorGlyphs({benefit}: {benefit: SevenBenefit}) {
+  const colors = benefit.color ? [benefit.color] : (benefit.colors || []);
+  return <span className="seven-effect-colors" aria-hidden="true">{colors.map(color => <i key={color} className={`seven-${color}`}/>)}</span>;
+}
+
+function SevenBenefitVisual({benefit}: {benefit: SevenBenefit}) {
+  const lang = useLang();
+  const amount = benefit.amount ?? 1;
+  if (benefit.type === "production") return <><b className="seven-production-label">{lang === "zh" ? "生产" : "Produces"}</b><SevenResourceOptions resources={benefit.resources || []}/></>;
+  if (benefit.type === "points") return <><b aria-hidden="true">🏆</b><strong aria-hidden="true">{amount}</strong></>;
+  if (benefit.type === "coins") return <><b aria-hidden="true">💰</b><strong aria-hidden="true">{amount}</strong></>;
+  if (benefit.type === "military") return <><b aria-hidden="true">⚔️</b><strong aria-hidden="true">{amount}</strong></>;
+  if (benefit.type === "science") return <strong className="seven-science-symbol" aria-hidden="true">{SEVEN_SCIENCE_SYMBOLS[benefit.symbol || ""] || "🔬"}</strong>;
+  if (benefit.type === "science_wild") return <><strong className="seven-science-wild" aria-hidden="true">🧭/🗿/⚙️</strong>{amount > 1 && <strong aria-hidden="true">{amount}</strong>}</>;
+  if (benefit.type === "trade_discount") return <><span className="seven-effect-directions" aria-hidden="true">{(benefit.directions || []).map(direction => <i key={direction}>{direction === "left" ? "←" : "→"}</i>)}</span><SevenResourceOptions resources={benefit.resources || []}/></>;
+  if (benefit.type === "coins_per_card" || benefit.type === "points_per_card") return <><SevenScopeGlyphs scope={benefit.scope}/><b aria-hidden="true">{benefit.type === "coins_per_card" ? "💰" : "🏆"}</b><strong aria-hidden="true">{amount}</strong><span aria-hidden="true">×</span><SevenColorGlyphs benefit={benefit}/></>;
+  if (benefit.type === "coins_per_stage" || benefit.type === "points_per_stage") return <><SevenScopeGlyphs scope={benefit.scope}/><b aria-hidden="true">{benefit.type === "coins_per_stage" ? "💰" : "🏆"}</b><strong aria-hidden="true">{amount}</strong><span aria-hidden="true">×◆</span></>;
+  if (benefit.type === "points_if_wonder_complete") return <><span aria-hidden="true">◆✓</span><b aria-hidden="true">🏆</b><strong aria-hidden="true">{amount}</strong></>;
+  if (benefit.type === "special") return <strong className="seven-special-symbol" aria-hidden="true">{SEVEN_SPECIAL_SYMBOLS[benefit.effect || ""] || "✨"}</strong>;
+  return <strong aria-hidden="true">◆</strong>;
+}
+
+function SevenBenefits({benefits, compact = false}: {benefits: SevenBenefit[]; compact?: boolean}) {
+  const lang = useLang();
+  return <div className={`seven-benefits ${compact ? "compact" : ""}`}>{benefits.map((benefit, index) => {
+    const description = sevenBenefitText(benefit, lang);
+    return <span className={`seven-benefit benefit-${benefit.type}`} title={description} aria-label={description} key={index}><SevenBenefitVisual benefit={benefit}/></span>;
+  })}</div>;
+}
+
+function SevenCardTile({card, compact = false}: {card: SevenCard; compact?: boolean}) {
+  const lang = useLang();
+  return <article className={`seven-card seven-${card.color} ${compact ? "compact" : ""}`} title={card.id}>
+    <header><span>AGE {card.age}</span><b>{SEVEN_COLOR_LABELS[card.color][lang]}</b></header>
+    <strong>{card.name}</strong>
+    <div className="seven-card-cost" title={lang === "zh" ? "建造成本" : "Build cost"}><SevenCost cost={card.cost} coins={card.coin_cost}/></div>
+    <SevenBenefits benefits={card.benefits} compact={compact}/>
+    {!compact && (card.chain_from.length > 0 || card.chain_to.length > 0) && <footer>{card.chain_from.length > 0 && <span>{lang === "zh" ? "免费前置" : "Free from"}: {card.chain_from.join(" / ")}</span>}{card.chain_to.length > 0 && <span>{lang === "zh" ? "可免费衔接" : "Chains to"}: {card.chain_to.join(" / ")}</span>}</footer>}
+  </article>;
+}
+
+function SevenResourceProduction({units, compact = false}: {units: SevenResourceUnit[]; compact?: boolean}) {
+  const lang = useLang();
+  return <div className={`seven-production ${compact ? "compact" : ""}`}>{units.map((unit, index) => {
+    const tradeDiscount = unit.kind === "trade_discount";
+    const title = tradeDiscount
+      ? `${unit.source_name} · ${lang === "zh" ? "邻城交易折扣" : "neighbor trade discount"}`
+      : unit.tradeable ? unit.source_name : `${unit.source_name} · ${lang === "zh" ? "仅自己使用" : "owner only"}`;
+    return <span className={`${unit.source_color ? `source-colored source-${unit.source_color}` : ""} ${tradeDiscount ? "production-trade-discount" : ""}`} key={`${unit.source_id}-${unit.unit || 0}-${index}`} title={title}>
+      {tradeDiscount && <span className="seven-effect-directions" aria-hidden="true">{(unit.directions || []).map(direction => <i key={direction}>{direction === "left" ? "←" : "→"}</i>)}</span>}
+      <SevenResourceOptions resources={unit.options}/>{!tradeDiscount && !unit.tradeable && <small aria-label={lang === "zh" ? "仅自己使用" : "Owner only"}>🔒</small>}
+    </span>;
+  })}</div>;
+}
+
+function SevenScienceStats({player, compact = false}: {player: SevenPlayerView; compact?: boolean}) {
+  const lang = useLang();
+  const counts: Record<"compass" | "tablet" | "gear" | "wild", number> = {compass: 0, tablet: 0, gear: 0, wild: 0};
+  const benefits = [
+    ...player.city.flatMap(card => card.benefits),
+    ...player.wonder_stages.filter(stage => stage.built).flatMap(stage => stage.benefits),
+  ];
+  for (const benefit of benefits) {
+    if (benefit.type === "science" && benefit.symbol && benefit.symbol in counts) counts[benefit.symbol as "compass" | "tablet" | "gear"] += benefit.amount ?? 1;
+    if (benefit.type === "science_wild") counts.wild += benefit.amount ?? 1;
+  }
+  const scienceScore = player.score_breakdown.science ?? 0;
+  return <div className={`seven-science-stats ${compact ? "compact" : ""}`} aria-label={lang === "zh" ? `科技符号统计，科技得分 ${scienceScore}` : `Science symbols, ${scienceScore} science points`}>
+    <b>{lang === "zh" ? "科技" : "SCI"}</b>
+    <span title={SEVEN_SCIENCE_LABELS.compass[lang]}>🧭 <strong>{counts.compass}</strong></span>
+    <span title={SEVEN_SCIENCE_LABELS.tablet[lang]}>🗿 <strong>{counts.tablet}</strong></span>
+    <span title={SEVEN_SCIENCE_LABELS.gear[lang]}>⚙️ <strong>{counts.gear}</strong></span>
+    {counts.wild > 0 && <span title={lang === "zh" ? "任意科技符号" : "Wild science"}>✨ <strong>{counts.wild}</strong></span>}
+    <em title={lang === "zh" ? `当前科技得分 ${scienceScore}` : `Current science score ${scienceScore}`}>🏆 {scienceScore}</em>
+  </div>;
+}
+
+function SevenCivilianScores({player, compact = false}: {player: SevenPlayerView; compact?: boolean}) {
+  const lang = useLang();
+  const cards = player.city.filter(card => card.color === "blue");
+  return <div className={`seven-civilian-scores ${compact ? "compact" : ""}`} aria-label={lang === "zh" ? "已建造市政牌得分" : "Built civilian card scores"}>
+    <b>{lang === "zh" ? "市政" : "CIV"}</b>
+    <div>{cards.map(card => <span key={card.id} title={`${card.name} · ${card.points} ${lang === "zh" ? "胜利点" : "victory points"}`}><i>{card.name}</i><em>🏆 {card.points}</em></span>)}{!cards.length && <small>—</small>}</div>
+  </div>;
+}
+
+function SevenGuildScores({player, compact = false}: {player: SevenPlayerView; compact?: boolean}) {
+  const lang = useLang();
+  const cards = player.city.filter(card => card.color === "purple");
+  return <div className={`seven-guild-scores ${compact ? "compact" : ""}`} aria-label={lang === "zh" ? "已建造协会牌得分" : "Built guild card scores"}>
+    <b>{lang === "zh" ? "协会" : "GUILD"}</b>
+    <div>{cards.map(card => {
+      const points = card.current_points ?? 0;
+      return <span key={card.id} title={`${card.name} · ${points} ${lang === "zh" ? "当前胜利点" : "current victory points"}`}><i>{card.name}</i><em>🏆 {points}</em></span>;
+    })}{!cards.length && <small>—</small>}</div>
+  </div>;
+}
+
+function SevenMilitaryTokens({player, compact = false}: {player: SevenPlayerView; compact?: boolean}) {
+  const lang = useLang();
+  const ages = player.military_tokens_by_age;
+  return <div className={`seven-military-tokens ${compact ? "compact" : ""}`} aria-label={lang === "zh" ? "各时代战争得分 Token" : "Military conflict tokens by Age"}>
+    <b>{lang === "zh" ? "战争" : "WAR"}</b>
+    <div>{ages.map((tokens, index) => tokens.length > 0 && <span className={`seven-war-age age-${index + 1}`} key={index}><i>{["I", "II", "III"][index]}</i>{tokens.map((token, tokenIndex) => <em className={token < 0 ? "defeat" : "victory"} key={tokenIndex}>{token}</em>)}</span>)}{!player.military_tokens.length && <small>—</small>}</div>
+  </div>;
+}
+
+function SevenWonderStageTile({stage}: {stage: SevenStage}) {
+  const lang = useLang();
+  return <div className={`seven-stage ${stage.built ? "built" : ""}`}><header><b>{stage.stage}</b><span>{stage.built ? (lang === "zh" ? "已建成" : "Built") : (lang === "zh" ? "未建造" : "Unbuilt")}</span></header><SevenCost cost={stage.cost}/><SevenBenefits benefits={stage.benefits} compact/></div>;
+}
+
+function SevenPlayerPanel({player: p, identity, active}: {player: SevenPlayerView; identity?: Snapshot["players"][number]; active: boolean}) {
+  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
+  return <section className={`player-panel seven-player-panel ${active ? "active-player" : ""}`}>
+    <header><div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `${t("player_label")} ${p.seat + 1}`}</h3></div><div className="seven-score" title={zh ? `${p.score} 胜利点` : `${p.score} victory points`}><strong>{p.score}</strong><span>🏆</span></div></header>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}</div>
+    <div className="seven-wonder-name"><div><span>{p.wonder_name} · {p.wonder_side.toUpperCase()}</span><small>{zh ? "城市初始资源" : "Starting resource"}</small></div><SevenResourceIcon resource={p.starting_resource}/></div>
+    <div className="seven-production-block"><b>{zh ? "每轮生产能力" : "Production each round"}</b><SevenResourceProduction units={p.resource_units} compact/><SevenScienceStats player={p} compact/><SevenCivilianScores player={p} compact/><SevenGuildScores player={p} compact/><SevenMilitaryTokens player={p} compact/></div>
+    <div className="seven-stages">{p.wonder_stages.map(stage => <SevenWonderStageTile key={stage.stage} stage={stage}/>)}</div>
+    <div className="seven-tableau-cards">{p.city.length ? p.city.map(card => <span key={card.id} className={`seven-${card.color}`} title={card.benefits.map(benefit => sevenBenefitText(benefit, lang)).join(" · ")}>{card.name}</span>) : <em>{zh ? "尚未建造建筑" : "No buildings yet"}</em>}</div>
+    <div className="seven-assets"><span title={zh ? `${p.coins} 金币` : `${p.coins} coins`}>💰 <b>{p.coins}</b></span><span title={zh ? `${p.military_strength} 军力` : `${p.military_strength} military`}>⚔️ <b>{p.military_strength}</b></span><span title={zh ? `${p.hand_count} 张手牌` : `${p.hand_count} cards`}>🃏 <b>{p.hand_count}</b></span>{p.choice_submitted && <em>{zh ? "已密封提交" : "Choice sealed"}</em>}</div>
+  </section>;
+}
+
+function sevenPaymentSummary(action: Record<string, unknown>, lang: Lang, names?: Record<number, string>) {
+  const zh = lang === "zh"; const payment = (action.payment || {}) as Record<string, number>;
+  const purchases = (action.purchases || []) as SevenPurchase[];
+  if (action.free_source) return zh ? `免费建造（${action.free_source}）` : `Build free (${action.free_source})`;
+  const parts = purchases.map(purchase => {
+    const neighbor = names?.[purchase.seat] || `${zh ? "座位" : "seat"} ${purchase.seat + 1}`;
+    const direction = purchase.direction === "left" ? (zh ? "左邻" : "left") : (zh ? "右邻" : "right");
+    const resources = Object.entries(purchase.resources).filter(([, amount]) => Number(amount) > 0).map(([resource, amount]) => `${SEVEN_RESOURCE_META[resource as SevenResource].symbol}${Number(amount) > 1 ? Number(amount) : ""}`).join(" ");
+    return zh ? `向${direction} ${neighbor} 购买 ${resources}，支付 💰${purchase.coins}` : `Buy ${resources} from ${direction} ${neighbor} for 💰${purchase.coins}`;
+  });
+  if ((payment.bank || 0) > 0) parts.unshift(zh ? `向银行支付 💰${payment.bank}` : `Pay bank 💰${payment.bank}`);
+  return parts.length ? parts.join(zh ? "；" : "; ") : (zh ? "使用自己的生产能力" : "Use your own production");
+}
+
+function SevenActionPicker({actions, view, names, disabled, submitting, onChoose}: {actions: LegalAction[]; view?: SevenView; names: Record<number, string>; disabled: boolean; submitting: string; onChoose: (item: LegalAction) => void}) {
+  const lang = useLang(); const zh = lang === "zh";
+  const viewer = view?.players.find(player => player.seat === view.viewer_seat);
+  const cards = viewer?.hand.filter((card): card is SevenCard => !("hidden" in card)) || [];
+  const cardIds = new Set(cards.map(card => card.id));
+  const remaining = actions.filter(item => !cardIds.has(String(item.action.card_id || "")));
+  return <div className="seven-action-picker">{cards.map(card => {
+    const options = actions.filter(item => item.action.card_id === card.id);
+    return <section key={card.id} className="seven-action-card"><SevenCardTile card={card}/><div>{options.map(item => {
+      const kind = String(item.action.type); const payment = sevenPaymentSummary(item.action, lang, names);
+      const label = kind === "sell_card" ? (zh ? "出售这张牌 · 获得 💰3" : "Sell this card · gain 💰3")
+        : kind === "build_wonder" ? (zh ? `用于建造奇迹第 ${item.action.stage} 阶段 · ${payment}` : `Use for Wonder stage ${item.action.stage} · ${payment}`)
+        : (zh ? `建造这张牌 · ${payment}` : `Build this card · ${payment}`);
+      return <button key={item.id} className={`seven-action-option option-${kind}`} disabled={disabled} title={item.id} onClick={() => onChoose(item)}><b>{kind === "sell_card" ? "💰" : kind === "build_wonder" ? "◆" : "🏛️"}</b><span>{label}</span>{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>;
+    })}</div></section>;
+  })}{remaining.length > 0 && <section className="seven-extra-actions">{remaining.map(item => <button key={item.id} disabled={disabled} onClick={() => onChoose(item)}>{humanActionText(item.action, lang)}</button>)}</section>}</div>;
+}
+
+function SevenCityCardGroups({cards}: {cards: SevenCard[]}) {
+  const lang = useLang();
+  return <div className="seven-city-card-groups">{SEVEN_COLOR_ORDER.map(color => {
+    const group = cards.filter(card => card.color === color);
+    if (!group.length) return null;
+    return <div className={`seven-city-card-group group-${color}`} aria-label={`${SEVEN_COLOR_LABELS[color][lang]} × ${group.length}`} key={color}>{group.map(card => <span key={card.id} className={`seven-${card.color}`} title={card.benefits.map(benefit => sevenBenefitText(benefit, lang)).join(" · ")}>{card.name}</span>)}</div>;
+  })}</div>;
+}
+
+function SevenSpectatorHands({views, identities}: {views: SevenView[]; identities: Snapshot["players"]}) {
+  const lang = useLang(); const zh = lang === "zh";
+  const hands = identities.map(identity => {
+    const seatView = views.find(candidate => candidate.viewer_seat === identity.seat);
+    const player = seatView?.players.find(candidate => candidate.seat === identity.seat);
+    const cards = player?.hand.filter((card): card is SevenCard => !("hidden" in card)) ?? [];
+    return {identity, player, cards};
+  });
+  return <section className="seven-spectator-hands">
+    <header><div><span>SPECTATOR HANDS</span><h3>{zh ? "所有座位的当前手牌" : "Current hands at every seat"}</h3></div><small>{zh ? "纯 Agent 对战 · 观察者上帝视角" : "Agent-only match · omniscient spectator view"}</small></header>
+    <div>{hands.map(({identity, player, cards}) => <article className={`seven-seat-hand ${player?.choice_submitted ? "choice-submitted" : ""}`} key={identity.seat}>
+      <header><div><span>{zh ? `座位 ${identity.seat + 1}` : `SEAT ${identity.seat + 1}`}</span><strong>{identity.name}</strong><code>{identity.backend}</code></div><p>{player?.choice_submitted && <em>{zh ? "已密封提交" : "CHOICE SEALED"}</em>}<b>{player?.hand_count ?? cards.length} {zh ? "张" : "cards"}</b></p></header>
+      <div className="seven-seat-hand-cards">{cards.map(card => <SevenCardTile key={card.id} card={card}/>)}{!cards.length && <em>{zh ? "当前没有手牌" : "No cards in hand"}</em>}</div>
+    </article>)}</div>
+  </section>;
+}
+
+function SevenPassRoutes({playerCount, currentAge, identities}: {playerCount: number; currentAge: number; identities: Snapshot["players"]}) {
+  const lang = useLang(); const zh = lang === "zh";
+  return <div className="seven-pass-routes" aria-label={zh ? "三个时代的手牌传递顺序" : "Hand passing order for all three Ages"}>{[1, 2, 3].map(age => {
+    const left = age !== 2;
+    const step = left ? -1 : 1;
+    const seats = Array.from({length: playerCount + 1}, (_, index) => (index * step + playerCount) % playerCount);
+    const route = seats.map(seat => identities.find(identity => identity.seat === seat)?.name || `${zh ? "座位" : "Seat"} ${seat + 1}`).join(" → ");
+    return <div className={age === currentAge ? "active" : ""} title={`${zh ? `时代 ${age}` : `Age ${age}`} · ${route}`} key={age}>
+      <b>{zh ? `时代 ${age}` : `AGE ${age}`}</b><em>{left ? (zh ? "← 左传" : "← LEFT") : (zh ? "右传 →" : "RIGHT →")}</em>
+      <ol>{seats.map((seat, index) => <li key={`${seat}-${index}`}><i>{seat + 1}</i>{index < seats.length - 1 && <span>→</span>}</li>)}</ol>
+    </div>;
+  })}</div>;
+}
+
+function SevenBoard({view, spectatorViews, identities = []}: {view?: SevenView; spectatorViews?: SevenView[]; identities?: Snapshot["players"]}) {
+  const lang = useLang(); const zh = lang === "zh";
+  if (!view) return null;
+  const viewer = view.players.find(player => player.seat === view.viewer_seat) ?? view.players[0];
+  const visibleHand = viewer.hand.filter((card): card is SevenCard => !("hidden" in card));
+  return <div className="seven-board">
+    <section className="seven-status"><div><span>7 WONDERS · BASE GAME</span><h2>{zh ? `时代 ${view.age} · 第 ${view.pick} 轮选牌` : `Age ${view.age} · Pick ${view.pick}`}</h2></div><p>{zh ? `手牌向${view.pass_direction === "left" ? "左" : "右"}传递；选择在所有座位提交前保持密封。资源是每轮可重复使用的生产能力。` : `Hands pass ${view.pass_direction}; choices remain sealed until all seats submit. Resources are reusable production, not inventory.`}</p><code>{view.rules_version}</code></section>
+    <section className="seven-draft-track"><div>{[1,2,3].map(age => <span key={age} className={age === view.age ? "active" : age < view.age ? "done" : ""}>AGE {age}</span>)}</div><b>{zh ? `弃牌 ${view.discard_count}` : `Discard ${view.discard_count}`}</b><small>{zh ? `已提交 ${view.pending_choice_seats.length}/${view.players.length}` : `Sealed ${view.pending_choice_seats.length}/${view.players.length}`}</small></section>
+    {spectatorViews ? <SevenSpectatorHands views={spectatorViews} identities={identities}/> : <section className="seven-hand"><header><div><span>DRAFT HAND</span><h3>{zh ? `座位 ${viewer.seat + 1} 的当前手牌` : `Seat ${viewer.seat + 1} current hand`}</h3></div><b>{visibleHand.length || viewer.hand_count} {zh ? "张" : "cards"}</b></header><div>{visibleHand.map(card => <SevenCardTile key={card.id} card={card}/>)}{!visibleHand.length && <em>{zh ? "该手牌对当前观察者隐藏" : "This hand is hidden from the current viewer"}</em>}</div></section>}
+    <section className="seven-cities"><header><div><span>CITY TABLEAUS</span><h3>{zh ? "公开城市与生产能力" : "Public cities and production"}</h3></div><SevenPassRoutes playerCount={view.players.length} currentAge={view.age} identities={identities}/></header><div>{view.players.map(player => <article key={player.seat}><header><strong>{player.wonder_name} · {player.wonder_side.toUpperCase()}</strong><b title={zh ? `${player.score} 胜利点` : `${player.score} victory points`}>{player.score} 🏆</b></header><SevenResourceProduction units={player.resource_units}/><SevenScienceStats player={player}/><SevenCivilianScores player={player}/><SevenGuildScores player={player}/><SevenMilitaryTokens player={player}/><SevenCityCardGroups cards={player.city}/></article>)}</div></section>
   </div>;
 }
 
@@ -619,6 +943,13 @@ function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?
   if (action.type === "finish_sell") return zh ? "结束出售行动" : "End sell action";
   if (action.type === "merchant_bonus_develop") return zh ? `商人奖励研发 ${action.industry}` : `Merchant develop bonus ${action.industry}`;
   if (action.type === "liquidate_industry") return zh ? `变卖 ${action.industry_id}，获得 £${action.value}` : `Liquidate ${action.industry_id}, gain £${action.value}`;
+  if (action.type === "build_card") {
+    return zh ? `建造 ${action.card_id}（${sevenPaymentSummary(action, lang)}）` : `Build ${action.card_id} (${sevenPaymentSummary(action, lang)})`;
+  }
+  if (action.type === "build_wonder") return zh ? `用 ${action.card_id} 建造奇迹第 ${action.stage} 阶段（${sevenPaymentSummary(action, lang)}）` : `Use ${action.card_id} for Wonder stage ${action.stage} (${sevenPaymentSummary(action, lang)})`;
+  if (action.type === "sell_card") return zh ? `出售 ${action.card_id}，获得 💰3` : `Sell ${action.card_id} for 💰3`;
+  if (action.type === "build_discard") return zh ? `从弃牌堆免费建造 ${action.card_id}` : `Build ${action.card_id} from discard for free`;
+  if (action.type === "skip_discard") return zh ? "跳过弃牌堆建造" : "Skip discard construction";
   if (action.type === "take_tokens") {
     const taken = tokenText((action.take ?? {}) as Record<string, number>, lang);
     const returned = tokenText((action.return ?? {}) as Record<string, number>, lang);
@@ -650,6 +981,8 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
     finish_sell: "结束出售", merchant_bonus_develop: "商人研发奖励", liquidate_industry: "变卖产业",
     play_merchant: "打出商人牌", acquire_merchant: "获取商人牌", claim_point: "完成订单", rest: "休息",
     draft_tiles: "选取并放置花砖",
+    build_card: "建造建筑", build_wonder: "建造奇迹", sell_card: "出售卡牌",
+    build_discard: "墓园建造", skip_discard: "跳过墓园建造",
   },
   en: {
     buy_visible: "Buy visible card", buy_reserved: "Buy reserved card", take_tokens: "Take gems",
@@ -666,6 +999,8 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
     finish_sell: "End sell", merchant_bonus_develop: "Merchant develop bonus", liquidate_industry: "Liquidate industry",
     play_merchant: "Play merchant card", acquire_merchant: "Acquire merchant card", claim_point: "Complete order", rest: "Rest",
     draft_tiles: "Draft and place tiles",
+    build_card: "Construct building", build_wonder: "Construct Wonder", sell_card: "Sell card",
+    build_discard: "Build from discard", skip_discard: "Skip discard build",
   },
 };
 
@@ -917,7 +1252,10 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const arkView = snapshot?.game === "ark_nova" ? viewer as ArkView : undefined;
   const brassView = snapshot?.game === "brass_birmingham" ? viewer as BrassView : undefined;
   const centuryView = snapshot?.game === "century_spice_road" ? viewer as CenturyView : undefined;
-  const maxPlayers = game === "century_spice_road" ? 5 : 4;
+  const sevenView = snapshot?.game === "seven_wonders" ? viewer as SevenView : undefined;
+  const sevenSpectatorViews = snapshot?.game === "seven_wonders" && !snapshot.players.some(player => player.backend === "human")
+    ? snapshot.views as SevenView[] : undefined;
+  const maxPlayers = game === "seven_wonders" ? 7 : game === "century_spice_road" ? 5 : 4;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
 
   function updatePlayer(id: string, patch: Partial<PlayerForm>) {
@@ -953,14 +1291,21 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   }
 
   function setMatchup(kind: "human" | "harness") {
-    setPlayers(kind === "human" ? [humanPlayer(1), deepseekHarnessPlayer(2, "opencode")] : [
+    const selected = kind === "human" ? [humanPlayer(1), deepseekHarnessPlayer(2, "opencode")] : [
       deepseekHarnessPlayer(1, "opencode"), codexHarnessPlayer(2),
-    ]);
+    ];
+    if (game === "seven_wonders") selected.push(player(3, "random"));
+    setPlayers(selected);
   }
 
   function selectGame(next: GameId) {
     setGame(next);
-    if (next !== "century_spice_road") setPlayers(current => current.slice(0, 4));
+    const maximum = next === "seven_wonders" ? 7 : next === "century_spice_road" ? 5 : 4;
+    setPlayers(current => {
+      const selected = current.slice(0, maximum);
+      while (next === "seven_wonders" && selected.length < 3) selected.push(player(selected.length + 1, "random"));
+      return selected;
+    });
   }
 
   function selectProvider(id: string, provider: Provider) {
@@ -991,6 +1336,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || "无法启动对局");
       setSnapshot(data);
+      requestAnimationFrame(() => window.scrollTo({top: 0, behavior: "smooth"}));
       const source = new EventSource(api(`/api/matches/${data.match_id}/events`));
       source.addEventListener("match", raw => {
         const item: Timeline = JSON.parse((raw as MessageEvent).data);
@@ -1106,6 +1452,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       {game === "azul" && <div className="setup-scope-note"><b>{GAME_COPY.azul.badge}</b> {zh ? "支持彩色墙基础版、100 枚具名花砖、工厂与中央区选砖、图案线、地板罚分、相邻计分、终局奖励和确定性回放；不包含灰墙玩法、扩展或出版商美术。" : "Supports the colored-wall base game, 100 identity-safe tiles, factory/center drafting, pattern lines, floor penalties, adjacency scoring, endgame bonuses and deterministic replay; no gray wall, expansions or publisher artwork."}</div>}
       {game === "brass_birmingham" && <div className="setup-scope-note"><b>{GAME_COPY.brass_birmingham.badge}</b> {zh ? "支持官方人数牌组、产业板、市场、商人、Build/Sell/Develop、单双铁路、负收入变卖、双时代计分与完整回放；界面不包含出版商美术。" : "Supports official player counts, industry board, markets, merchants, Build/Sell/Develop, single/double rail, negative-income liquidation, two-era scoring and full replay; no publisher artwork."}</div>}
       {game === "century_spice_road" && <div className="setup-scope-note"><b>{GAME_COPY.century_spice_road.badge}</b> {zh ? "完整基础牌组数值、重复交易、升级、市场压香料、商队容量、金币银币、终局与计分均已接通；不包含出版商卡图。" : "Full base-set values, repeat trades, upgrades, market spice, caravan capacity, gold/silver coins, endgame and scoring wired up; no publisher artwork."}</div>}
+      {game === "seven_wonders" && <div className="setup-scope-note"><b>{GAME_COPY.seven_wonders.badge}</b> {zh ? "支持 148 张基础牌、日/夜双面奇迹、密封同步选牌、邻城贸易、链式建造、军事、科技、商会与七类计分；不包含扩展或出版商美术。" : "Supports all 148 base cards, Day/Night Wonders, sealed simultaneous drafting, neighbor trade, chains, military, science, guilds and seven-part scoring; no expansions or publisher artwork."}</div>}
       {error && <div className="error">{error}</div>}
     </section>
   </main>;
@@ -1133,18 +1480,20 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
             ? <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity}/>
             : snapshot.game === "brass_birmingham"
               ? <BrassPlayerPanel key={identity.seat} player={visiblePlayer as BrassPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
-              : <CenturyPlayerPanel key={identity.seat} player={visiblePlayer as CenturyPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
+              : snapshot.game === "century_spice_road"
+                ? <CenturyPlayerPanel key={identity.seat} player={visiblePlayer as CenturyPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
+                : <SevenPlayerPanel key={identity.seat} player={visiblePlayer as SevenPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
       })}</aside>
       <section className="board">
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? t("pause_pending") : t("paused")}</strong><span>{snapshot.pause_pending ? t("pause_pending_desc") : t("paused_desc")}</span></div>}
         {snapshot.human_turn && <section className="human-turn" aria-live="polite">
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}{t("pick_action")}</h2></div><b>{snapshot.human_turn.legal_actions.length} {t("legal_opts")}</b></header>
-          {snapshot.game === "azul" ? <AzulActionPicker actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
+          {snapshot.game === "azul" ? <AzulActionPicker actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
             <h3>{ACTION_GROUPS[lang][kind] || kind}<span>{actions.length}</span></h3>
             <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div>
           </section>)}</div>}
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players}/> : <CenturyBoard view={centuryView}/>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
         {snapshot.status === "finished" && <div className="winner-banner"><span>{t("winner")}</span><strong>{timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong><button onClick={() => { setSnapshot(null); setTimeline([]); }}>{t("play_again")}</button></div>}
       </section>
       <aside className="timeline">

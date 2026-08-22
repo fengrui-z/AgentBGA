@@ -56,7 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
     match_sub = match.add_subparsers(dest="command", required=True)
     create = match_sub.add_parser("create")
     create.add_argument("--game", default="splendor", choices=game_ids())
-    create.add_argument("--players", type=int, required=True, choices=[2, 3, 4])
+    create.add_argument("--players", type=int, required=True, choices=range(2, 8))
     create.add_argument("--seed", type=int)
     create.add_argument("--game-config", help="game-specific JSON object, or @path/to/config.json")
     add_db(create)
@@ -91,7 +91,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     run = commands.add_parser("run", help="create and run a complete match")
     run.add_argument("--game", choices=game_ids(), help="game for a new match (default: splendor)")
-    run.add_argument("--players", type=int, choices=[2, 3, 4])
+    run.add_argument("--players", type=int, choices=range(2, 8))
     run.add_argument("--seed", type=int)
     run.add_argument("--match-id", help="resume an existing match instead of creating one")
     run.add_argument("--game-config", help="game-specific JSON object for a new match")

@@ -14,6 +14,7 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /花砖物语/);
   assert.match(html, /伯明翰/);
   assert.match(html, /香料之路/);
+  assert.match(html, /七大奇迹/);
   assert.match(html, /CONTROLLED CORE/);
   assert.match(html, /OpenAI 兼容/);
   assert.match(html, /Anthropic/);
@@ -49,6 +50,11 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /AZUL_FLOOR_PENALTIES = \[-1, -1, -2, -2, -2, -3, -3\]/);
   assert.match(source, /BrassBoard/);
   assert.match(source, /CenturyBoard/);
+  assert.match(source, /SevenBoard/);
+  assert.match(source, /SevenSpectatorHands/);
+  assert.match(source, /SevenPassRoutes/);
+  assert.match(source, /sevenSpectatorViews/);
+  assert.match(source, /!snapshot\.players\.some\(player => player\.backend === "human"\)/);
   assert.match(source, /century_spice_road/);
   assert.match(source, /game_description\.runnable/);
   assert.match(source, /GEM_ORDER = \["red", "green", "white", "blue", "black", "gold"\]/);
