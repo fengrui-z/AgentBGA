@@ -256,6 +256,37 @@ class WebTests(unittest.TestCase):
                 store.close()
             self.assertNotIn("top-secret", persisted)
 
+    def test_codex_subscription_does_not_require_inline_api_key(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db = Path(directory) / "matches.sqlite3"
+            captured = threading.Event()
+            seen = {}
+
+            def fake_run(_store, _match_id, players, sink, turn_gate):
+                seen["player"] = players[0]
+                captured.set()
+                sink({"type": "match_failed", "error": "test stop"})
+
+            with mock.patch("agentbga.web.run_match", side_effect=fake_run):
+                created = MatchHub(db).create({
+                    "players": [
+                        {"name": "Codex", "backend": "codex", "model": "gpt-test",
+                         "auth_mode": "subscription"},
+                        {"name": "Baseline", "backend": "random"},
+                    ]
+                })
+                self.assertTrue(captured.wait(2))
+
+            self.assertEqual("subscription", seen["player"].auth_mode)
+            self.assertIsNone(seen["player"].api_key)
+            store = Store(db)
+            try:
+                persisted = store.players(created["match_id"])[0]
+            finally:
+                store.close()
+            self.assertEqual("subscription", persisted["auth_mode"])
+            self.assertNotIn("api_key_env", persisted)
+
     def test_stream_delta_does_not_duplicate_full_snapshot(self):
         with tempfile.TemporaryDirectory() as directory:
             hub = MatchHub(Path(directory) / "matches.sqlite3")

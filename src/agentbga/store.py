@@ -81,6 +81,7 @@ class Store:
                 model TEXT,
                 base_url TEXT,
                 api_key_env TEXT,
+                auth_mode TEXT,
                 harness TEXT,
                 wire_api TEXT,
                 reasoning_effort TEXT,
@@ -106,6 +107,8 @@ class Store:
             self.connection.execute("ALTER TABLE match_players ADD COLUMN wire_api TEXT")
         if "reasoning_effort" not in columns:
             self.connection.execute("ALTER TABLE match_players ADD COLUMN reasoning_effort TEXT")
+        if "auth_mode" not in columns:
+            self.connection.execute("ALTER TABLE match_players ADD COLUMN auth_mode TEXT")
         self.connection.commit()
 
     def close(self) -> None:
@@ -241,10 +244,10 @@ class Store:
             for seat, player in enumerate(players):
                 self.connection.execute(
                     "INSERT INTO match_players "
-                    "(match_id,seat,name,backend,model,base_url,api_key_env,harness,wire_api,reasoning_effort) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "(match_id,seat,name,backend,model,base_url,api_key_env,auth_mode,harness,wire_api,reasoning_effort) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (match_id, seat, player["name"], player["backend"], player.get("model"),
-                     player.get("base_url"), player.get("api_key_env"),
+                     player.get("base_url"), player.get("api_key_env"), player.get("auth_mode"),
                      player["backend"] if player["backend"] in {"claude", "pi", "codex", "opencode", "dsh", "minimal"} else None,
                      player.get("wire_api"), player.get("reasoning_effort")),
                 )
@@ -252,7 +255,7 @@ class Store:
     def players(self, match_id: str) -> list[dict[str, Any]]:
         self.load(match_id)
         rows = self.connection.execute(
-            "SELECT seat,name,backend,model,base_url,api_key_env,harness,wire_api,reasoning_effort "
+            "SELECT seat,name,backend,model,base_url,api_key_env,auth_mode,harness,wire_api,reasoning_effort "
             "FROM match_players WHERE match_id=? ORDER BY seat",
             (match_id,),
         ).fetchall()

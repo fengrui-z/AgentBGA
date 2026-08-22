@@ -263,12 +263,30 @@ class HarnessAgent:
             env[key_name] = key
         if self.config.backend == "codex":
             codex_home = self.session.workspace / ".codex-home"
-            codex_home.mkdir(exist_ok=True)
+            codex_home.mkdir(mode=0o700, exist_ok=True)
             env["CODEX_HOME"] = str(codex_home)
-            if key:
-                env[self.config.api_key_env or "OPENAI_API_KEY"] = key
-            if self.config.base_url:
-                env["OPENAI_BASE_URL"] = self.config.base_url
+            if self.config.auth_mode == "subscription":
+                # Keep caches, plugins, skills, and runtime state seat-local. Only
+                # bridge the file-backed ChatGPT login; keyring-backed credentials
+                # remain discoverable by the CLI without a file link.
+                source_home = Path(source_env.get("CODEX_HOME") or Path.home() / ".codex")
+                source_auth = source_home / "auth.json"
+                auth_link = codex_home / "auth.json"
+                if auth_link.is_symlink() and auth_link.resolve() != source_auth.resolve():
+                    auth_link.unlink()
+                elif auth_link.exists() and not auth_link.is_symlink():
+                    raise AgentError(
+                        f"refusing to replace non-symlink Codex credential file: {auth_link}"
+                    )
+                if source_auth.is_file() and not auth_link.exists():
+                    auth_link.symlink_to(source_auth)
+                env.pop("OPENAI_API_KEY", None)
+                env.pop("OPENAI_BASE_URL", None)
+            else:
+                if key:
+                    env[self.config.api_key_env or "OPENAI_API_KEY"] = key
+                if self.config.base_url:
+                    env["OPENAI_BASE_URL"] = self.config.base_url
         elif self.config.backend == "opencode":
             for variable, dirname in (
                 ("XDG_DATA_HOME", ".opencode-data"),
@@ -406,11 +424,19 @@ class HarnessAgent:
             "approval_policy = \"never\"\n"
             "sandbox_mode = \"workspace-write\"\n"
             "web_search = \"disabled\"\n"
+            + ("forced_login_method = \"chatgpt\"\n" if self.config.auth_mode == "subscription" else "")
+            + ("history.persistence = \"none\"\n" if self.config.auth_mode == "subscription" else "")
+            + ("memories.use_memories = false\n" if self.config.auth_mode == "subscription" else "")
             + codex_reasoning
             + provider
+            + ("[features]\nshell_tool = false\nskill_mcp_dependency_install = false\n" if self.config.auth_mode == "subscription" else "")
             + "[mcp_servers.agentbga]\n"
             f"command = {json.dumps(mcp_command[0])}\n"
             f"args = [{escaped_args}]\n"
+            f"env = {{ PYTHONPATH = {json.dumps(self._pythonpath)} }}\n"
+            "required = true\n"
+            "startup_timeout_sec = 30\n"
+            "default_tools_approval_mode = \"approve\"\n"
         )
         (codex_dir / "config.toml").write_text(codex_config, encoding="utf-8")
         provider_id, separator, model_id = (self.config.model or "").partition("/")
@@ -550,7 +576,19 @@ class HarnessAgent:
             "--config", "web_search=\"disabled\"",
             "--config", f"mcp_servers.agentbga.command={json.dumps(mcp_command[0])}",
             "--config", f"mcp_servers.agentbga.args=[{escaped_args}]",
+            "--config", f"mcp_servers.agentbga.env={{PYTHONPATH={json.dumps(self._pythonpath)}}}",
+            "--config", "mcp_servers.agentbga.required=true",
+            "--config", "mcp_servers.agentbga.startup_timeout_sec=30",
+            "--config", 'mcp_servers.agentbga.default_tools_approval_mode="approve"',
         ]
+        if self.config.auth_mode == "subscription":
+            self._codex_config_args.extend([
+                "--config", "forced_login_method=\"chatgpt\"",
+                "--config", "history.persistence=\"none\"",
+                "--config", "memories.use_memories=false",
+                "--config", "features.shell_tool=false",
+                "--config", "features.skill_mcp_dependency_install=false",
+            ])
         if reasoning_enabled:
             self._codex_config_args.extend([
                 "--config", f"model_reasoning_effort={json.dumps(reasoning_effort)}",

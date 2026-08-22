@@ -8,7 +8,9 @@ import os
 from pathlib import Path
 import secrets
 import shutil
+import subprocess
 import sys
+import tempfile
 from typing import Any
 
 from . import __version__
@@ -20,6 +22,34 @@ from .runner import run_match
 from .store import ConflictError, MatchNotFound, Store
 
 SCHEMA = "agentbga.cli.v1"
+
+
+def _codex_subscription_status(executable: str) -> tuple[bool, str]:
+    """Check the same local ChatGPT login that a subscription seat will reuse."""
+    with tempfile.TemporaryDirectory(prefix="agentbga-codex-auth-") as directory:
+        isolated_home = Path(directory)
+        source_home = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+        source_auth = source_home / "auth.json"
+        if source_auth.is_file():
+            (isolated_home / "auth.json").symlink_to(source_auth)
+        environment = dict(os.environ)
+        environment["CODEX_HOME"] = directory
+        environment.pop("OPENAI_API_KEY", None)
+        environment.pop("OPENAI_BASE_URL", None)
+        try:
+            result = subprocess.run(
+                [executable, "login", "status"], capture_output=True, text=True,
+                timeout=10, check=False, env=environment,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            return False, f"login status check failed: {exc}"
+    raw_detail = "\n".join(part.strip() for part in (result.stdout, result.stderr) if part.strip())
+    lines = [line.strip() for line in raw_detail.splitlines() if line.strip()]
+    detail = next(
+        (line for line in reversed(lines) if "logged in" in line.lower()),
+        lines[-1] if lines else "login status unavailable",
+    )
+    return result.returncode == 0 and "chatgpt" in detail.lower(), detail
 
 
 def envelope(data: Any, **extra: Any) -> dict[str, Any]:
@@ -184,21 +214,36 @@ def execute(args: argparse.Namespace) -> int:
             players = load_players_config(args.players_config)
             player_checks = []
             for seat, player in enumerate(players):
-                key_required = player.backend not in {"random", "human"}
+                subscription_auth = player.backend == "codex" and player.auth_mode == "subscription"
+                key_required = player.backend not in {"random", "human"} and not subscription_auth
                 key_configured = not key_required or bool(os.environ.get(player.api_key_env or ""))
                 harness_required = player.backend in HARNESS_BACKENDS
                 # "minimal" runs in-process (no external binary needed)
                 if player.backend == "minimal":
                     harness_executable = True
+                    executable = None
                 else:
-                    harness_executable = not harness_required or bool(shutil.which(player.backend))
-                player_checks.append({
+                    executable = shutil.which(player.backend) if harness_required else None
+                    harness_executable = not harness_required or bool(executable)
+                auth_configured = key_configured
+                auth_status = None
+                if subscription_auth:
+                    auth_configured, auth_status = (
+                        _codex_subscription_status(executable) if executable
+                        else (False, "codex executable not found")
+                    )
+                check = {
                     "seat": seat, **player.public_dict(),
-                    "api_key_configured": key_configured,
+                    "api_key_configured": None if subscription_auth else key_configured,
+                    "authentication_configured": auth_configured,
                     "harness_executable": harness_executable,
-                })
+                }
+                if auth_status is not None:
+                    check["authentication_status"] = auth_status
+                player_checks.append(check)
             ready = sys.version_info >= (3, 11) and all(
-                row["api_key_configured"] and row["harness_executable"] for row in player_checks
+                row["authentication_configured"] and row["harness_executable"]
+                for row in player_checks
             )
             emit(envelope({
                 "python": {"ok": sys.version_info >= (3, 11), "version": sys.version.split()[0]},
