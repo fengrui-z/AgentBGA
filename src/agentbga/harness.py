@@ -406,7 +406,31 @@ class HarnessAgent:
         codex_dir.mkdir(exist_ok=True)
         escaped_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
         provider = ""
-        if self.config.base_url and self.config.base_url.rstrip("/") != "https://api.openai.com/v1":
+        provider_args: list[str] = []
+        if self.config.auth_mode == "subscription":
+            # The built-in ChatGPT provider prefers WebSockets and only falls
+            # back to HTTPS after exhausting its stream retries. Some networks
+            # allow the HTTPS endpoint but silently drop the WebSocket stream,
+            # adding more than a minute to every move. A named provider can
+            # reuse Codex's ChatGPT login while selecting HTTPS explicitly.
+            provider = (
+                "model_provider = \"agentbga_chatgpt_https\"\n"
+                "[model_providers.agentbga_chatgpt_https]\n"
+                "name = \"AgentBGA ChatGPT HTTPS\"\n"
+                "base_url = \"https://chatgpt.com/backend-api/codex\"\n"
+                "wire_api = \"responses\"\n"
+                "requires_openai_auth = true\n"
+                "supports_websockets = false\n"
+            )
+            provider_args = [
+                "--config", "model_provider=\"agentbga_chatgpt_https\"",
+                "--config", "model_providers.agentbga_chatgpt_https.name=\"AgentBGA ChatGPT HTTPS\"",
+                "--config", "model_providers.agentbga_chatgpt_https.base_url=\"https://chatgpt.com/backend-api/codex\"",
+                "--config", "model_providers.agentbga_chatgpt_https.wire_api=\"responses\"",
+                "--config", "model_providers.agentbga_chatgpt_https.requires_openai_auth=true",
+                "--config", "model_providers.agentbga_chatgpt_https.supports_websockets=false",
+            ]
+        elif self.config.base_url and self.config.base_url.rstrip("/") != "https://api.openai.com/v1":
             provider = (
                 "model_provider = \"agentbga\"\n"
                 "[model_providers.agentbga]\n"
@@ -416,6 +440,14 @@ class HarnessAgent:
                 "wire_api = \"responses\"\n"
                 "requires_openai_auth = false\n"
             )
+            provider_args = [
+                "--config", "model_provider=\"agentbga\"",
+                "--config", "model_providers.agentbga.name=\"AgentBGA seat provider\"",
+                "--config", f"model_providers.agentbga.base_url={json.dumps(self.config.base_url.rstrip('/'))}",
+                "--config", f"model_providers.agentbga.env_key={json.dumps(self.config.api_key_env or 'OPENAI_API_KEY')}",
+                "--config", "model_providers.agentbga.wire_api=\"responses\"",
+                "--config", "model_providers.agentbga.requires_openai_auth=false",
+            ]
         codex_reasoning = (
             f"model_reasoning_effort = {json.dumps(reasoning_effort)}\n"
             if reasoning_enabled else ""
@@ -602,15 +634,7 @@ class HarnessAgent:
             self._codex_config_args.extend([
                 "--config", f"model_reasoning_effort={json.dumps(reasoning_effort)}",
             ])
-        if provider:
-            self._codex_config_args.extend([
-                "--config", "model_provider=\"agentbga\"",
-                "--config", "model_providers.agentbga.name=\"AgentBGA seat provider\"",
-                "--config", f"model_providers.agentbga.base_url={json.dumps(self.config.base_url.rstrip('/'))}",
-                "--config", f"model_providers.agentbga.env_key={json.dumps(self.config.api_key_env or 'OPENAI_API_KEY')}",
-                "--config", "model_providers.agentbga.wire_api=\"responses\"",
-                "--config", "model_providers.agentbga.requires_openai_auth=false",
-            ])
+        self._codex_config_args.extend(provider_args)
         return submission_path
 
     def _recover_hermes_session_id(self) -> None:

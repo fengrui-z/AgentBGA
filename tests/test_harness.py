@@ -752,6 +752,11 @@ class HarnessTests(unittest.TestCase):
             )
             self.assertIn('forced_login_method = "chatgpt"', codex_config)
             self.assertIn('history.persistence = "none"', codex_config)
+            self.assertIn('model_provider = "agentbga_chatgpt_https"', codex_config)
+            self.assertIn('[model_providers.agentbga_chatgpt_https]', codex_config)
+            self.assertIn('base_url = "https://chatgpt.com/backend-api/codex"', codex_config)
+            self.assertIn("requires_openai_auth = true", codex_config)
+            self.assertIn("supports_websockets = false", codex_config)
             self.assertIn("plugins = false", codex_config)
             self.assertIn("remote_plugin = false", codex_config)
             self.assertIn("shell_tool = false", codex_config)
@@ -759,6 +764,11 @@ class HarnessTests(unittest.TestCase):
             self.assertIn("required = true", codex_config)
             self.assertIn('default_tools_approval_mode = "approve"', codex_config)
             self.assertIn('forced_login_method="chatgpt"', agent._codex_config_args)
+            self.assertIn('model_provider="agentbga_chatgpt_https"', agent._codex_config_args)
+            self.assertIn(
+                "model_providers.agentbga_chatgpt_https.supports_websockets=false",
+                agent._codex_config_args,
+            )
             self.assertIn("features.plugins=false", agent._codex_config_args)
             self.assertIn("features.remote_plugin=false", agent._codex_config_args)
             self.assertIn("features.shell_tool=false", agent._codex_config_args)
