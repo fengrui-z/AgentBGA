@@ -435,9 +435,27 @@ class HarnessTests(unittest.TestCase):
                     self.assertEqual("https://proxy.example/v1", models["providers"]["agentbga"]["baseUrl"])
                     self.assertEqual("$OPENAI_API_KEY", models["providers"]["agentbga"]["apiKey"])
                     self.assertTrue(models["providers"]["agentbga"]["models"][0]["reasoning"])
+                    self.assertEqual({
+                        "supportsStore": False,
+                        "supportsDeveloperRole": False,
+                        "supportsReasoningEffort": False,
+                        "supportsStrictMode": False,
+                        "maxTokensField": "max_tokens",
+                    }, models["providers"]["agentbga"]["models"][0]["compat"])
                     self.assertEqual("max", models["providers"]["agentbga"]["models"][0]["thinkingLevelMap"]["xhigh"])
                     extension = (agent.session.workspace / "agentbga-tools.ts").read_text()
                     self.assertIn('name: "submit_action"', extension)
+
+            official_pi = HarnessAgent(PlayerConfig.from_dict({
+                "name": "Official Pi", "backend": "pi", "model": "gpt-test",
+            }, 2), "match-official-pi", 2, runs_root=directory)
+            official_pi._prepare_turn({"state_version": 1}, LEGAL)
+            official_models = json.loads(
+                (official_pi.session.workspace / ".pi-home" / "models.json").read_text()
+            )
+            self.assertNotIn(
+                "compat", official_models["providers"]["agentbga"]["models"][0],
+            )
 
             opencode = HarnessAgent(PlayerConfig.from_dict({
                 "name": "OpenCode", "backend": "opencode", "model": "custom-model",

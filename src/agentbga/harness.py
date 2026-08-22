@@ -381,16 +381,26 @@ class HarnessAgent:
         pi_dir = self.session.workspace / ".pi-home"
         pi_dir.mkdir(exist_ok=True)
         pi_api_key_env = self._provider_api_key_env()
+        pi_api = self.config.wire_api or "openai-completions"
+        pi_model: dict[str, Any] = {
+            "id": self.config.model,
+            "reasoning": reasoning_enabled,
+            "thinkingLevelMap": {
+                "minimal": None, "low": None, "medium": None,
+                "high": "high", "xhigh": "max",
+            },
+        }
+        if pi_api == "openai-completions" and self.config.base_url != "https://api.openai.com/v1":
+            pi_model["compat"] = {
+                "supportsStore": False,
+                "supportsDeveloperRole": False,
+                "supportsReasoningEffort": False,
+                "supportsStrictMode": False,
+                "maxTokensField": "max_tokens",
+            }
         pi_models = {"providers": {"agentbga": {
-            "baseUrl": self.config.base_url, "api": self.config.wire_api or "openai-completions",
-            "apiKey": f"${pi_api_key_env}", "models": [{
-                "id": self.config.model,
-                "reasoning": reasoning_enabled,
-                "thinkingLevelMap": {
-                    "minimal": None, "low": None, "medium": None,
-                    "high": "high", "xhigh": "max",
-                },
-            }],
+            "baseUrl": self.config.base_url, "api": pi_api,
+            "apiKey": f"${pi_api_key_env}", "models": [pi_model],
         }}}
         (pi_dir / "models.json").write_text(
             json.dumps(pi_models, ensure_ascii=False, indent=2), encoding="utf-8",

@@ -7,9 +7,9 @@ Codex、GPT-5.6 Sol/Luna、Kimi 与其他尚未配置 endpoint 的模型。
 
 ## 实验矩阵
 
-- 固定 Minimal 比较 6 个模型：Qwen 3.8 Max、DeepSeek V4 Flash 0731、
+- 固定 Pi Agent 比较 6 个模型：Qwen 3.8 Max、DeepSeek V4 Flash 0731、
   DeepSeek V4 Pro 0813、GLM-5.2、MiMo V2.5 Pro、MiMo V2.5。
-- 固定 DeepSeek V4 Pro 0813 比较 Minimal、OpenCode、DSh、Claude Code、Hermes。
+- 固定 DeepSeek V4 Pro 0813 比较 Pi Agent、OpenCode、DSh、Claude Code、Hermes。
 - 增加典型组合 MiMo V2.5 Pro × Claude Code 和 GLM-5.2 × Claude Code。
 - Pilot 不包含 Direct API 座位。
 
@@ -60,7 +60,8 @@ unset DASHSCOPE_API_KEY MIMO_API_KEY
 
 ## 检查与运行
 
-先安装项目，并自行安装配置中实际使用的 Claude Code、OpenCode、DSh、Hermes CLI：
+先安装项目，并自行安装配置中实际使用的 Pi Agent、Claude Code、OpenCode、DSh、
+Hermes CLI：
 
 ```console
 python3 -m venv .venv

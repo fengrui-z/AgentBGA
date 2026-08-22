@@ -3,10 +3,10 @@
   "tournament_id": "three-game-local-providers-pilot",
   "participants": [
     {
-      "id": "qwen38-max-minimal",
+      "id": "qwen38-max-pi",
       "player": {
-        "name": "Qwen 3.8 Max · Minimal",
-        "backend": "minimal",
+        "name": "Qwen 3.8 Max · Pi Agent",
+        "backend": "pi",
         "model": "qwen3.8-max",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key_env": "DASHSCOPE_API_KEY",
@@ -14,10 +14,10 @@
       }
     },
     {
-      "id": "deepseek-v4-flash-minimal",
+      "id": "deepseek-v4-flash-pi",
       "player": {
-        "name": "DeepSeek V4 Flash 0731 · Minimal",
-        "backend": "minimal",
+        "name": "DeepSeek V4 Flash 0731 · Pi Agent",
+        "backend": "pi",
         "model": "deepseek-v4-flash-0731",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key_env": "DASHSCOPE_API_KEY",
@@ -25,10 +25,10 @@
       }
     },
     {
-      "id": "deepseek-v4-pro-minimal",
+      "id": "deepseek-v4-pro-pi",
       "player": {
-        "name": "DeepSeek V4 Pro 0813 · Minimal",
-        "backend": "minimal",
+        "name": "DeepSeek V4 Pro 0813 · Pi Agent",
+        "backend": "pi",
         "model": "deepseek-v4-pro-0813",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key_env": "DASHSCOPE_API_KEY",
@@ -36,10 +36,10 @@
       }
     },
     {
-      "id": "glm52-minimal",
+      "id": "glm52-pi",
       "player": {
-        "name": "GLM 5.2 · Minimal",
-        "backend": "minimal",
+        "name": "GLM 5.2 · Pi Agent",
+        "backend": "pi",
         "model": "glm-5.2",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key_env": "DASHSCOPE_API_KEY",
@@ -47,10 +47,10 @@
       }
     },
     {
-      "id": "mimo-v25-pro-minimal",
+      "id": "mimo-v25-pro-pi",
       "player": {
-        "name": "MiMo V2.5 Pro · Minimal",
-        "backend": "minimal",
+        "name": "MiMo V2.5 Pro · Pi Agent",
+        "backend": "pi",
         "model": "mimo-v2.5-pro",
         "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
         "api_key_env": "MIMO_API_KEY",
@@ -58,10 +58,10 @@
       }
     },
     {
-      "id": "mimo-v25-minimal",
+      "id": "mimo-v25-pi",
       "player": {
-        "name": "MiMo V2.5 · Minimal",
-        "backend": "minimal",
+        "name": "MiMo V2.5 · Pi Agent",
+        "backend": "pi",
         "model": "mimo-v2.5",
         "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
         "api_key_env": "MIMO_API_KEY",
