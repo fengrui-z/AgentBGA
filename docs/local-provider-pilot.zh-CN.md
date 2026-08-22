@@ -19,11 +19,11 @@ Codex、GPT-5.6 Sol/Luna、Kimi 与其他尚未配置 endpoint 的模型。
 
 | Provider | Claude Code | 其他 Harness | 密钥变量 |
 |---|---|---|---|
-| DashScope | `https://dashscope.aliyuncs.com/compatible-mode/apps/anthropic` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `DASHSCOPE_API_KEY` |
+| DashScope | `https://dashscope.aliyuncs.com/apps/anthropic` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `DASHSCOPE_API_KEY` |
 | MiMo Token Plan | `https://token-plan-cn.xiaomimimo.com/anthropic` | `https://token-plan-cn.xiaomimimo.com/v1` | `MIMO_API_KEY` |
 
 JSON 中只保存环境变量名，不保存密钥值。AgentBGA 启动 seat 时会把对应密钥映射到
-Claude Code 的 `ANTHROPIC_API_KEY`、DSh 的 `DEEPSEEK_API_KEY`、Hermes 的
+Claude Code 的 `ANTHROPIC_AUTH_TOKEN`、DSh 的 provider credential、Hermes 的
 `OPENAI_API_KEY`；不同 provider 的原始变量不会互相替代。
 
 ## 在 zsh 中输入密钥

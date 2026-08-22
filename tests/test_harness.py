@@ -425,7 +425,11 @@ class HarnessTests(unittest.TestCase):
                 if backend == "claude":
                     mcp = json.loads((agent.session.workspace / "claude-mcp.json").read_text())
                     self.assertIn("agentbga", mcp["mcpServers"])
-                    self.assertEqual("https://proxy.example/v1", agent._environment()["ANTHROPIC_BASE_URL"])
+                    with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "seat-secret"}):
+                        environment = agent._environment()
+                    self.assertEqual("https://proxy.example/v1", environment["ANTHROPIC_BASE_URL"])
+                    self.assertEqual("seat-secret", environment["ANTHROPIC_AUTH_TOKEN"])
+                    self.assertNotIn("ANTHROPIC_API_KEY", environment)
                 else:
                     models = json.loads((agent.session.workspace / ".pi-home" / "models.json").read_text())
                     self.assertEqual("https://proxy.example/v1", models["providers"]["agentbga"]["baseUrl"])
@@ -505,6 +509,23 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("workspace-write", env["DSH_PERMISSION_MODE"])
             self.assertEqual("DISABLED", env["DSH_TELEMETRY_MODE"])
             self.assertIn("seat-0-dsh", env["DSH_HOME"])
+
+            proxied_dsh = HarnessAgent(PlayerConfig.from_dict({
+                "name": "Proxied DSh", "backend": "dsh",
+                "model": "deepseek-v4-pro-0813",
+                "base_url": "https://dashscope.example/compatible-mode/v1",
+                "api_key_env": "DASHSCOPE_API_KEY",
+                "reasoning_effort": "max",
+            }, 0), "match-proxied-dsh", 0, runs_root=directory)
+            proxied_dsh._prepare_turn({"state_version": 1}, LEGAL)
+            proxied_patch = (proxied_dsh.session.workspace / "dsh-patch.yml").read_text()
+            self.assertIn("provider: agentbga", proxied_patch)
+            self.assertIn("    providers:\n      agentbga:", proxied_patch)
+            self.assertIn("api: openai-completions", proxied_patch)
+            self.assertIn('apiKeyEnv: "DASHSCOPE_API_KEY"', proxied_patch)
+            self.assertIn('baseURL: "https://dashscope.example/compatible-mode/v1"', proxied_patch)
+            self.assertIn('id: "deepseek-v4-pro-0813"', proxied_patch)
+            self.assertIn("max: max", proxied_patch)
 
             hermes = HarnessAgent(PlayerConfig.from_dict({
                 "name": "Hermes Agent", "backend": "hermes", "model": "custom-model",

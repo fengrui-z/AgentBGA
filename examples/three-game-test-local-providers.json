@@ -74,7 +74,7 @@
         "name": "GLM 5.2 · Claude Code",
         "backend": "claude",
         "model": "glm-5.2",
-        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/apps/anthropic",
+        "base_url": "https://dashscope.aliyuncs.com/apps/anthropic",
         "api_key_env": "DASHSCOPE_API_KEY",
         "reasoning_effort": "max"
       }
@@ -107,7 +107,7 @@
         "name": "DeepSeek V4 Pro 0813 · Claude Code",
         "backend": "claude",
         "model": "deepseek-v4-pro-0813",
-        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/apps/anthropic",
+        "base_url": "https://dashscope.aliyuncs.com/apps/anthropic",
         "api_key_env": "DASHSCOPE_API_KEY",
         "reasoning_effort": "max"
       }

@@ -33,7 +33,7 @@ class ThreeGameTournamentTests(unittest.TestCase):
         players = [row["player"] for row in config["participants"]]
         endpoints = {row["base_url"] for row in players}
         self.assertEqual({
-            "https://dashscope.aliyuncs.com/compatible-mode/apps/anthropic",
+            "https://dashscope.aliyuncs.com/apps/anthropic",
             "https://dashscope.aliyuncs.com/compatible-mode/v1",
             "https://token-plan-cn.xiaomimimo.com/anthropic",
             "https://token-plan-cn.xiaomimimo.com/v1",

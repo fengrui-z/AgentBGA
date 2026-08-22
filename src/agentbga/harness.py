@@ -286,7 +286,18 @@ class HarnessAgent:
             claude_config.mkdir(exist_ok=True)
             env["CLAUDE_CONFIG_DIR"] = str(claude_config)
             if key:
-                env["ANTHROPIC_API_KEY"] = key
+                if self.config.base_url and "api.anthropic.com" not in self.config.base_url:
+                    # Claude Code's third-party provider contract uses a bearer
+                    # token. DashScope and MiMo document ANTHROPIC_AUTH_TOKEN;
+                    # ANTHROPIC_API_KEY is reserved for Anthropic's own endpoint.
+                    if key_name:
+                        env.pop(key_name, None)
+                    env.pop("ANTHROPIC_API_KEY", None)
+                    env["ANTHROPIC_AUTH_TOKEN"] = key
+                else:
+                    if key_name and key_name != "ANTHROPIC_API_KEY":
+                        env.pop(key_name, None)
+                    env["ANTHROPIC_API_KEY"] = key
             if self.config.base_url:
                 env["ANTHROPIC_BASE_URL"] = self.config.base_url
         elif self.config.backend == "pi":
@@ -467,13 +478,24 @@ class HarnessAgent:
             llm_plugin_block = (
                 "- id: llm-pi-ai\n"
                 "  config:\n"
-                f"    baseURL: {json.dumps(dsh_base_url)}\n"
-                f"    apiKeyEnv: {json.dumps(dsh_api_key_env)}\n"
+                "    providers:\n"
+                "      agentbga:\n"
+                "        displayName: AgentBGA seat provider\n"
+                f"        apiKeyEnv: {json.dumps(dsh_api_key_env)}\n"
+                "        api: openai-completions\n"
+                f"        baseURL: {json.dumps(dsh_base_url)}\n"
+                "        models:\n"
+                f"          - id: {json.dumps(self.config.model or '')}\n"
+                f"            name: {json.dumps(self.config.model or '')}\n"
+                "            contextWindow: 1048576\n"
+                "            maxTokens: 131072\n"
+                "            reasoningEfforts:\n"
+                f"              {requested_effort}: {requested_effort}\n"
             )
         dsh_patch = (
             "- id: agent-default-model\n"
             "  config:\n"
-            f"    provider: {'deepseek-official' if is_deepseek_native else 'pi-ai'}\n"
+            f"    provider: {'deepseek-official' if is_deepseek_native else 'agentbga'}\n"
             f"    model: {json.dumps(self.config.model or '')}\n"
             + llm_plugin_block
             + "- id: headless-runner\n"
