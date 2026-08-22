@@ -29,7 +29,7 @@
       "player": {
         "name": "DeepSeek V4 Pro 0813 · Minimal",
         "backend": "minimal",
-        "model": "deepseek-v4-pro0813",
+        "model": "deepseek-v4-pro-0813",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key_env": "DASHSCOPE_API_KEY",
         "reasoning_effort": "max"
@@ -73,7 +73,7 @@
       "player": {
         "name": "DeepSeek V4 Pro 0813 · Direct API",
         "backend": "openai",
-        "model": "deepseek-v4-pro0813",
+        "model": "deepseek-v4-pro-0813",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key_env": "DASHSCOPE_API_KEY"
       }
@@ -83,7 +83,7 @@
       "player": {
         "name": "DeepSeek V4 Pro 0813 · OpenCode",
         "backend": "opencode",
-        "model": "deepseek-v4-pro0813",
+        "model": "deepseek-v4-pro-0813",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key_env": "DASHSCOPE_API_KEY",
         "reasoning_effort": "max"
@@ -94,7 +94,7 @@
       "player": {
         "name": "DeepSeek V4 Pro 0813 · DSh",
         "backend": "dsh",
-        "model": "deepseek-v4-pro0813",
+        "model": "deepseek-v4-pro-0813",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key_env": "DASHSCOPE_API_KEY",
         "reasoning_effort": "max"
@@ -105,7 +105,7 @@
       "player": {
         "name": "DeepSeek V4 Pro 0813 · Claude Code",
         "backend": "claude",
-        "model": "deepseek-v4-pro0813",
+        "model": "deepseek-v4-pro-0813",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/apps/anthropic",
         "api_key_env": "DASHSCOPE_API_KEY",
         "reasoning_effort": "max"
@@ -116,7 +116,7 @@
       "player": {
         "name": "DeepSeek V4 Pro 0813 · Hermes",
         "backend": "hermes",
-        "model": "deepseek-v4-pro0813",
+        "model": "deepseek-v4-pro-0813",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key_env": "DASHSCOPE_API_KEY",
         "reasoning_effort": "max"

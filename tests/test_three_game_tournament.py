@@ -38,8 +38,12 @@ class ThreeGameTournamentTests(unittest.TestCase):
             "https://token-plan-cn.xiaomimimo.com/anthropic",
             "https://token-plan-cn.xiaomimimo.com/v1",
         }, endpoints)
-        self.assertIn("glm-5.2", {row["model"] for row in players})
-        self.assertNotIn("glm-5.3", {row["model"] for row in players})
+        models = {row["model"] for row in players}
+        self.assertIn("glm-5.2", models)
+        self.assertNotIn("glm-5.3", models)
+        self.assertIn("deepseek-v4-flash-0731", models)
+        self.assertIn("deepseek-v4-pro-0813", models)
+        self.assertNotIn("deepseek-v4-pro0813", models)
         self.assertNotIn("codex", {row["backend"] for row in players})
         for player in players:
             endpoint = player["base_url"]
