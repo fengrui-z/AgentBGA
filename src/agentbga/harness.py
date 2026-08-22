@@ -429,7 +429,14 @@ class HarnessAgent:
             + ("memories.use_memories = false\n" if self.config.auth_mode == "subscription" else "")
             + codex_reasoning
             + provider
-            + ("[features]\nshell_tool = false\nskill_mcp_dependency_install = false\n" if self.config.auth_mode == "subscription" else "")
+            + (
+                "[features]\n"
+                "plugins = false\n"
+                "remote_plugin = false\n"
+                "shell_tool = false\n"
+                "skill_mcp_dependency_install = false\n"
+                if self.config.auth_mode == "subscription" else ""
+            )
             + "[mcp_servers.agentbga]\n"
             f"command = {json.dumps(mcp_command[0])}\n"
             f"args = [{escaped_args}]\n"
@@ -586,6 +593,8 @@ class HarnessAgent:
                 "--config", "forced_login_method=\"chatgpt\"",
                 "--config", "history.persistence=\"none\"",
                 "--config", "memories.use_memories=false",
+                "--config", "features.plugins=false",
+                "--config", "features.remote_plugin=false",
                 "--config", "features.shell_tool=false",
                 "--config", "features.skill_mcp_dependency_install=false",
             ])
