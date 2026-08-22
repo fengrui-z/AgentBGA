@@ -466,6 +466,11 @@ class HarnessAgent:
         dsh_api_key_env = self.config.api_key_env or "OPENAI_API_KEY"
         dsh_base_url = (self.config.base_url or "https://api.deepseek.com").rstrip("/")
         is_deepseek_native = "deepseek.com" in dsh_base_url.lower()
+        is_deepseek_model = (self.config.model or "").lower().startswith("deepseek")
+        # dsh-llm-pi-ai does not expose pi-ai's supportsDeveloperRole switch.
+        # Using the catalog provider identity makes pi-ai apply its DeepSeek
+        # compatibility profile even when the endpoint is a compatible proxy.
+        dsh_proxy_provider = "deepseek" if is_deepseek_model else "agentbga"
         if is_deepseek_native:
             llm_plugin_block = (
                 "- id: llm-deepseek\n"
@@ -479,7 +484,7 @@ class HarnessAgent:
                 "- id: llm-pi-ai\n"
                 "  config:\n"
                 "    providers:\n"
-                "      agentbga:\n"
+                f"      {dsh_proxy_provider}:\n"
                 "        displayName: AgentBGA seat provider\n"
                 f"        apiKeyEnv: {json.dumps(dsh_api_key_env)}\n"
                 "        api: openai-completions\n"
@@ -495,7 +500,7 @@ class HarnessAgent:
         dsh_patch = (
             "- id: agent-default-model\n"
             "  config:\n"
-            f"    provider: {'deepseek-official' if is_deepseek_native else 'agentbga'}\n"
+            f"    provider: {'deepseek-official' if is_deepseek_native else dsh_proxy_provider}\n"
             f"    model: {json.dumps(self.config.model or '')}\n"
             + llm_plugin_block
             + "- id: headless-runner\n"
