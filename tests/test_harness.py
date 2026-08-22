@@ -431,7 +431,7 @@ class HarnessTests(unittest.TestCase):
                     self.assertEqual("https://proxy.example/v1", models["providers"]["agentbga"]["baseUrl"])
                     self.assertEqual("$OPENAI_API_KEY", models["providers"]["agentbga"]["apiKey"])
                     self.assertTrue(models["providers"]["agentbga"]["models"][0]["reasoning"])
-                    self.assertEqual("max", models["providers"]["agentbga"]["models"][0]["thinkingLevelMap"]["xhigh"])
+                    self.assertEqual("xhigh", models["providers"]["agentbga"]["models"][0]["thinkingLevelMap"]["xhigh"])
                     extension = (agent.session.workspace / "agentbga-tools.ts").read_text()
                     self.assertIn('name: "submit_action"', extension)
 

@@ -377,7 +377,7 @@ class HarnessAgent:
                 "reasoning": reasoning_enabled,
                 "thinkingLevelMap": {
                     "minimal": None, "low": None, "medium": None,
-                    "high": "high", "xhigh": "max",
+                    "high": "high", "xhigh": "xhigh",
                 },
             }],
         }}}
