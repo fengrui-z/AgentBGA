@@ -50,7 +50,7 @@ Each seat can use one of:
 | `anthropic` | Direct API | Anthropic Messages API |
 | `gemini` | Direct API | Google Gemini generateContent |
 | `opencode` | Harness | CLI + MCP, persistent session |
-| `codex` | Harness | CLI + MCP, persistent session |
+| `codex` | Harness | CLI + MCP, persistent session; API key or ChatGPT subscription auth |
 | `dsh` | Harness | DeepSeek Harness, cold-start resumable headless profile |
 | `hermes` | Harness | Hermes Agent + MCP, isolated home, persistent session |
 | `claude` | Harness | Claude Code + MCP, persistent session |
@@ -62,6 +62,20 @@ Each seat can use one of:
 All harness seats share a unified 5-tool interface: `observe`, `legal_actions`, `submit_action`, `read_notes`, `write_notes`. The `minimal` harness runs entirely in Python with zero external dependencies — no CLI, no MCP server, no Node.js.
 
 The `hermes` backend requires the `hermes` executable with MCP support. AgentBGA creates a seat-local `HERMES_HOME`, configures only the seat-scoped `agentbga` MCP server, and routes the configured OpenAI-compatible endpoint through Hermes' custom provider.
+
+Codex can reuse the ChatGPT subscription already authenticated by the local CLI. Log in
+once, select `auth_mode: "subscription"`, and omit `base_url` and `api_key_env`:
+
+```console
+codex login
+./agentbga doctor --players-config examples/codex-subscription-vs-random.json
+./agentbga run --players-config examples/codex-subscription-vs-random.json --seed 42 --jsonl
+```
+
+Subscription mode bridges only the active Codex credential into a seat-isolated
+`CODEX_HOME`, forces ChatGPT login, and disables personal plugins, skills, shell access,
+history, and memories. It does not inject `OPENAI_API_KEY` or endpoint overrides. The
+default `api_key` mode keeps the existing seat-isolated usage-based API configuration.
 
 Every harness backend assigns match memory to `(match_id, seat)`. In a learning series,
 memory is instead assigned to `(series_id, participant_id)`, so a competitor keeps its

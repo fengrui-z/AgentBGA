@@ -33,6 +33,7 @@ class PlayerConfig:
     model: str | None = None
     base_url: str | None = None
     api_key_env: str | None = None
+    auth_mode: str | None = None
     wire_api: str | None = None
     reasoning_effort: str | None = None
     series_id: str | None = None
@@ -43,7 +44,7 @@ class PlayerConfig:
     @classmethod
     def from_dict(cls, value: dict[str, Any], seat: int) -> "PlayerConfig":
         allowed = {
-            "name", "backend", "model", "base_url", "api_key_env", "wire_api",
+            "name", "backend", "model", "base_url", "api_key_env", "auth_mode", "wire_api",
             "reasoning_effort", "series_id", "participant_id",
         }
         unknown = set(value) - allowed
@@ -58,6 +59,20 @@ class PlayerConfig:
         model = value.get("model")
         if backend not in {"random", "human"} and not model:
             raise ValueError(f"player {seat} using {backend} requires model")
+        auth_mode = value.get("auth_mode")
+        if auth_mode is not None:
+            if backend != "codex":
+                raise ValueError(f"player {seat} auth_mode is only supported by the codex backend")
+            if not isinstance(auth_mode, str) or auth_mode.lower() not in {"api_key", "subscription"}:
+                raise ValueError(f"player {seat} auth_mode must be api_key or subscription")
+            auth_mode = auth_mode.lower()
+        elif backend == "codex":
+            auth_mode = "api_key"
+        if auth_mode == "subscription":
+            if value.get("base_url"):
+                raise ValueError(f"player {seat} codex subscription auth cannot use base_url")
+            if value.get("api_key_env"):
+                raise ValueError(f"player {seat} codex subscription auth cannot use api_key_env")
         defaults = {
             "openai": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
             "anthropic": ("https://api.anthropic.com", "ANTHROPIC_API_KEY"),
@@ -71,7 +86,7 @@ class PlayerConfig:
             "minimal": (None, "OPENAI_API_KEY"),
         }
         base_url, api_key_env = (None, None)
-        if backend in defaults:
+        if backend in defaults and auth_mode != "subscription":
             base_url, api_key_env = defaults[backend]
         selected_url = str(value.get("base_url") or base_url) if (value.get("base_url") or base_url) else None
         if selected_url and backend in HARNESS_BACKENDS:
@@ -142,6 +157,7 @@ class PlayerConfig:
             model=str(model) if model else None,
             base_url=selected_url,
             api_key_env=selected_key_env,
+            auth_mode=auth_mode,
             wire_api=str(wire_api) if wire_api else None,
             reasoning_effort=reasoning_effort,
             series_id=series_id,

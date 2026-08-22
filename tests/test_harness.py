@@ -30,6 +30,7 @@ class HarnessTests(unittest.TestCase):
             "base_url": "https://api.deepseek.com/v1/chat/completions/",
         }, 1)
         self.assertEqual("OPENAI_API_KEY", codex.api_key_env)
+        self.assertEqual("api_key", codex.auth_mode)
         self.assertEqual("responses", codex.wire_api)
         self.assertEqual("DEEPSEEK_API_KEY", opencode.api_key_env)
         self.assertEqual("https://api.deepseek.com/v1", opencode.base_url)
@@ -85,6 +86,23 @@ class HarnessTests(unittest.TestCase):
             PlayerConfig.from_dict({
                 "name": "No Reasoning Codex", "backend": "codex", "model": "gpt-test",
                 "reasoning_effort": "none",
+            }, 6)
+        subscription = PlayerConfig.from_dict({
+            "name": "Codex Subscription", "backend": "codex", "model": "gpt-test",
+            "auth_mode": "subscription",
+        }, 6)
+        self.assertEqual("subscription", subscription.auth_mode)
+        self.assertIsNone(subscription.base_url)
+        self.assertIsNone(subscription.api_key_env)
+        with self.assertRaisesRegex(ValueError, "subscription auth cannot use base_url"):
+            PlayerConfig.from_dict({
+                "name": "Invalid Subscription", "backend": "codex", "model": "gpt-test",
+                "auth_mode": "subscription", "base_url": "https://api.openai.com/v1",
+            }, 6)
+        with self.assertRaisesRegex(ValueError, "only supported by the codex backend"):
+            PlayerConfig.from_dict({
+                "name": "Invalid Auth", "backend": "opencode", "model": "gpt-test",
+                "auth_mode": "subscription",
             }, 6)
         with self.assertRaisesRegex(ValueError, "only supported for harness backends"):
             PlayerConfig.from_dict({
@@ -700,6 +718,65 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("seat-secret", environment["SEAT_KEY"])
             self.assertNotIn("OTHER_TOKEN", environment)
             self.assertIn("seat-0-codex/.codex-home", environment["CODEX_HOME"])
+
+    def test_codex_subscription_reuses_login_store_and_forces_chatgpt_auth(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/codex"):
+            root = Path(directory)
+            source_home = root / "authenticated-codex"
+            source_home.mkdir()
+            source_auth = source_home / "auth.json"
+            source_auth.write_text("{}", encoding="utf-8")
+            (source_home / "plugins").mkdir()
+            config = PlayerConfig.from_dict({
+                "name": "Codex Subscription", "backend": "codex", "model": "gpt-test",
+                "auth_mode": "subscription",
+            }, 0)
+            with mock.patch.dict(os.environ, {
+                "HOME": str(root), "PATH": "/bin",
+                "CODEX_HOME": str(source_home),
+                "OPENAI_API_KEY": "metered-secret",
+                "OPENAI_BASE_URL": "https://proxy.example/v1",
+            }, clear=True):
+                agent = HarnessAgent(config, "match", 0, runs_root=root / "runs")
+                environment = agent._environment()
+                agent._prepare_turn({"turn_count": 0, "state_version": 0}, LEGAL)
+            isolated_home = agent.session.workspace / ".codex-home"
+            self.assertEqual(str(isolated_home), environment["CODEX_HOME"])
+            self.assertNotIn("OPENAI_API_KEY", environment)
+            self.assertNotIn("OPENAI_BASE_URL", environment)
+            self.assertTrue((isolated_home / "auth.json").is_symlink())
+            self.assertEqual(source_auth.resolve(), (isolated_home / "auth.json").resolve())
+            self.assertFalse((isolated_home / "plugins").exists())
+            codex_config = (agent.session.workspace / ".codex" / "config.toml").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn('forced_login_method = "chatgpt"', codex_config)
+            self.assertIn('history.persistence = "none"', codex_config)
+            self.assertIn('model_provider = "agentbga_chatgpt_https"', codex_config)
+            self.assertIn('[model_providers.agentbga_chatgpt_https]', codex_config)
+            self.assertIn('base_url = "https://chatgpt.com/backend-api/codex"', codex_config)
+            self.assertIn("requires_openai_auth = true", codex_config)
+            self.assertIn("supports_websockets = false", codex_config)
+            self.assertIn("plugins = false", codex_config)
+            self.assertIn("remote_plugin = false", codex_config)
+            self.assertIn("shell_tool = false", codex_config)
+            self.assertIn(f'env = {{ PYTHONPATH = {json.dumps(agent._pythonpath)} }}', codex_config)
+            self.assertIn("required = true", codex_config)
+            self.assertIn('default_tools_approval_mode = "approve"', codex_config)
+            self.assertIn('forced_login_method="chatgpt"', agent._codex_config_args)
+            self.assertIn('model_provider="agentbga_chatgpt_https"', agent._codex_config_args)
+            self.assertIn(
+                "model_providers.agentbga_chatgpt_https.supports_websockets=false",
+                agent._codex_config_args,
+            )
+            self.assertIn("features.plugins=false", agent._codex_config_args)
+            self.assertIn("features.remote_plugin=false", agent._codex_config_args)
+            self.assertIn("features.shell_tool=false", agent._codex_config_args)
+            self.assertIn("mcp_servers.agentbga.required=true", agent._codex_config_args)
+            self.assertIn(
+                'mcp_servers.agentbga.default_tools_approval_mode="approve"',
+                agent._codex_config_args,
+            )
 
     def test_harness_writes_per_turn_trace_file(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/fake"):

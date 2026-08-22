@@ -160,6 +160,63 @@ class CLITests(unittest.TestCase):
             self.assertFalse(result["ready_for_model"])
             self.assertEqual([True, False], [row["api_key_configured"] for row in result["data"]["players"]])
 
+    def test_doctor_accepts_logged_in_codex_subscription_without_api_key(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "players.json"
+            config.write_text(json.dumps({
+                "schema_version": "agentbga.players.v1",
+                "players": [
+                    {"name": "Codex", "backend": "codex", "model": "gpt-test",
+                     "auth_mode": "subscription"},
+                    {"name": "Baseline", "backend": "random"},
+                ],
+            }))
+            output = StringIO()
+            login_status = mock.Mock(returncode=0, stdout="Logged in using ChatGPT\n", stderr="")
+            with mock.patch.dict(os.environ, {}, clear=True), \
+                    mock.patch("agentbga.cli.shutil.which", return_value="/bin/codex"), \
+                    mock.patch("agentbga.cli.subprocess.run", return_value=login_status) as run, \
+                    redirect_stdout(output):
+                code = main(["doctor", "--players-config", str(config)])
+            self.assertEqual(0, code)
+            result = json.loads(output.getvalue())
+            codex = result["data"]["players"][0]
+            self.assertTrue(codex["authentication_configured"])
+            self.assertIsNone(codex["api_key_configured"])
+            self.assertEqual("Logged in using ChatGPT", codex["authentication_status"])
+            run.assert_called_once()
+            command, = run.call_args.args
+            self.assertEqual(["/bin/codex", "login", "status"], command)
+            call_options = run.call_args.kwargs
+            self.assertTrue(call_options["capture_output"])
+            self.assertTrue(call_options["text"])
+            self.assertEqual(10, call_options["timeout"])
+            self.assertFalse(call_options["check"])
+            self.assertNotIn("OPENAI_API_KEY", call_options["env"])
+            self.assertNotEqual(os.environ.get("CODEX_HOME"), call_options["env"]["CODEX_HOME"])
+
+    def test_doctor_rejects_api_key_login_for_codex_subscription(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "players.json"
+            config.write_text(json.dumps({
+                "schema_version": "agentbga.players.v1",
+                "players": [
+                    {"name": "Codex", "backend": "codex", "model": "gpt-test",
+                     "auth_mode": "subscription"},
+                    {"name": "Baseline", "backend": "random"},
+                ],
+            }))
+            output = StringIO()
+            api_login = mock.Mock(returncode=0, stdout="Logged in using an API key\n", stderr="")
+            with mock.patch("agentbga.cli.shutil.which", return_value="/bin/codex"), \
+                    mock.patch("agentbga.cli.subprocess.run", return_value=api_login), \
+                    redirect_stdout(output):
+                code = main(["doctor", "--players-config", str(config)])
+            self.assertEqual(1, code)
+            result = json.loads(output.getvalue())
+            self.assertFalse(result["ready_for_model"])
+            self.assertFalse(result["data"]["players"][0]["authentication_configured"])
+
     def test_named_random_players_config_runs_and_status_preserves_names(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -119,7 +119,8 @@ class MatchHub:
             api_key = raw.get("api_key")
             public = {key: value for key, value in raw.items() if key != "api_key"}
             config = PlayerConfig.from_dict(public, seat)
-            if game_description.get("runnable", True) and config.backend not in {"random", "human"} and (
+            subscription_auth = config.backend == "codex" and config.auth_mode == "subscription"
+            if game_description.get("runnable", True) and config.backend not in {"random", "human"} and not subscription_auth and (
                 not isinstance(api_key, str) or not api_key.strip()
             ):
                 raise ValueError(f"player {seat} requires api_key")

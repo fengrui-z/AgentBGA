@@ -36,8 +36,10 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /添加人类/);
   assert.match(html, /type="password"/);
   const source = await readFile(new URL("app/page.tsx", root), "utf8");
+  const styles = await readFile(new URL("app/globals.css", root), "utf8");
   assert.match(source, /deepseekHarnessPlayer\(1, "opencode"\)/);
   assert.match(source, /codexHarnessPlayer\(2\)/);
+  assert.match(styles, /\.player-config \.auth-field \{ grid-column:2 \/ span 2; \}/);
   assert.match(source, /MODEL STREAM|模型 Chat/);
   assert.match(source, /暂停|继续对局/);
   assert.match(source, /human_turn|submitHumanAction/);
