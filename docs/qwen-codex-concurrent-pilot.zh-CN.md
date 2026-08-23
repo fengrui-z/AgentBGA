@@ -9,15 +9,15 @@
 | 模型 | Harness | 认证 |
 |---|---|---|
 | Qwen 3.8 Max | Pi Agent | `DASHSCOPE_API_KEY` |
-| Qwen 3.7 Plus | Pi Agent | `DASHSCOPE_API_KEY` |
+| MiMo V2.5 Pro | Pi Agent | `MIMO_API_KEY` |
 | Qwen 3.8 27B | Pi Agent | `DASHSCOPE_API_KEY` |
 | Qwen 3.8 Max | OpenCode | `DASHSCOPE_API_KEY` |
 | GPT-5.6 Sol | Codex | ChatGPT subscription |
 | GPT-5.6 Luna | Codex | ChatGPT subscription |
 
-这样同时得到三类比较：固定 Pi 比较三个 Qwen 模型、固定 Qwen 3.8 Max 比较 Pi 和
-OpenCode、固定 Codex 比较 Sol 和 Luna。GPT-5.6 的两个名称按当前 Codex 接入
-使用；不要把它们当作已经由公开 API 文档确认的模型 ID。
+这样同时得到三类比较：固定 Pi 比较两个 Qwen 模型和 MiMo V2.5 Pro、固定
+Qwen 3.8 Max 比较 Pi 和 OpenCode、固定 Codex 比较 Sol 和 Luna。GPT-5.6 的两个
+名称按当前 Codex 接入使用；不要把它们当作已经由公开 API 文档确认的模型 ID。
 
 ## 赛程
 
@@ -50,6 +50,9 @@ codex login status
 read -s "DASHSCOPE_API_KEY?DashScope API Key: "
 export DASHSCOPE_API_KEY
 echo
+read -s "MIMO_API_KEY?MiMo API Key: "
+export MIMO_API_KEY
+echo
 ```
 
 配置只记录环境变量名，不会记录 key。Codex seat 使用 `auth_mode: subscription`，不需要
@@ -80,8 +83,8 @@ PYTHONPATH=src python3 examples/qwen_codex_pilot.py run \
   --workers 1
 ```
 
-固定种子下，赛程前 4 场会覆盖全部 6 个条件；要一次检查三个 Qwen ID、OpenCode
-endpoint 和两个 Codex 模型，可运行：
+固定种子下，赛程前 4 场会覆盖全部 6 个条件；要一次检查两个 Qwen ID、MiMo、
+OpenCode endpoint 和两个 Codex 模型，可运行：
 
 ```console
 PYTHONPATH=src python3 examples/qwen_codex_pilot.py run \

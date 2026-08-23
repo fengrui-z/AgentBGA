@@ -14,13 +14,13 @@
       }
     },
     {
-      "id": "qwen37-plus-pi",
+      "id": "mimo-v25-pro-pi",
       "player": {
-        "name": "Qwen 3.7 Plus · Pi Agent",
+        "name": "MiMo V2.5 Pro · Pi Agent",
         "backend": "pi",
-        "model": "qwen3.7-plus",
-        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        "api_key_env": "DASHSCOPE_API_KEY",
+        "model": "mimo-v2.5-pro",
+        "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
+        "api_key_env": "MIMO_API_KEY",
         "reasoning_effort": "max"
       }
     },

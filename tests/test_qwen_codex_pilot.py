@@ -59,10 +59,17 @@ class QwenCodexPilotTests(unittest.TestCase):
         codex = [
             row for row in config["participants"] if row["player"]["backend"] == "codex"
         ]
-        self.assertEqual(4, len(qwen))
-        self.assertEqual({"qwen3.8-max", "qwen3.7-plus", "qwen3.8-27B"}, {
+        self.assertEqual(3, len(qwen))
+        self.assertEqual({"qwen3.8-max", "qwen3.8-27B"}, {
             row["player"]["model"] for row in qwen
         })
+        mimo = next(
+            row for row in config["participants"]
+            if row["player"]["model"] == "mimo-v2.5-pro"
+        )
+        self.assertEqual("pi", mimo["player"]["backend"])
+        self.assertEqual("https://token-plan-cn.xiaomimimo.com/v1", mimo["player"]["base_url"])
+        self.assertEqual("MIMO_API_KEY", mimo["player"]["api_key_env"])
         self.assertEqual({"gpt-5.6-sol", "gpt-5.6-luna"}, {
             row["player"]["model"] for row in codex
         })
@@ -112,7 +119,10 @@ class QwenCodexPilotTests(unittest.TestCase):
             }
 
         report = {
-            "credentials": {"DASHSCOPE_API_KEY": {"configured": True}},
+            "credentials": {
+                "DASHSCOPE_API_KEY": {"configured": True},
+                "MIMO_API_KEY": {"configured": True},
+            },
             "codex_subscription": {"configured": True, "status": "Logged in using ChatGPT"},
             "harnesses": {
                 name: {"path": f"/bin/{name}", "version": "test"}
