@@ -124,21 +124,22 @@ class CLITests(unittest.TestCase):
                 "schema_version": "agentbga.players.v1",
                 "players": [
                     {"name": "Claude", "backend": "claude", "model": "claude-test"},
+                    {"name": "Qwen Code", "backend": "qwen", "model": "qwen3-coder-plus"},
                     {"name": "Codex", "backend": "codex", "model": "gpt-test"},
                     {"name": "OpenCode", "backend": "opencode", "model": "deepseek/test"},
-                    {"name": "DeepSeek Harness", "backend": "dsh", "model": "deepseek-v4-flash"},
                 ],
             }))
             output = StringIO()
             with mock.patch.dict(os.environ, {
                 "ANTHROPIC_API_KEY": "present", "AGENTBGA_API_KEY": "present",
                 "OPENAI_API_KEY": "present", "DEEPSEEK_API_KEY": "present",
+                "BAILIAN_CODING_PLAN_API_KEY": "present",
             }, clear=True), mock.patch("agentbga.cli.shutil.which", return_value="/bin/harness"), redirect_stdout(output):
                 code = main(["doctor", "--players-config", str(config)])
             self.assertEqual(0, code)
             result = json.loads(output.getvalue())
             self.assertEqual(
-                ["claude", "codex", "opencode", "dsh"],
+                ["claude", "qwen", "codex", "opencode"],
                 [row["backend"] for row in result["data"]["players"]],
             )
 

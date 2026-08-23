@@ -9,6 +9,7 @@ import time
 import uuid
 from typing import Any
 
+from .agents import HARNESS_BACKENDS
 from .registry import get_game
 
 
@@ -248,7 +249,7 @@ class Store:
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (match_id, seat, player["name"], player["backend"], player.get("model"),
                      player.get("base_url"), player.get("api_key_env"), player.get("auth_mode"),
-                     player["backend"] if player["backend"] in {"claude", "pi", "codex", "opencode", "dsh", "minimal"} else None,
+                     player["backend"] if player["backend"] in HARNESS_BACKENDS else None,
                      player.get("wire_api"), player.get("reasoning_effort")),
                 )
 

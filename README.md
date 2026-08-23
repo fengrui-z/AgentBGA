@@ -55,6 +55,7 @@ Each seat can use one of:
 | `hermes` | Harness | Hermes Agent + MCP, isolated home, persistent session |
 | `claude` | Harness | Claude Code + MCP, persistent session |
 | `pi` | Harness | Pi + native TS extension, persistent session |
+| `qwen` | Harness | Qwen Code + MCP, isolated provider config, persistent session |
 | `minimal` | Harness | Pure Python, in-process, direct LLM + 5 tools |
 | `human` | — | Browser-based play |
 | `random` | — | Random baseline |
@@ -62,6 +63,17 @@ Each seat can use one of:
 All harness seats share a unified 5-tool interface: `observe`, `legal_actions`, `submit_action`, `read_notes`, `write_notes`. The `minimal` harness runs entirely in Python with zero external dependencies — no CLI, no MCP server, no Node.js.
 
 The `hermes` backend requires the `hermes` executable with MCP support. AgentBGA creates a seat-local `HERMES_HOME`, configures only the seat-scoped `agentbga` MCP server, and routes the configured OpenAI-compatible endpoint through Hermes' custom provider.
+
+The `qwen` backend requires the `qwen` executable. AgentBGA creates seat-local
+`QWEN_HOME` and `QWEN_RUNTIME_DIR` directories, configures an OpenAI-compatible
+model provider, disables ambient tools and memory, and exposes only the seat-scoped
+`agentbga` MCP tools. For Alibaba Cloud Coding Plan:
+
+```console
+export BAILIAN_CODING_PLAN_API_KEY='...'
+./agentbga doctor --players-config examples/qwen-code-vs-random.json
+./agentbga run --players-config examples/qwen-code-vs-random.json --seed 42 --jsonl
+```
 
 Codex can reuse the ChatGPT subscription already authenticated by the local CLI. Log in
 once, select `auth_mode: "subscription"`, and omit `base_url` and `api_key_env`:
