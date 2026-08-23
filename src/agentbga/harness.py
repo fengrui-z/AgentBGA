@@ -136,6 +136,8 @@ class HarnessAgent:
         requested = self.config.reasoning_effort or "max"
         if self.config.backend in {"codex", "pi"} and requested == "max":
             return "xhigh"
+        if self.config.backend == "qwen" and requested == "minimal":
+            return "low"
         if self.config.backend == "claude" and requested == "xhigh":
             return "max"
         return requested
@@ -192,6 +194,22 @@ class HarnessAgent:
             if self.session.session_id:
                 command.extend(["--session", self.session.session_id])
             return [*command, prompt]
+        if self.config.backend == "qwen":
+            mcp_path = self.session.workspace / "qwen-mcp.json"
+            mcp_config = mcp_path.read_text(encoding="utf-8") if mcp_path.is_file() else "{}"
+            command = [
+                self.binary,
+                "--output-format", "stream-json",
+                "--chat-recording",
+                "--approval-mode", "yolo",
+                "--core-tools", "",
+                # Qwen Code expects the JSON payload itself here, not a path.
+                "--mcp-config", mcp_config,
+                "--model", model,
+            ]
+            if self.session.session_id:
+                command.extend(["--resume", self.session.session_id])
+            return [*command, "--prompt", prompt]
         if self.config.backend == "codex":
             overrides = getattr(self, "_codex_config_args", [])
             runtime_dir = os.path.relpath(self.session.runtime, self.session.workspace)
@@ -320,6 +338,22 @@ class HarnessAgent:
             env["AGENTBGA_SEAT_CONTEXT"] = str(self.session.runtime / "turn-context.json")
             env["AGENTBGA_SEAT_SUBMISSION"] = str(self.session.runtime / "submission.json")
             env["AGENTBGA_SEAT_AUDIT"] = str(self.session.runtime / "tool-events.jsonl")
+        elif self.config.backend == "qwen":
+            qwen_home = self.session.workspace / ".qwen-home"
+            qwen_runtime = self.session.workspace / ".qwen-runtime"
+            qwen_home.mkdir(mode=0o700, exist_ok=True)
+            qwen_runtime.mkdir(mode=0o700, exist_ok=True)
+            env["QWEN_HOME"] = str(qwen_home)
+            env["QWEN_RUNTIME_DIR"] = str(qwen_runtime)
+            env["QWEN_CODE_SYSTEM_SETTINGS_PATH"] = str(qwen_home / "settings.json")
+            env["QWEN_USAGE_STATISTICS_ENABLED"] = "0"
+            env["QWEN_TELEMETRY_ENABLED"] = "0"
+            env["QWEN_CODE_SUPPRESS_YOLO_WARNING"] = "1"
+            # Make the first headless model turn wait until the seat MCP tools
+            # have completed discovery.
+            env["QWEN_CODE_LEGACY_MCP_BLOCKING"] = "1"
+            if key:
+                env[self.config.api_key_env or "BAILIAN_CODING_PLAN_API_KEY"] = key
         elif self.config.backend == "dsh":
             self._dsh_home.mkdir(parents=True, exist_ok=True)
             env["DSH_HOME"] = str(self._dsh_home)
@@ -401,6 +435,71 @@ class HarnessAgent:
         }}}
         (pi_dir / "models.json").write_text(
             json.dumps(pi_models, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        qwen_dir = self.session.workspace / ".qwen-home"
+        qwen_dir.mkdir(mode=0o700, exist_ok=True)
+        qwen_model: dict[str, Any] = {"name": self.config.model}
+        qwen_effort = self._native_reasoning_effort()
+        if qwen_effort in {"low", "medium", "high", "xhigh", "max"}:
+            qwen_model["reasoningEffort"] = qwen_effort
+        qwen_settings = {
+            "general": {"enableAutoUpdate": False},
+            "privacy": {"usageStatisticsEnabled": False},
+            "telemetry": {"enabled": False, "logPrompts": False},
+            "security": {
+                "folderTrust": {"enabled": False},
+                "auth": {"selectedType": "openai", "enforcedType": "openai"},
+            },
+            "modelProviders": {"openai": [{
+                "id": self.config.model,
+                "name": self.config.model,
+                "baseUrl": self.config.base_url,
+                "envKey": self.config.api_key_env or "BAILIAN_CODING_PLAN_API_KEY",
+            }]},
+            "model": qwen_model,
+            # Qwen Code currently uses tools.core as the registry allowlist.
+            # An empty list hides all built-in tools; the explicit command-line
+            # MCP config below remains available.
+            "tools": {
+                "core": [],
+                "disabled": [
+                    "skill", "get_goal", "update_goal", "list_agents", "task_stop",
+                    "agent", "send_message", "enter_worktree", "exit_worktree",
+                ],
+                "approvalMode": "yolo",
+                "workflowsEnabled": False,
+                "computerUse": {"enabled": False},
+                "toolSearch": {"enabled": False},
+            },
+            "context": {"fileName": []},
+            "skills": {
+                "disabledLevels": ["project", "user", "extension", "bundled"],
+            },
+            "memory": {
+                "enableManagedAutoMemory": False,
+                "enableManagedAutoDream": False,
+                "enableAutoSkill": False,
+                "enableTeamMemory": False,
+                "enableTeamMemorySync": False,
+            },
+            "experimental": {"artifact": False},
+            "mcp": {"allowed": ["agentbga"]},
+        }
+        qwen_mcp = {"mcpServers": {"agentbga": {
+            "command": mcp_command[0],
+            "args": mcp_command[1:],
+            "env": {"PYTHONPATH": self._pythonpath},
+            "trust": True,
+            "includeTools": [
+                "observe", "legal_actions", "submit_action",
+                "read_notes", "write_notes",
+            ],
+        }}}
+        (qwen_dir / "settings.json").write_text(
+            json.dumps(qwen_settings, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        (self.session.workspace / "qwen-mcp.json").write_text(
+            json.dumps(qwen_mcp, ensure_ascii=False, indent=2), encoding="utf-8",
         )
         codex_dir = self.session.workspace / ".codex"
         codex_dir.mkdir(exist_ok=True)
@@ -734,6 +833,14 @@ class HarnessAgent:
                 for key in ("text", "thinking"):
                     if isinstance(delta.get(key), str):
                         return delta[key]
+        message = payload.get("message")
+        if isinstance(message, dict) and isinstance(message.get("content"), list):
+            text_blocks = [
+                block["text"] for block in message["content"]
+                if isinstance(block, dict) and isinstance(block.get("text"), str)
+            ]
+            if text_blocks:
+                return "".join(text_blocks)
         item = payload.get("item") or payload.get("part") or payload
         if not isinstance(item, dict):
             return ""
@@ -762,6 +869,16 @@ class HarnessAgent:
     def _tool_details(payload: dict[str, Any]) -> tuple[str, Any] | None:
         if payload.get("type") == "tool_execution_start":
             return str(payload.get("toolName") or "tool"), payload.get("args") or {}
+        message = payload.get("message")
+        if isinstance(message, dict) and isinstance(message.get("content"), list):
+            for block in message["content"]:
+                if not isinstance(block, dict):
+                    continue
+                if str(block.get("type") or "").lower() not in {"tool_use", "tool_call"}:
+                    continue
+                name = block.get("name") or block.get("tool_name") or "tool"
+                arguments = block.get("input") or block.get("arguments") or {}
+                return str(name), arguments
         item = payload.get("item") or payload.get("part") or payload
         if not isinstance(item, dict):
             return None
