@@ -36,12 +36,12 @@
       }
     },
     {
-      "id": "qwen38-max-claude",
+      "id": "qwen38-max-opencode",
       "player": {
-        "name": "Qwen 3.8 Max · Claude Code",
-        "backend": "claude",
+        "name": "Qwen 3.8 Max · OpenCode",
+        "backend": "opencode",
         "model": "qwen3.8-max",
-        "base_url": "https://dashscope.aliyuncs.com/apps/anthropic",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key_env": "DASHSCOPE_API_KEY",
         "reasoning_effort": "max"
       }

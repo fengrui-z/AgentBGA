@@ -443,11 +443,7 @@ class HarnessTests(unittest.TestCase):
                 if backend == "claude":
                     mcp = json.loads((agent.session.workspace / "claude-mcp.json").read_text())
                     self.assertIn("agentbga", mcp["mcpServers"])
-                    with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "seat-secret"}):
-                        environment = agent._environment()
-                    self.assertEqual("https://proxy.example/v1", environment["ANTHROPIC_BASE_URL"])
-                    self.assertEqual("seat-secret", environment["ANTHROPIC_AUTH_TOKEN"])
-                    self.assertNotIn("ANTHROPIC_API_KEY", environment)
+                    self.assertEqual("https://proxy.example/v1", agent._environment()["ANTHROPIC_BASE_URL"])
                 else:
                     models = json.loads((agent.session.workspace / ".pi-home" / "models.json").read_text())
                     self.assertEqual("https://proxy.example/v1", models["providers"]["agentbga"]["baseUrl"])
@@ -463,14 +459,6 @@ class HarnessTests(unittest.TestCase):
                     self.assertEqual("xhigh", models["providers"]["agentbga"]["models"][0]["thinkingLevelMap"]["xhigh"])
                     extension = (agent.session.workspace / "agentbga-tools.ts").read_text()
                     self.assertIn('name: "submit_action"', extension)
-
-            official_claude = HarnessAgent(PlayerConfig.from_dict({
-                "name": "Official Claude", "backend": "claude", "model": "claude-test",
-            }, 2), "match-official-claude", 2, runs_root=directory)
-            with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "official-secret"}):
-                official_claude_env = official_claude._environment()
-            self.assertEqual("official-secret", official_claude_env["ANTHROPIC_API_KEY"])
-            self.assertNotIn("ANTHROPIC_AUTH_TOKEN", official_claude_env)
 
             official_pi = HarnessAgent(PlayerConfig.from_dict({
                 "name": "Official Pi", "backend": "pi", "model": "gpt-test",

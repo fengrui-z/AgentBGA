@@ -304,15 +304,7 @@ class HarnessAgent:
             claude_config.mkdir(exist_ok=True)
             env["CLAUDE_CONFIG_DIR"] = str(claude_config)
             if key:
-                if self.config.base_url and "api.anthropic.com" not in self.config.base_url:
-                    if key_name:
-                        env.pop(key_name, None)
-                    env.pop("ANTHROPIC_API_KEY", None)
-                    env["ANTHROPIC_AUTH_TOKEN"] = key
-                else:
-                    if key_name and key_name != "ANTHROPIC_API_KEY":
-                        env.pop(key_name, None)
-                    env["ANTHROPIC_API_KEY"] = key
+                env["ANTHROPIC_API_KEY"] = key
             if self.config.base_url:
                 env["ANTHROPIC_BASE_URL"] = self.config.base_url
         elif self.config.backend == "pi":

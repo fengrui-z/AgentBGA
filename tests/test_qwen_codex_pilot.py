@@ -70,6 +70,13 @@ class QwenCodexPilotTests(unittest.TestCase):
             row["player"]["auth_mode"] for row in codex
         })
         self.assertTrue(all("api_key_env" not in row["player"] for row in codex))
+        self.assertEqual({"pi", "opencode", "codex"}, {
+            row["player"]["backend"] for row in config["participants"]
+        })
+        self.assertEqual({"pi", "opencode"}, {
+            row["player"]["backend"]
+            for row in qwen if row["player"]["model"] == "qwen3.8-max"
+        })
 
     def test_failed_rows_remain_visible_in_score_artifacts(self):
         rows = [{
@@ -109,7 +116,7 @@ class QwenCodexPilotTests(unittest.TestCase):
             "codex_subscription": {"configured": True, "status": "Logged in using ChatGPT"},
             "harnesses": {
                 name: {"path": f"/bin/{name}", "version": "test"}
-                for name in ("claude", "codex", "pi")
+                for name in ("codex", "opencode", "pi")
             },
             "endpoints": [],
         }

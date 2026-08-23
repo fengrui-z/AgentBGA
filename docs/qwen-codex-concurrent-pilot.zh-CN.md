@@ -11,12 +11,12 @@
 | Qwen 3.8 Max | Pi Agent | `DASHSCOPE_API_KEY` |
 | Qwen 3.7 Plus | Pi Agent | `DASHSCOPE_API_KEY` |
 | Qwen 3.8 27B | Pi Agent | `DASHSCOPE_API_KEY` |
-| Qwen 3.8 Max | Claude Code | `DASHSCOPE_API_KEY` |
+| Qwen 3.8 Max | OpenCode | `DASHSCOPE_API_KEY` |
 | GPT-5.6 Sol | Codex | ChatGPT subscription |
 | GPT-5.6 Luna | Codex | ChatGPT subscription |
 
 这样同时得到三类比较：固定 Pi 比较三个 Qwen 模型、固定 Qwen 3.8 Max 比较 Pi 和
-Claude Code、固定 Codex 比较 Sol 和 Luna。GPT-5.6 的两个名称按当前 Codex 接入
+OpenCode、固定 Codex 比较 Sol 和 Luna。GPT-5.6 的两个名称按当前 Codex 接入
 使用；不要把它们当作已经由公开 API 文档确认的模型 ID。
 
 ## 赛程
@@ -37,7 +37,7 @@ Codex subscription 限流、内存和 CLI timeout。
 
 ## 准备认证
 
-先在服务器安装并固定 Pi Agent、Claude Code 和 Codex CLI 版本，然后登录 Codex：
+先在服务器安装并固定 Pi Agent、OpenCode 和 Codex CLI 版本，然后登录 Codex：
 
 ```console
 codex login
@@ -80,7 +80,7 @@ PYTHONPATH=src python3 examples/qwen_codex_pilot.py run \
   --workers 1
 ```
 
-固定种子下，赛程前 4 场会覆盖全部 6 个条件；要一次检查三个 Qwen ID、Claude Code
+固定种子下，赛程前 4 场会覆盖全部 6 个条件；要一次检查三个 Qwen ID、OpenCode
 endpoint 和两个 Codex 模型，可运行：
 
 ```console
