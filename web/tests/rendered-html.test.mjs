@@ -45,6 +45,11 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /MODEL STREAM|模型 Chat/);
   assert.match(source, /暂停|继续对局/);
   assert.match(source, /human_turn|submitHumanAction/);
+  assert.match(source, /function HumanActionConfirmation/);
+  assert.match(source, /confirmHumanAction/);
+  assert.match(source, /select_action_required/);
+  assert.match(source, /azul_source_required/);
+  assert.match(source, /selectedActionId/);
   assert.match(source, /随机座次|movePlayer/);
   assert.match(source, /ArkNovaBoard/);
   assert.match(source, /AzulBoard/);
@@ -59,11 +64,14 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /is-expanded/);
   assert.match(source, /专注地图/);
   assert.match(source, /humanActions\.filter\(item => item\.action\.connection_id/);
-  assert.match(source, /onChoose=\{submitHumanAction\}/);
+  assert.doesNotMatch(source, /onChoose=\{submitHumanAction\}/);
+  assert.match(source, /onChoose=\{item => stageHumanAction\(item\)\}/);
   assert.match(styles, /\.brass-live-map/);
   assert.match(styles, /\.brass-route\.actionable/);
   assert.match(styles, /\.brass-live-map\.is-expanded/);
   assert.match(styles, /\.brass-map-slots button\.actionable/);
+  assert.match(styles, /\.human-action-confirmation/);
+  assert.match(styles, /\.human-action-groups button\.selected/);
   assert.match(source, /CenturyBoard/);
   assert.match(source, /SevenBoard/);
   assert.match(source, /SevenSpectatorHands/);
