@@ -130,6 +130,8 @@ Runnable examples are provided in
 [`examples/experiment-duel.json`](examples/experiment-duel.json),
 [`examples/experiment-tournament.json`](examples/experiment-tournament.json), and
 [`examples/experiment-series-one-sided.json`](examples/experiment-series-one-sided.json).
+The dedicated 33-match, 10-worker Qwen/Codex three-game pilot is documented in
+[`docs/qwen-codex-concurrent-pilot.zh-CN.md`](docs/qwen-codex-concurrent-pilot.zh-CN.md).
 
 Every run writes cumulative `agentbga.results.v1` documents atomically. `latest.json`
 is refreshed after every configured batch, `results-000020.json` is an immutable

@@ -304,7 +304,15 @@ class HarnessAgent:
             claude_config.mkdir(exist_ok=True)
             env["CLAUDE_CONFIG_DIR"] = str(claude_config)
             if key:
-                env["ANTHROPIC_API_KEY"] = key
+                if self.config.base_url and "api.anthropic.com" not in self.config.base_url:
+                    if key_name:
+                        env.pop(key_name, None)
+                    env.pop("ANTHROPIC_API_KEY", None)
+                    env["ANTHROPIC_AUTH_TOKEN"] = key
+                else:
+                    if key_name and key_name != "ANTHROPIC_API_KEY":
+                        env.pop(key_name, None)
+                    env["ANTHROPIC_API_KEY"] = key
             if self.config.base_url:
                 env["ANTHROPIC_BASE_URL"] = self.config.base_url
         elif self.config.backend == "pi":
@@ -388,16 +396,26 @@ class HarnessAgent:
         pi_dir = self.session.workspace / ".pi-home"
         pi_dir.mkdir(exist_ok=True)
         pi_api_key_env = self._provider_api_key_env()
+        pi_api = self.config.wire_api or "openai-completions"
+        pi_model: dict[str, Any] = {
+            "id": self.config.model,
+            "reasoning": reasoning_enabled,
+            "thinkingLevelMap": {
+                "minimal": None, "low": None, "medium": None,
+                "high": "high", "xhigh": "xhigh",
+            },
+        }
+        if pi_api == "openai-completions" and self.config.base_url != "https://api.openai.com/v1":
+            pi_model["compat"] = {
+                "supportsStore": False,
+                "supportsDeveloperRole": False,
+                "supportsReasoningEffort": False,
+                "supportsStrictMode": False,
+                "maxTokensField": "max_tokens",
+            }
         pi_models = {"providers": {"agentbga": {
-            "baseUrl": self.config.base_url, "api": self.config.wire_api or "openai-completions",
-            "apiKey": f"${pi_api_key_env}", "models": [{
-                "id": self.config.model,
-                "reasoning": reasoning_enabled,
-                "thinkingLevelMap": {
-                    "minimal": None, "low": None, "medium": None,
-                    "high": "high", "xhigh": "xhigh",
-                },
-            }],
+            "baseUrl": self.config.base_url, "api": pi_api,
+            "apiKey": f"${pi_api_key_env}", "models": [pi_model],
         }}}
         (pi_dir / "models.json").write_text(
             json.dumps(pi_models, ensure_ascii=False, indent=2), encoding="utf-8",

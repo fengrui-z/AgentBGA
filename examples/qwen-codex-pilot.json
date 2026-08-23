@@ -1,0 +1,84 @@
+{
+  "schema_version": "agentbga.qwen-codex-pilot.v1",
+  "tournament_id": "qwen-codex-small-concurrent-pilot",
+  "participants": [
+    {
+      "id": "qwen38-max-pi",
+      "player": {
+        "name": "Qwen 3.8 Max · Pi Agent",
+        "backend": "pi",
+        "model": "qwen3.8-max",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "qwen37-plus-pi",
+      "player": {
+        "name": "Qwen 3.7 Plus · Pi Agent",
+        "backend": "pi",
+        "model": "qwen3.7-plus",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "qwen38-27b-pi",
+      "player": {
+        "name": "Qwen 3.8 27B · Pi Agent",
+        "backend": "pi",
+        "model": "qwen3.8-27B",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "qwen38-max-claude",
+      "player": {
+        "name": "Qwen 3.8 Max · Claude Code",
+        "backend": "claude",
+        "model": "qwen3.8-max",
+        "base_url": "https://dashscope.aliyuncs.com/apps/anthropic",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "gpt56-sol-codex",
+      "player": {
+        "name": "GPT-5.6 Sol · Codex",
+        "backend": "codex",
+        "model": "gpt-5.6-sol",
+        "auth_mode": "subscription",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "gpt56-luna-codex",
+      "player": {
+        "name": "GPT-5.6 Luna · Codex",
+        "backend": "codex",
+        "model": "gpt-5.6-luna",
+        "auth_mode": "subscription",
+        "reasoning_effort": "max"
+      }
+    }
+  ],
+  "schedule": {
+    "appearances_per_condition": 2,
+    "base_seed": 20260823,
+    "workers": 10,
+    "games": {
+      "splendor": [2, 3, 4],
+      "seven_wonders": [3, 4],
+      "brass_birmingham": [2, 3, 4]
+    }
+  },
+  "run": {
+    "retries": 0,
+    "fallback": "fail"
+  }
+}
