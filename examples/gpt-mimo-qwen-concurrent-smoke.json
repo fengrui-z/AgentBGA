@@ -1,0 +1,62 @@
+{
+  "schema_version": "agentbga.qwen-codex-pilot.v1",
+  "tournament_id": "gpt-mimo-qwen-concurrent-smoke",
+  "participants": [
+    {
+      "id": "gpt56-sol-codex",
+      "player": {
+        "name": "GPT-5.6 Sol · Codex",
+        "backend": "codex",
+        "model": "gpt-5.6-sol",
+        "auth_mode": "subscription",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "gpt56-luna-codex",
+      "player": {
+        "name": "GPT-5.6 Luna · Codex",
+        "backend": "codex",
+        "model": "gpt-5.6-luna",
+        "auth_mode": "subscription",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "mimo-v25-pro-qwen",
+      "player": {
+        "name": "MiMo V2.5 Pro · Qwen Code",
+        "backend": "qwen",
+        "model": "mimo-v2.5-pro",
+        "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
+        "api_key_env": "MIMO_API_KEY",
+        "reasoning_effort": "none"
+      }
+    },
+    {
+      "id": "mimo-v25-qwen",
+      "player": {
+        "name": "MiMo V2.5 · Qwen Code",
+        "backend": "qwen",
+        "model": "mimo-v2.5",
+        "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
+        "api_key_env": "MIMO_API_KEY",
+        "reasoning_effort": "none"
+      }
+    }
+  ],
+  "schedule": {
+    "appearances_per_condition": 2,
+    "base_seed": 20260824,
+    "workers": 6,
+    "games": {
+      "splendor": [4],
+      "seven_wonders": [4],
+      "brass_birmingham": [4]
+    }
+  },
+  "run": {
+    "retries": 0,
+    "fallback": "fail"
+  }
+}

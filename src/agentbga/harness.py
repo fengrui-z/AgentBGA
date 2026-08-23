@@ -192,6 +192,18 @@ class HarnessAgent:
             if self.session.session_id:
                 command.extend(["--session", self.session.session_id])
             return [*command, prompt]
+        if self.config.backend == "qwen":
+            command = [
+                self.binary,
+                "--output-format", "stream-json",
+                "--chat-recording",
+                "--yolo",
+                "--mcp-config", "qwen-mcp.json",
+                "--model", model,
+            ]
+            if self.session.session_id:
+                command.extend(["--resume", self.session.session_id])
+            return [*command, "--prompt", prompt]
         if self.config.backend == "codex":
             overrides = getattr(self, "_codex_config_args", [])
             runtime_dir = os.path.relpath(self.session.runtime, self.session.workspace)
@@ -320,6 +332,19 @@ class HarnessAgent:
             env["AGENTBGA_SEAT_CONTEXT"] = str(self.session.runtime / "turn-context.json")
             env["AGENTBGA_SEAT_SUBMISSION"] = str(self.session.runtime / "submission.json")
             env["AGENTBGA_SEAT_AUDIT"] = str(self.session.runtime / "tool-events.jsonl")
+        elif self.config.backend == "qwen":
+            qwen_home = self.session.workspace / ".qwen-home"
+            qwen_runtime = self.session.workspace / ".qwen-runtime"
+            qwen_home.mkdir(exist_ok=True)
+            qwen_runtime.mkdir(exist_ok=True)
+            env["QWEN_HOME"] = str(qwen_home)
+            env["QWEN_RUNTIME_DIR"] = str(qwen_runtime)
+            env["QWEN_USAGE_STATISTICS_ENABLED"] = "0"
+            # Wait for the seat MCP server before the first headless prompt so
+            # the benchmark tools are present from the first model turn.
+            env["QWEN_CODE_LEGACY_MCP_BLOCKING"] = "1"
+            if key:
+                env[self.config.api_key_env or "OPENAI_API_KEY"] = key
         elif self.config.backend == "dsh":
             self._dsh_home.mkdir(parents=True, exist_ok=True)
             env["DSH_HOME"] = str(self._dsh_home)
@@ -411,6 +436,51 @@ class HarnessAgent:
         }}}
         (pi_dir / "models.json").write_text(
             json.dumps(pi_models, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        qwen_dir = self.session.workspace / ".qwen-home"
+        qwen_dir.mkdir(exist_ok=True)
+        qwen_settings = {
+            "general": {"enableAutoUpdate": False},
+            "privacy": {"usageStatisticsEnabled": False},
+            "security": {"auth": {"selectedType": "openai"}},
+            "modelProviders": {"openai": [{
+                "id": self.config.model,
+                "name": self.config.model,
+                "baseUrl": self.config.base_url,
+                "envKey": self.config.api_key_env or "OPENAI_API_KEY",
+            }]},
+            "model": {"name": self.config.model},
+            # Hide Qwen Code's built-in coding tools. The benchmark exposes only
+            # the five seat-scoped MCP tools below.
+            "tools": {
+                "core": [],
+                "approvalMode": "yolo",
+                "toolSearch": {"enabled": False},
+            },
+            "memory": {
+                "enableManagedAutoMemory": False,
+                "enableManagedAutoDream": False,
+                "enableAutoSkill": False,
+                "enableTeamMemory": False,
+                "enableTeamMemorySync": False,
+            },
+            "mcp": {"allowed": ["agentbga"]},
+        }
+        qwen_mcp = {"mcpServers": {"agentbga": {
+            "command": mcp_command[0],
+            "args": mcp_command[1:],
+            "env": {"PYTHONPATH": self._pythonpath},
+            "trust": True,
+            "includeTools": [
+                "observe", "legal_actions", "submit_action",
+                "read_notes", "write_notes",
+            ],
+        }}}
+        (qwen_dir / "settings.json").write_text(
+            json.dumps(qwen_settings, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        (self.session.workspace / "qwen-mcp.json").write_text(
+            json.dumps(qwen_mcp, ensure_ascii=False, indent=2), encoding="utf-8",
         )
         codex_dir = self.session.workspace / ".codex"
         codex_dir.mkdir(exist_ok=True)
@@ -744,6 +814,15 @@ class HarnessAgent:
                 for key in ("text", "thinking"):
                     if isinstance(delta.get(key), str):
                         return delta[key]
+        message = payload.get("message")
+        if isinstance(message, dict) and isinstance(message.get("content"), list):
+            text_blocks = [
+                str(block.get("text"))
+                for block in message["content"]
+                if isinstance(block, dict) and isinstance(block.get("text"), str)
+            ]
+            if text_blocks:
+                return "".join(text_blocks)
         item = payload.get("item") or payload.get("part") or payload
         if not isinstance(item, dict):
             return ""
@@ -772,6 +851,16 @@ class HarnessAgent:
     def _tool_details(payload: dict[str, Any]) -> tuple[str, Any] | None:
         if payload.get("type") == "tool_execution_start":
             return str(payload.get("toolName") or "tool"), payload.get("args") or {}
+        message = payload.get("message")
+        if isinstance(message, dict) and isinstance(message.get("content"), list):
+            for block in message["content"]:
+                if not isinstance(block, dict):
+                    continue
+                if str(block.get("type") or "").lower() not in {"tool_use", "tool_call"}:
+                    continue
+                name = block.get("name") or block.get("tool_name") or "tool"
+                arguments = block.get("input") or block.get("arguments") or {}
+                return str(name), arguments
         item = payload.get("item") or payload.get("part") or payload
         if not isinstance(item, dict):
             return None

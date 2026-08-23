@@ -55,6 +55,7 @@ Each seat can use one of:
 | `hermes` | Harness | Hermes Agent + MCP, isolated home, persistent session |
 | `claude` | Harness | Claude Code + MCP, persistent session |
 | `pi` | Harness | Pi + native TS extension, persistent session |
+| `qwen` | Harness | Qwen Code + MCP, isolated provider config, persistent session |
 | `minimal` | Harness | Pure Python, in-process, direct LLM + 5 tools |
 | `human` | — | Browser-based play |
 | `random` | — | Random baseline |
@@ -132,6 +133,8 @@ Runnable examples are provided in
 [`examples/experiment-series-one-sided.json`](examples/experiment-series-one-sided.json).
 The dedicated 33-match, 10-worker Qwen/Codex three-game pilot is documented in
 [`docs/qwen-codex-concurrent-pilot.zh-CN.md`](docs/qwen-codex-concurrent-pilot.zh-CN.md).
+The smaller six-match GPT/Codex versus MiMo/Qwen Code concurrency smoke test is documented in
+[`docs/gpt-mimo-qwen-concurrent-smoke.zh-CN.md`](docs/gpt-mimo-qwen-concurrent-smoke.zh-CN.md).
 
 Every run writes cumulative `agentbga.results.v1` documents atomically. `latest.json`
 is refreshed after every configured batch, `results-000020.json` is an immutable

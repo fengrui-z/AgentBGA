@@ -16,9 +16,30 @@ from examples.qwen_codex_pilot import build_schedule, load_config, write_scores
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "examples" / "qwen-codex-pilot.json"
+GPT_MIMO_CONFIG = ROOT / "examples" / "gpt-mimo-qwen-concurrent-smoke.json"
 
 
 class QwenCodexPilotTests(unittest.TestCase):
+    def test_gpt_mimo_smoke_is_six_balanced_four_player_matches(self):
+        config = load_config(GPT_MIMO_CONFIG)
+        schedule = build_schedule(config)
+        self.assertEqual(6, len(schedule))
+        self.assertEqual({4}, {row["player_count"] for row in schedule})
+        self.assertEqual(
+            {"splendor": 2, "seven_wonders": 2, "brass_birmingham": 2},
+            {
+                game: sum(row["game"] == game for row in schedule)
+                for game in config["schedule"]["games"]
+            },
+        )
+        participants = {row["id"] for row in config["participants"]}
+        self.assertTrue(all(set(row["participants"]) == participants for row in schedule))
+        appearances = {
+            participant: sum(participant in row["participants"] for row in schedule)
+            for participant in participants
+        }
+        self.assertEqual({6}, set(appearances.values()))
+
     def test_small_schedule_is_balanced_across_33_matches(self):
         config = load_config(CONFIG)
         schedule = build_schedule(config)

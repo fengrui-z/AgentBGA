@@ -19,7 +19,9 @@ class AgentError(RuntimeError):
     pass
 
 
-HARNESS_BACKENDS = frozenset({"claude", "pi", "codex", "opencode", "dsh", "hermes", "minimal"})
+HARNESS_BACKENDS = frozenset({
+    "claude", "pi", "qwen", "codex", "opencode", "dsh", "hermes", "minimal",
+})
 HARNESS_REASONING_EFFORT = "max"
 REASONING_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "max", "xhigh"})
 
@@ -79,6 +81,7 @@ class PlayerConfig:
             "gemini": ("https://generativelanguage.googleapis.com/v1beta", "GEMINI_API_KEY"),
             "claude": ("https://api.anthropic.com", "ANTHROPIC_API_KEY"),
             "pi": ("https://api.openai.com/v1", "AGENTBGA_API_KEY"),
+            "qwen": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
             "codex": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
             "opencode": (None, "DEEPSEEK_API_KEY"),
             "dsh": ("https://api.deepseek.com", "DEEPSEEK_API_KEY"),

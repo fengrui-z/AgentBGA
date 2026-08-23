@@ -40,8 +40,14 @@ class HarnessTests(unittest.TestCase):
         pi = PlayerConfig.from_dict({
             "name": "Pi", "backend": "pi", "model": "model-test",
         }, 3)
+        qwen = PlayerConfig.from_dict({
+            "name": "Qwen Code", "backend": "qwen", "model": "mimo-test",
+            "base_url": "https://mimo.example/v1", "api_key_env": "MIMO_API_KEY",
+        }, 4)
         self.assertEqual("ANTHROPIC_API_KEY", claude.api_key_env)
         self.assertEqual("AGENTBGA_API_KEY", pi.api_key_env)
+        self.assertEqual("https://mimo.example/v1", qwen.base_url)
+        self.assertEqual("MIMO_API_KEY", qwen.api_key_env)
         self.assertEqual("max", codex.reasoning_effort)
         self.assertEqual("max", opencode.reasoning_effort)
         dsh = PlayerConfig.from_dict({
@@ -403,6 +409,21 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("xhigh", command[command.index("--thinking") + 1])
             self.assertEqual("session-3", command[command.index("--session") + 1])
 
+            qwen_config = PlayerConfig.from_dict({
+                "name": "Qwen Code", "backend": "qwen", "model": "mimo-v2.5-pro",
+                "base_url": "https://mimo.example/v1", "api_key_env": "MIMO_API_KEY",
+                "reasoning_effort": "none",
+            }, 4)
+            qwen = HarnessAgent(qwen_config, "match", 4, runs_root=directory)
+            qwen.session.session_id = "qwen-session"
+            command = qwen._command("turn")
+            self.assertEqual("stream-json", command[command.index("--output-format") + 1])
+            self.assertIn("--chat-recording", command)
+            self.assertIn("--yolo", command)
+            self.assertEqual("qwen-mcp.json", command[command.index("--mcp-config") + 1])
+            self.assertEqual("qwen-session", command[command.index("--resume") + 1])
+            self.assertEqual("turn", command[command.index("--prompt") + 1])
+
             dsh_config = PlayerConfig.from_dict({
                 "name": "DeepSeek Harness", "backend": "dsh", "model": "deepseek-v4-flash",
             }, 4)
@@ -483,6 +504,39 @@ class HarnessTests(unittest.TestCase):
             variant = configured["provider"]["agentbga"]["models"]["custom-model"]["variants"]["max"]
             self.assertEqual("max", variant["reasoningEffort"])
             self.assertIn("agentbga/custom-model", opencode._command("turn"))
+
+            qwen = HarnessAgent(PlayerConfig.from_dict({
+                "name": "Qwen Code", "backend": "qwen", "model": "mimo-v2.5-pro",
+                "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
+                "api_key_env": "MIMO_API_KEY", "reasoning_effort": "none",
+            }, 0), "match-qwen", 0, runs_root=directory)
+            qwen._prepare_turn({"state_version": 1}, LEGAL)
+            qwen_settings = json.loads(
+                (qwen.session.workspace / ".qwen-home" / "settings.json").read_text()
+            )
+            provider = qwen_settings["modelProviders"]["openai"][0]
+            self.assertEqual("mimo-v2.5-pro", provider["id"])
+            self.assertEqual(
+                "https://token-plan-cn.xiaomimimo.com/v1", provider["baseUrl"],
+            )
+            self.assertEqual("MIMO_API_KEY", provider["envKey"])
+            self.assertEqual([], qwen_settings["tools"]["core"])
+            self.assertEqual(["agentbga"], qwen_settings["mcp"]["allowed"])
+            qwen_mcp = json.loads(
+                (qwen.session.workspace / "qwen-mcp.json").read_text()
+            )
+            self.assertEqual(
+                ["observe", "legal_actions", "submit_action", "read_notes", "write_notes"],
+                qwen_mcp["mcpServers"]["agentbga"]["includeTools"],
+            )
+            with mock.patch.dict(os.environ, {
+                "MIMO_API_KEY": "mimo-secret", "OTHER_TOKEN": "hidden", "PATH": "/bin",
+            }, clear=True):
+                qwen_environment = qwen._environment()
+            self.assertEqual("mimo-secret", qwen_environment["MIMO_API_KEY"])
+            self.assertNotIn("OTHER_TOKEN", qwen_environment)
+            self.assertEqual("0", qwen_environment["QWEN_USAGE_STATISTICS_ENABLED"])
+            self.assertIn("seat-0-qwen/.qwen-home", qwen_environment["QWEN_HOME"])
 
             proxied_deepseek = HarnessAgent(PlayerConfig.from_dict({
                 "name": "OpenCode", "backend": "opencode", "model": "deepseek-v4-flash",
@@ -673,6 +727,20 @@ class HarnessTests(unittest.TestCase):
             "type": "stream_event", "event": {"delta": {"text": "claude"}},
         }))
         self.assertEqual("pi-session", HarnessAgent._event_session_id({"type": "session", "id": "pi-session"}))
+        qwen_message = {
+            "type": "assistant",
+            "session_id": "qwen-session",
+            "message": {"content": [{"type": "text", "text": "qwen text"}]},
+        }
+        self.assertEqual("qwen text", HarnessAgent._event_text(qwen_message))
+        self.assertEqual("qwen-session", HarnessAgent._event_session_id(qwen_message))
+        self.assertEqual(("submit_action", {"action_id": "a-test"}), HarnessAgent._tool_details({
+            "type": "assistant",
+            "message": {"content": [{
+                "type": "tool_use", "name": "submit_action",
+                "input": {"action_id": "a-test"},
+            }]},
+        }))
 
     def test_harness_requires_submit_tool_and_records_tool_events(self):
         events = []
