@@ -45,6 +45,10 @@ class QwenCodexPilotTests(unittest.TestCase):
         )
         self.assertEqual(15, len(pair_exposure))
         self.assertEqual({6, 7}, set(pair_exposure.values()))
+        self.assertEqual(
+            {row["id"] for row in config["participants"]},
+            {identifier for match in schedule[:4] for identifier in match["participants"]},
+        )
 
     def test_matrix_prioritizes_qwen_and_uses_codex_subscription(self):
         config = load_config(CONFIG)

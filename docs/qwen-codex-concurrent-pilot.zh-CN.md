@@ -80,6 +80,16 @@ PYTHONPATH=src python3 examples/qwen_codex_pilot.py run \
   --workers 1
 ```
 
+固定种子下，赛程前 4 场会覆盖全部 6 个条件；要一次检查三个 Qwen ID、Claude Code
+endpoint 和两个 Codex 模型，可运行：
+
+```console
+PYTHONPATH=src python3 examples/qwen_codex_pilot.py run \
+  --out .agentbga/qwen-codex-all-paths-probe \
+  --limit 4 \
+  --workers 4
+```
+
 正式运行 33 场：
 
 ```console
