@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 // ── i18n ─────────────────────────────────────────────────────────────
 type Lang = "zh" | "en";
@@ -237,6 +237,7 @@ type BrassView = {
   };
   players: BrassPlayerView[];
 };
+type BrassMapPoint = {x: number; y: number; kind: "industry" | "merchant" | "farm"};
 type SpiceName = "turmeric" | "saffron" | "cardamom" | "cinnamon";
 type SpicePool = Record<SpiceName, number>;
 type CenturyMerchant = {id: string; kind: "gain" | "upgrade" | "trade"; upgrades: number; input: SpicePool; output: SpicePool};
@@ -1128,6 +1129,36 @@ const BRASS_LOCATION_ZH: Record<string, string> = {
   warrington: "沃灵顿", nottingham: "诺丁汉", shrewsbury: "什鲁斯伯里", gloucester: "格洛斯特", oxford: "牛津",
   farm_brewery_cannock: "坎诺克农场啤酒厂", farm_brewery_kidderminster_worcester: "基德明斯特／伍斯特农场啤酒厂",
 };
+const BRASS_MAP_POINTS: Record<string, BrassMapPoint> = {
+  warrington: {x: 135, y: 45, kind: "merchant"},
+  stoke_on_trent: {x: 245, y: 140, kind: "industry"},
+  stone: {x: 205, y: 245, kind: "industry"},
+  leek: {x: 455, y: 60, kind: "industry"},
+  belper: {x: 650, y: 72, kind: "industry"},
+  nottingham: {x: 870, y: 112, kind: "merchant"},
+  uttoxeter: {x: 465, y: 210, kind: "industry"},
+  derby: {x: 690, y: 225, kind: "industry"},
+  stafford: {x: 315, y: 335, kind: "industry"},
+  burton_on_trent: {x: 555, y: 330, kind: "industry"},
+  farm_brewery_cannock: {x: 190, y: 410, kind: "farm"},
+  cannock: {x: 390, y: 420, kind: "industry"},
+  tamworth: {x: 670, y: 420, kind: "industry"},
+  shrewsbury: {x: 75, y: 505, kind: "merchant"},
+  coalbrookdale: {x: 245, y: 520, kind: "industry"},
+  wolverhampton: {x: 390, y: 520, kind: "industry"},
+  walsall: {x: 525, y: 520, kind: "industry"},
+  nuneaton: {x: 745, y: 540, kind: "industry"},
+  dudley: {x: 430, y: 625, kind: "industry"},
+  birmingham: {x: 590, y: 645, kind: "industry"},
+  coventry: {x: 775, y: 665, kind: "industry"},
+  farm_brewery_kidderminster_worcester: {x: 170, y: 720, kind: "farm"},
+  kidderminster: {x: 300, y: 725, kind: "industry"},
+  redditch: {x: 595, y: 770, kind: "industry"},
+  oxford: {x: 825, y: 795, kind: "merchant"},
+  worcester: {x: 335, y: 845, kind: "industry"},
+  gloucester: {x: 570, y: 875, kind: "merchant"},
+};
+const BRASS_SEAT_COLORS = ["#c9483d", "#d9a52f", "#7650a0", "#5a6d78"];
 
 function brassLocationLabel(location: string, lang: Lang) {
   if (lang === "en") return location.replaceAll("_", " ").replace(/\b\w/g, c => c.toUpperCase());
@@ -1169,19 +1200,85 @@ function BrassMarket({label, market, resource}: {label: string; market: {prices:
   return <div className={`brass-market brass-market-${resource}`}><header><span>{label}</span><b>{market.occupied.filter(Boolean).length}</b></header><div>{market.prices.map((price, index) => <i key={index} className={market.occupied[index] ? "filled" : "empty"} title={`£${price}`}><small>£{price}</small></i>)}</div></div>;
 }
 
-function BrassBoard({view, players}: {view?: BrassView; players: Snapshot["players"]}) {
-  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
-  if (!view) return null;
+function BrassLiveMap({view, players, humanActions = [], disabled, submitting, onChoose}: {
+  view: BrassView; players: Snapshot["players"]; humanActions?: LegalAction[];
+  disabled: boolean; submitting: string; onChoose?: (item: LegalAction) => void;
+}) {
+  const lang = useLang(); const zh = lang === "zh";
+  const [zoom, setZoom] = useState(1);
+  const [expanded, setExpanded] = useState(false);
+  const [choiceTarget, setChoiceTarget] = useState<{label: string; actions: LegalAction[]} | null>(null);
+  useEffect(() => {
+    if (!expanded) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setExpanded(false); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [expanded]);
+  const choiceIsCurrent = choiceTarget?.actions.every(action => humanActions.some(item => item.id === action.id));
+  const currentChoice = choiceIsCurrent ? choiceTarget : null;
   const industryById = new Map(view.board.industries.map(industry => [industry.id, industry]));
   const linksByConnection = new Map(view.board.links.map(link => [link.connection_id, link]));
+  const merchantById = new Map(view.board.merchant_locations.map(merchant => [merchant.id, merchant]));
+  const targetActions = (values: unknown[]) => {
+    const keys = values.filter((value): value is string => typeof value === "string");
+    return humanActions.filter(item => keys.includes(String(item.action.slot_id || "")) || keys.includes(String(item.action.industry_id || "")) || keys.includes(String(item.action.source_id || "")));
+  };
+  const choose = (label: string, actions: LegalAction[]) => {
+    if (!actions.length || disabled || !onChoose) return;
+    if (actions.length === 1) onChoose(actions[0]);
+    else setChoiceTarget({label, actions});
+  };
+  return <section className={`brass-live-map ${expanded ? "is-expanded" : ""}`} aria-label={zh ? "伯明翰实时互动地图" : "Brass Birmingham live interactive map"}>
+    <header><div><span>LIVE NETWORK MAP</span><h3>{zh ? "实时产业与交通地图" : "Live industry & network map"}</h3></div><div className="brass-map-tools"><i>{humanActions.length ? (zh ? "可点击高亮目标" : "Highlighted targets are clickable") : (zh ? "实时观战" : "Live spectator")}</i><button className="map-focus" onClick={() => setExpanded(value => !value)} aria-label={expanded ? (zh ? "退出专注地图" : "Exit map focus") : (zh ? "专注地图" : "Focus map")}>{expanded ? "×" : "⛶"}</button><button onClick={() => setZoom(value => Math.max(.82, value - .14))} aria-label={zh ? "缩小地图" : "Zoom out"}>−</button><b>{Math.round(zoom * 100)}%</b><button onClick={() => setZoom(value => Math.min(1.55, value + .14))} aria-label={zh ? "放大地图" : "Zoom in"}>＋</button></div></header>
+    <div className="brass-map-legend"><span><i className="legend-open"/>{zh ? "可用线路" : "Available"}</span>{players.map(player => <span key={player.seat}><i style={{background: BRASS_SEAT_COLORS[player.seat]}}/>{player.name}</span>)}<span><i className="legend-action"/>{zh ? "本步合法目标" : "Legal target"}</span></div>
+    <div className="brass-map-viewport">
+      <div className="brass-map-stage" style={{width: `${zoom * 100}%`}}>
+        <svg className="brass-route-layer" viewBox="0 0 1000 920" role="img" aria-label={zh ? "运河与铁路连接" : "Canal and rail connections"}>
+          <defs><filter id="routeGlow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+          {view.board.connection_spaces.map(connection => {
+            const points = connection.endpoints.map(endpoint => BRASS_MAP_POINTS[endpoint]).filter(Boolean);
+            if (points.length < 2) return null;
+            const built = linksByConnection.get(connection.id);
+            const actions = humanActions.filter(item => item.action.connection_id === connection.id);
+            const eraActive = connection.available_eras.includes(view.era);
+            const hub = points.length === 2 ? null : {x: points.reduce((sum, point) => sum + point.x, 0) / points.length, y: points.reduce((sum, point) => sum + point.y, 0) / points.length};
+            const segments = hub ? points.map(point => [point, hub]) : [[points[0], points[1]]];
+            const label = connection.endpoints.map(endpoint => brassLocationLabel(endpoint, lang)).join(" ↔ ");
+            return <g key={connection.id} className={`brass-route ${built ? `built seat-${built.owner}` : eraActive ? "era-active" : "era-inactive"} ${actions.length ? "actionable" : ""}`} style={built ? {"--route-color": BRASS_SEAT_COLORS[built.owner]} as CSSProperties : undefined}>
+              {segments.map(([start, end], index) => <g key={index}><line className="route-visible" x1={start.x} y1={start.y} x2={end.x} y2={end.y}/><line className="route-hit" x1={start.x} y1={start.y} x2={end.x} y2={end.y} tabIndex={actions.length ? 0 : -1} role={actions.length ? "button" : undefined} aria-label={actions.length ? `${label} · ${zh ? "选择线路" : "choose route"}` : label} onClick={() => choose(label, actions)} onKeyDown={event => {if ((event.key === "Enter" || event.key === " ") && actions.length) choose(label, actions);}}/></g>)}
+            </g>;
+          })}
+        </svg>
+        {view.board.locations.map(location => {
+          const point = BRASS_MAP_POINTS[location.id]; if (!point) return null;
+          return <article key={location.id} className={`brass-map-city kind-${point.kind}`} style={{left: `${point.x / 10}%`, top: `${point.y / 9.2}%`}}>
+            <h4>{brassLocationLabel(location.id, lang)}</h4><div className="brass-map-slots">{location.industry_slots.map(slot => {
+              const tile = slot.industry_id ? industryById.get(slot.industry_id) : undefined;
+              const actions = targetActions([slot.id, tile?.id]);
+              const label = tile ? `${BRASS_INDUSTRY_LABELS[lang][tile.industry]} L${tile.level}` : slot.accepts.map(kind => BRASS_INDUSTRY_LABELS[lang][kind]).join("/");
+              return <button key={slot.id} className={`${tile ? `occupied seat-${tile.owner}` : "vacant"} ${actions.length ? "actionable" : ""}`} disabled={!actions.length || disabled} onClick={() => choose(`${brassLocationLabel(location.id, lang)} · ${label}`, actions)} title={`${label}${actions.length ? ` · ${zh ? "点击选择" : "click to choose"}` : ""}`}>
+                {tile ? <><i className={`industry-mark industry-${tile.industry}`}/><b>L{tile.level}</b><small>{tile.flipped ? "✓" : tile.resources ? `×${tile.resources}` : "○"}</small></> : <>{slot.accepts.map(kind => <i key={kind} className={`industry-mark industry-${kind}`}/>)}</>}
+              </button>;
+            })}</div>
+          </article>;
+        })}
+        {Object.entries(BRASS_MAP_POINTS).filter(([, point]) => point.kind === "merchant").map(([locationId, point]) => {
+          const merchant = merchantById.get(locationId);
+          return <article key={locationId} className={`brass-map-merchant ${merchant ? "active" : "inactive"}`} style={{left: `${point.x / 10}%`, top: `${point.y / 9.2}%`}}><h4>{brassLocationLabel(locationId, lang)}</h4><div>{merchant ? merchant.slots.map(slot => {const actions = targetActions([slot.id]); return <button key={slot.id} className={actions.length ? "actionable" : ""} disabled={!actions.length || disabled} onClick={() => choose(`${brassLocationLabel(locationId, lang)} · ${slot.buys}`, actions)}><span>{slot.buys === "any" ? "◆" : slot.buys === "blank" ? "—" : <i className={`industry-mark industry-${slot.buys}`}/>}</span><b>{slot.beer ? "🍺" : "·"}</b></button>;}) : <small>{zh ? "本人数无商人牌" : "No merchant tile"}</small>}</div></article>;
+        })}
+      </div>
+    </div>
+    {currentChoice && <div className="brass-map-choice"><header><div><span>{zh ? "地图目标" : "Map target"}</span><b>{currentChoice.label}</b></div><button onClick={() => setChoiceTarget(null)}>×</button></header><div>{currentChoice.actions.map(item => <button key={item.id} disabled={disabled} onClick={() => onChoose?.(item)}><strong>{humanActionText(item.action, lang, view)}</strong><small>{submitting === item.id ? (zh ? "提交中…" : "Submitting…") : item.id}</small></button>)}</div></div>}
+  </section>;
+}
+
+function BrassBoard({view, players, humanActions, disabled, submitting, onChoose}: {view?: BrassView; players: Snapshot["players"]; humanActions?: LegalAction[]; disabled?: boolean; submitting?: string; onChoose?: (item: LegalAction) => void}) {
+  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
+  if (!view) return null;
   return <div className="brass-board">
     <section className="brass-status"><div><span>BRASS · BIRMINGHAM</span><h2>{view.era === "canal" ? t("brass_canal") : t("brass_rail")} · {zh ? `第 ${view.round} 轮` : `Round ${view.round}`}</h2></div><div><small>CURRENT DECISION</small><strong>{view.turn.decision.replaceAll("_", " ")}</strong><b>{view.turn.actions_remaining}/{view.turn.actions_total} {t("brass_actions")}</b></div><code>{view.rules_version}</code></section>
     <section className="brass-economy-board"><BrassMarket label={t("coal_market")} market={view.markets.coal} resource="coal"/><BrassMarket label={t("iron_market")} market={view.markets.iron} resource="iron"/><div className="brass-deck"><span>{t("deck_label")}</span><strong>{view.deck_count}</strong><small>{t("turn_order")} · {view.turn_order.map(seat => players[seat]?.name || seat + 1).join(" → ")}</small></div></section>
-    <section className="brass-map"><header><div><span>BLACK COUNTRY / BIRMINGHAM</span><h3>{t("brass_map_h")}</h3></div><b>{view.board.industries.length} {t("industries_unit")} · {view.board.links.length} {t("links_unit")}</b></header>
-      <div className="brass-city-grid">{view.board.locations.filter(location => location.kind === "industry").map(location => <article key={location.id}><h4>{brassLocationLabel(location.id, lang)}</h4><div>{location.industry_slots.map(slot => {const tile = slot.industry_id ? industryById.get(slot.industry_id) : undefined; return <span key={slot.id} className={tile ? `occupied seat-${tile.owner}` : "vacant"} title={slot.accepts.map(kind => BRASS_INDUSTRY_LABELS[lang][kind]).join(" / ")}>{tile ? <><i className={`industry-mark industry-${tile.industry}`}/><b>L{tile.level}</b><small>{tile.flipped ? t("flipped") : tile.resources ? `×${tile.resources}` : t("not_flipped")}</small></> : <small>{slot.accepts.map(kind => BRASS_INDUSTRY_LABELS[lang][kind]).join("/")}</small>}</span>;})}</div></article>)}</div>
-    </section>
-    <section className="brass-network"><header><span>{t("brass_conn")}</span><b>{view.era === "canal" ? t("canal") : t("rail")}</b></header><div>{view.board.connection_spaces.filter(space => space.available_eras.includes(view.era)).map(space => {const link = linksByConnection.get(space.id); return <span key={space.id} className={link ? `built seat-${link.owner}` : "open"}><b>{space.endpoints.map(l => brassLocationLabel(l, lang)).join(" ↔ ")}</b><small>{link ? players[link.owner]?.name || `${t("seat_label")} ${link.owner + 1}` : t("not_built")}</small></span>;})}</div></section>
-    <section className="brass-merchants"><header><span>MERCHANTS</span><h3>{t("brass_merchants")}</h3></header><div>{view.board.merchant_locations.map(merchant => <article key={merchant.id}><b>{brassLocationLabel(merchant.id, lang)}</b>{merchant.slots.map(slot => <span key={slot.id}>{slot.buys === "any" ? t("any_goods") : slot.buys === "blank" ? t("blank") : BRASS_INDUSTRY_LABELS[lang][slot.buys]}<i>{slot.beer ? "🍺" : "—"}</i></span>)}</article>)}</div></section>
+    <BrassLiveMap view={view} players={players} humanActions={humanActions} disabled={Boolean(disabled)} submitting={submitting || ""} onChoose={onChoose}/>
   </div>;
 }
 
@@ -1500,7 +1597,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
             <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div>
           </section>)}</div>}
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
         {snapshot.status === "finished" && <div className="winner-banner"><span>{t("winner")}</span><strong>{timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong><button onClick={() => { setSnapshot(null); setTimeline([]); }}>{t("play_again")}</button></div>}
       </section>
       <aside className="timeline">

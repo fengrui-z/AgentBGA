@@ -53,6 +53,17 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /azul-player-board-row/);
   assert.match(source, /AZUL_FLOOR_PENALTIES = \[-1, -1, -2, -2, -2, -3, -3\]/);
   assert.match(source, /BrassBoard/);
+  assert.match(source, /function BrassLiveMap/);
+  assert.match(source, /BRASS_MAP_POINTS/);
+  assert.match(source, /brass-route-layer/);
+  assert.match(source, /is-expanded/);
+  assert.match(source, /专注地图/);
+  assert.match(source, /humanActions\.filter\(item => item\.action\.connection_id/);
+  assert.match(source, /onChoose=\{submitHumanAction\}/);
+  assert.match(styles, /\.brass-live-map/);
+  assert.match(styles, /\.brass-route\.actionable/);
+  assert.match(styles, /\.brass-live-map\.is-expanded/);
+  assert.match(styles, /\.brass-map-slots button\.actionable/);
   assert.match(source, /CenturyBoard/);
   assert.match(source, /SevenBoard/);
   assert.match(source, /SevenSpectatorHands/);
