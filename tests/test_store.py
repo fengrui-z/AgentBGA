@@ -57,6 +57,8 @@ class StoreTests(unittest.TestCase):
             ]
             result = run_match(store, match_id, players, max_turns=20)
             self.assertEqual("ark_nova", result["game"])
+            self.assertEqual([], result["harness_metrics"]["players"])
+            self.assertTrue(result["harness_metrics"]["totals"]["complete"])
             self.assertGreater(result["decisions"], result["turns"])
             self.assertEqual("finished", store.load(match_id)[1]["status"])
             self.assertEqual(result["version"], store.replay(match_id)[-1]["version"])

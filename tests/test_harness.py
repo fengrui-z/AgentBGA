@@ -727,6 +727,40 @@ class HarnessTests(unittest.TestCase):
             agent._recover_hermes_session_id()
             self.assertEqual("new-tool", agent.session.session_id)
 
+    def test_hermes_reads_exact_usage_delta_from_session_database(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/hermes"):
+            config = PlayerConfig.from_dict({
+                "name": "Hermes Agent", "backend": "hermes", "model": "gpt-test",
+            }, 0)
+            agent = HarnessAgent(config, "match", 0, runs_root=directory)
+            agent.session.session_id = "session-1"
+            home = agent.session.workspace / ".hermes-home"
+            home.mkdir(exist_ok=True)
+            with sqlite3.connect(home / "state.db") as connection:
+                connection.execute(
+                    "CREATE TABLE sessions ("
+                    "id TEXT, input_tokens INTEGER, cache_read_tokens INTEGER, "
+                    "cache_write_tokens INTEGER, output_tokens INTEGER, "
+                    "reasoning_tokens INTEGER, api_call_count INTEGER)"
+                )
+                connection.execute(
+                    "INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    ("session-1", 100, 70, 5, 30, 20, 2),
+                )
+            before = {
+                "inputTokens": 40, "cacheReadTokens": 30, "cacheWriteTokens": 0,
+                "outputTokens": 10, "reasoningTokens": 5, "modelResponses": 1,
+            }
+
+            agent._record_hermes_usage(before)
+
+            usage = agent.usage_summary()
+            self.assertEqual(105, usage["input_tokens"])
+            self.assertEqual(40, usage["cached_input_tokens"])
+            self.assertEqual(20, usage["output_tokens"])
+            self.assertEqual(15, usage["reasoning_output_tokens"])
+            self.assertEqual(1, usage["usage_records"])
+
     def test_pi_json_events_stream_text_reasoning_and_session(self):
         self.assertEqual("hello", HarnessAgent._event_text({
             "type": "message_update", "assistantMessageEvent": {"type": "text_delta", "delta": "hello"},

@@ -149,6 +149,15 @@ checkpoint, and `final.json` is the complete artifact. Set `results.emit_every` 
 for every match or to `N` for every N matches. The format is defined by
 [`schemas/results-v1.schema.json`](schemas/results-v1.schema.json).
 
+Each completed match result also includes `harness_metrics`. For every harness seat it
+records provider-reported input and output tokens, cache reads and writes, uncached input,
+reasoning tokens, cache-hit rate, controller calls, failures and random fallbacks, session
+resumes, compactions, and process/action latency statistics. Match-level totals use
+`cached_input_tokens / input_tokens` for the cache-hit rate; reasoning tokens are a subset
+of output tokens and are not counted twice. If a harness or provider does not expose exact
+usage, its `token_usage.available` is `false` and `totals.complete` is `false` rather than
+substituting an estimate.
+
 Trusted upload credentials may be embedded at generation time without putting the token
 in the experiment manifest:
 
