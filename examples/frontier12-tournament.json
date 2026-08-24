@@ -1,0 +1,153 @@
+{
+  "schema_version": "agentbga.balanced-tournament.v1",
+  "tournament_id": "frontier12-model-harness-2026",
+  "participants": [
+    {
+      "id": "gpt56-sol-codex",
+      "player": {
+        "name": "GPT-5.6 Sol · Codex",
+        "backend": "codex",
+        "model": "gpt-5.6-sol",
+        "auth_mode": "subscription",
+        "reasoning_effort": "xhigh"
+      }
+    },
+    {
+      "id": "gpt56-terra-codex",
+      "player": {
+        "name": "GPT-5.6 Terra · Codex",
+        "backend": "codex",
+        "model": "gpt-5.6-terra",
+        "auth_mode": "subscription",
+        "reasoning_effort": "xhigh"
+      }
+    },
+    {
+      "id": "gpt56-luna-codex",
+      "player": {
+        "name": "GPT-5.6 Luna · Codex",
+        "backend": "codex",
+        "model": "gpt-5.6-luna",
+        "auth_mode": "subscription",
+        "reasoning_effort": "xhigh"
+      }
+    },
+    {
+      "id": "gpt56-sol-opencode",
+      "player": {
+        "name": "GPT-5.6 Sol · OpenCode",
+        "backend": "opencode",
+        "model": "gpt-5.6-sol",
+        "base_url": "https://api.openai.com/v1",
+        "api_key_env": "OPENAI_API_KEY",
+        "wire_api": "responses",
+        "reasoning_effort": "xhigh"
+      }
+    },
+    {
+      "id": "qwen38-max-qwen",
+      "player": {
+        "name": "Qwen3.8 Max · Qwen Code",
+        "backend": "qwen",
+        "model": "qwen3.8-max",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "qwen38-max-opencode",
+      "player": {
+        "name": "Qwen3.8 Max · OpenCode",
+        "backend": "opencode",
+        "model": "qwen3.8-max",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "glm52-opencode",
+      "player": {
+        "name": "GLM-5.2 · OpenCode",
+        "backend": "opencode",
+        "model": "glm-5.2",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "high"
+      }
+    },
+    {
+      "id": "deepseek-v4-pro-dsh",
+      "player": {
+        "name": "DeepSeek V4 Pro · DSh",
+        "backend": "dsh",
+        "model": "deepseek-v4-pro",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "deepseek-v4-pro-opencode",
+      "player": {
+        "name": "DeepSeek V4 Pro · OpenCode",
+        "backend": "opencode",
+        "model": "deepseek-v4-pro",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "deepseek-v4-flash-dsh",
+      "player": {
+        "name": "DeepSeek V4 Flash · DSh",
+        "backend": "dsh",
+        "model": "deepseek-v4-flash",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "deepseek-v4-flash-opencode",
+      "player": {
+        "name": "DeepSeek V4 Flash · OpenCode",
+        "backend": "opencode",
+        "model": "deepseek-v4-flash",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "kimi-k27-code-opencode",
+      "player": {
+        "name": "Kimi K2.7 Code · OpenCode",
+        "backend": "opencode",
+        "model": "kimi-k2.7-code",
+        "base_url_env": "DASHSCOPE_KIMI_BASE_URL",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "none"
+      }
+    }
+  ],
+  "schedule": {
+    "appearances_per_condition": 12,
+    "base_seed": 20260825,
+    "workers": 16,
+    "games": {
+      "splendor": [2, 3, 4],
+      "seven_wonders": [3, 4],
+      "brass_birmingham": [2, 3, 4]
+    }
+  },
+  "run": {
+    "retries": 0,
+    "fallback": "fail"
+  },
+  "results": {
+    "emit_every": 8
+  }
+}

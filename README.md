@@ -143,6 +143,11 @@ Runnable examples are provided in
 [`examples/experiment-tournament.json`](examples/experiment-tournament.json), and
 [`examples/experiment-series-one-sided.json`](examples/experiment-series-one-sided.json).
 
+The server-resumable 12-participant, 396-match balanced frontier tournament is
+configured in [`examples/frontier12-tournament.json`](examples/frontier12-tournament.json).
+See [`docs/frontier12-server-run.zh-CN.md`](docs/frontier12-server-run.zh-CN.md) for
+credential checks, the four-match all-participant probe, 16-worker execution, and recovery.
+
 Every run writes cumulative `agentbga.results.v1` documents atomically. `latest.json`
 is refreshed after every configured batch, `results-000020.json` is an immutable
 checkpoint, and `final.json` is the complete artifact. Set `results.emit_every` to `1`
