@@ -40,6 +40,10 @@ const STR: Record<Lang, Dict> = {
     // human turn
     your_turn: "YOUR TURN · SEAT", pick_action: "，请选择行动", legal_opts: "个合法选项",
     submitting: "提交中…", returning: "归还", buying: "支付", reserving: "预留",
+    confirm_action: "确认操作", confirm_submit: "确认并提交 →", selection_ready: "已选择",
+    confirm_idle: "尚未选择完整操作", confirm_help: "点击选项只会暂存；确认后才会正式提交。",
+    select_action_required: "请先点选一个操作，再按确认。", selection_expired: "当前选择已失效，请根据最新局面重新选择。",
+    azul_source_required: "请先选择砖块来源。", azul_color_required: "请选择要拿取的颜色。", azul_destination_required: "请选择图案线或地板线。",
     // splendor board
     supply: "供应区", gem_bank: "宝石银行", nobles: "贵族", available: "AVAILABLE",
     tier: "TIER", cards_unit: "张",
@@ -116,6 +120,10 @@ const STR: Record<Lang, Dict> = {
     paused_desc: "The table stops at a safe turn boundary. Click Resume to continue.",
     your_turn: "YOUR TURN · SEAT", pick_action: ", choose an action", legal_opts: "legal options",
     submitting: "Submitting…", returning: "Return", buying: "Pay", reserving: "Reserve",
+    confirm_action: "CONFIRM ACTION", confirm_submit: "Confirm & submit →", selection_ready: "SELECTED",
+    confirm_idle: "No complete action selected", confirm_help: "Choosing only stages an action; it is submitted after confirmation.",
+    select_action_required: "Choose an action before confirming.", selection_expired: "This choice is no longer legal. Choose again from the latest position.",
+    azul_source_required: "Choose a tile source first.", azul_color_required: "Choose the color to draft.", azul_destination_required: "Choose a pattern line or the floor.",
     supply: "Supply", gem_bank: "Gem Bank", nobles: "Nobles", available: "AVAILABLE",
     tier: "TIER", cards_unit: "cards",
     reserve_label: "Reserve", buy_label: "Buy",
@@ -711,7 +719,7 @@ function sevenPaymentSummary(action: Record<string, unknown>, lang: Lang, names?
   return parts.length ? parts.join(zh ? "；" : "; ") : (zh ? "使用自己的生产能力" : "Use your own production");
 }
 
-function SevenActionPicker({actions, view, names, disabled, submitting, onChoose}: {actions: LegalAction[]; view?: SevenView; names: Record<number, string>; disabled: boolean; submitting: string; onChoose: (item: LegalAction) => void}) {
+function SevenActionPicker({actions, view, names, disabled, submitting, selectedId, onChoose}: {actions: LegalAction[]; view?: SevenView; names: Record<number, string>; disabled: boolean; submitting: string; selectedId: string; onChoose: (item: LegalAction) => void}) {
   const lang = useLang(); const zh = lang === "zh";
   const viewer = view?.players.find(player => player.seat === view.viewer_seat);
   const cards = viewer?.hand.filter((card): card is SevenCard => !("hidden" in card)) || [];
@@ -724,9 +732,9 @@ function SevenActionPicker({actions, view, names, disabled, submitting, onChoose
       const label = kind === "sell_card" ? (zh ? "出售这张牌 · 获得 💰3" : "Sell this card · gain 💰3")
         : kind === "build_wonder" ? (zh ? `用于建造奇迹第 ${item.action.stage} 阶段 · ${payment}` : `Use for Wonder stage ${item.action.stage} · ${payment}`)
         : (zh ? `建造这张牌 · ${payment}` : `Build this card · ${payment}`);
-      return <button key={item.id} className={`seven-action-option option-${kind}`} disabled={disabled} title={item.id} onClick={() => onChoose(item)}><b>{kind === "sell_card" ? "💰" : kind === "build_wonder" ? "◆" : "🏛️"}</b><span>{label}</span>{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>;
+      return <button key={item.id} className={`seven-action-option option-${kind} ${selectedId === item.id ? "selected" : ""}`} disabled={disabled} title={item.id} aria-pressed={selectedId === item.id} onClick={() => onChoose(item)}><b>{kind === "sell_card" ? "💰" : kind === "build_wonder" ? "◆" : "🏛️"}</b><span>{label}</span>{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>;
     })}</div></section>;
-  })}{remaining.length > 0 && <section className="seven-extra-actions">{remaining.map(item => <button key={item.id} disabled={disabled} onClick={() => onChoose(item)}>{humanActionText(item.action, lang)}</button>)}</section>}</div>;
+  })}{remaining.length > 0 && <section className="seven-extra-actions">{remaining.map(item => <button key={item.id} className={selectedId === item.id ? "selected" : ""} aria-pressed={selectedId === item.id} disabled={disabled} onClick={() => onChoose(item)}>{humanActionText(item.action, lang)}</button>)}</section>}</div>;
 }
 
 function SevenCityCardGroups({cards}: {cards: SevenCard[]}) {
@@ -1033,8 +1041,8 @@ function findActionCard(action: Record<string, unknown>, view?: View) {
   );
 }
 
-function HumanActionChoice({item, view, brassView, disabled, submitting, onChoose}: {
-  item: LegalAction; view?: View; brassView?: BrassView; disabled: boolean; submitting: boolean; onChoose: () => void;
+function HumanActionChoice({item, view, brassView, disabled, submitting, selected, onChoose}: {
+  item: LegalAction; view?: View; brassView?: BrassView; disabled: boolean; submitting: boolean; selected: boolean; onChoose: () => void;
 }) {
   const lang = useLang(); const zh = lang === "zh";
   const kind = String(item.action.type);
@@ -1042,19 +1050,19 @@ function HumanActionChoice({item, view, brassView, disabled, submitting, onChoos
     const take = (item.action.take ?? {}) as Record<string, number>;
     const returned = (item.action.return ?? {}) as Record<string, number>;
     const returnColors = GEM_ORDER.filter(color => (returned[color] ?? 0) > 0);
-    return <button className="token-action-choice" disabled={disabled} onClick={onChoose} aria-label={humanActionText(item.action, lang)} title={`${humanActionText(item.action, lang)} · ${item.id}`}>
+    return <button className={`token-action-choice ${selected ? "selected" : ""}`} disabled={disabled} onClick={onChoose} aria-pressed={selected} aria-label={humanActionText(item.action, lang)} title={`${humanActionText(item.action, lang)} · ${item.id}`}>
       <span className="token-choice-gems">{GEM_ORDER.filter(color => (take[color] ?? 0) > 0).map(color => <Gem key={color} color={color} value={take[color]}/>)}</span>
       {returnColors.length > 0 && <span className="token-choice-return"><b>{zh ? "归还" : "Return"}</b>{returnColors.map(color => <Gem key={color} color={color} value={returned[color]} compact/>)}</span>}
       {submitting && <i>{zh ? "提交中…" : "Submitting…"}</i>}
     </button>;
   }
-  if (CENTURY_ACTION_TYPES.has(kind)) return <button className={`century-action-choice century-action-${kind}`} disabled={disabled} onClick={onChoose} title={item.id}>
+  if (CENTURY_ACTION_TYPES.has(kind)) return <button className={`century-action-choice century-action-${kind} ${selected ? "selected" : ""}`} disabled={disabled} aria-pressed={selected} onClick={onChoose} title={item.id}>
     <span>{ACTION_GROUPS[lang][kind]}</span><strong>{humanActionText(item.action, lang)}</strong>{submitting && <i>{zh ? "提交中…" : "Submitting…"}</i>}
   </button>;
   const card = CARD_ACTION_TYPES.has(kind) ? findActionCard(item.action, view) : undefined;
-  if (!card) return <button disabled={disabled} onClick={onChoose}><strong>{humanActionText(item.action, lang, brassView)}</strong><small>{item.id}{submitting ? (zh ? " · 提交中…" : " · submitting…") : ""}</small></button>;
+  if (!card) return <button className={selected ? "selected" : ""} aria-pressed={selected} disabled={disabled} onClick={onChoose}><strong>{humanActionText(item.action, lang, brassView)}</strong><small>{item.id}{submitting ? (zh ? " · 提交中…" : " · submitting…") : ""}</small></button>;
   const payment = tokenText((item.action.payment ?? item.action.return ?? {}) as Record<string, number>, lang);
-  return <button className={`card-action-choice card-${card.bonus}`} disabled={disabled} onClick={onChoose} aria-label={humanActionText(item.action, lang)}>
+  return <button className={`card-action-choice card-${card.bonus} ${selected ? "selected" : ""}`} disabled={disabled} onClick={onChoose} aria-pressed={selected} aria-label={humanActionText(item.action, lang)}>
     <span className="card-action-label">{kind === "reserve_visible" ? (zh ? "预留" : "Reserve") : (zh ? "购买" : "Buy")}</span>
     <span className="card-action-top"><strong>{card.points || "·"}</strong><b>{GEM_META[card.bonus]?.mark}</b></span>
     <Cost cost={card.cost}/>
@@ -1063,20 +1071,29 @@ function HumanActionChoice({item, view, brassView, disabled, submitting, onChoos
   </button>;
 }
 
-function AzulActionPicker({actions, disabled, submitting, onChoose}: {actions: LegalAction[]; disabled: boolean; submitting: string; onChoose: (item: LegalAction) => void}) {
+function AzulActionPicker({actions, disabled, submitting, selectedId, onSelect}: {actions: LegalAction[]; disabled: boolean; submitting: string; selectedId: string; onSelect: (item: LegalAction | null, requirement?: string) => void}) {
   const lang = useLang(); const zh = lang === "zh";
+  const t = makeT(lang);
   const sources = useMemo(() => [...new Set(actions.map(item => String(item.action.source)))], [actions]);
   const [selectedSource, setSelectedSource] = useState("");
-  const source = sources.includes(selectedSource) ? selectedSource : sources[0] || "";
-  const colors = AZUL_COLORS.filter(color => actions.some(item => item.action.source === source && item.action.color === color));
+  const source = sources.includes(selectedSource) ? selectedSource : "";
+  const colors = source ? AZUL_COLORS.filter(color => actions.some(item => item.action.source === source && item.action.color === color)) : [];
   const [selectedColor, setSelectedColor] = useState<AzulColor | "">("");
-  const color = colors.includes(selectedColor as AzulColor) ? selectedColor : colors[0] || "";
-  const choices = actions.filter(item => item.action.source === source && item.action.color === color);
+  const color = colors.includes(selectedColor as AzulColor) ? selectedColor : "";
+  const choices = color ? actions.filter(item => item.action.source === source && item.action.color === color) : [];
   return <div className="azul-action-picker">
-    <div><span>1 · {zh ? "来源" : "Source"}</span>{sources.map(value => <button key={value} className={source === value ? "selected" : ""} onClick={() => {setSelectedSource(value); setSelectedColor("");}} disabled={disabled}>{value === "center" ? (zh ? "中央区" : "Center") : `${zh ? "工厂" : "Factory"} ${value.replace("factory-", "")}`}</button>)}</div>
-    <div><span>2 · {zh ? "颜色" : "Color"}</span>{colors.map(value => <button key={value} className={color === value ? "selected" : ""} onClick={() => setSelectedColor(value)} disabled={disabled}><AzulTile color={value}/>{AZUL_META[value][lang]}</button>)}</div>
-    <div><span>3 · {zh ? "放置位置" : "Destination"}</span>{choices.map(item => <button key={item.id} onClick={() => onChoose(item)} disabled={disabled}>{item.action.destination === "floor" ? (zh ? "地板线" : "Floor") : `${zh ? "图案线" : "Pattern line"} ${String(item.action.destination).replace("pattern-line-", "")}`}{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>)}</div>
+    <div><span>1 · {zh ? "来源" : "Source"}</span>{sources.map(value => <button key={value} className={source === value ? "selected" : ""} aria-pressed={source === value} onClick={() => {setSelectedSource(value); setSelectedColor(""); onSelect(null, t("azul_color_required"));}} disabled={disabled}>{value === "center" ? (zh ? "中央区" : "Center") : `${zh ? "工厂" : "Factory"} ${value.replace("factory-", "")}`}</button>)}</div>
+    <div><span>2 · {zh ? "颜色" : "Color"}</span>{colors.length ? colors.map(value => <button key={value} className={color === value ? "selected" : ""} aria-pressed={color === value} onClick={() => {setSelectedColor(value); onSelect(null, t("azul_destination_required"));}} disabled={disabled}><AzulTile color={value}/>{AZUL_META[value][lang]}</button>) : <em>{t("azul_source_required")}</em>}</div>
+    <div><span>3 · {zh ? "放置位置" : "Destination"}</span>{choices.length ? choices.map(item => <button key={item.id} className={selectedId === item.id ? "selected" : ""} aria-pressed={selectedId === item.id} onClick={() => onSelect(item)} disabled={disabled}>{item.action.destination === "floor" ? (zh ? "地板线" : "Floor") : `${zh ? "图案线" : "Pattern line"} ${String(item.action.destination).replace("pattern-line-", "")}`}{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>) : <em>{source ? t("azul_color_required") : t("azul_source_required")}</em>}</div>
   </div>;
+}
+
+function HumanActionConfirmation({selected, brassView, issue, submitting, onConfirm}: {selected: LegalAction | null; brassView?: BrassView; issue: string; submitting: boolean; onConfirm: () => void}) {
+  const lang = useLang(); const t = makeT(lang);
+  return <footer className={`human-action-confirmation ${selected ? "is-ready" : ""} ${issue ? "has-error" : ""}`}>
+    <div><span>{selected ? t("selection_ready") : t("confirm_action")}</span><strong>{selected ? humanActionText(selected.action, lang, brassView) : t("confirm_idle")}</strong><small className={issue ? "validation-message" : ""} role={issue ? "alert" : undefined}>{issue || t("confirm_help")}</small></div>
+    <button type="button" disabled={submitting} onClick={onConfirm}><b>{submitting ? t("submitting") : t("confirm_submit")}</b><i>{selected ? "✓" : "!"}</i></button>
+  </footer>;
 }
 
 const ARK_ACTION_LABELS: Record<Lang, Record<string, string>> = {
@@ -1200,9 +1217,9 @@ function BrassMarket({label, market, resource}: {label: string; market: {prices:
   return <div className={`brass-market brass-market-${resource}`}><header><span>{label}</span><b>{market.occupied.filter(Boolean).length}</b></header><div>{market.prices.map((price, index) => <i key={index} className={market.occupied[index] ? "filled" : "empty"} title={`£${price}`}><small>£{price}</small></i>)}</div></div>;
 }
 
-function BrassLiveMap({view, players, humanActions = [], disabled, submitting, onChoose}: {
+function BrassLiveMap({view, players, humanActions = [], disabled, submitting, selectedActionId, onChoose}: {
   view: BrassView; players: Snapshot["players"]; humanActions?: LegalAction[];
-  disabled: boolean; submitting: string; onChoose?: (item: LegalAction) => void;
+  disabled: boolean; submitting: string; selectedActionId: string; onChoose?: (item: LegalAction) => void;
 }) {
   const lang = useLang(); const zh = lang === "zh";
   const [zoom, setZoom] = useState(1);
@@ -1244,7 +1261,7 @@ function BrassLiveMap({view, players, humanActions = [], disabled, submitting, o
             const hub = points.length === 2 ? null : {x: points.reduce((sum, point) => sum + point.x, 0) / points.length, y: points.reduce((sum, point) => sum + point.y, 0) / points.length};
             const segments = hub ? points.map(point => [point, hub]) : [[points[0], points[1]]];
             const label = connection.endpoints.map(endpoint => brassLocationLabel(endpoint, lang)).join(" ↔ ");
-            return <g key={connection.id} className={`brass-route ${built ? `built seat-${built.owner}` : eraActive ? "era-active" : "era-inactive"} ${actions.length ? "actionable" : ""}`} style={built ? {"--route-color": BRASS_SEAT_COLORS[built.owner]} as CSSProperties : undefined}>
+            return <g key={connection.id} className={`brass-route ${built ? `built seat-${built.owner}` : eraActive ? "era-active" : "era-inactive"} ${actions.length ? "actionable" : ""} ${actions.some(item => item.id === selectedActionId) ? "selected" : ""}`} style={built ? {"--route-color": BRASS_SEAT_COLORS[built.owner]} as CSSProperties : undefined}>
               {segments.map(([start, end], index) => <g key={index}><line className="route-visible" x1={start.x} y1={start.y} x2={end.x} y2={end.y}/><line className="route-hit" x1={start.x} y1={start.y} x2={end.x} y2={end.y} tabIndex={actions.length ? 0 : -1} role={actions.length ? "button" : undefined} aria-label={actions.length ? `${label} · ${zh ? "选择线路" : "choose route"}` : label} onClick={() => choose(label, actions)} onKeyDown={event => {if ((event.key === "Enter" || event.key === " ") && actions.length) choose(label, actions);}}/></g>)}
             </g>;
           })}
@@ -1256,7 +1273,7 @@ function BrassLiveMap({view, players, humanActions = [], disabled, submitting, o
               const tile = slot.industry_id ? industryById.get(slot.industry_id) : undefined;
               const actions = targetActions([slot.id, tile?.id]);
               const label = tile ? `${BRASS_INDUSTRY_LABELS[lang][tile.industry]} L${tile.level}` : slot.accepts.map(kind => BRASS_INDUSTRY_LABELS[lang][kind]).join("/");
-              return <button key={slot.id} className={`${tile ? `occupied seat-${tile.owner}` : "vacant"} ${actions.length ? "actionable" : ""}`} disabled={!actions.length || disabled} onClick={() => choose(`${brassLocationLabel(location.id, lang)} · ${label}`, actions)} title={`${label}${actions.length ? ` · ${zh ? "点击选择" : "click to choose"}` : ""}`}>
+              return <button key={slot.id} className={`${tile ? `occupied seat-${tile.owner}` : "vacant"} ${actions.length ? "actionable" : ""} ${actions.some(item => item.id === selectedActionId) ? "selected" : ""}`} disabled={!actions.length || disabled} onClick={() => choose(`${brassLocationLabel(location.id, lang)} · ${label}`, actions)} title={`${label}${actions.length ? ` · ${zh ? "点击选择" : "click to choose"}` : ""}`}>
                 {tile ? <><i className={`industry-mark industry-${tile.industry}`}/><b>L{tile.level}</b><small>{tile.flipped ? "✓" : tile.resources ? `×${tile.resources}` : "○"}</small></> : <>{slot.accepts.map(kind => <i key={kind} className={`industry-mark industry-${kind}`}/>)}</>}
               </button>;
             })}</div>
@@ -1264,21 +1281,21 @@ function BrassLiveMap({view, players, humanActions = [], disabled, submitting, o
         })}
         {Object.entries(BRASS_MAP_POINTS).filter(([, point]) => point.kind === "merchant").map(([locationId, point]) => {
           const merchant = merchantById.get(locationId);
-          return <article key={locationId} className={`brass-map-merchant ${merchant ? "active" : "inactive"}`} style={{left: `${point.x / 10}%`, top: `${point.y / 9.2}%`}}><h4>{brassLocationLabel(locationId, lang)}</h4><div>{merchant ? merchant.slots.map(slot => {const actions = targetActions([slot.id]); return <button key={slot.id} className={actions.length ? "actionable" : ""} disabled={!actions.length || disabled} onClick={() => choose(`${brassLocationLabel(locationId, lang)} · ${slot.buys}`, actions)}><span>{slot.buys === "any" ? "◆" : slot.buys === "blank" ? "—" : <i className={`industry-mark industry-${slot.buys}`}/>}</span><b>{slot.beer ? "🍺" : "·"}</b></button>;}) : <small>{zh ? "本人数无商人牌" : "No merchant tile"}</small>}</div></article>;
+          return <article key={locationId} className={`brass-map-merchant ${merchant ? "active" : "inactive"}`} style={{left: `${point.x / 10}%`, top: `${point.y / 9.2}%`}}><h4>{brassLocationLabel(locationId, lang)}</h4><div>{merchant ? merchant.slots.map(slot => {const actions = targetActions([slot.id]); return <button key={slot.id} className={`${actions.length ? "actionable" : ""} ${actions.some(item => item.id === selectedActionId) ? "selected" : ""}`} disabled={!actions.length || disabled} onClick={() => choose(`${brassLocationLabel(locationId, lang)} · ${slot.buys}`, actions)}><span>{slot.buys === "any" ? "◆" : slot.buys === "blank" ? "—" : <i className={`industry-mark industry-${slot.buys}`}/>}</span><b>{slot.beer ? "🍺" : "·"}</b></button>;}) : <small>{zh ? "本人数无商人牌" : "No merchant tile"}</small>}</div></article>;
         })}
       </div>
     </div>
-    {currentChoice && <div className="brass-map-choice"><header><div><span>{zh ? "地图目标" : "Map target"}</span><b>{currentChoice.label}</b></div><button onClick={() => setChoiceTarget(null)}>×</button></header><div>{currentChoice.actions.map(item => <button key={item.id} disabled={disabled} onClick={() => onChoose?.(item)}><strong>{humanActionText(item.action, lang, view)}</strong><small>{submitting === item.id ? (zh ? "提交中…" : "Submitting…") : item.id}</small></button>)}</div></div>}
+    {currentChoice && <div className="brass-map-choice"><header><div><span>{zh ? "地图目标" : "Map target"}</span><b>{currentChoice.label}</b></div><button onClick={() => setChoiceTarget(null)}>×</button></header><div>{currentChoice.actions.map(item => <button key={item.id} className={selectedActionId === item.id ? "selected" : ""} aria-pressed={selectedActionId === item.id} disabled={disabled} onClick={() => onChoose?.(item)}><strong>{humanActionText(item.action, lang, view)}</strong><small>{submitting === item.id ? (zh ? "提交中…" : "Submitting…") : item.id}</small></button>)}</div></div>}
   </section>;
 }
 
-function BrassBoard({view, players, humanActions, disabled, submitting, onChoose}: {view?: BrassView; players: Snapshot["players"]; humanActions?: LegalAction[]; disabled?: boolean; submitting?: string; onChoose?: (item: LegalAction) => void}) {
+function BrassBoard({view, players, humanActions, disabled, submitting, selectedActionId, onChoose}: {view?: BrassView; players: Snapshot["players"]; humanActions?: LegalAction[]; disabled?: boolean; submitting?: string; selectedActionId?: string; onChoose?: (item: LegalAction) => void}) {
   const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
   if (!view) return null;
   return <div className="brass-board">
     <section className="brass-status"><div><span>BRASS · BIRMINGHAM</span><h2>{view.era === "canal" ? t("brass_canal") : t("brass_rail")} · {zh ? `第 ${view.round} 轮` : `Round ${view.round}`}</h2></div><div><small>CURRENT DECISION</small><strong>{view.turn.decision.replaceAll("_", " ")}</strong><b>{view.turn.actions_remaining}/{view.turn.actions_total} {t("brass_actions")}</b></div><code>{view.rules_version}</code></section>
     <section className="brass-economy-board"><BrassMarket label={t("coal_market")} market={view.markets.coal} resource="coal"/><BrassMarket label={t("iron_market")} market={view.markets.iron} resource="iron"/><div className="brass-deck"><span>{t("deck_label")}</span><strong>{view.deck_count}</strong><small>{t("turn_order")} · {view.turn_order.map(seat => players[seat]?.name || seat + 1).join(" → ")}</small></div></section>
-    <BrassLiveMap view={view} players={players} humanActions={humanActions} disabled={Boolean(disabled)} submitting={submitting || ""} onChoose={onChoose}/>
+    <BrassLiveMap view={view} players={players} humanActions={humanActions} disabled={Boolean(disabled)} submitting={submitting || ""} selectedActionId={selectedActionId || ""} onChoose={onChoose}/>
   </div>;
 }
 
@@ -1346,7 +1363,12 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const [starting, setStarting] = useState(false);
   const [controlling, setControlling] = useState(false);
   const [submittingAction, setSubmittingAction] = useState("");
+  const [humanActionState, setHumanActionState] = useState<{turnKey: string; selected: LegalAction | null; requirement: string; issue: string} | null>(null);
   const sourceRef = useRef<EventSource | null>(null);
+  const humanTurnKey = snapshot?.human_turn ? `${snapshot.match_id}:${snapshot.human_turn.seat}:${snapshot.human_turn.version}` : "";
+  const currentHumanActionState = humanActionState?.turnKey === humanTurnKey ? humanActionState : null;
+  const selectedHumanAction = currentHumanActionState?.selected ?? null;
+  const humanActionIssue = currentHumanActionState?.issue ?? "";
   const humanSeat = snapshot?.human_turn?.seat ?? snapshot?.players.find(player => player.backend === "human")?.seat ?? 0;
   const viewer = snapshot?.views[humanSeat];
   const splendorView = snapshot?.game === "splendor" ? viewer as View : undefined;
@@ -1512,9 +1534,34 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || "无法提交行动");
-      setSnapshot(data);
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+      setSnapshot(data); setHumanActionState(null);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message);
+      setHumanActionState(current => current?.turnKey === humanTurnKey ? {...current, issue: message} : current);
+    }
     finally { setSubmittingAction(""); }
+  }
+
+  function stageHumanAction(item: LegalAction | null, requirement = "") {
+    if (!humanTurnKey) return;
+    setError("");
+    setHumanActionState({turnKey: humanTurnKey, selected: item, requirement, issue: ""});
+  }
+
+  function confirmHumanAction() {
+    if (!snapshot?.human_turn || submittingAction) return;
+    if (!selectedHumanAction) {
+      const message = currentHumanActionState?.requirement || (snapshot.game === "azul" ? t("azul_source_required") : t("select_action_required"));
+      setHumanActionState({turnKey: humanTurnKey, selected: null, requirement: currentHumanActionState?.requirement || "", issue: message});
+      return;
+    }
+    const legalAction = snapshot.human_turn.legal_actions.find(item => item.id === selectedHumanAction.id);
+    if (!legalAction) {
+      setHumanActionState({turnKey: humanTurnKey, selected: null, requirement: "", issue: t("selection_expired")});
+      return;
+    }
+    void submitHumanAction(legalAction);
   }
 
   if (!snapshot) return <main className="setup-shell">
@@ -1588,16 +1635,17 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
                 ? <CenturyPlayerPanel key={identity.seat} player={visiblePlayer as CenturyPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
                 : <SevenPlayerPanel key={identity.seat} player={visiblePlayer as SevenPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
       })}</aside>
-      <section className="board">
+      <section className={`board ${snapshot.human_turn ? "has-human-action" : ""}`}>
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? t("pause_pending") : t("paused")}</strong><span>{snapshot.pause_pending ? t("pause_pending_desc") : t("paused_desc")}</span></div>}
         {snapshot.human_turn && <section className="human-turn" aria-live="polite">
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}{t("pick_action")}</h2></div><b>{snapshot.human_turn.legal_actions.length} {t("legal_opts")}</b></header>
-          {snapshot.game === "azul" ? <AzulActionPicker actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
+          {snapshot.game === "azul" ? <AzulActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
             <h3>{ACTION_GROUPS[lang][kind] || kind}<span>{actions.length}</span></h3>
-            <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div>
+            <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div>
           </section>)}</div>}
+          <HumanActionConfirmation selected={selectedHumanAction} brassView={brassView} issue={humanActionIssue} submitting={Boolean(submittingAction)} onConfirm={confirmHumanAction}/>
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
         {snapshot.status === "finished" && <div className="winner-banner"><span>{t("winner")}</span><strong>{timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong><button onClick={() => { setSnapshot(null); setTimeline([]); }}>{t("play_again")}</button></div>}
       </section>
       <aside className="timeline">
