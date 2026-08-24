@@ -35,8 +35,31 @@ function fakeWorld() {
           emitCompaction = false;
         }
         append("user/message", { message });
+        append("assistant/chunk", {
+          turn: 1,
+          step: 0,
+          chunk: {
+            type: "usage",
+            usage: {
+              inputTokens: 100,
+              cacheReadTokens: 70,
+              cacheWriteTokens: 5,
+              outputTokens: 20,
+              reasoningTokens: 12,
+            },
+          },
+        });
         append("assistant/message", {
+          turn: 1,
+          step: 0,
           message: { content: [{ type: "text", text: "submitted" }] },
+          usage: {
+            inputTokens: 120,
+            cacheReadTokens: 80,
+            cacheWriteTokens: 5,
+            outputTokens: 24,
+            reasoningTokens: 16,
+          },
         });
         append("turn/end", { reason: { kind: "completed" } });
       },
@@ -114,6 +137,14 @@ test("cold starts once, resumes continuously, and resumes after compaction", asy
       first.compactionEvents.map((event) => event.type),
       ["compaction/start", "compaction/end"],
     );
+    assert.deepEqual(first.tokenUsage, {
+      inputTokens: 120,
+      cacheReadTokens: 80,
+      cacheWriteTokens: 5,
+      outputTokens: 24,
+      reasoningTokens: 16,
+      modelResponses: 1,
+    });
 
     const secondMetadata = join(directory, "turn-2.json");
     const secondIo = outputCapture();
@@ -126,6 +157,8 @@ test("cold starts once, resumes continuously, and resumes after compaction", asy
     assert.equal(second.resumeCount, 1);
     assert.deepEqual(second.compactionEvents, []);
     assert.equal(second.compactionEventCountTotal, 2);
+    assert.equal(second.tokenUsage.inputTokens, 120);
+    assert.equal(second.tokenUsage.modelResponses, 1);
     assert.equal(world.calls.flush.length, 2);
   } finally {
     await rm(directory, { recursive: true, force: true });

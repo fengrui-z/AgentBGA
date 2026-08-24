@@ -16,6 +16,7 @@ from typing import Any, Callable
 
 from .agents import AgentError, PlayerConfig, StreamSink
 from .memory import memory_identity, stable_session_id
+from .usage import TokenUsageAccumulator, harness_usage_samples, normalize_token_usage
 
 
 HarnessEventSink = Callable[[dict[str, Any]], None]
@@ -116,9 +117,12 @@ class HarnessAgent:
         self._dsh_state_path = self._dsh_home / "agentbga-session.json"
         self._dsh_metadata_path = runtime / "dsh-turn-metadata.json"
         self._dsh_turn_metadata: dict[str, Any] = {}
+        self._dsh_usage_keys: set[tuple[Any, Any]] = set()
         self._session_state_path = workspace / "agentbga-harness-session.json"
         self.trace_dir = trace_dir
         self._trace_steps: list[dict[str, Any]] = []
+        self._match_usage = TokenUsageAccumulator()
+        self._turn_usage = TokenUsageAccumulator()
         self.binary = shutil.which(config.backend)
         if not self.binary:
             raise AgentError(f"harness executable not found: {config.backend}")
@@ -755,6 +759,40 @@ class HarnessAgent:
         if row and isinstance(row[0], str) and row[0]:
             self.session.session_id = row[0]
 
+    def _hermes_usage_snapshot(self) -> dict[str, int]:
+        """Read exact cumulative usage from Hermes' isolated session store."""
+        empty = {
+            "inputTokens": 0, "cacheReadTokens": 0, "cacheWriteTokens": 0,
+            "outputTokens": 0, "reasoningTokens": 0, "modelResponses": 0,
+        }
+        if self.config.backend != "hermes" or not self.session.session_id:
+            return empty
+        database = self.session.workspace / ".hermes-home" / "state.db"
+        if not database.is_file():
+            return empty
+        try:
+            with sqlite3.connect(database) as connection:
+                row = connection.execute(
+                    "SELECT input_tokens,cache_read_tokens,cache_write_tokens,"
+                    "output_tokens,reasoning_tokens,api_call_count "
+                    "FROM sessions WHERE id = ?", (self.session.session_id,),
+                ).fetchone()
+        except sqlite3.Error:
+            return empty
+        if row is None:
+            return empty
+        return {key: max(0, int(value or 0)) for key, value in zip(empty, row)}
+
+    def _record_hermes_usage(self, before: dict[str, int]) -> None:
+        if self.config.backend != "hermes":
+            return
+        after = self._hermes_usage_snapshot()
+        delta = {key: max(0, after[key] - before.get(key, 0)) for key in after}
+        sample = normalize_token_usage(delta, source="hermes.session_db")
+        records = delta["modelResponses"]
+        self._turn_usage.add(sample, records=records if records > 0 else 1)
+        self._match_usage.add(sample, records=records if records > 0 else 1)
+
     def _load_harness_session_state(self) -> None:
         if self.config.backend == "dsh" or not self._session_state_path.is_file():
             return
@@ -806,6 +844,19 @@ class HarnessAgent:
         resume_count = metadata.get("resumeCount")
         if isinstance(resume_count, int) and resume_count >= 0:
             self.session.resume_count = resume_count
+        token_usage = metadata.get("tokenUsage")
+        usage_key = (metadata.get("firstSeq"), metadata.get("lastSeq"))
+        if isinstance(token_usage, dict) and usage_key not in self._dsh_usage_keys:
+            sample = normalize_token_usage(token_usage, source="dsh.assistant_message")
+            records = token_usage.get("modelResponses")
+            record_count = records if isinstance(records, int) and records > 0 else 1
+            self._turn_usage.add(sample, records=record_count)
+            self._match_usage.add(sample, records=record_count)
+            self._dsh_usage_keys.add(usage_key)
+
+    def usage_summary(self) -> dict[str, Any]:
+        """Return exact native token usage observed by this match-local agent."""
+        return self._match_usage.summary()
 
     def _emit_tool_audit(self) -> None:
         path = self.session.runtime / "tool-events.jsonl"
@@ -930,6 +981,9 @@ class HarnessAgent:
                         self._emit("harness_output", channel="content", delta=line + "\n")
                         self._trace_steps.append({"role": "assistant", "channel": "content", "text": line})
                         continue
+                    for sample in harness_usage_samples(self.config.backend, payload):
+                        self._turn_usage.add(sample)
+                        self._match_usage.add(sample)
                     session_id = self._event_session_id(payload)
                     if session_id:
                         self.session.session_id = session_id
@@ -1069,6 +1123,7 @@ class HarnessAgent:
         on_stream: StreamSink | None = None,
     ) -> tuple[str, dict[str, Any]]:
         submission_path = self._prepare_turn(observation, legal)
+        self._turn_usage = TokenUsageAccumulator()
         prompt = TURN_PROMPT.format(
             seat=self.session.seat,
             version=observation.get("state_version", observation.get("turn_count")),
@@ -1078,11 +1133,13 @@ class HarnessAgent:
         started = time.monotonic()
         started_wall = time.time()
         turn_resumed = bool(self.session.session_id)
+        hermes_usage_before = self._hermes_usage_snapshot()
         self._trace_steps = []
         try:
             raw, stderr, returncode = self._run(self._command(prompt))
         except AgentError as error:
             self._recover_hermes_session_id()
+            self._record_hermes_usage(hermes_usage_before)
             self._recover_dsh_turn_metadata()
             self._save_harness_session_state()
             process_latency_ms = round((time.monotonic() - started) * 1000, 3)
@@ -1098,6 +1155,7 @@ class HarnessAgent:
             )
             raise
         self._recover_hermes_session_id()
+        self._record_hermes_usage(hermes_usage_before)
         self._recover_dsh_turn_metadata()
         process_latency_ms = round((time.monotonic() - started) * 1000, 3)
         action_latency_ms = self._action_latency_ms(submission_path, started_wall)
@@ -1153,6 +1211,9 @@ class HarnessAgent:
             "action_latency_ms": action_latency_ms,
             "process_latency_ms": process_latency_ms,
         }
+        turn_usage = self._turn_usage.summary()
+        if turn_usage["available"]:
+            metadata["usage"] = turn_usage
         self._emit("harness_finished", action_id=action_id,
                    latency_ms=process_latency_ms,
                    action_latency_ms=action_latency_ms,

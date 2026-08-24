@@ -212,6 +212,19 @@ class Store:
                  json.dumps(metadata, separators=(",", ":")), time.time()),
             )
 
+    def controller_calls(self, match_id: str) -> list[dict[str, Any]]:
+        self.load(match_id)
+        rows = self.connection.execute(
+            "SELECT version,seat,controller,metadata_json,created_at FROM model_calls "
+            "WHERE match_id=? ORDER BY version,seat", (match_id,),
+        ).fetchall()
+        return [{
+            "version": row["version"], "seat": row["seat"],
+            "controller": row["controller"],
+            "metadata": json.loads(row["metadata_json"]),
+            "created_at": row["created_at"],
+        } for row in rows]
+
     def record_harness_event(
         self, match_id: str, version: int, seat: int, event: dict[str, Any],
     ) -> None:
