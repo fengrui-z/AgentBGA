@@ -16,6 +16,7 @@ export type ArkCard = {
   abilities?: {keyword?: string; name_cn?: string; name_en?: string; effect_cn?: string; effect_en?: string; value?: unknown}[];
   mechanism_notes?: {timing?: string; summary_cn?: string; summary_en?: string}[];
   resolved_mechanics?: {timing: string; timing_cn: string; timing_en: string; description_cn: string; description_en: string; op?: string; source?: string}[];
+  resolved_requirements?: {description_cn: string; description_en: string}[];
   live_scoring?: {conservation: number; metric?: string; metric_value?: number; conditions?: Record<string, boolean>; winning_categories?: string[]; right_neighbor_seat?: number};
   criterion_cn?: string; criterion_en?: string; requirement_cn?: string; requirement_en?: string;
   project_type?: string; release_icon?: string; breeding_icon?: string;
@@ -195,7 +196,8 @@ function humanIcon(icon: string, lang: ArkLang) {
   return labels[icon]?.[lang] || icon.replaceAll("_", " ");
 }
 
-function readableRequirements(card: ArkCard) {
+function readableRequirements(card: ArkCard, lang: ArkLang) {
+  if (card.resolved_requirements?.length) return card.resolved_requirements.map(requirement => lang === "zh" ? requirement.description_cn : requirement.description_en);
   return (card.requirements || []).filter((item): item is string => typeof item === "string" && Boolean(item.trim()));
 }
 
@@ -237,7 +239,7 @@ function readableMechanisms(card: ArkCard, lang: ArkLang) {
 
 function readableCardLabel(card: ArkCard, lang: ArkLang) {
   if (card.hidden) return cardTitle(card, lang);
-  const requirements = readableRequirements(card);
+  const requirements = readableRequirements(card, lang);
   const mechanisms = readableMechanisms(card, lang);
   return [
     cardTitle(card, lang), cardTypeLabel(card, lang),
@@ -287,7 +289,7 @@ function CardDetailsOverlay({card, lang, open, pinned, onClose}: {
 }) {
   if (!open || typeof document === "undefined") return null;
   const title = cardTitle(card, lang);
-  const requirements = readableRequirements(card);
+  const requirements = readableRequirements(card, lang);
   const mechanisms = readableMechanisms(card, lang);
   const tiers = readableTiers(card);
   const icons = cardIcons(card);
@@ -324,7 +326,7 @@ function ReadableCardFace({card, lang, selectionControl}: {
   const [pinned, setPinned] = useState(false);
   if (card.hidden) return <div className="ark-readable-card-face is-hidden"><header className="ark-readable-card-heading"><i>?</i><div><b>{copy(lang, "隐藏卡牌", "Hidden card")}</b><small>{copy(lang, "仅牌背公开", "Only the card back is public")}</small></div>{selectionControl}</header></div>;
   const title = cardTitle(card, lang);
-  const requirements = readableRequirements(card);
+  const requirements = readableRequirements(card, lang);
   const mechanisms = readableMechanisms(card, lang);
   const tiers = readableTiers(card);
   const icons = cardIcons(card);

@@ -1,8 +1,8 @@
 from pathlib import Path
 import unittest
 
-from agentbga.ark_nova_official import ArkNovaOfficialPlugin, SemanticEngine, add_project_to_state, load_content_pack, new_semantic_state, present_entry, setup_official_game
-from agentbga.ark_nova_official.setup import _bonus_tiles
+from agentbga.ark_nova_official import ArkNovaOfficialPlugin, EvaluationContext, SemanticEngine, add_project_to_state, load_content_pack, new_semantic_state, present_entry, setup_official_game
+from agentbga.ark_nova_official.setup import _bonus_tiles, card_instance
 
 
 class ArkNovaOfficialSetupTests(unittest.TestCase):
@@ -49,6 +49,22 @@ class ArkNovaOfficialSetupTests(unittest.TestCase):
             with self.subTest(entry_id=entry_id):
                 entry = self.pack.entry(entry_id)
                 self.assertEqual(icons, present_entry(entry)["facts"]["icons"])
+
+    def test_runtime_card_uses_executable_reputation_threshold(self):
+        plugin = ArkNovaOfficialPlugin()
+        entry = plugin.pack.entry("ark-nova:sponsor-228")
+        state = plugin.setup(2, seed=47)
+        state["players"][0]["hand"] = [card_instance(entry)]
+        card = plugin.observe(state, 0)["players"][0]["hand"][0]
+        self.assertEqual(
+            [{"description_cn": "你的声望 >= 3", "description_en": "your reputation >= 3"}],
+            card["resolved_requirements"],
+        )
+        state["players"][0]["tracks"]["reputation"] = 2
+        self.assertFalse(plugin.engine.evaluate(
+            entry.requirements[0],
+            EvaluationContext(state=state, actor_seat=0),
+        ))
 
     def test_two_player_base_projects_block_left_high_middle_and_right_low(self):
         state = setup_official_game(2, 42, pack=self.pack)

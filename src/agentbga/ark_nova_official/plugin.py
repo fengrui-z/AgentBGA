@@ -14,7 +14,7 @@ from .cards import printed_icon_counts, terrain_requirement_icon_counts
 from .content import ContentPack
 from .final_scoring_effects import score_final_card
 from .milestones import queue_endgame_final_scoring_discard
-from .presentation import resolve_mechanics
+from .presentation import explain_predicate, resolve_mechanics
 from .rounds import advance_solo_round_after_turn, queue_break, queue_solo_break
 from .scoring import check_endgame_trigger, score_game
 from .semantics import SemanticEngine, SemanticRuleError
@@ -315,7 +315,7 @@ class ArkNovaOfficialPlugin:
                 "start_marker": f"players-{state['player_count']}",
                 "triggered": bool(state["break"]["pending"]),
             },
-            "card_display": [_present_card(card) for card in state["card_display"]],
+            "card_display": [_present_card(card, self.indexes) for card in state["card_display"]],
             "game_board_bonus_tiles": [
                 {**deepcopy(tile), "milestone": int(at)}
                 for at in ("5", "8")
@@ -483,7 +483,9 @@ def _physical_zoo_card_ids(state: Mapping[str, Any]) -> list[str]:
     return ids
 
 
-def _present_card(card: Mapping[str, Any]) -> dict[str, Any]:
+def _present_card(
+    card: Mapping[str, Any], indexes: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
     result = deepcopy(dict(card))
     facts = result.get("facts")
     if isinstance(facts, Mapping):
@@ -512,6 +514,17 @@ def _present_card(card: Mapping[str, Any]) -> dict[str, Any]:
     kind = result.get("kind")
     if kind in kind_to_card_type:
         result.setdefault("card_type", kind_to_card_type[kind])
+    entry_id = result.get("entry_id")
+    entry = next((
+        collection.get(entry_id)
+        for collection in indexes.values()
+        if isinstance(entry_id, str) and collection.get(entry_id) is not None
+    ), None)
+    if entry is not None:
+        result["resolved_requirements"] = [{
+            "description_cn": explain_predicate(requirement, locale="zh-CN"),
+            "description_en": explain_predicate(requirement, locale="en"),
+        } for requirement in entry.requirements]
     if result.get("card_type") == "sponsor" or result.get("kind") == "sponsor":
         result["resolved_mechanics"] = resolve_mechanics(
             result.get("effects", []), facts if isinstance(facts, Mapping) else {},
@@ -544,11 +557,11 @@ def _present_player(
             "level_id": None if claim is None else claim.get("level_id"),
             "on_board": board_project is not None,
         })
-    played = [_present_card(card) for card in player["played_cards"]]
+    played = [_present_card(card, indexes) for card in player["played_cards"]]
     final_scoring_cards = []
     if private:
         for card in player["final_scoring_cards"]:
-            presented = _present_card(card)
+            presented = _present_card(card, indexes)
             live_scoring = score_final_card(state, int(player["seat"]), card)
             if live_scoring is not None:
                 presented["live_scoring"] = live_scoring
@@ -565,9 +578,9 @@ def _present_player(
         ],
         "hand_count": len(player["hand"]),
         "initial_draw_count": len(player.get("initial_draw", [])),
-        "hand": [_present_card(card) for card in player["hand"]] if private else hidden_items(player["hand"]),
+        "hand": [_present_card(card, indexes) for card in player["hand"]] if private else hidden_items(player["hand"]),
         "initial_draw": (
-            [_present_card(card) for card in player.get("initial_draw", [])]
+            [_present_card(card, indexes) for card in player.get("initial_draw", [])]
             if private else hidden_items(player.get("initial_draw", []))
         ),
         "final_scoring_cards": final_scoring_cards,
