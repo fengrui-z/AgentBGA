@@ -23,7 +23,7 @@ from .setup import (
     load_official_base_pack,
     setup_official_game,
 )
-from .state import SEMANTIC_RULES_VERSION, validate_semantic_state
+from .state import SEMANTIC_RULES_VERSION, reputation_track_limit, validate_semantic_state
 
 
 class ArkNovaOfficialPlugin:
@@ -77,6 +77,7 @@ class ArkNovaOfficialPlugin:
         return []
 
     def legal_actions(self, state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
+        state, _ = _normalize_reputation_caps(state)
         if seat not in self.decision_seats(state):
             return []
         if state.get("phase") == "initial_hand_selection":
@@ -92,6 +93,7 @@ class ArkNovaOfficialPlugin:
         self, state: dict[str, Any], seat: int, action: dict[str, Any],
     ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         try:
+            state, reputation_events = _normalize_reputation_caps(state)
             if state.get("phase") == "initial_hand_selection":
                 if action.get("type") != "choose_initial_hand":
                     raise SemanticRuleError("initial hand selection is required")
@@ -108,6 +110,7 @@ class ArkNovaOfficialPlugin:
             self.validate_state(next_state)
             return next_state, [
                 action_accepted(seat, deepcopy(action), rules_version=self.rules_version),
+                *reputation_events,
                 *events,
                 *lifecycle_events,
             ]
@@ -256,9 +259,11 @@ class ArkNovaOfficialPlugin:
     def observe(self, state: dict[str, Any], seat: int) -> dict[str, Any]:
         if not 0 <= seat < state["player_count"]:
             raise GameRuleError("seat is out of range")
+        state, _ = _normalize_reputation_caps(state)
         return self._observe(state, seat, reveal_all_private=False)
 
     def observe_spectator(self, state: dict[str, Any]) -> dict[str, Any]:
+        state, _ = _normalize_reputation_caps(state)
         view = self._observe(state, 0, reveal_all_private=True)
         view["viewer_mode"] = "spectator"
         return view
@@ -353,6 +358,28 @@ class ArkNovaOfficialPlugin:
 
 
 _TARGET_APPEAL = tuple(conservation_target_appeal(value) for value in range(42))
+
+
+def _normalize_reputation_caps(
+    state: dict[str, Any],
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Repair legacy states created before the Cards-I ceiling was enforced."""
+
+    corrections = []
+    for player in state["players"]:
+        old = int(player["tracks"]["reputation"])
+        limit = reputation_track_limit(player)
+        if old > limit:
+            corrections.append({
+                "type": "reputation_cap_corrected", "seat": int(player["seat"]),
+                "old_value": old, "value": limit, "cards_upgraded": limit == 15,
+            })
+    if not corrections:
+        return state, []
+    normalized = deepcopy(state)
+    for event in corrections:
+        normalized["players"][event["seat"]]["tracks"]["reputation"] = event["value"]
+    return normalized, corrections
 
 
 def _physical_zoo_card_ids(state: Mapping[str, Any]) -> list[str]:

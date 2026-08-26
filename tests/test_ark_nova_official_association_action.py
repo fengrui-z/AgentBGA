@@ -267,6 +267,10 @@ class ArkNovaOfficialAssociationActionTests(unittest.TestCase):
         project = self.project()
         self.projects = {project.id: project}
         state["players"][0]["x_tokens"] = 2
+        next(
+            card for card in state["players"][0]["action_cards"]
+            if card["action"] == "cards"
+        )["upgraded"] = True
         state["players"][0]["tracks"]["reputation"] = 15
         state["card_display"] = [{
             "id": "project-display-a", "entry_id": project.id,

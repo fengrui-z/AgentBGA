@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any
+from typing import Any, Mapping
 
 from ..ark_nova_map import map_zero, valid_building_shape
 
@@ -22,6 +22,16 @@ PROJECT_TOKEN_SLOTS = (
     {"id": "money-12", "recurring": False},
     {"id": "x-3", "recurring": False},
 )
+
+
+def reputation_track_limit(player: Mapping[str, Any]) -> int:
+    """Return the reputation ceiling imposed by the Cards action card."""
+
+    cards = next((
+        card for card in player.get("action_cards", [])
+        if isinstance(card, Mapping) and card.get("action") == "cards"
+    ), None)
+    return 15 if isinstance(cards, Mapping) and cards.get("upgraded") is True else 9
 
 
 def new_semantic_state(players: int, *, seed: int = 0) -> dict[str, Any]:
@@ -263,6 +273,8 @@ def validate_semantic_state(state: dict[str, Any]) -> None:
         for track, limit in TRACK_LIMITS.items():
             if not 0 <= tracks.get(track, -1) <= limit:
                 raise AssertionError(f"invalid {track} track")
+        if tracks.get("reputation", -1) > reputation_track_limit(player):
+            raise AssertionError("reputation exceeds the Cards action limit")
         zoo_map = player.get("map")
         if not isinstance(zoo_map, dict) or zoo_map.get("id") != "map-0":
             raise AssertionError("invalid player zoo map")

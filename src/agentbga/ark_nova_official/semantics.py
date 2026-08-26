@@ -11,7 +11,7 @@ from typing import Any, Callable, Mapping
 
 from ..ark_nova_tracks import appeal_income
 from ..mechanics import axial_hex_neighbors
-from .state import clone_state, validate_semantic_state
+from .state import clone_state, reputation_track_limit, validate_semantic_state
 
 
 PREDICATE_OPS = frozenset({
@@ -2831,7 +2831,11 @@ class SemanticEngine:
                 raise SemanticRuleError(f"unknown Ark Nova track: {track}")
             amount = self._integer(args.get("amount"), context)
             old = player["tracks"][track]
-            player["tracks"][track] = max(0, min(state["track_limits"][track], old + amount))
+            limit = (
+                reputation_track_limit(player)
+                if track == "reputation" else state["track_limits"][track]
+            )
+            player["tracks"][track] = max(0, min(limit, old + amount))
             self._queue_crossed_milestones(state, frame, track, old, player["tracks"][track])
             return [{
                 "type": "track_moved", **base_event, "track": track,

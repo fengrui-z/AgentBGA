@@ -189,10 +189,8 @@ def _metric_value(player: Mapping[str, Any], metric: str) -> int:
         return sum(card.get("kind") == "sponsor" for card in played)
     if metric in {"rock_icon_count", "water_icon_count"}:
         terrain = metric.removesuffix("_icon_count")
-        return int(player["icons"].get(terrain, 0)) + sum(
-            int(card.get("facts", {}).get(f"{terrain}_requirement", 0) or 0)
-            for card in played if isinstance(card.get("facts"), Mapping)
-        )
+        # A terrain adjacency requirement is not a printed terrain icon.
+        return int(player["icons"].get(terrain, 0))
     raise ValueError(f"unknown Final Scoring metric: {metric}")
 
 
