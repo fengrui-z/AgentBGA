@@ -85,10 +85,10 @@ test("Ark Nova workbench uses the validated P8 catalog projection", async () => 
   assert.match(source, /互动效果|Interaction/);
   assert.match(source, /终局计分|Endgame/);
   assert.equal(catalog.schema_version, "agentbga.ark_nova.catalog.v1");
-  assert.equal(catalog.pack.content_version, "m4-reference-import.15");
+  assert.equal(catalog.pack.content_version, "m4-reference-import.16");
   assert.equal(catalog.coverage.total, 254);
-  assert.equal(catalog.coverage.roster_indexed, 235);
-  assert.equal(catalog.coverage.semantic_entries, 234);
+  assert.equal(catalog.coverage.roster_indexed, 244);
+  assert.equal(catalog.coverage.semantic_entries, 243);
   assert.equal(catalog.entries.length, 254);
   await access(new URL("dist/client/ark-nova-content.json", root));
 });
@@ -147,6 +147,7 @@ test("Ark Nova table exposes the public board, association, summary, and interac
   assert.match(source, /function PlayerCardArea/);
   assert.match(source, /function FinalScoringCardArea/);
   assert.match(source, /function PlayedCardArea/);
+  assert.match(source, /card\.card_type \|\| card\.kind/);
   assert.match(source, /choose_initial_hand/);
   assert.match(source, /select_action/);
   assert.match(source, /take_x_token/);

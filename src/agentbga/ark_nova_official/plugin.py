@@ -391,8 +391,15 @@ def _present_card(card: Mapping[str, Any]) -> dict[str, Any]:
                 deepcopy(dict(item)) for item in fact_effects
                 if isinstance(item, Mapping)
             ]
-    if result.get("kind") == "zoo_conservation_project":
-        result["card_type"] = "conservation_project"
+    kind_to_card_type = {
+        "animal": "animal",
+        "sponsor": "sponsor",
+        "zoo_conservation_project": "conservation_project",
+        "final_scoring": "final_scoring",
+    }
+    kind = result.get("kind")
+    if kind in kind_to_card_type:
+        result.setdefault("card_type", kind_to_card_type[kind])
     if result.get("card_type") == "sponsor" or result.get("kind") == "sponsor":
         result["resolved_mechanics"] = resolve_mechanics(
             result.get("effects", []), facts if isinstance(facts, Mapping) else {},

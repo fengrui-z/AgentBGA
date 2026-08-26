@@ -54,6 +54,20 @@ class ArkNovaOfficialSetupTests(unittest.TestCase):
             for project in projects
         ))
 
+    def test_played_card_view_normalises_runtime_kind_for_web_grouping(self):
+        plugin = ArkNovaOfficialPlugin()
+        state = plugin.setup(2, seed=44)
+        state["players"][0]["played_cards"] = [
+            {"id": "animal-a", "kind": "animal", "facts": {}, "effects": []},
+            {"id": "sponsor-a", "kind": "sponsor", "facts": {}, "effects": []},
+        ]
+
+        view = plugin.observe(state, 0)
+        self.assertEqual(
+            ["animal", "sponsor"],
+            [card["card_type"] for card in view["players"][0]["played_cards"]],
+        )
+
     def test_setup_draws_four_of_the_nine_exact_bonus_tile_faces(self):
         tiles = _bonus_tiles(self.pack.collections["bonus_tiles"])
         self.assertEqual(9, len(tiles))

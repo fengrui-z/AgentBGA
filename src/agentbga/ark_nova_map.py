@@ -86,11 +86,11 @@ _BUILDING_SHAPES: dict[tuple[str, int], tuple[tuple[int, int], ...]] = {
     ("unique_sponsor_257", 2): ((0, 0), (1, 0)),
 }
 
-# The supplied physical size-four enclosure reference contains a second fixed
-# footprint that is not a rotation of the compact rhombus above.  Keep it as a
-# named template rather than weakening placement validation to arbitrary
-# connected four-hex shapes.
-_ALTERNATE_BUILDING_SHAPES: dict[
+# Older development builds could generate this branched size-four footprint.
+# It is retained only to keep already-running matches loadable; it must never
+# be offered as a new placement because the standard size-four enclosure is the
+# compact rhombus declared in ``_BUILDING_SHAPES``.
+_LEGACY_ACCEPTED_BUILDING_SHAPES: dict[
     tuple[str, int], tuple[tuple[tuple[int, int], ...], ...]
 ] = {
     ("standard_enclosure", 4): (
@@ -121,23 +121,20 @@ def building_shape_variants(building_type: str, size: int) -> list[dict[str, Any
         return []
     variants: list[dict[str, Any]] = []
     seen: set[tuple[tuple[int, int], ...]] = set()
-    templates = (template, *_ALTERNATE_BUILDING_SHAPES.get((building_type, size), ()))
-    for template_index, source_template in enumerate(templates):
-        rotated = source_template
-        for rotation in range(6):
-            signature = _normalise(rotated)
-            if signature not in seen:
-                seen.add(signature)
-                suffix = "" if template_index == 0 else f"-variant-{template_index + 1}"
-                variants.append({
-                    "shape_id": f"{building_type}-{size}{suffix}",
-                    "rotation": rotation,
-                    # Keep the template's (0, 0) member as the placement anchor.
-                    # Normalising each axis independently can create an anchor that
-                    # is not part of the polyhex and drops otherwise legal placements.
-                    "cells": tuple(sorted(rotated)),
-                })
-            rotated = tuple(_rotate(cell) for cell in rotated)
+    rotated = template
+    for rotation in range(6):
+        signature = _normalise(rotated)
+        if signature not in seen:
+            seen.add(signature)
+            variants.append({
+                "shape_id": f"{building_type}-{size}",
+                "rotation": rotation,
+                # Keep the template's (0, 0) member as the placement anchor.
+                # Normalising each axis independently can create an anchor that
+                # is not part of the polyhex and drops otherwise legal placements.
+                "cells": tuple(sorted(rotated)),
+            })
+        rotated = tuple(_rotate(cell) for cell in rotated)
     return variants
 
 
@@ -148,10 +145,29 @@ def valid_building_shape(building: dict[str, Any]) -> bool:
     if len(cells) != building["size"] or len(cells) != len(set(cells)):
         return False
     normalised = _normalise(cells)
-    return any(
+    if any(
         normalised == _normalise(variant["cells"])
         for variant in building_shape_variants(building["type"], building["size"])
+    ):
+        return True
+    return any(
+        normalised == _normalise(rotated)
+        for template in _LEGACY_ACCEPTED_BUILDING_SHAPES.get(
+            (building["type"], building["size"]), ()
+        )
+        for rotated in _rotations(template)
     )
+
+
+def _rotations(
+    template: tuple[tuple[int, int], ...],
+) -> tuple[tuple[tuple[int, int], ...], ...]:
+    result = []
+    rotated = template
+    for _ in range(6):
+        result.append(rotated)
+        rotated = tuple(_rotate(cell) for cell in rotated)
+    return tuple(result)
 
 
 def map_zero() -> dict[str, Any]:

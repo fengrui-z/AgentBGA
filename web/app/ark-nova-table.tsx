@@ -7,7 +7,7 @@ export type ArkLang = "zh" | "en";
 export type ArkIdentity = {seat: number; name: string; backend?: string; model?: string};
 export type ArkLegalAction = {id: string; action: Record<string, unknown>};
 export type ArkCard = {
-  id?: string; card_type?: string; tags?: string[]; continent?: string; implementation?: string;
+  id?: string; kind?: string; card_type?: string; tags?: string[]; continent?: string; implementation?: string;
   display_title?: string; display_summary?: string;
   cost?: number; enclosure_size?: number; appeal?: number; conservation?: number; reputation?: number;
   level?: number; income?: number; enclosure_id?: string; objective?: string; per?: number; maximum?: number; hidden?: true;
@@ -877,7 +877,9 @@ function PlayedCardArea({player, lang}: {player: ArkPlayerView; lang: ArkLang}) 
     {type: "sponsor", title: copy(lang, "已打出的赞助商卡牌", "Played sponsor cards"), mark: "S"},
   ];
   return <section className="ark-played-card-area"><header><span>PLAYED CARDS</span><b>{copy(lang, "玩家已打出的卡牌", "Player's played cards")}</b></header><div>{groups.map(group => {
-    const cards = player.played_cards.filter(knownCard).filter(card => card.card_type === group.type);
+    const cards = player.played_cards.filter(knownCard)
+      .filter(card => (card.card_type || card.kind) === group.type)
+      .map(card => card.card_type ? card : {...card, card_type: card.kind});
     return <section key={group.type}><header><b>{group.title}</b><small>{cards.length} {copy(lang, "张", "cards")}</small></header><div>{cards.length ? cards.map(card => <article key={card.id} aria-label={readableCardLabel(card, lang)} className={`ark-readable-card card-${group.type}`}><ReadableCardFace card={card} lang={lang}/>{card.enclosure_id && <footer><span>{copy(lang, "围栏", "Enclosure")} {card.enclosure_id}</span></footer>}</article>) : <em>{copy(lang, "尚无卡牌", "No cards yet")}</em>}</div></section>;
   })}</div></section>;
 }

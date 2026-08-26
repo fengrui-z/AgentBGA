@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from agentbga.ark_nova_map import building_shape_variants
+from agentbga.ark_nova_map import building_shape_variants, valid_building_shape
 from agentbga.ark_nova_official import (
     SemanticEngine,
     SemanticRuleError,
@@ -49,7 +49,6 @@ class ArkNovaOfficialBuildActionTests(unittest.TestCase):
             (3, {(1, -3), (1, -2), (0, -2)}),
             (4, {(-4, 2), (-3, 1), (-4, 3), (-3, 2)}),
             (4, {(-1, 2), (-2, 3), (-1, 3), (-2, 4)}),
-            (4, {(-4, 2), (-3, 1), (-4, 3), (-3, 3)}),
         ]
         for size, cells in expected:
             self.assertTrue(any(
@@ -61,6 +60,29 @@ class ArkNovaOfficialBuildActionTests(unittest.TestCase):
         size_five = building_shape_variants("standard_enclosure", 5)[0]["cells"]
         self.assertEqual(5, len(size_five))
         self.assertEqual({0, 1}, {q for q, _ in size_five})
+
+    def test_branched_size_four_legacy_shape_is_not_offered(self):
+        state = self.state
+        state["players"][0]["x_tokens"] = 2
+        state, _ = start_action(state, 0, "build", x_by_execution=(2,))
+        placements = [item["action"] for item in self.choices(state)]
+        branched = {(-1, 2), (-2, 3), (-2, 4), (0, 2)}
+
+        self.assertFalse(any(
+            action.get("building_type") == "standard_enclosure"
+            and action.get("size") == 4 and footprint(action) == branched
+            for action in placements
+        ))
+        self.assertFalse(any(
+            "variant" in variant["shape_id"]
+            for variant in building_shape_variants("standard_enclosure", 4)
+        ))
+        # Compatibility: a match saved by an older build remains loadable even
+        # though this footprint is no longer generated as a legal action.
+        self.assertTrue(valid_building_shape({
+            "type": "standard_enclosure", "size": 4,
+            "cells": [{"q": q, "r": r} for q, r in branched],
+        }))
 
     def test_build_one_places_exactly_one_building_then_requires_finish(self):
         state, _ = start_action(self.state, 0, "build")
