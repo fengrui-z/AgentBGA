@@ -138,6 +138,21 @@ const BUILDING_META: Record<string, {mark: string; zh: string; en: string}> = {
   kiosk: {mark: "K", zh: "商亭", en: "Kiosk"}, petting_zoo: {mark: "PE", zh: "萌宠动物园", en: "Petting zoo"},
   reptile_house: {mark: "RH", zh: "爬行动物馆", en: "Reptile house"},
   large_bird_aviary: {mark: "BA", zh: "大型鸟舍", en: "Bird aviary"},
+  unique_sponsor_243: {mark: "U", zh: "狐獴窝", en: "Meerkat Den"},
+  unique_sponsor_244: {mark: "U", zh: "企鹅池", en: "Penguin Pool"},
+  unique_sponsor_245: {mark: "U", zh: "水族馆", en: "Aquarium"},
+  unique_sponsor_246: {mark: "U", zh: "空中索道", en: "Cable Car"},
+  unique_sponsor_247: {mark: "U", zh: "狒狒岩", en: "Baboon Rock"},
+  unique_sponsor_248: {mark: "U", zh: "恒河猴园", en: "Rhesus Monkey Park"},
+  unique_sponsor_249: {mark: "U", zh: "横斑林鸮屋", en: "Barred Owl Hut"},
+  unique_sponsor_250: {mark: "U", zh: "海龟池", en: "Sea Turtle Tank"},
+  unique_sponsor_251: {mark: "U", zh: "北极熊展区", en: "Polar Bear Exhibit"},
+  unique_sponsor_252: {mark: "U", zh: "斑鬣狗馆", en: "Spotted Hyena Compound"},
+  unique_sponsor_253: {mark: "U", zh: "霍加狓厩舍", en: "Okapi Stable"},
+  unique_sponsor_254: {mark: "U", zh: "动物园学校", en: "Zoo School"},
+  unique_sponsor_255: {mark: "U", zh: "探险游乐场", en: "Adventure Playground"},
+  unique_sponsor_256: {mark: "U", zh: "水上游乐场", en: "Water Playground"},
+  unique_sponsor_257: {mark: "U", zh: "侧门", en: "Side Entrance"},
 };
 
 function copy(lang: ArkLang, zh: string, en: string) { return lang === "zh" ? zh : en; }
@@ -707,7 +722,7 @@ function ZooMap({player, lang, legalActions, submitting, onChoose, selectedAnima
   player: ArkPlayerView; lang: ArkLang; legalActions: ArkLegalAction[]; submitting: string;
   onChoose?: (action: ArkLegalAction) => void; selectedAnimal: string;
 }) {
-  const placements = useMemo(() => legalActions.filter(item => item.action.type === "place_building"), [legalActions]);
+  const placements = useMemo(() => legalActions.filter(item => ["place_building", "place_unique_sponsor_building"].includes(actionType(item))), [legalActions]);
   const animalActions = useMemo(() => legalActions.filter(item => actionType(item) === "play_animal"), [legalActions]);
   const animalTargets = useMemo(() => legalActions.filter(item => actionType(item) === "play_animal_enclosure"), [legalActions]);
   const buildOptions = useMemo(() => [...new Map(placements.map(item => {
@@ -719,6 +734,7 @@ function ZooMap({player, lang, legalActions, submitting, onChoose, selectedAnima
   const animalIds = useMemo(() => [...new Set(animalActions.map(actionCardId))], [animalActions]);
   const effectiveAnimal = animalIds.includes(selectedAnimal) ? selectedAnimal : "";
   const filteredPlacements = placements.filter(item => `${item.action.building_type}:${item.action.size}:${Number(item.action.rotation || 0)}` === effectiveBuild);
+  const uniqueSponsorPlacement = filteredPlacements.some(item => actionType(item) === "place_unique_sponsor_building");
   const filteredAnimals = animalActions.filter(item => item.action.card_id === effectiveAnimal);
   const [hoveredAction, setHoveredAction] = useState("");
   const [selectedCellKey, setSelectedCellKey] = useState("");
@@ -775,7 +791,7 @@ function ZooMap({player, lang, legalActions, submitting, onChoose, selectedAnima
     {(buildOptions.length > 0 || animalIds.length > 0) && <div className="ark-map-tools">
       {buildOptions.length > 0 && <section><span>1 · {copy(lang, "建筑与旋转", "Building & rotation")}</span><div>{buildOptions.map(item => <button key={`${item.type}:${item.size}:${item.rotation}`} className={effectiveBuild === `${item.type}:${item.size}:${item.rotation}` ? "selected" : ""} onClick={() => {setSelectedBuild(`${item.type}:${item.size}:${item.rotation}`); setHoveredAction("");}}><b>{BUILDING_META[item.type]?.mark || "B"}</b>{buildingName(item.type, lang)} {item.size} · {item.rotation * 60}°</button>)}</div></section>}
       {animalIds.length > 0 && <section className={effectiveAnimal ? "animal-ready" : "animal-waiting"}><span>2 · {copy(lang, "选择围栏", "Choose enclosure")}</span><div><strong>{effectiveAnimal ? `${copy(lang, "已选择", "Selected")} · ${effectiveAnimal}` : copy(lang, "先在上方手牌或展示区选择动物", "First choose an animal in your hand or the display")}</strong></div></section>}
-      <p>{effectiveBuild ? copy(lang, "先选择固定形状的旋转方向，再点击绿色锚点；悬停会预览完整占地。", "Choose a fixed-shape rotation, then click a green anchor; hover previews the full footprint.") : effectiveAnimal ? copy(lang, "现在点击高亮的空围栏放入这只动物。打出后如仍可打第二只，请重新选择下一张动物牌。", "Now click a highlighted empty enclosure. If you may play another animal, choose the next card again.") : copy(lang, "尚未选择动物，地图不会预选第一张牌。", "No animal is selected; the map will not choose one automatically.")}</p>
+      <p>{effectiveBuild ? uniqueSponsorPlacement ? copy(lang, "这是赞助商牌的强制特殊建筑。选择旋转方向，悬停绿色锚点预览完整形状，点击确认放置并继续结算赞助商。", "This unique building is mandatory for the Sponsor. Choose a rotation, hover a green anchor to preview its footprint, then click to place it and continue resolving the Sponsor.") : copy(lang, "先选择固定形状的旋转方向，再点击绿色锚点；悬停会预览完整占地。", "Choose a fixed-shape rotation, then click a green anchor; hover previews the full footprint.") : effectiveAnimal ? copy(lang, "现在点击高亮的空围栏放入这只动物。打出后如仍可打第二只，请重新选择下一张动物牌。", "Now click a highlighted empty enclosure. If you may play another animal, choose the next card again.") : copy(lang, "尚未选择动物，地图不会预选第一张牌。", "No animal is selected; the map will not choose one automatically.")}</p>
     </div>}
     <div className="ark-map-scroll"><div className="ark-interactive-map" style={{width, height}} aria-label={`${player.map.name} · ${copy(lang, "六边形地图", "hex map")}`}>
       {player.map.cells.map(cell => {

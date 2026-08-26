@@ -1012,6 +1012,7 @@ const CENTURY_ACTION_TYPES = new Set(["play_merchant", "acquire_merchant", "clai
 const ARK_TABLE_ACTION_TYPES = new Set([
   "choose_initial_hand", "select_action", "take_x_token", "cancel_action", "draw_cards", "snap_card", "discard_card",
   "place_building", "play_animal", "finish_action", "association_task", "make_donation",
+  "place_unique_sponsor_building",
   "finish_association_tasks", "advance_break", "play_sponsor", "break_discard",
   "choose_conservation_bonus", "upgrade_action_card", "keep_final_card", "take_map_card",
   "clever_action_card",
