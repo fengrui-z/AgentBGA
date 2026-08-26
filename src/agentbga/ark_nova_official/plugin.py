@@ -342,22 +342,7 @@ class ArkNovaOfficialPlugin:
 
     def validate_state(self, state: dict[str, Any]) -> None:
         validate_semantic_state(state)
-        ids = [
-            card["id"]
-            for card in [*state["zoo_deck"], *state["zoo_discard"], *state["card_display"]]
-        ]
-        for player in state["players"]:
-            ids.extend(card["id"] for card in player["hand"])
-            ids.extend(card["id"] for card in player.get("initial_draw", []))
-            ids.extend(
-                card["id"] for card in player.get("played_cards", [])
-                if isinstance(card.get("id"), str) and card["id"].startswith("zoo-")
-            )
-        ids.extend(
-            project["instance_id"] for project in state.get("conservation_projects", [])
-            if isinstance(project.get("instance_id"), str)
-            and project["instance_id"].startswith("zoo-")
-        )
+        ids = _physical_zoo_card_ids(state)
         if len(ids) != len(set(ids)):
             raise AssertionError("Zoo-card physical IDs must be unique across zones")
         if state.get("content_pack_id") and len(ids) != 212:
@@ -368,6 +353,53 @@ class ArkNovaOfficialPlugin:
 
 
 _TARGET_APPEAL = tuple(conservation_target_appeal(value) for value in range(42))
+
+
+def _physical_zoo_card_ids(state: Mapping[str, Any]) -> list[str]:
+    """Collect physical Zoo-card IDs from every persistent or in-flight zone.
+
+    Pending semantic choices may temporarily own cards already removed from a
+    deck or discard pile. Only continuations that actually transfer physical
+    Zoo cards are included; effect-frame card snapshots are deliberately not.
+    """
+
+    ids = [
+        card["id"]
+        for card in [*state["zoo_deck"], *state["zoo_discard"], *state["card_display"]]
+    ]
+    for player in state["players"]:
+        ids.extend(card["id"] for card in player["hand"])
+        ids.extend(card["id"] for card in player.get("initial_draw", []))
+        for card in player.get("played_cards", []):
+            card_id = card.get("id")
+            if isinstance(card_id, str) and card_id.startswith("zoo-"):
+                ids.append(card_id)
+            ids.extend(
+                tucked["id"] for tucked in card.get("tucked_cards", [])
+                if isinstance(tucked, Mapping)
+                and isinstance(tucked.get("id"), str)
+                and tucked["id"].startswith("zoo-")
+            )
+    ids.extend(
+        project["instance_id"] for project in state.get("conservation_projects", [])
+        if isinstance(project.get("instance_id"), str)
+        and project["instance_id"].startswith("zoo-")
+    )
+    pending = state.get("resolution", {}).get("pending_choice")
+    continuation = pending.get("continuation") if isinstance(pending, Mapping) else None
+    if (
+        isinstance(continuation, Mapping)
+        and continuation.get("type") in {"draw_keep_cards", "scavenge_discard"}
+    ):
+        drawn = continuation.get("drawn", [])
+        if isinstance(drawn, list):
+            ids.extend(
+                card["id"] for card in drawn
+                if isinstance(card, Mapping)
+                and isinstance(card.get("id"), str)
+                and card["id"].startswith("zoo-")
+            )
+    return ids
 
 
 def _present_card(card: Mapping[str, Any]) -> dict[str, Any]:
