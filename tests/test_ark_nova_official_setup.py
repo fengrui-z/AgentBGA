@@ -1,7 +1,7 @@
 from pathlib import Path
 import unittest
 
-from agentbga.ark_nova_official import ArkNovaOfficialPlugin, SemanticEngine, load_content_pack, new_semantic_state, setup_official_game
+from agentbga.ark_nova_official import ArkNovaOfficialPlugin, SemanticEngine, load_content_pack, new_semantic_state, present_entry, setup_official_game
 from agentbga.ark_nova_official.setup import _bonus_tiles
 
 
@@ -27,6 +27,25 @@ class ArkNovaOfficialSetupTests(unittest.TestCase):
                     player["tracks"]["conservation"] == 0
                     for player in state["players"]
                 ))
+
+    def test_multi_icon_cards_share_complete_engine_and_web_projection(self):
+        expected = {
+            "ark-nova:sponsor-246": {"rock": 2},
+            "ark-nova:sponsor-245": {"water": 2},
+            "ark-nova:animal-401": {"africa": 1, "predator": 2},
+            "ark-nova:animal-407": {"asia": 1, "predator": 1, "water": 2},
+            "ark-nova:animal-421": {
+                "australia": 1, "predator": 1, "rock": 1, "water": 1,
+            },
+            "ark-nova:animal-441": {"europe": 2, "herbivore": 1},
+            "ark-nova:animal-446": {
+                "australia": 2, "herbivore": 1, "water": 2,
+            },
+        }
+        for entry_id, icons in expected.items():
+            with self.subTest(entry_id=entry_id):
+                entry = self.pack.entry(entry_id)
+                self.assertEqual(icons, present_entry(entry)["facts"]["icons"])
 
     def test_two_player_base_projects_block_left_high_middle_and_right_low(self):
         state = setup_official_game(2, 42, pack=self.pack)
@@ -88,6 +107,8 @@ class ArkNovaOfficialSetupTests(unittest.TestCase):
         self.assertEqual(2, counters["animals"]["research"])
         self.assertEqual(2, counters["animals"]["predator"])
         self.assertEqual(1, counters["animals"]["rock"])
+        presented = plugin.observe(state, 0)["players"][0]["played_cards"][0]
+        self.assertEqual({"rock": 1, "water": 2}, presented["icons"])
         self.assertEqual(2, counters["animals"]["water"])
 
     def test_private_final_cards_include_live_scoring_projection(self):

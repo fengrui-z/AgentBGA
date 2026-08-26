@@ -10,7 +10,7 @@ from ..ark_nova_tracks import conservation_score_offset, conservation_target_app
 from ..game import GameRuleError
 from ..mechanics import action_accepted, hidden_items, state_digest
 from .action_domains import apply_official_action, content_entry_indexes, legal_official_actions
-from .cards import terrain_requirement_icon_counts
+from .cards import printed_icon_counts, terrain_requirement_icon_counts
 from .content import ContentPack
 from .final_scoring_effects import score_final_card
 from .milestones import queue_endgame_final_scoring_discard
@@ -479,6 +479,10 @@ def _present_card(card: Mapping[str, Any]) -> dict[str, Any]:
     if isinstance(facts, Mapping):
         for key, value in facts.items():
             result.setdefault(key, deepcopy(value))
+        if result.get("kind") in {"animal", "sponsor"}:
+            # The Web card face must show the same complete printed-icon set
+            # that the executable engine records when this card enters play.
+            result["icons"] = printed_icon_counts(facts)
         # ``effects`` on a runtime card contains executable operations.  The
         # imported Sponsor facts also carry short, original-language-neutral
         # mechanic summaries intended for the UI, so expose those under a

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from .cards import printed_icon_counts
 from .content import ContentEntry
 
 
@@ -437,13 +438,16 @@ def resolve_mechanics(
 
 def present_entry(entry: ContentEntry, *, locale: str = "zh-CN") -> dict[str, Any]:
     """Create a UI-safe view from facts and semantics, without copied card prose."""
+    facts = dict(entry.facts)
+    if entry.kind in {"animal", "sponsor"}:
+        facts["icons"] = printed_icon_counts(entry.facts)
     return {
         "id": entry.id,
         "kind": entry.kind,
         "official_component_id": entry.official_component_id,
         "title": entry.display_title,
         "summary": entry.display_summary,
-        "facts": dict(entry.facts),
+        "facts": facts,
         "requirements": [explain_predicate(item, locale=locale) for item in entry.requirements],
         "effects": [{
             "timing": item.get("timing"),

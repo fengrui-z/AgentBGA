@@ -255,6 +255,13 @@ function cardIcons(card: ArkCard) {
   return Object.entries(card.icons || {}).filter(([, count]) => Number(count) > 0);
 }
 
+function terrainRequirement(card: ArkCard, lang: ArkLang) {
+  const rows = [];
+  if ((card.rock_requirement || 0) > 0) rows.push(`${copy(lang, "邻接岩石", "Adjacent rock")} ×${card.rock_requirement}`);
+  if ((card.water_requirement || 0) > 0) rows.push(`${copy(lang, "邻接水域", "Adjacent water")} ×${card.water_requirement}`);
+  return rows;
+}
+
 function liveScoringCount(card: ArkCard) {
   const score = card.live_scoring;
   if (!score) return undefined;
@@ -280,6 +287,7 @@ function CardDetailsOverlay({card, lang, open, pinned, onClose}: {
   const mechanisms = readableMechanisms(card, lang);
   const tiers = readableTiers(card);
   const icons = cardIcons(card);
+  const terrain = terrainRequirement(card, lang);
   const criterion = cardCriterion(card, lang);
   const special = card.special_enclosure ? BUILDING_META[card.special_enclosure]?.[lang] || card.special_enclosure.replaceAll("_", " ") : copy(lang, "普通围栏", "Standard enclosure");
   return createPortal(<aside className={`ark-card-details-overlay card-${card.card_type || "unknown"} ${pinned ? "is-pinned" : ""}`} role={pinned ? "dialog" : "tooltip"} aria-label={`${title} · ${copy(lang, "完整说明", "Full details")}`}>
@@ -290,7 +298,7 @@ function CardDetailsOverlay({card, lang, open, pinned, onClose}: {
       <span><b>{copy(lang, "地形", "Terrain")}</b><strong>{(card.rock_requirement || 0) > 0 ? `⛰ ×${card.rock_requirement}` : ""}{(card.water_requirement || 0) > 0 ? ` 💧 ×${card.water_requirement}` : ""}{!(card.rock_requirement || card.water_requirement) ? copy(lang, "无要求", "None") : ""}</strong></span>
       <span><b>{copy(lang, "轨道收益", "Track gains")}</b><strong>{copy(lang, "魅力", "Appeal")} {card.appeal ?? 0} · {copy(lang, "保护", "Conservation")} {card.conservation ?? 0} · {copy(lang, "声望", "Reputation")} {card.reputation ?? 0}</strong></span>
     </div>}
-    {card.card_type === "sponsor" && <div className="ark-card-detail-stats"><span><b>{copy(lang, "行动强度", "Action strength")}</b><strong>{card.level ?? "—"}</strong></span></div>}
+    {card.card_type === "sponsor" && <div className="ark-card-detail-stats"><span><b>{copy(lang, "行动强度", "Action strength")}</b><strong>{card.level ?? "—"}</strong></span>{terrain.length > 0 && <span><b>{copy(lang, "建筑摆放", "Building placement")}</b><strong>{terrain.join(" · ")}</strong></span>}</div>}
     {card.card_type === "final_scoring" && card.live_scoring && <div className="ark-card-detail-stats ark-final-live-detail"><span><b>{copy(lang, "当前满足条件数", "Currently satisfied")}</b><strong>{liveScoringCount(card) ?? 0}</strong></span><span><b>{copy(lang, "预计终局保护点", "Projected final conservation")}</b><strong>+{card.live_scoring.conservation} C</strong></span></div>}
     {shouldShowSummary(card) && <p className="ark-card-details-summary">{card.display_summary}</p>}
     <dl>
@@ -316,6 +324,7 @@ function ReadableCardFace({card, lang, selectionControl}: {
   const mechanisms = readableMechanisms(card, lang);
   const tiers = readableTiers(card);
   const icons = cardIcons(card);
+  const terrain = terrainRequirement(card, lang);
   const criterion = cardCriterion(card, lang);
   const special = card.special_enclosure ? BUILDING_META[card.special_enclosure]?.[lang] || card.special_enclosure.replaceAll("_", " ") : copy(lang, "普通围栏", "Enclosure");
   const primaryMechanism = mechanisms[0];
@@ -332,7 +341,7 @@ function ReadableCardFace({card, lang, selectionControl}: {
       <p className="ark-readable-card-mechanism"><b>{copy(lang, "能力", "Ability")}</b><span>{primaryMechanism ? `${primaryMechanism.name}${primaryMechanism.text ? ` · ${primaryMechanism.text}` : ""}` : copy(lang, "无即时能力", "No immediate ability")}</span></p>
     </>}
     {card.card_type === "sponsor" && <>
-      <p className="ark-readable-card-requirement"><b>{copy(lang, "条件", "Requirements")}</b><span>{requirements.length ? requirements.join(" · ") : copy(lang, "无额外条件", "None")}</span></p>
+      <p className="ark-readable-card-requirement"><b>{copy(lang, "条件", "Requirements")}</b><span>{requirements.length || terrain.length ? [...requirements, ...terrain].join(" · ") : copy(lang, "无额外条件", "None")}</span></p>
       {icons.length > 0 && <div className="ark-readable-card-icons" aria-label={copy(lang, "获得图标", "Gained icons")}>{icons.map(([icon, count]) => <span key={icon} title={humanIcon(icon, lang)}><b>{humanIcon(icon, lang)}</b>{count > 1 ? ` ×${count}` : ""}</span>)}</div>}
       <div className="ark-readable-card-mechanisms">{(mechanisms.length ? mechanisms.slice(0, 2) : [{name: copy(lang, "作用", "Effect"), text: shouldShowSummary(card) ? card.display_summary || "" : copy(lang, "结构化效果见详情", "See structured details"), timing: "fallback"}]).map((mechanic, index) => <p key={`${mechanic.name}-${index}`} className={`ark-readable-card-mechanism timing-${mechanic.timing}`}><b>{mechanic.name}</b><span>{mechanic.text}</span></p>)}</div>
     </>}
