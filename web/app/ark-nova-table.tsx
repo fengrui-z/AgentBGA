@@ -76,7 +76,10 @@ export type ArkView = {
   turn_count: number; decision_count: number; active_seat: number;
   turn: {active_seat: number; decision: string; action_card: string | null; remaining_plays: number};
   break_track: {position: number; limit?: number; start_marker: string; triggered: boolean};
-  card_display: ArkCard[]; game_board_bonus_tiles: {id: string; implementation: string; effects?: {type?: string; amount?: number}[]}[];
+  card_display: ArkCard[]; game_board_bonus_tiles: {
+    id: string; milestone?: number; available?: boolean; label?: string; label_cn?: string; label_en?: string;
+    implementation?: string; effects?: ({type?: string; amount?: number; op?: string; args?: Record<string, unknown>})[];
+  }[];
   deck_count: number; discard_count: number; base_conservation_projects: ArkProject[];
   association_board: {
     partner_zoos: Record<string, number>; universities: Record<string, number>; blocked_two_player: string[];
@@ -413,7 +416,8 @@ function SummaryCounterRow({values, player, kind, lang}: {
 function trackRewardLabel(kind: string, lang: ArkLang) {
   const labels: Record<string, [string, string]> = {
     action_upgrade: ["升级一张行动卡牌", "Upgrade one action card"],
-    choose_board_bonus: ["选择一枚保护奖励板块", "Choose one conservation bonus tile"],
+    action_upgrade_or_worker: ["升级一张行动卡牌，或者增加一名协会事务员", "Upgrade one action card or gain one association worker"],
+    choose_board_bonus: ["选择该档仍可用的奖励；3/4 人局也可选择 5 金币", "Choose an available reward; in 3/4-player games, 5 money is also available"],
     final_card_choice: ["两张终局牌中弃置一张", "Discard one of your two final scoring cards"],
     gain_worker: ["增加一名协会事务员", "Gain one association worker"],
     take_card_or_deck: ["从声望范围拿一张牌，或从牌库抽一张", "Take a card in reputation range or draw from the deck"],
@@ -421,6 +425,23 @@ function trackRewardLabel(kind: string, lang: ArkLang) {
     gain_x_token: ["获得 1 个 X 标记", "Gain 1 X-token"],
   };
   return labels[kind]?.[lang === "zh" ? 0 : 1] || kind.replaceAll("_", " ");
+}
+
+function bonusTileLabel(tile: ArkView["game_board_bonus_tiles"][number], lang: ArkLang) {
+  return (lang === "zh" ? tile.label_cn : tile.label_en) || tile.label || tile.id;
+}
+
+function bonusTileSymbol(id: string) {
+  if (id.includes("reputation")) return "R+2";
+  if (id.includes("x-3")) return "X×3";
+  if (id.includes("enclosure")) return "E3";
+  if (id.includes("cards-3")) return "▣×3";
+  if (id.includes("money-10")) return "₡10";
+  if (id.includes("money-5")) return "₡5";
+  if (id.includes("multiplier")) return "×2";
+  if (id.includes("university")) return "U";
+  if (id.includes("partner-zoo")) return "Z";
+  return "◇";
 }
 
 function TrackLane({label, tone, min = 0, max, values, rewards = [], lang}: {
@@ -511,6 +532,13 @@ function GameBoard({view, identities, lang, legalActions, submitting, onChoose, 
   ].map(([minimum_reputation, maximum_reputation], index) => ({slot: index + 1, minimum_reputation, maximum_reputation, requires_cards_upgrade: minimum_reputation >= 10}));
   const rewardLegend = [...(view.public_tracks?.conservation.rewards || []), ...(view.public_tracks?.reputation.rewards || [])]
     .filter((reward, index, all) => all.findIndex(candidate => candidate.kind === reward.kind) === index);
+  const normalizedBonusTiles = view.game_board_bonus_tiles.map((tile, index) => ({
+    ...tile, milestone: tile.milestone ?? (index < 2 ? 5 : 8),
+  }));
+  const bonusGroups = [5, 8].map(milestone => ({
+    milestone,
+    tiles: normalizedBonusTiles.filter(tile => tile.milestone === milestone),
+  }));
   return <section className="ark-surface ark-game-board">
     <header className="ark-surface-header"><div><span>GAME BOARD</span><h2>{copy(lang, "整体游戏板", "Main game board")}</h2></div><div className="ark-turn-stamp"><span>{copy(lang, "当前决策", "CURRENT DECISION")}</span><b>{view.turn.decision.replaceAll("_", " ")}</b></div></header>
     <div className="ark-game-board-scroll"><div className="ark-game-board-canvas">
@@ -533,7 +561,7 @@ function GameBoard({view, identities, lang, legalActions, submitting, onChoose, 
           {actions.length > 0 && <footer>{animal && card.id && <button disabled={Boolean(submitting)} aria-pressed={card.id === selectedAnimal} onClick={() => {onSelectAnimal(card.id as string); if (animal.action.type === "select_animal_card") onChoose?.(animal);}}>{card.id === selectedAnimal ? copy(lang, "已选择，去地图选围栏", "Selected; choose an enclosure") : copy(lang, "选择这只动物", "Choose this animal")}</button>}{actions.filter(item => actionType(item) !== "play_animal").map(item => <button key={item.id} disabled={Boolean(submitting)} onClick={() => onChoose?.(item)}>{actionType(item) === "snap_card" ? copy(lang, "拿取", "Snap") : copy(lang, "打出", "Play")}{submitting === item.id ? "…" : ""}</button>)}</footer>}
         </article>;})}</div>
       </section>
-      <section className="ark-bonus-bank"><header><b>{copy(lang, "游戏板奖励", "Board bonuses")}</b><span>{copy(lang, "仍在板上", "Remaining")}</span></header><div>{view.game_board_bonus_tiles.map((tile, index) => <span key={tile.id}><i>{index + 1}</i><b>{benefitLabel(tile.effects?.[0], lang)}</b><small>{tile.id}</small></span>)}</div></section>
+      <section className="ark-bonus-bank"><header><b>{copy(lang, "游戏板奖励", "Board bonuses")}</b><span>{copy(lang, "开局从 9 枚中随机抽取 4 枚", "4 of 9 tiles drawn at setup")}</span></header><div className="ark-bonus-milestones">{bonusGroups.map(group => <article key={group.milestone}><header><b>C{group.milestone}</b><span>{copy(lang, "到达时选择一项", "Choose one on arrival")}</span></header><div>{group.tiles.map(tile => <span key={tile.id} className={tile.available === false ? "is-taken" : "is-available"} title={`${copy(lang, `保护 ${group.milestone} 点`, `Conservation ${group.milestone}`)} · ${bonusTileLabel(tile, lang)} · ${tile.available === false ? copy(lang, "已被其他玩家选走", "Already taken") : copy(lang, "仍可选择", "Available")}`}><i>{bonusTileSymbol(tile.id)}</i><b>{bonusTileLabel(tile, lang)}</b><small>{tile.available === false ? copy(lang, "已取走", "TAKEN") : copy(lang, "奖励板块", "BONUS TILE")}</small></span>)}{view.players.length >= 3 && <span className="money-option" title={copy(lang, "3/4 人局固定可选；即使两枚奖励板块已取走仍可选择", "Always available in 3/4-player games, even after both tiles are taken")}><i>₡5</i><b>{copy(lang, "获得 5 金币", "Gain 5 money")}</b><small>{copy(lang, "3/4 人局固定选项", "3/4P FIXED OPTION")}</small></span>}</div></article>)}</div></section>
       </div>
     </div></div>
   </section>;

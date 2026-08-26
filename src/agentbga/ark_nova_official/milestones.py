@@ -138,6 +138,8 @@ def _prepare_bonus_tiles(values: Sequence[Mapping[str, Any]]) -> list[dict[str, 
         result.append({
             "id": tile_id,
             "label": str(raw.get("label", tile_id)),
+            "label_en": str(raw.get("label_en", raw.get("label", tile_id))),
+            "label_cn": str(raw.get("label_cn", raw.get("label", tile_id))),
             "effects": deepcopy(effects),
             "available": True,
         })

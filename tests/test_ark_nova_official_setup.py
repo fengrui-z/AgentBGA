@@ -1,7 +1,8 @@
 from pathlib import Path
 import unittest
 
-from agentbga.ark_nova_official import load_content_pack, setup_official_game
+from agentbga.ark_nova_official import SemanticEngine, load_content_pack, new_semantic_state, setup_official_game
+from agentbga.ark_nova_official.setup import _bonus_tiles
 
 
 class ArkNovaOfficialSetupTests(unittest.TestCase):
@@ -36,6 +37,118 @@ class ArkNovaOfficialSetupTests(unittest.TestCase):
         self.assertEqual(
             [["high"], ["middle"], ["low"]],
             [project["blocked_levels"] for project in base_projects],
+        )
+
+    def test_setup_draws_four_of_the_nine_exact_bonus_tile_faces(self):
+        tiles = _bonus_tiles(self.pack.collections["bonus_tiles"])
+        self.assertEqual(9, len(tiles))
+        self.assertEqual({
+            "bonus-reputation-2", "bonus-x-3", "bonus-enclosure-3",
+            "bonus-cards-3", "bonus-money-5", "bonus-money-10",
+            "bonus-multiplier", "bonus-university", "bonus-partner-zoo",
+        }, {tile["id"] for tile in tiles})
+        state = setup_official_game(3, 43, pack=self.pack)
+        installed = [
+            tile for at in ("5", "8")
+            for tile in state["conservation_bonus_slots"][at]
+        ]
+        self.assertEqual(4, len(installed))
+        self.assertEqual(4, len({tile["id"] for tile in installed}))
+        self.assertEqual(5, len(state["unused_conservation_bonus_tiles"]))
+        self.assertTrue(all(tile["available"] for tile in installed))
+
+    def test_choice_bonus_tiles_execute_build_multiplier_and_association_assets(self):
+        engine = SemanticEngine()
+        tiles = {tile["id"]: tile for tile in _bonus_tiles()}
+
+        building_state = new_semantic_state(2)
+        building_state, _ = engine.start_effects(
+            building_state, 0, tiles["bonus-enclosure-3"]["effects"],
+            source_id="test:bonus-enclosure-3",
+        )
+        placement = engine.legal_choice_actions(building_state, 0)[0]["action"]
+        building_state, _ = engine.submit_choice(
+            building_state, 0, placement["choice_id"], placement["option_ids"],
+        )
+        self.assertEqual(3, building_state["players"][0]["map"]["buildings"][0]["size"])
+        self.assertEqual(
+            "standard_enclosure",
+            building_state["players"][0]["map"]["buildings"][0]["type"],
+        )
+
+        multiplier_state = new_semantic_state(2)
+        multiplier_state, _ = engine.start_effects(
+            multiplier_state, 0, tiles["bonus-multiplier"]["effects"],
+            source_id="test:bonus-multiplier",
+        )
+        multiplier = next(
+            item["action"] for item in engine.legal_choice_actions(multiplier_state, 0)
+            if item["action"]["option_ids"] == ["association"]
+        )
+        multiplier_state, _ = engine.submit_choice(
+            multiplier_state, 0, multiplier["choice_id"], multiplier["option_ids"],
+        )
+        association = next(
+            card for card in multiplier_state["players"][0]["action_cards"]
+            if card["action"] == "association"
+        )
+        self.assertEqual("multiplier", association["tokens"][0]["type"])
+
+        university_state = new_semantic_state(2)
+        university_state, _ = engine.start_effects(
+            university_state, 0, tiles["bonus-university"]["effects"],
+            source_id="test:bonus-university",
+        )
+        university = next(
+            item["action"] for item in engine.legal_choice_actions(university_state, 0)
+            if item["action"]["option_ids"] == ["research-2"]
+        )
+        university_state, _ = engine.submit_choice(
+            university_state, 0, university["choice_id"], university["option_ids"],
+        )
+        self.assertEqual(["research-2"], university_state["players"][0]["universities"])
+        self.assertEqual(2, university_state["players"][0]["icons"]["research"])
+        self.assertEqual(
+            0, university_state["association_board"]["universities"]["research-2"]["available"],
+        )
+
+    def test_partner_zoo_bonus_respects_association_two_upgrade_gate(self):
+        engine = SemanticEngine()
+        state = new_semantic_state(2)
+        state["players"][0]["partner_zoos"] = ["africa", "europe"]
+        state["conservation_bonus_slots"]["5"] = [{
+            **next(tile for tile in _bonus_tiles() if tile["id"] == "bonus-partner-zoo"),
+            "available": True,
+        }, {
+            "id": "bonus-x-3", "label": "Gain 3 X-tokens", "available": True,
+            "effects": [{
+                "op": "gain_x_token", "timing": "immediate", "args": {"amount": 3},
+            }],
+        }]
+        state, _ = engine.start_effects(
+            state, 0, [{
+                "op": "choose_conservation_reward", "timing": "system", "args": {"at": 5},
+            }], source_id="test:partner-zoo-gate",
+        )
+        self.assertEqual(
+            ["bonus-bonus-x-3"],
+            [option["id"] for option in state["resolution"]["pending_choice"]["options"]],
+        )
+
+        state["resolution"]["pending_choice"] = None
+        state["resolution"]["queue"] = []
+        next(
+            card for card in state["players"][0]["action_cards"]
+            if card["action"] == "association"
+        )["upgraded"] = True
+        state, _ = engine.start_effects(
+            state, 0, [{
+                "op": "choose_conservation_reward", "timing": "system", "args": {"at": 5},
+            }], source_id="test:partner-zoo-gate-upgraded",
+        )
+        self.assertIn(
+            "bonus-bonus-partner-zoo",
+            [option["id"] for option in state["resolution"]["pending_choice"]["options"]],
         )
 
 

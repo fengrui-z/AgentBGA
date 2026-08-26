@@ -29,11 +29,11 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
                 state, _ = self.plugin.apply_action(state, seat, action)
         return state
 
-    def test_core_235_faces_and_all_255_four_player_physical_cards_are_executable(self):
+    def test_core_faces_bonus_tiles_and_all_255_four_player_physical_cards_are_executable(self):
         report = audit_content_pack(self.plugin.pack, SemanticEngine())
         interactions = audit_interactions(self.plugin.pack)
-        self.assertEqual(235, report.roster_entry_count)
-        self.assertEqual(234, report.semantic_entry_count)
+        self.assertEqual(244, report.roster_entry_count)
+        self.assertEqual(243, report.semantic_entry_count)
         self.assertEqual((), interactions.unresolved)
         self.assertEqual(
             {"transcribed"},

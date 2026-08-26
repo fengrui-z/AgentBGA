@@ -215,6 +215,7 @@ def legal_free_building_placements(
         "pavilion": ("pavilion", 1),
         "standard_enclosure_1": ("standard_enclosure", 1),
         "standard_enclosure_2": ("standard_enclosure", 2),
+        "standard_enclosure_3": ("standard_enclosure", 3),
         "standard_enclosure_5": ("standard_enclosure", 5),
         "large_bird_aviary": ("large_bird_aviary", 5),
         "reptile_house": ("reptile_house", 5),

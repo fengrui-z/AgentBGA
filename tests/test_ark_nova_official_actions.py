@@ -150,8 +150,8 @@ class ArkNovaOfficialActionTests(unittest.TestCase):
 
     def test_official_conservation_milestones_pause_in_order_and_share_bonus_tiles(self):
         engine = SemanticEngine()
-        state = new_semantic_state(2)
-        for seat in (0, 1):
+        state = new_semantic_state(3)
+        for seat in (0, 1, 2):
             state["players"][seat]["final_scoring_cards"] = [
                 {"id": f"final-{seat}-a"}, {"id": f"final-{seat}-b"},
             ]
@@ -209,13 +209,79 @@ class ArkNovaOfficialActionTests(unittest.TestCase):
         state, _ = engine.submit_choice(
             state, 1, discard_1["choice_id"], discard_1["option_ids"],
         )
-        self.assertEqual([1, 1], [
+        discard_2 = engine.legal_choice_actions(state, 2)[0]["action"]
+        state, _ = engine.submit_choice(
+            state, 2, discard_2["choice_id"], discard_2["option_ids"],
+        )
+        self.assertEqual([1, 1, 1], [
             len(player["final_scoring_cards"]) for player in state["players"]
         ])
-        self.assertEqual(2, len(state["final_scoring_discard"]))
+        self.assertEqual(3, len(state["final_scoring_discard"]))
         self.assertTrue(state["endgame"]["final_scoring_discard_completed"])
         self.assertIsNone(state["resolution"]["pending_choice"])
 
+    def test_conservation_bonus_choices_follow_player_count_and_shared_supply(self):
+        engine = SemanticEngine()
+        tiles = [{
+            "id": "tile-a", "label": "Tile A",
+            "effects": [effect("gain_money", {"amount": 10})],
+        }, {
+            "id": "tile-b", "label": "Tile B",
+            "effects": [effect("gain_x_token", {"amount": 3})],
+        }]
+
+        two_player = install_official_conservation_milestones(
+            new_semantic_state(2), bonuses_at_5=tiles,
+        )
+        two_player, _ = engine.start_effects(
+            two_player, 0,
+            [effect("choose_conservation_reward", {"at": 5}, "system")],
+            source_id="test:two-player-c5",
+        )
+        self.assertEqual(
+            {"bonus-tile-a", "bonus-tile-b"},
+            {option["id"] for option in two_player["resolution"]["pending_choice"]["options"]},
+        )
+        first = engine.legal_choice_actions(two_player, 0)[0]["action"]
+        two_player, _ = engine.submit_choice(
+            two_player, 0, first["choice_id"], first["option_ids"],
+        )
+        two_player, _ = engine.start_effects(
+            two_player, 1,
+            [effect("choose_conservation_reward", {"at": 5}, "system")],
+            source_id="test:second-two-player-c5",
+        )
+        self.assertEqual(1, len(two_player["resolution"]["pending_choice"]["options"]))
+        self.assertNotEqual(
+            first["option_ids"][0],
+            two_player["resolution"]["pending_choice"]["options"][0]["id"],
+        )
+
+        three_player = install_official_conservation_milestones(
+            new_semantic_state(3), bonuses_at_5=tiles,
+        )
+        for seat in (0, 1):
+            three_player, _ = engine.start_effects(
+                three_player, seat,
+                [effect("choose_conservation_reward", {"at": 5}, "system")],
+                source_id=f"test:three-player-c5:{seat}",
+            )
+            bonus = next(
+                item["action"] for item in engine.legal_choice_actions(three_player, seat)
+                if item["action"]["option_ids"][0].startswith("bonus-")
+            )
+            three_player, _ = engine.submit_choice(
+                three_player, seat, bonus["choice_id"], bonus["option_ids"],
+            )
+        three_player, _ = engine.start_effects(
+            three_player, 2,
+            [effect("choose_conservation_reward", {"at": 5}, "system")],
+            source_id="test:third-three-player-c5",
+        )
+        self.assertEqual(
+            ["money-5"],
+            [option["id"] for option in three_player["resolution"]["pending_choice"]["options"]],
+        )
     def test_endgame_fallback_discards_final_scoring_cards_when_ten_was_not_reached(self):
         engine = SemanticEngine()
         state = new_semantic_state(2)

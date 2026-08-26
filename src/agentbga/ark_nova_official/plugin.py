@@ -311,7 +311,7 @@ class ArkNovaOfficialPlugin:
             },
             "card_display": [_present_card(card) for card in state["card_display"]],
             "game_board_bonus_tiles": [
-                deepcopy(tile)
+                {**deepcopy(tile), "milestone": int(at)}
                 for at in ("5", "8")
                 for tile in state["conservation_bonus_slots"][at]
             ],

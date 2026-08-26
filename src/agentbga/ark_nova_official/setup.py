@@ -6,7 +6,7 @@ from copy import deepcopy
 from itertools import combinations
 from pathlib import Path
 import random
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from .content import ContentEntry, ContentPack, load_content_pack
 from .build_action import legal_setup_building_placements
@@ -59,27 +59,76 @@ def card_instance(entry: ContentEntry) -> dict[str, Any]:
     return card
 
 
-def _bonus_tiles() -> list[dict[str, Any]]:
-    # Mechanics-only reward faces. Four are installed each game (two at each
-    # printed Conservation milestone); the remaining faces stay out of play.
-    definitions = (
-        ("money-8", "Gain 8 money", "gain_money", {"amount": 8}),
-        ("x-3", "Gain 3 X-tokens", "gain_x_token", {"amount": 3}),
-        ("reputation-2", "Gain 2 reputation", "move_track", {"track": "reputation", "amount": 2}),
-        ("appeal-3", "Gain 3 appeal", "move_track", {"track": "appeal", "amount": 3}),
-        ("conservation-1", "Gain 1 conservation", "move_track", {"track": "conservation", "amount": 1}),
-        ("cards-3", "Draw 3 cards", "draw_cards", {"amount": 3}),
-        ("worker-1", "Activate 1 worker", "gain_association_worker", {"amount": 1}),
-        ("card", "Take a card", "take_map_reward_card", {}),
-        ("enclosure-2", "Build a free size-2 enclosure", "place_free_building", {"building_types": ["standard_enclosure_2"]}),
-    )
-    return [
+def _bonus_tiles(entries: Sequence[ContentEntry] | None = None) -> list[dict[str, Any]]:
+    """Return the nine mechanics-only base-game reward tiles."""
+
+    if entries is not None:
+        if len(entries) != 9:
+            raise SemanticRuleError("official bonus-tile content must contain nine faces")
+        return [{
+            "id": f"bonus-{entry.official_component_id or entry.id.rsplit('-', 1)[-1]}",
+            "label": entry.display_title,
+            "label_en": entry.display_title,
+            "label_cn": str(entry.facts.get("label_cn", entry.display_title)),
+            "effects": deepcopy(list(entry.effects)),
+        } for entry in entries]
+
+    def effect(op: str, args: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        return {"op": op, "timing": "immediate", "args": dict(args or {})}
+
+    multiplier_options = [
         {
-            "id": f"bonus:{tile_id}", "label": label,
-            "effects": [{"op": op, "timing": "immediate", "args": args}],
+            "id": action,
+            "label": f"Place the multiplier token on {action}",
+            "effects": [effect("add_action_token", {
+                "action": action, "token": "multiplier",
+            })],
         }
-        for tile_id, label, op, args in definitions
+        for action in ACTION_TYPES
     ]
+    definitions = (
+        ("reputation-2", "Gain 2 reputation", "声望提升 2 点", [
+            effect("move_track", {"track": "reputation", "amount": 2}),
+        ]),
+        ("x-3", "Gain 3 X-tokens", "获得 3 枚 X 标记", [
+            effect("gain_x_token", {"amount": 3}),
+        ]),
+        ("enclosure-3", "Build a free size-3 standard enclosure", "立刻免费建造一个 3 格标准饲养区", [
+            effect("place_free_building", {
+                "building_types": ["standard_enclosure_3"], "maximum": 1,
+            }),
+        ]),
+        ("cards-3", "Take or draw a card three times", "执行 3 次：从声望范围拿牌或从牌库抽牌", [
+            effect("take_map_reward_card"),
+            effect("take_map_reward_card"),
+            effect("take_map_reward_card"),
+        ]),
+        ("money-5", "Gain 5 money", "获得 5 金币", [
+            effect("gain_money", {"amount": 5}),
+        ]),
+        ("money-10", "Gain 10 money", "获得 10 金币", [
+            effect("gain_money", {"amount": 10}),
+        ]),
+        ("multiplier", "Place a multiplier token on an Action card", "在一张行动卡牌上放置双重标记", [
+            effect("choose_one", {
+                "prompt": "Choose an Action card for the multiplier token",
+                "options": multiplier_options,
+            }),
+        ]),
+        ("university", "Take an available university", "从协会板图选择一个可用大学", [
+            effect("choose_bonus_association_asset", {"asset": "university"}),
+        ]),
+        ("partner-zoo", "Take an available partner zoo", "从协会板图选择一个可用合作动物园", [
+            effect("choose_bonus_association_asset", {"asset": "partner_zoo"}),
+        ]),
+    )
+    return [{
+        "id": f"bonus-{tile_id}",
+        "label": label_en,
+        "label_en": label_en,
+        "label_cn": label_cn,
+        "effects": effects,
+    } for tile_id, label_en, label_cn, effects in definitions]
 
 
 def setup_official_game(
@@ -148,7 +197,7 @@ def setup_official_game(
     state = install_base_projects(state, projects[:project_count])
     state["base_project_supply"] = [entry.id for entry in projects[project_count:]]
 
-    bonuses = _bonus_tiles()
+    bonuses = _bonus_tiles(content.collections["bonus_tiles"])
     rng.shuffle(bonuses)
     state = install_official_conservation_milestones(
         state, bonuses_at_5=bonuses[:2], bonuses_at_8=bonuses[2:4],

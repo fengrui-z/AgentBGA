@@ -33,6 +33,7 @@ EFFECT_OPS = frozenset({
     "draw_keep_final_scoring", "take_display_sponsors", "refill_card_display",
     "take_base_project", "introduce_base_project",
     "place_free_building", "take_map_reward_card",
+    "choose_bonus_association_asset",
     "move_track", "advance_break", "draw_cards", "set_flag", "add_modifier",
     "trigger_icon_entered", "trigger_animal_played", "trigger_building_placed",
     "trigger_project_supported", "open_bonus_sponsor_play",
@@ -40,14 +41,14 @@ EFFECT_OPS = frozenset({
     "discard_to_hand_limit", "clear_action_tokens", "recall_association_workers",
     "replenish_association", "refresh_display", "take_income", "reset_break",
     "add_score_entry", "custom",
-    "choose_action_upgrade_or_worker", "choose_conservation_reward",
+    "choose_action_upgrade_or_worker", "choose_action_upgrade", "choose_conservation_reward",
     "discard_final_scoring_card", "take_conservation_bonus",
     "mark_final_scoring_discard_complete",
 })
 SYSTEM_EFFECT_OPS = frozenset({
     "discard_to_hand_limit", "clear_action_tokens", "recall_association_workers",
     "replenish_association", "refresh_display", "take_income", "reset_break",
-    "choose_action_upgrade_or_worker", "choose_conservation_reward",
+    "choose_action_upgrade_or_worker", "choose_action_upgrade", "choose_conservation_reward",
     "discard_final_scoring_card", "take_conservation_bonus",
     "mark_final_scoring_discard_complete",
 })
@@ -708,6 +709,9 @@ class SemanticEngine:
         if op == "choose_action_upgrade_or_worker":
             self._choose_action_upgrade_or_worker(state, frame)
             return
+        if op == "choose_action_upgrade":
+            self._choose_action_upgrade(state, frame)
+            return
         if op == "choose_conservation_reward":
             self._choose_conservation_reward(state, frame)
             return
@@ -755,6 +759,9 @@ class SemanticEngine:
             return
         if op == "take_map_reward_card":
             self._take_map_reward_card(state, frame)
+            return
+        if op == "choose_bonus_association_asset":
+            self._choose_bonus_association_asset(state, frame)
             return
         events.extend(self._apply_effect(state, frame))
 
@@ -970,6 +977,25 @@ class SemanticEngine:
             continuation={"type": "conservation_2_reward", "seat": seat},
         )
 
+    def _choose_action_upgrade(
+        self, state: dict[str, Any], frame: Mapping[str, Any],
+    ) -> None:
+        seat = frame.get("target_seat")
+        if seat is None:
+            seat = frame["actor_seat"]
+        options = [{
+            "id": f"upgrade-{card['action']}",
+            "label": f"Upgrade {card['action']}",
+            "value": {"action": card["action"]},
+        } for card in sorted(
+            state["players"][seat]["action_cards"], key=lambda item: item["position"],
+        ) if not card["upgraded"]]
+        self._open_choice(
+            state, frame, seat=seat, prompt="Upgrade one Action card",
+            options=options,
+            continuation={"type": "action_upgrade_reward", "seat": seat},
+        )
+
     def _choose_conservation_reward(
         self, state: dict[str, Any], frame: Mapping[str, Any],
     ) -> None:
@@ -979,20 +1005,24 @@ class SemanticEngine:
         at = frame["operation"]["args"].get("at")
         if at not in (5, 8):
             raise SemanticRuleError("conservation reward must be for space 5 or 8")
-        options = [{
-            "id": "money-5",
-            "label": "Take 5 money",
-            "effects": [{
-                "op": "gain_money", "args": {"amount": 5}, "timing": "system",
-            }],
-            "target_seat": seat,
-        }]
+        options = []
+        if state["player_count"] >= 3:
+            options.append({
+                "id": "money-5",
+                "label": "Take 5 money",
+                "effects": [{
+                    "op": "gain_money", "args": {"amount": 5}, "timing": "system",
+                }],
+                "target_seat": seat,
+            })
         for tile in state.get("conservation_bonus_slots", {}).get(str(at), []):
             if not tile.get("available", True):
                 continue
             tile_id = tile.get("id")
             if not isinstance(tile_id, str) or _IDENTIFIER.fullmatch(tile_id) is None:
                 raise SemanticRuleError("conservation bonus tile requires a stable ID")
+            if not self._bonus_tile_usable(state, seat, tile):
+                continue
             options.append({
                 "id": f"bonus-{tile_id}",
                 "label": str(tile.get("label", tile_id)),
@@ -1009,6 +1039,65 @@ class SemanticEngine:
             seat=seat,
             prompt=f"Choose the conservation reward at {at}",
             options=options,
+        )
+
+    def _bonus_tile_usable(
+        self, state: Mapping[str, Any], seat: int, tile: Mapping[str, Any],
+    ) -> bool:
+        for effect in tile.get("effects", []):
+            if isinstance(effect, Mapping) and effect.get("op") == "choose_bonus_association_asset":
+                asset = effect.get("args", {}).get("asset")
+                return bool(self._bonus_association_asset_options(state, seat, asset))
+        return True
+
+    @staticmethod
+    def _bonus_association_asset_options(
+        state: Mapping[str, Any], seat: int, asset: Any,
+    ) -> list[dict[str, Any]]:
+        player = state["players"][seat]
+        if asset == "university":
+            owned = set(player["universities"])
+            supply = state["association_board"]["universities"]
+            maximum = 3
+        elif asset == "partner_zoo":
+            association_upgraded = next(
+                card["upgraded"] for card in player["action_cards"]
+                if card["action"] == "association"
+            )
+            if len(player["partner_zoos"]) >= 2 and not association_upgraded:
+                return []
+            owned = set(player["partner_zoos"])
+            supply = state["association_board"]["partner_zoos"]
+            maximum = 4
+        else:
+            raise SemanticRuleError("unknown bonus association asset")
+        if len(owned) >= maximum:
+            return []
+        return [{
+            "id": asset_id,
+            "label": asset_id.replace("-", " ").title(),
+            "value": asset_id,
+        } for asset_id, stock in supply.items()
+            if asset_id not in owned
+            and int(stock.get("available", 0) if isinstance(stock, Mapping) else stock) > 0]
+
+    def _choose_bonus_association_asset(
+        self, state: dict[str, Any], frame: Mapping[str, Any],
+    ) -> None:
+        seat = frame.get("target_seat")
+        if seat is None:
+            seat = frame["actor_seat"]
+        asset = frame["operation"]["args"].get("asset")
+        options = self._bonus_association_asset_options(state, seat, asset)
+        self._open_choice(
+            state, frame, seat=seat,
+            prompt=("Choose an available university" if asset == "university"
+                    else "Choose an available partner zoo"),
+            options=options,
+            continuation={
+                "type": "bonus_association_asset", "seat": seat, "asset": asset,
+                "actor_seat": frame["actor_seat"], "source_id": frame["source_id"],
+            },
         )
 
     def _discard_final_scoring_card(
@@ -2415,6 +2504,87 @@ class SemanticEngine:
                 events.append({"type": "association_worker_activated", "seat": seat})
                 return
             raise SemanticRuleError("unknown conservation-2 reward")
+        if continuation_type == "action_upgrade_reward":
+            if len(selected) != 1 or not isinstance(selected[0].get("value"), Mapping):
+                raise SemanticRuleError("the Action-card upgrade requires one selection")
+            action = selected[0]["value"].get("action")
+            card = next(
+                (item for item in player["action_cards"] if item["action"] == action), None,
+            )
+            if card is None or card["upgraded"]:
+                raise SemanticRuleError("the selected Action card cannot be upgraded")
+            card["upgraded"] = True
+            events.append({"type": "action_card_upgraded", "seat": seat, "action": action})
+            return
+        if continuation_type == "bonus_association_asset":
+            if len(selected) != 1 or not isinstance(selected[0].get("value"), str):
+                raise SemanticRuleError("the association reward requires one asset")
+            asset = continuation.get("asset")
+            asset_id = selected[0]["value"]
+            legal_ids = {
+                option["value"] for option in self._bonus_association_asset_options(
+                    state, seat, asset,
+                )
+            }
+            if asset_id not in legal_ids:
+                raise SemanticRuleError("the selected association asset is no longer available")
+            board_key = "universities" if asset == "university" else "partner_zoos"
+            supply = state["association_board"][board_key][asset_id]
+            if isinstance(supply, Mapping):
+                supply["available"] = 0
+                if seat not in supply["owners"]:
+                    supply["owners"].append(seat)
+            else:
+                state["association_board"][board_key][asset_id] = 0
+            queued: list[dict[str, Any]] = []
+            if asset == "university":
+                player["universities"].append(asset_id)
+                icon_count = 2 if asset_id == "research-2" else 1
+                player["icons"]["research"] = player["icons"].get("research", 0) + icon_count
+                player["icons"]["science"] = player["icons"].get("science", 0) + icon_count
+                queued.append({
+                    "op": "trigger_icon_entered", "timing": "immediate",
+                    "args": {"icon": "science", "count": icon_count},
+                })
+                if asset_id == "research-reputation":
+                    queued.append({
+                        "op": "move_track", "timing": "immediate",
+                        "args": {"track": "reputation", "amount": 2},
+                    })
+                elif asset_id == "research-hand-limit":
+                    player["hand_limit"] += 2
+                count = len(player["universities"])
+                if count == 2:
+                    queued.append({"op": "choose_action_upgrade", "timing": "system", "args": {}})
+                elif count == 3:
+                    queued.append({
+                        "op": "move_track", "timing": "immediate",
+                        "args": {"track": "conservation", "amount": 2},
+                    })
+            else:
+                player["partner_zoos"].append(asset_id)
+                count = len(player["partner_zoos"])
+                if count == 2:
+                    queued.append({"op": "choose_action_upgrade", "timing": "system", "args": {}})
+                elif count == 3:
+                    queued.append({
+                        "op": "gain_association_worker", "timing": "immediate",
+                        "args": {"amount": 1},
+                    })
+                elif count == 4:
+                    queued.append({
+                        "op": "move_track", "timing": "immediate",
+                        "args": {"track": "conservation", "amount": 2},
+                    })
+            state["resolution"]["queue"][0:0] = self._frames(
+                queued, int(continuation.get("actor_seat", seat)), seat,
+                str(continuation.get("source_id", "bonus-association-asset")), None, {},
+            )
+            events.append({
+                "type": "bonus_association_asset_taken", "seat": seat,
+                "asset": asset, "asset_id": asset_id,
+            })
+            return
         if continuation_type == "discard_final_scoring_card":
             if len(selected) != 1:
                 raise SemanticRuleError("exactly one Final Scoring card must be discarded")
@@ -3466,6 +3636,11 @@ class SemanticEngine:
         elif op == "choose_conservation_reward":
             if args.get("at") not in (5, 8):
                 raise SemanticRuleError("choose_conservation_reward requires space 5 or 8")
+        elif op == "choose_bonus_association_asset":
+            if args.get("asset") not in {"university", "partner_zoo"}:
+                raise SemanticRuleError(
+                    "choose_bonus_association_asset requires university or partner_zoo"
+                )
         elif op == "take_conservation_bonus":
             if args.get("at") not in (5, 8) or not isinstance(args.get("bonus_id"), str):
                 raise SemanticRuleError("take_conservation_bonus requires space and bonus ID")

@@ -101,7 +101,7 @@ def public_tracks(state: dict[str, Any]) -> dict[str, Any]:
             "minimum": 0, "maximum": CONSERVATION_MAXIMUM,
             "markers": [{"seat": player["seat"], "position": player["conservation"]} for player in state["players"]],
             "rewards": [
-                {"position": 2, "symbol": "II", "kind": "action_upgrade"},
+                {"position": 2, "symbol": "II/W", "kind": "action_upgrade_or_worker"},
                 {"position": 5, "symbol": "◇", "kind": "choose_board_bonus"},
                 {"position": 8, "symbol": "◇", "kind": "choose_board_bonus"},
                 {"position": 10, "symbol": "F", "kind": "final_card_choice"},

@@ -10,14 +10,15 @@
       "zoo_conservation_projects": 20
     },
     "review": {
+      "scenario_tested": 9,
       "transcribed": 235,
-      "unentered": 19
+      "unentered": 10
     },
-    "roster_indexed": 235,
-    "scenario_covered_entries": 0,
-    "semantic_entries": 234,
+    "roster_indexed": 244,
+    "scenario_covered_entries": 9,
+    "semantic_entries": 243,
     "total": 254,
-    "unentered": 19
+    "unentered": 10
   },
   "disclaimer": "Project-authored mechanics data only. Short component names and identifiers are catalog references; publisher artwork and verbatim card prose are excluded. Only released entries are suitable for rules-accurate play.",
   "entries": [
@@ -25,7 +26,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -95,11 +96,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 9",
+          "description": "魅力 +9",
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 actor.icons.predator",
+          "description": "魅力 +你的肉食图标数量",
           "timing": "on_play"
         }
       ],
@@ -168,15 +169,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reveal_keep_animal",
+          "description": "从牌库展示4张动物牌并保留1张",
           "timing": "on_play"
         }
       ],
@@ -234,7 +235,7 @@
       "kind": "animal",
       "official_component_id": "403",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -245,11 +246,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reveal_keep_animal",
+          "description": "从牌库展示2张动物牌并保留1张",
           "timing": "on_play"
         }
       ],
@@ -314,11 +315,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -383,15 +384,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 10",
+          "description": "魅力 +10",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 2",
+          "description": "保护点数 +2",
           "timing": "on_play"
         }
       ],
@@ -445,15 +446,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 8",
+          "description": "魅力 +8",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 2",
+          "description": "保护点数 +2",
           "timing": "on_play"
         }
       ],
@@ -507,11 +508,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -579,7 +580,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
@@ -644,7 +645,7 @@
       "kind": "animal",
       "official_component_id": "409",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -655,11 +656,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reveal_keep_animal",
+          "description": "从牌库展示1张动物牌并保留1张",
           "timing": "on_play"
         }
       ],
@@ -724,7 +725,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 9",
+          "description": "魅力 +9",
           "timing": "on_play"
         },
         {
@@ -732,7 +733,7 @@
           "timing": "on_play"
         },
         {
-          "description": "语义效果：gain_association_worker",
+          "description": "获得 1 名事务员",
           "timing": "on_play"
         }
       ],
@@ -807,7 +808,7 @@
       "official_component_id": "411",
       "requirements": [
         "至少有 2 个“predator”图标",
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -818,11 +819,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 8",
+          "description": "魅力 +8",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reveal_keep_animal",
+          "description": "从牌库展示4张动物牌并保留1张",
           "timing": "on_play"
         }
       ],
@@ -891,7 +892,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
@@ -899,7 +900,7 @@
           "timing": "on_play"
         },
         {
-          "description": "获得 3 资金",
+          "description": "金币 +3",
           "timing": "on_play"
         }
       ],
@@ -964,7 +965,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
@@ -1036,11 +1037,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -1108,7 +1109,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 8",
+          "description": "魅力 +8",
           "timing": "on_play"
         },
         {
@@ -1116,7 +1117,7 @@
           "timing": "on_play"
         },
         {
-          "description": "语义效果：gain_association_worker",
+          "description": "获得 1 名事务员",
           "timing": "on_play"
         }
       ],
@@ -1191,7 +1192,7 @@
       "official_component_id": "416",
       "requirements": [
         "至少有 1 个“bear”图标",
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -1202,11 +1203,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 actor.icons.predator",
+          "description": "魅力 +你的肉食图标数量",
           "timing": "on_play"
         }
       ],
@@ -1271,7 +1272,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 2",
+          "description": "魅力 +2",
           "timing": "on_play"
         },
         {
@@ -1344,11 +1345,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -1413,11 +1414,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reveal_keep_animal",
+          "description": "从牌库展示1张动物牌并保留1张",
           "timing": "on_play"
         }
       ],
@@ -1486,11 +1487,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 8",
+          "description": "魅力 +8",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：gain_association_worker",
+          "description": "获得 1 名事务员",
           "timing": "on_play"
         }
       ],
@@ -1548,7 +1549,7 @@
       "kind": "animal",
       "official_component_id": "421",
       "requirements": [
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -1559,15 +1560,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：sell_hand_cards",
+          "description": "最多出售3张手牌",
           "timing": "on_play"
         }
       ],
@@ -1625,7 +1626,7 @@
       "kind": "animal",
       "official_component_id": "422",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -1636,11 +1637,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 actor.icons.predator",
+          "description": "魅力 +你的肉食图标数量",
           "timing": "on_play"
         }
       ],
@@ -1705,11 +1706,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 actor.icons.predator",
+          "description": "魅力 +你的肉食图标数量",
           "timing": "on_play"
         }
       ],
@@ -1774,15 +1775,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：tuck_hand_cards",
+          "description": "最多将1张手牌压在这张牌下",
           "timing": "on_play"
         }
       ],
@@ -1851,11 +1852,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 10",
+          "description": "魅力 +10",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
@@ -1918,7 +1919,7 @@
       "kind": "animal",
       "official_component_id": "426",
       "requirements": [
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -1929,7 +1930,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 9",
+          "description": "魅力 +9",
           "timing": "on_play"
         },
         {
@@ -2002,11 +2003,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -2071,15 +2072,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -2160,7 +2161,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -2222,7 +2223,7 @@
       "kind": "animal",
       "official_component_id": "430",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -2233,11 +2234,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 8",
+          "description": "魅力 +8",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         },
         {
@@ -2300,7 +2301,7 @@
       "kind": "animal",
       "official_component_id": "431",
       "requirements": [
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -2311,7 +2312,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 9",
+          "description": "魅力 +9",
           "timing": "on_play"
         },
         {
@@ -2373,7 +2374,7 @@
       "kind": "animal",
       "official_component_id": "432",
       "requirements": [
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -2384,15 +2385,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 10",
+          "description": "魅力 +10",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 2",
+          "description": "保护点数 +2",
           "timing": "on_play"
         }
       ],
@@ -2442,7 +2443,7 @@
       "requirements": [
         "至少有 1 个“herbivore”图标",
         "至少有 1 个“bear”图标",
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -2453,7 +2454,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -2529,11 +2530,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
@@ -2602,7 +2603,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
@@ -2676,7 +2677,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
@@ -2753,7 +2754,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         }
       ],
@@ -2818,7 +2819,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         }
       ],
@@ -2883,11 +2884,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         },
         {
@@ -2956,7 +2957,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -3023,7 +3024,7 @@
       "kind": "animal",
       "official_component_id": "441",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -3034,7 +3035,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
@@ -3119,7 +3120,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         }
       ],
@@ -3184,7 +3185,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
@@ -3192,7 +3193,7 @@
           "timing": "on_play"
         },
         {
-          "description": "获得 2 资金",
+          "description": "金币 +2",
           "timing": "on_play"
         }
       ],
@@ -3257,7 +3258,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
@@ -3326,11 +3327,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 9",
+          "description": "魅力 +9",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         },
         {
@@ -3393,7 +3394,7 @@
       "kind": "animal",
       "official_component_id": "446",
       "requirements": [
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -3404,11 +3405,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：tuck_hand_cards",
+          "description": "最多将2张手牌压在这张牌下",
           "timing": "on_play"
         }
       ],
@@ -3485,15 +3486,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 8",
+          "description": "魅力 +8",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：tuck_hand_cards",
+          "description": "最多将2张手牌压在这张牌下",
           "timing": "on_play"
         }
       ],
@@ -3565,7 +3566,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
@@ -3647,11 +3648,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：tuck_hand_cards",
+          "description": "最多将1张手牌压在这张牌下",
           "timing": "on_play"
         }
       ],
@@ -3716,11 +3717,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 10",
+          "description": "魅力 +10",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 2",
+          "description": "保护点数 +2",
           "timing": "on_play"
         },
         {
@@ -3784,7 +3785,7 @@
       "official_component_id": "451",
       "requirements": [
         "至少有 2 个“primate”图标",
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -3795,7 +3796,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 1",
+          "description": "魅力 +1",
           "timing": "on_play"
         },
         {
@@ -3868,7 +3869,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 8",
+          "description": "魅力 +8",
           "timing": "on_play"
         },
         {
@@ -3941,11 +3942,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：sell_hand_cards",
+          "description": "最多出售3张手牌",
           "timing": "on_play"
         }
       ],
@@ -4010,11 +4011,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -4079,7 +4080,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -4154,7 +4155,7 @@
       "kind": "animal",
       "official_component_id": "456",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -4165,11 +4166,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 9",
+          "description": "魅力 +9",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 2",
+          "description": "保护点数 +2",
           "timing": "on_play"
         },
         {
@@ -4243,7 +4244,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
@@ -4333,15 +4334,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：gain_tiered_icon_reward",
+          "description": "根据你的灵长类图标数量，达到档位时获得x token（1→1，3→2，5→3）",
           "timing": "on_play"
         }
       ],
@@ -4410,11 +4411,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -4479,11 +4480,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 2",
+          "description": "声望 +2",
           "timing": "on_play"
         },
         {
@@ -4491,7 +4492,7 @@
           "timing": "on_play"
         },
         {
-          "description": "获得 4 资金",
+          "description": "金币 +4",
           "timing": "on_play"
         }
       ],
@@ -4549,7 +4550,7 @@
       "kind": "animal",
       "official_component_id": "461",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -4560,7 +4561,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -4568,7 +4569,7 @@
           "timing": "on_play"
         },
         {
-          "description": "获得 3 资金",
+          "description": "金币 +3",
           "timing": "on_play"
         }
       ],
@@ -4633,7 +4634,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
@@ -4708,7 +4709,7 @@
       "kind": "animal",
       "official_component_id": "463",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -4719,15 +4720,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：gain_tiered_icon_reward",
+          "description": "根据你的灵长类图标数量，达到档位时获得x token（1→1，3→2，5→3）",
           "timing": "on_play"
         }
       ],
@@ -4796,11 +4797,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -4865,11 +4866,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -4934,11 +4935,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -5003,15 +5004,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         }
       ],
@@ -5065,7 +5066,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 9",
+          "description": "魅力 +9",
           "timing": "on_play"
         },
         {
@@ -5142,7 +5143,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -5230,15 +5231,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：sell_hand_cards",
+          "description": "最多出售3张手牌",
           "timing": "on_play"
         }
       ],
@@ -5303,11 +5304,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：sell_hand_cards",
+          "description": "最多出售3张手牌",
           "timing": "on_play"
         }
       ],
@@ -5372,11 +5373,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：sell_hand_cards",
+          "description": "最多出售2张手牌",
           "timing": "on_play"
         }
       ],
@@ -5441,7 +5442,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
@@ -5528,7 +5529,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -5605,7 +5606,7 @@
       "official_component_id": "475",
       "requirements": [
         "至少有 2 个“science”图标",
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -5616,7 +5617,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 2",
+          "description": "魅力 +2",
           "timing": "on_play"
         },
         {
@@ -5689,7 +5690,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
@@ -5758,11 +5759,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：sell_hand_cards",
+          "description": "最多出售2张手牌",
           "timing": "on_play"
         }
       ],
@@ -5827,7 +5828,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
@@ -5896,7 +5897,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -5965,19 +5966,19 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 8",
+          "description": "魅力 +8",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 2",
+          "description": "保护点数 +2",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：sell_hand_cards",
+          "description": "最多出售4张手牌",
           "timing": "on_play"
         }
       ],
@@ -6037,7 +6038,7 @@
       "official_component_id": "481",
       "requirements": [
         "至少有 2 个“americas”图标",
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -6048,7 +6049,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -6124,7 +6125,7 @@
       "kind": "animal",
       "official_component_id": "482",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -6135,7 +6136,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
@@ -6222,7 +6223,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         }
       ],
@@ -6272,7 +6273,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 2",
+          "description": "魅力 +2",
           "timing": "on_play"
         },
         {
@@ -6347,7 +6348,7 @@
       "kind": "animal",
       "official_component_id": "485",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -6358,7 +6359,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 2",
+          "description": "魅力 +2",
           "timing": "on_play"
         }
       ],
@@ -6408,11 +6409,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -6477,7 +6478,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 2",
+          "description": "魅力 +2",
           "timing": "on_play"
         }
       ],
@@ -6527,7 +6528,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 9",
+          "description": "魅力 +9",
           "timing": "on_play"
         },
         {
@@ -6594,7 +6595,7 @@
       "kind": "animal",
       "official_component_id": "489",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -6605,7 +6606,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -6674,7 +6675,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
@@ -6743,7 +6744,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
@@ -6831,7 +6832,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         }
       ],
@@ -6881,7 +6882,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 8",
+          "description": "魅力 +8",
           "timing": "on_play"
         },
         {
@@ -6950,11 +6951,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         }
       ],
@@ -7004,7 +7005,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
@@ -7073,11 +7074,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：place_free_building",
+          "description": "免费放置1座kiosk、pavilion",
           "timing": "on_play"
         }
       ],
@@ -7142,11 +7143,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         }
       ],
@@ -7200,7 +7201,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -7269,15 +7270,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         },
         {
@@ -7350,11 +7351,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：place_free_building",
+          "description": "免费放置2座kiosk、pavilion",
           "timing": "on_play"
         }
       ],
@@ -7423,11 +7424,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：reposition_action_card",
+          "description": "可以将1张行动牌移到强度1",
           "timing": "after_finishing"
         }
       ],
@@ -7492,15 +7493,15 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：draw_keep_cards",
+          "description": "抽4张牌并保留2张",
           "timing": "on_play"
         }
       ],
@@ -7569,11 +7570,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
@@ -7646,7 +7647,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 8",
+          "description": "魅力 +8",
           "timing": "on_play"
         },
         {
@@ -7708,7 +7709,7 @@
       "kind": "animal",
       "official_component_id": "505",
       "requirements": [
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -7719,7 +7720,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 9",
+          "description": "魅力 +9",
           "timing": "on_play"
         },
         {
@@ -7792,7 +7793,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
@@ -7861,11 +7862,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：place_free_building",
+          "description": "免费放置3座kiosk、pavilion",
           "timing": "on_play"
         }
       ],
@@ -7923,7 +7924,7 @@
       "kind": "animal",
       "official_component_id": "508",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -7934,7 +7935,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
@@ -7996,7 +7997,7 @@
       "kind": "animal",
       "official_component_id": "509",
       "requirements": [
-        "actor.action_cards.animals.upgraded == 是"
+        "actor.action cards.animals.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -8007,7 +8008,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
@@ -8080,11 +8081,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：place_free_building",
+          "description": "免费放置1座kiosk、pavilion",
           "timing": "on_play"
         }
       ],
@@ -8149,11 +8150,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：draw_keep_cards",
+          "description": "抽4张牌并保留2张",
           "timing": "on_play"
         }
       ],
@@ -8211,7 +8212,7 @@
       "kind": "animal",
       "official_component_id": "512",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -8222,11 +8223,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 3",
+          "description": "魅力 +3",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：draw_keep_cards",
+          "description": "抽4张牌并保留2张",
           "timing": "on_play"
         }
       ],
@@ -8291,11 +8292,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 7",
+          "description": "魅力 +7",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：place_free_building",
+          "description": "免费放置1座large bird aviary",
           "timing": "on_play"
         }
       ],
@@ -8364,7 +8365,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
@@ -8433,7 +8434,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 6",
+          "description": "魅力 +6",
           "timing": "on_play"
         },
         {
@@ -8495,7 +8496,7 @@
       "kind": "animal",
       "official_component_id": "516",
       "requirements": [
-        "actor.partner_zoo_count >= 1"
+        "actor.partner zoo count >= 1"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -8575,11 +8576,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 5",
+          "description": "魅力 +5",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：place_free_building",
+          "description": "免费放置1座kiosk、pavilion",
           "timing": "on_play"
         }
       ],
@@ -8644,7 +8645,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 (actor.icons.pet × 3)",
+          "description": "魅力 +(你的pet图标数量 × 3)",
           "timing": "on_play"
         }
       ],
@@ -8705,7 +8706,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 (actor.icons.pet × 3)",
+          "description": "魅力 +(你的pet图标数量 × 3)",
           "timing": "on_play"
         }
       ],
@@ -8766,11 +8767,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 (actor.icons.pet × 3)",
+          "description": "魅力 +(你的pet图标数量 × 3)",
           "timing": "on_play"
         }
       ],
@@ -8835,7 +8836,7 @@
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 (actor.icons.pet × 3)",
+          "description": "魅力 +(你的pet图标数量 × 3)",
           "timing": "on_play"
         }
       ],
@@ -8908,7 +8909,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 (actor.icons.pet × 3)",
+          "description": "魅力 +(你的pet图标数量 × 3)",
           "timing": "on_play"
         }
       ],
@@ -8973,7 +8974,7 @@
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 (actor.icons.pet × 3)",
+          "description": "魅力 +(你的pet图标数量 × 3)",
           "timing": "on_play"
         }
       ],
@@ -9046,7 +9047,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 (actor.icons.pet × 3)",
+          "description": "魅力 +(你的pet图标数量 × 3)",
           "timing": "on_play"
         }
       ],
@@ -9107,7 +9108,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 (actor.icons.pet × 3)",
+          "description": "魅力 +(你的pet图标数量 × 3)",
           "timing": "on_play"
         }
       ],
@@ -9168,7 +9169,7 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "魅力移动 (actor.icons.pet × 3)",
+          "description": "魅力 +(你的pet图标数量 × 3)",
           "timing": "on_play"
         }
       ],
@@ -9229,11 +9230,11 @@
       "collection": "animals",
       "effects": [
         {
-          "description": "语义效果：tuck_hand_cards",
+          "description": "最多将1张手牌压在这张牌下",
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 (actor.icons.pet × 3)",
+          "description": "魅力 +(你的pet图标数量 × 3)",
           "timing": "on_play"
         }
       ],
@@ -9306,15 +9307,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "语义效果：take_map_reward_card",
+          "description": "从牌库或声望范围内拿取1张牌",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-201”（触发：income）",
+          "description": "休息阶段收入时：从牌库或声望范围内拿取1张牌",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：gain_tiered_icon_reward",
+          "description": "根据你的研究图标数量，达到档位时获得保护点数（3→1，6→2）",
           "timing": "end_of_game"
         }
       ],
@@ -9361,7 +9362,7 @@
       "kind": "sponsor",
       "official_component_id": "201",
       "requirements": [
-        "actor.action_cards.sponsors.upgraded == 是"
+        "actor.action cards.sponsors.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -9372,7 +9373,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-202”（触发：icon_entered:self:science）",
+          "description": "每当你获得研究图标时：声望 +1",
           "timing": "on_play"
         }
       ],
@@ -9427,15 +9428,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "语义效果：gain_tiered_reward",
+          "description": "根据你的大学数量，达到档位时获得金币（1→2，2→5，3→10）",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-203”（触发：static）",
+          "description": "支持保护项目所需的协会行动强度改为4",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你的大学数量 >= 3：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -9486,11 +9487,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "获得 (actor.icons.science × 2) 资金",
+          "description": "金币 +(你的研究图标数量 × 2)",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-204”（触发：icon_entered:self:science）",
+          "description": "每当你获得研究图标时：保护点数 +1",
           "timing": "on_play"
         }
       ],
@@ -9543,11 +9544,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "声望移动 2",
+          "description": "声望 +2",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         }
       ],
@@ -9600,11 +9601,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 (actor.supported_project_count × 2)",
+          "description": "魅力 +(你已支持的保护项目数量 × 2)",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-206”（触发：income）",
+          "description": "休息阶段收入时：保护点数 +1",
           "timing": "on_play"
         }
       ],
@@ -9657,11 +9658,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "保育移动 整除(actor.distinct_continent_animal_category_count, 2)",
+          "description": "保护点数 +整除(你拥有的不同洲与动物类别图标数量, 2)",
           "timing": "on_play"
         },
         {
-          "description": "每名对手：获得 (整除(actor.distinct_continent_animal_category_count, 2) × 2) 资金",
+          "description": "每名对手：金币 +(整除(你拥有的不同洲与动物类别图标数量, 2) × 2)",
           "timing": "on_play"
         }
       ],
@@ -9704,7 +9705,7 @@
       "kind": "sponsor",
       "official_component_id": "207",
       "requirements": [
-        "actor.action_cards.sponsors.upgraded == 是",
+        "actor.action cards.sponsors.upgraded == 是",
         "你的魅力 <= 25"
       ],
       "review_status": "transcribed",
@@ -9716,15 +9717,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.science",
+          "description": "魅力 +你的研究图标数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-208”（触发：icon_entered:any:science）",
+          "description": "每当任意动物园获得研究图标时：金币 +2",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你拥有的不同动物类别图标数量 >= 5：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -9782,11 +9783,11 @@
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-209”（触发：income）",
+          "description": "休息阶段收入时：获得 1 个 X 标记",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你的大学数量 >= 3：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -9837,15 +9838,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.americas",
+          "description": "魅力 +你的美洲图标数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-210”（触发：icon_entered:self:americas）",
+          "description": "每当你获得美洲图标时：免费放置1座kiosk",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你的商亭数量 >= 5：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -9896,15 +9897,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.europe",
+          "description": "魅力 +你的欧洲图标数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-211”（触发：icon_entered:self:europe）",
+          "description": "每当你获得欧洲图标时：免费放置1座standard enclosure 1",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你已入住的1格普通围栏数量 >= 5：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -9960,11 +9961,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.australia",
+          "description": "魅力 +你的澳洲图标数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-212”（触发：icon_entered:self:australia）",
+          "description": "每当你获得澳洲图标时：最多将1张手牌压在这张牌下",
           "timing": "on_play"
         }
       ],
@@ -10015,11 +10016,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.asia",
+          "description": "魅力 +你的亚洲图标数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-213”（触发：icon_entered:self:asia）",
+          "description": "每当你获得亚洲图标时：免费放置1座pavilion",
           "timing": "on_play"
         }
       ],
@@ -10070,19 +10071,19 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.africa",
+          "description": "魅力 +你的非洲图标数量",
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 你的 X 标记",
+          "description": "魅力 +你的 X 标记",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-214”（触发：icon_entered:self:africa）",
+          "description": "每当你获得非洲图标时：可以将1张行动牌移到强度1",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你是否覆盖全部可建造边缘格 == 是：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -10133,15 +10134,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "语义效果：add_source_card_tokens",
+          "description": "在这张牌上放置 2 个自己的玩家标记",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-215-wildcard”（触发：static）",
+          "description": "可花费这张牌上的1个标记，将其视为支持基础保护项目所需的任意1个图标",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你已支持的保护项目数量 >= 5：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -10191,7 +10192,7 @@
       "kind": "sponsor",
       "official_component_id": "215",
       "requirements": [
-        "actor.partner_zoo_count >= 2"
+        "actor.partner zoo count >= 2"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -10202,7 +10203,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "语义效果：gain_association_worker",
+          "description": "获得 1 名事务员",
           "timing": "on_play"
         }
       ],
@@ -10244,7 +10245,7 @@
       "kind": "sponsor",
       "official_component_id": "216",
       "requirements": [
-        "actor.action_cards.sponsors.upgraded == 是"
+        "actor.action cards.sponsors.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -10255,11 +10256,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-217”（触发：static）",
+          "description": "建造行动至少建造1座建筑后，可按正常费用额外建造1座同类非特殊建筑",
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 5",
+          "description": "若你的地图是否完全覆盖 == 是：魅力 +5",
           "timing": "end_of_game"
         }
       ],
@@ -10308,15 +10309,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "语义效果：add_source_card_tokens",
+          "description": "在这张牌上放置 2 个自己的玩家标记",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-218-wildcard”（触发：static）",
+          "description": "可花费这张牌上的1个标记，将其视为支持基础保护项目所需的任意1个图标",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你已支持的保护项目数量 >= 5：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -10367,15 +10368,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "获得 ((actor.rock_requirement_total + actor.water_requirement_total) × 2) 资金",
+          "description": "金币 +((你已打出牌上的岩石要求总数 + 你已打出牌上的水域要求总数) × 2)",
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 (最小值(actor.rock_requirement_total, actor.water_requirement_total, 3) × 2)",
+          "description": "魅力 +(最小值(你已打出牌上的岩石要求总数, 你已打出牌上的水域要求总数, 3) × 2)",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-219”（触发：static）",
+          "description": "建造时可使用岩石或水域格，并忽略动物的岩石与水域摆放要求",
           "timing": "on_play"
         }
       ],
@@ -10419,7 +10420,7 @@
       "kind": "sponsor",
       "official_component_id": "219",
       "requirements": [
-        "actor.action_cards.sponsors.upgraded == 是"
+        "actor.action cards.sponsors.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -10430,15 +10431,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "获得 3 资金",
+          "description": "金币 +3",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-220”（触发：income）",
+          "description": "休息阶段收入时：金币 +3",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你的声望 >= 9：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -10487,11 +10488,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-221”（触发：static）",
+          "description": "获得地图边缘的放置奖励时，可再获得1次未覆盖的放置奖励",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你是否覆盖全部可建造边缘格 == 是：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -10546,11 +10547,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "保育移动 最小值(actor.icons.science, 3)",
+          "description": "保护点数 +最小值(你的研究图标数量, 3)",
           "timing": "on_play"
         },
         {
-          "description": "每名对手：获得 (最小值(actor.icons.science, 3) × 2) 资金",
+          "description": "每名对手：金币 +(最小值(你的研究图标数量, 3) × 2)",
           "timing": "on_play"
         }
       ],
@@ -10647,11 +10648,11 @@
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-224”（触发：release_project_supported）",
+          "description": "每当你支持放归项目时：保护点数 +1",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-224-repeat”（触发：static）",
+          "description": "同一个动物放归项目可以被你多次支持",
           "timing": "on_play"
         }
       ],
@@ -10708,11 +10709,11 @@
           "timing": "on_play"
         },
         {
-          "description": "设置状态“interaction_immunity”",
+          "description": "你不受其他玩家的互动效果影响",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若（至少有 1 个“africa”图标）且（至少有 1 个“americas”图标）且（至少有 1 个“asia”图标）且（至少有 1 个“australia”图标）且（至少有 1 个“europe”图标）：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -10762,7 +10763,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "保育移动 1",
+          "description": "若（至少有 1 个“africa”图标）且（至少有 1 个“americas”图标）且（至少有 1 个“asia”图标）且（至少有 1 个“australia”图标）且（至少有 1 个“europe”图标）：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -10807,7 +10808,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "选择一项（Small Animals (size 1–2)：设置状态“waza_small_only”，语义效果：reveal_first_animal_size，添加持续效果“sponsor-227”（触发：small_animal_played）；Large Animals (size 4–5)：设置状态“waza_large_only”，语义效果：reveal_first_animal_size，添加持续效果“sponsor-227”（触发：large_animal_played））",
+          "description": "选择一项（Small Animals (size 1–2)：设置状态“waza_small_only”，从牌库寻找并拿取第一张小型动物，每当你打出小型动物时：魅力 +2；Large Animals (size 4–5)：设置状态“waza_large_only”，从牌库寻找并拿取第一张大型动物，每当你打出大型动物时：魅力 +4）",
           "timing": "on_play"
         }
       ],
@@ -10858,11 +10859,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "获得 (actor.small_animal_count × 2) 资金",
+          "description": "金币 +(你的小型动物数量 × 2)",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-228”（触发：static）",
+          "description": "动物行动只打出小型动物时，可按正常费用额外打出1只小型动物",
           "timing": "on_play"
         }
       ],
@@ -10911,11 +10912,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.small_animal_count",
+          "description": "魅力 +你的小型动物数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-229”（触发：static）",
+          "description": "打出小型动物时少支付3金币",
           "timing": "on_play"
         }
       ],
@@ -10964,11 +10965,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 (actor.large_animal_count × 2)",
+          "description": "魅力 +(你的大型动物数量 × 2)",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-230”（触发：static）",
+          "description": "打出大型动物时少支付4金币",
           "timing": "on_play"
         }
       ],
@@ -11017,11 +11018,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.primate",
+          "description": "魅力 +你的灵长类图标数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-231”（触发：income）",
+          "description": "休息阶段收入时：根据你的灵长类图标数量，达到档位时获得金币（1→3，3→6，5→9）",
           "timing": "on_play"
         }
       ],
@@ -11070,11 +11071,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.reptile",
+          "description": "魅力 +你的爬行图标数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-232”（触发：income）",
+          "description": "休息阶段收入时：根据你的爬行图标数量，达到档位时获得金币（1→3，3→6，5→9）",
           "timing": "on_play"
         }
       ],
@@ -11123,11 +11124,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.bird",
+          "description": "魅力 +你的鸟类图标数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-233”（触发：income）",
+          "description": "休息阶段收入时：根据你的鸟类图标数量，达到档位时获得金币（1→3，3→6，5→9）",
           "timing": "on_play"
         }
       ],
@@ -11176,11 +11177,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.predator",
+          "description": "魅力 +你的肉食图标数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-234”（触发：income）",
+          "description": "休息阶段收入时：根据你的肉食图标数量，达到档位时获得金币（1→3，3→6，5→9）",
           "timing": "on_play"
         }
       ],
@@ -11229,11 +11230,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.herbivore",
+          "description": "魅力 +你的草食图标数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-235”（触发：income）",
+          "description": "休息阶段收入时：根据你的草食图标数量，达到档位时获得金币（1→3，3→6，5→9）",
           "timing": "on_play"
         }
       ],
@@ -11282,7 +11283,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-236”（触发：icon_entered:any:primate）",
+          "description": "每当任意动物园获得灵长类图标时：金币 +3",
           "timing": "on_play"
         }
       ],
@@ -11331,7 +11332,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-237”（触发：icon_entered:any:reptile）",
+          "description": "每当任意动物园获得爬行图标时：金币 +3",
           "timing": "on_play"
         }
       ],
@@ -11380,7 +11381,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-238”（触发：icon_entered:any:bird）",
+          "description": "每当任意动物园获得鸟类图标时：金币 +3",
           "timing": "on_play"
         }
       ],
@@ -11429,7 +11430,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-239”（触发：icon_entered:any:predator）",
+          "description": "每当任意动物园获得肉食图标时：金币 +3",
           "timing": "on_play"
         }
       ],
@@ -11478,7 +11479,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-240”（触发：icon_entered:any:herbivore）",
+          "description": "每当任意动物园获得草食图标时：金币 +3",
           "timing": "on_play"
         }
       ],
@@ -11527,15 +11528,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.icons.water",
+          "description": "魅力 +你的水域图标数量",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-241”（触发：building_placed）",
+          "description": "每当你放置建筑时：金币 +本次建筑覆盖且邻接水域的格数",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你的水域是否全部连通 == 是：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -11591,15 +11592,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 (整除(actor.icons.rock, 2) × 3)",
+          "description": "魅力 +(整除(你的岩石图标数量, 2) × 3)",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-242”（触发：building_placed）",
+          "description": "每当你放置建筑时：金币 +本次建筑覆盖且邻接岩石的格数",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你的岩石是否全部连通 == 是：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -11655,11 +11656,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-243”（触发：icon_entered:self:herbivore）",
+          "description": "每当你获得草食图标时：魅力 +2",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你的草食图标数量 >= 6：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -11717,11 +11718,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-244”（触发：icon_entered:self:bird）",
+          "description": "每当你获得鸟类图标时：魅力 +2",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你的鸟类图标数量 >= 6：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -11779,11 +11780,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-245”（触发：icon_entered:self:water）",
+          "description": "每当你获得水域图标时：魅力 +2",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你的水域图标数量 >= 6：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -11841,11 +11842,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-246”（触发：icon_entered:self:rock）",
+          "description": "每当你获得岩石图标时：魅力 +2",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你的岩石图标数量 >= 6：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -11899,11 +11900,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-247”（触发：icon_entered:self:primate）",
+          "description": "每当你获得灵长类图标时：魅力 +2",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你的灵长类图标数量 >= 6：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -11957,7 +11958,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-248”（触发：icon_entered:self:primate）",
+          "description": "每当你获得灵长类图标时：获得 1 个 X 标记",
           "timing": "on_play"
         }
       ],
@@ -12011,7 +12012,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-249”（触发：icon_entered:self:bird）",
+          "description": "每当你获得鸟类图标时：抽2张牌并保留1张",
           "timing": "on_play"
         }
       ],
@@ -12063,7 +12064,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-250”（触发：icon_entered:self:reptile）",
+          "description": "每当你获得爬行图标时：最多出售2张手牌",
           "timing": "on_play"
         }
       ],
@@ -12117,11 +12118,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-251”（触发：icon_entered:any:bear）",
+          "description": "每当任意动物园获得熊类图标时：魅力 +2",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：gain_tiered_icon_reward",
+          "description": "根据你的熊类图标数量，达到档位时获得保护点数（3→1，6→2）",
           "timing": "end_of_game"
         }
       ],
@@ -12175,7 +12176,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-252”（触发：icon_entered:self:predator）",
+          "description": "每当你获得肉食图标时：从牌库展示你的肉食图标数量张动物牌并保留1张",
           "timing": "on_play"
         }
       ],
@@ -12229,11 +12230,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "语义效果：add_source_card_tokens",
+          "description": "在这张牌上放置 3 个自己的玩家标记",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-253”（触发：icon_entered:self:herbivore）",
+          "description": "每当你获得草食图标时：可以额外打出1张赞助商牌",
           "timing": "on_play"
         }
       ],
@@ -12292,15 +12293,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "声望移动 1",
+          "description": "声望 +1",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：take_map_reward_card",
+          "description": "从牌库或声望范围内拿取1张牌",
           "timing": "on_play"
         }
       ],
@@ -12349,7 +12350,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         }
       ],
@@ -12399,7 +12400,7 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 4",
+          "description": "魅力 +4",
           "timing": "on_play"
         }
       ],
@@ -12449,11 +12450,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-257”（触发：income）",
+          "description": "休息阶段收入时：金币 +(侧入口收入建筑数量 × 2)",
           "timing": "on_play"
         },
         {
-          "description": "魅力移动 5",
+          "description": "若你的地图是否完全覆盖 == 是：魅力 +5",
           "timing": "end_of_game"
         }
       ],
@@ -12513,11 +12514,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.connected_water_space_count",
+          "description": "魅力 +连通水域格数量",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 整除(actor.unconnected_water_space_count, 2)",
+          "description": "保护点数 +整除(未连通水域格数量, 2)",
           "timing": "end_of_game"
         }
       ],
@@ -12570,11 +12571,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.connected_rock_space_count",
+          "description": "魅力 +连通岩石格数量",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 整除(actor.unconnected_rock_space_count, 2)",
+          "description": "保护点数 +整除(未连通岩石格数量, 2)",
           "timing": "end_of_game"
         }
       ],
@@ -12627,11 +12628,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.connected_uncovered_border_space_count",
+          "description": "魅力 +连通的未覆盖边缘格数量",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 actor.empty_buildable_group_of_six_count",
+          "description": "保护点数 +连续6格空置可建土地组数量",
           "timing": "end_of_game"
         }
       ],
@@ -12684,15 +12685,15 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 1",
+          "description": "魅力 +1",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "保护点数 +1",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 1",
+          "description": "若你拥有的不同动物类别图标数量 >= 5：保护点数 +1",
           "timing": "end_of_game"
         }
       ],
@@ -12737,11 +12738,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "获得 (actor.distinct_continent_animal_category_count × 2) 资金",
+          "description": "金币 +(你拥有的不同洲与动物类别图标数量 × 2)",
           "timing": "on_play"
         },
         {
-          "description": "添加持续效果“sponsor-262”（触发：distinct_icon_entered）",
+          "description": "每当你的动物园首次获得一种洲或动物类别图标时：魅力 +1；金币 +2",
           "timing": "on_play"
         }
       ],
@@ -12788,7 +12789,7 @@
       "kind": "sponsor",
       "official_component_id": "262",
       "requirements": [
-        "actor.action_cards.sponsors.upgraded == 是"
+        "actor.action cards.sponsors.upgraded == 是"
       ],
       "review_status": "transcribed",
       "scenario_tests": [],
@@ -12799,11 +12800,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "添加持续效果“sponsor-263”（触发：static）",
+          "description": "打出大型动物时可以忽略1项非围栏、非地形条件",
           "timing": "on_play"
         },
         {
-          "description": "语义效果：place_free_building",
+          "description": "免费放置1座standard enclosure 5",
           "timing": "on_play"
         }
       ],
@@ -12847,7 +12848,7 @@
       "kind": "sponsor",
       "official_component_id": "263",
       "requirements": [
-        "actor.action_cards.sponsors.upgraded == 是",
+        "actor.action cards.sponsors.upgraded == 是",
         "你的声望 >= 6"
       ],
       "review_status": "transcribed",
@@ -12859,11 +12860,11 @@
       "collection": "sponsors",
       "effects": [
         {
-          "description": "魅力移动 actor.connected_placement_bonus_space_count",
+          "description": "魅力 +连通的放置奖励格数量",
           "timing": "on_play"
         },
         {
-          "description": "保育移动 整除(actor.unconnected_placement_bonus_space_count, 2)",
+          "description": "保护点数 +整除(未连通的放置奖励格数量, 2)",
           "timing": "end_of_game"
         }
       ],
@@ -16129,147 +16130,219 @@
     },
     {
       "collection": "bonus_tiles",
-      "effects": [],
+      "effects": [
+        {
+          "description": "声望 +2",
+          "timing": "immediate"
+        }
+      ],
       "facts": {
-        "catalog_status": "slot_only",
-        "slot": 1
+        "catalog_status": "structured_transcription",
+        "label_cn": "声望提升 2 点"
       },
-      "id": "ark-nova:bonus_tile-slot-001",
+      "id": "ark-nova:bonus-tile-reputation-2",
       "kind": "bonus_tile",
-      "official_component_id": null,
+      "official_component_id": "reputation-2",
       "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 01"
+      "review_status": "scenario_tested",
+      "scenario_tests": [
+        "official-bonus-tile-effects"
+      ],
+      "summary": "Advance two spaces on the Reputation track.",
+      "title": "Reputation +2"
     },
     {
       "collection": "bonus_tiles",
-      "effects": [],
+      "effects": [
+        {
+          "description": "获得 3 个 X 标记",
+          "timing": "immediate"
+        }
+      ],
       "facts": {
-        "catalog_status": "slot_only",
-        "slot": 2
+        "catalog_status": "structured_transcription",
+        "label_cn": "获得 3 枚 X 标记"
       },
-      "id": "ark-nova:bonus_tile-slot-002",
+      "id": "ark-nova:bonus-tile-x-3",
       "kind": "bonus_tile",
-      "official_component_id": null,
+      "official_component_id": "x-3",
       "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 02"
+      "review_status": "scenario_tested",
+      "scenario_tests": [
+        "official-bonus-tile-effects"
+      ],
+      "summary": "Gain three X-tokens, respecting the normal resource limit.",
+      "title": "Three X-tokens"
     },
     {
       "collection": "bonus_tiles",
-      "effects": [],
+      "effects": [
+        {
+          "description": "免费放置1座standard enclosure 3",
+          "timing": "immediate"
+        }
+      ],
       "facts": {
-        "catalog_status": "slot_only",
-        "slot": 3
+        "catalog_status": "structured_transcription",
+        "label_cn": "立刻免费建造一个 3 格标准饲养区"
       },
-      "id": "ark-nova:bonus_tile-slot-003",
+      "id": "ark-nova:bonus-tile-enclosure-3",
       "kind": "bonus_tile",
-      "official_component_id": null,
+      "official_component_id": "enclosure-3",
       "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 03"
+      "review_status": "scenario_tested",
+      "scenario_tests": [
+        "official-bonus-tile-effects"
+      ],
+      "summary": "Immediately place one standard size-3 enclosure without paying its construction cost.",
+      "title": "Free size-3 enclosure"
     },
     {
       "collection": "bonus_tiles",
-      "effects": [],
+      "effects": [
+        {
+          "description": "从牌库或声望范围内拿取1张牌",
+          "timing": "immediate"
+        },
+        {
+          "description": "从牌库或声望范围内拿取1张牌",
+          "timing": "immediate"
+        },
+        {
+          "description": "从牌库或声望范围内拿取1张牌",
+          "timing": "immediate"
+        }
+      ],
       "facts": {
-        "catalog_status": "slot_only",
-        "slot": 4
+        "catalog_status": "structured_transcription",
+        "label_cn": "执行 3 次：从声望范围拿牌或从牌库抽牌"
       },
-      "id": "ark-nova:bonus_tile-slot-004",
+      "id": "ark-nova:bonus-tile-cards-3",
       "kind": "bonus_tile",
-      "official_component_id": null,
+      "official_component_id": "cards-3",
       "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 04"
+      "review_status": "scenario_tested",
+      "scenario_tests": [
+        "official-bonus-tile-effects"
+      ],
+      "summary": "Resolve three times: take a card within Reputation range or draw one from the deck.",
+      "title": "Take three cards"
     },
     {
       "collection": "bonus_tiles",
-      "effects": [],
+      "effects": [
+        {
+          "description": "金币 +5",
+          "timing": "immediate"
+        }
+      ],
       "facts": {
-        "catalog_status": "slot_only",
-        "slot": 5
+        "catalog_status": "structured_transcription",
+        "label_cn": "获得 5 金币"
       },
-      "id": "ark-nova:bonus_tile-slot-005",
+      "id": "ark-nova:bonus-tile-money-5",
       "kind": "bonus_tile",
-      "official_component_id": null,
+      "official_component_id": "money-5",
       "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 05"
+      "review_status": "scenario_tested",
+      "scenario_tests": [
+        "official-bonus-tile-effects"
+      ],
+      "summary": "Gain five money.",
+      "title": "Five money"
     },
     {
       "collection": "bonus_tiles",
-      "effects": [],
+      "effects": [
+        {
+          "description": "金币 +10",
+          "timing": "immediate"
+        }
+      ],
       "facts": {
-        "catalog_status": "slot_only",
-        "slot": 6
+        "catalog_status": "structured_transcription",
+        "label_cn": "获得 10 金币"
       },
-      "id": "ark-nova:bonus_tile-slot-006",
+      "id": "ark-nova:bonus-tile-money-10",
       "kind": "bonus_tile",
-      "official_component_id": null,
+      "official_component_id": "money-10",
       "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 06"
+      "review_status": "scenario_tested",
+      "scenario_tests": [
+        "official-bonus-tile-effects"
+      ],
+      "summary": "Gain ten money.",
+      "title": "Ten money"
     },
     {
       "collection": "bonus_tiles",
-      "effects": [],
+      "effects": [
+        {
+          "description": "选择一项（Animals：语义效果：add_action_token；Cards：语义效果：add_action_token；Build：语义效果：add_action_token；Association：语义效果：add_action_token；Sponsors：语义效果：add_action_token）",
+          "timing": "immediate"
+        }
+      ],
       "facts": {
-        "catalog_status": "slot_only",
-        "slot": 7
+        "catalog_status": "structured_transcription",
+        "label_cn": "在一张行动卡牌上放置双重标记"
       },
-      "id": "ark-nova:bonus_tile-slot-007",
+      "id": "ark-nova:bonus-tile-multiplier",
       "kind": "bonus_tile",
-      "official_component_id": null,
+      "official_component_id": "multiplier",
       "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 07"
+      "review_status": "scenario_tested",
+      "scenario_tests": [
+        "official-bonus-tile-effects"
+      ],
+      "summary": "Choose one Action card and place a multiplier token on it.",
+      "title": "Multiplier token"
     },
     {
       "collection": "bonus_tiles",
-      "effects": [],
+      "effects": [
+        {
+          "description": "语义效果：choose_bonus_association_asset",
+          "timing": "immediate"
+        }
+      ],
       "facts": {
-        "catalog_status": "slot_only",
-        "slot": 8
+        "catalog_status": "structured_transcription",
+        "label_cn": "从协会板图选择一个可用大学"
       },
-      "id": "ark-nova:bonus_tile-slot-008",
+      "id": "ark-nova:bonus-tile-university",
       "kind": "bonus_tile",
-      "official_component_id": null,
+      "official_component_id": "university",
       "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 08"
+      "review_status": "scenario_tested",
+      "scenario_tests": [
+        "official-bonus-tile-effects"
+      ],
+      "summary": "Choose and take one currently available university from the Association board.",
+      "title": "Available university"
     },
     {
       "collection": "bonus_tiles",
-      "effects": [],
+      "effects": [
+        {
+          "description": "语义效果：choose_bonus_association_asset",
+          "timing": "immediate"
+        }
+      ],
       "facts": {
-        "catalog_status": "slot_only",
-        "slot": 9
+        "catalog_status": "structured_transcription",
+        "label_cn": "从协会板图选择一个可用合作动物园"
       },
-      "id": "ark-nova:bonus_tile-slot-009",
+      "id": "ark-nova:bonus-tile-partner-zoo",
       "kind": "bonus_tile",
-      "official_component_id": null,
+      "official_component_id": "partner-zoo",
       "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 09"
+      "review_status": "scenario_tested",
+      "scenario_tests": [
+        "official-bonus-tile-effects",
+        "partner-zoo-association-ii-gate"
+      ],
+      "summary": "Choose and take one currently available partner zoo; taking a third still requires Association II.",
+      "title": "Available partner zoo"
     },
     {
       "collection": "maps",
@@ -16433,8 +16506,8 @@
     }
   ],
   "pack": {
-    "content_sha256": "b362cc04ea4ea7c311c343e6525e089a214f511da825888c98ebf0f2f2cd8525",
-    "content_version": "m4-reference-import.15",
+    "content_sha256": "9b079512b92753d536f6f49a2cbd83c8791cedd1ed6af9098e5113069a8b445d",
+    "content_version": "m4-reference-import.16",
     "distribution_mode": "repository_safe",
     "id": "ark-nova-base-en-draft-roster",
     "rules_version": "base-1.2-faq-v2-semantic.1",
@@ -16448,6 +16521,7 @@
       "add_source_card_tokens",
       "advance_break",
       "apply_interaction_tokens",
+      "choose_bonus_association_asset",
       "choose_one",
       "dig_cards",
       "draw_cards",

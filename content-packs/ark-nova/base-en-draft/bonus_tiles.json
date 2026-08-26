@@ -1,236 +1,126 @@
 [
   {
-    "display": {
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 01"
-    },
-    "effects": [],
-    "facts": {
-      "catalog_status": "slot_only",
-      "slot": 1
-    },
-    "id": "ark-nova:bonus_tile-slot-001",
+    "schema_version": "agentbga.ark_nova.card.v1",
+    "id": "ark-nova:bonus-tile-reputation-2",
+    "official_ref": {"component_id": "reputation-2", "source_ids": ["user-structured-base-255"]},
     "kind": "bonus_tile",
-    "official_ref": {
-      "component_id": null,
-      "source_ids": [
-        "capstone-rulebook-base-en"
-      ]
-    },
-    "references": [],
+    "display": {"title": "Reputation +2", "summary": "Advance two spaces on the Reputation track."},
+    "facts": {"catalog_status": "structured_transcription", "label_cn": "声望提升 2 点"},
     "requirements": [],
-    "review": {
-      "scenario_tests": [],
-      "status": "unentered"
-    },
-    "schema_version": "agentbga.ark_nova.card.v1"
+    "effects": [{"op": "move_track", "timing": "immediate", "args": {"track": "reputation", "amount": 2}}],
+    "references": [],
+    "review": {"status": "scenario_tested", "scenario_tests": ["official-bonus-tile-effects"]}
   },
   {
-    "display": {
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 02"
-    },
-    "effects": [],
-    "facts": {
-      "catalog_status": "slot_only",
-      "slot": 2
-    },
-    "id": "ark-nova:bonus_tile-slot-002",
+    "schema_version": "agentbga.ark_nova.card.v1",
+    "id": "ark-nova:bonus-tile-x-3",
+    "official_ref": {"component_id": "x-3", "source_ids": ["user-structured-base-255"]},
     "kind": "bonus_tile",
-    "official_ref": {
-      "component_id": null,
-      "source_ids": [
-        "capstone-rulebook-base-en"
-      ]
-    },
-    "references": [],
+    "display": {"title": "Three X-tokens", "summary": "Gain three X-tokens, respecting the normal resource limit."},
+    "facts": {"catalog_status": "structured_transcription", "label_cn": "获得 3 枚 X 标记"},
     "requirements": [],
-    "review": {
-      "scenario_tests": [],
-      "status": "unentered"
-    },
-    "schema_version": "agentbga.ark_nova.card.v1"
+    "effects": [{"op": "gain_x_token", "timing": "immediate", "args": {"amount": 3}}],
+    "references": [],
+    "review": {"status": "scenario_tested", "scenario_tests": ["official-bonus-tile-effects"]}
   },
   {
-    "display": {
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 03"
-    },
-    "effects": [],
-    "facts": {
-      "catalog_status": "slot_only",
-      "slot": 3
-    },
-    "id": "ark-nova:bonus_tile-slot-003",
+    "schema_version": "agentbga.ark_nova.card.v1",
+    "id": "ark-nova:bonus-tile-enclosure-3",
+    "official_ref": {"component_id": "enclosure-3", "source_ids": ["user-structured-base-255"]},
     "kind": "bonus_tile",
-    "official_ref": {
-      "component_id": null,
-      "source_ids": [
-        "capstone-rulebook-base-en"
-      ]
-    },
-    "references": [],
+    "display": {"title": "Free size-3 enclosure", "summary": "Immediately place one standard size-3 enclosure without paying its construction cost."},
+    "facts": {"catalog_status": "structured_transcription", "label_cn": "立刻免费建造一个 3 格标准饲养区"},
     "requirements": [],
-    "review": {
-      "scenario_tests": [],
-      "status": "unentered"
-    },
-    "schema_version": "agentbga.ark_nova.card.v1"
+    "effects": [{"op": "place_free_building", "timing": "immediate", "args": {"building_types": ["standard_enclosure_3"], "maximum": 1}}],
+    "references": [],
+    "review": {"status": "scenario_tested", "scenario_tests": ["official-bonus-tile-effects"]}
   },
   {
-    "display": {
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 04"
-    },
-    "effects": [],
-    "facts": {
-      "catalog_status": "slot_only",
-      "slot": 4
-    },
-    "id": "ark-nova:bonus_tile-slot-004",
+    "schema_version": "agentbga.ark_nova.card.v1",
+    "id": "ark-nova:bonus-tile-cards-3",
+    "official_ref": {"component_id": "cards-3", "source_ids": ["user-structured-base-255"]},
     "kind": "bonus_tile",
-    "official_ref": {
-      "component_id": null,
-      "source_ids": [
-        "capstone-rulebook-base-en"
-      ]
-    },
-    "references": [],
+    "display": {"title": "Take three cards", "summary": "Resolve three times: take a card within Reputation range or draw one from the deck."},
+    "facts": {"catalog_status": "structured_transcription", "label_cn": "执行 3 次：从声望范围拿牌或从牌库抽牌"},
     "requirements": [],
-    "review": {
-      "scenario_tests": [],
-      "status": "unentered"
-    },
-    "schema_version": "agentbga.ark_nova.card.v1"
+    "effects": [
+      {"op": "take_map_reward_card", "timing": "immediate", "args": {}},
+      {"op": "take_map_reward_card", "timing": "immediate", "args": {}},
+      {"op": "take_map_reward_card", "timing": "immediate", "args": {}}
+    ],
+    "references": [],
+    "review": {"status": "scenario_tested", "scenario_tests": ["official-bonus-tile-effects"]}
   },
   {
-    "display": {
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 05"
-    },
-    "effects": [],
-    "facts": {
-      "catalog_status": "slot_only",
-      "slot": 5
-    },
-    "id": "ark-nova:bonus_tile-slot-005",
+    "schema_version": "agentbga.ark_nova.card.v1",
+    "id": "ark-nova:bonus-tile-money-5",
+    "official_ref": {"component_id": "money-5", "source_ids": ["user-structured-base-255"]},
     "kind": "bonus_tile",
-    "official_ref": {
-      "component_id": null,
-      "source_ids": [
-        "capstone-rulebook-base-en"
-      ]
-    },
-    "references": [],
+    "display": {"title": "Five money", "summary": "Gain five money."},
+    "facts": {"catalog_status": "structured_transcription", "label_cn": "获得 5 金币"},
     "requirements": [],
-    "review": {
-      "scenario_tests": [],
-      "status": "unentered"
-    },
-    "schema_version": "agentbga.ark_nova.card.v1"
+    "effects": [{"op": "gain_money", "timing": "immediate", "args": {"amount": 5}}],
+    "references": [],
+    "review": {"status": "scenario_tested", "scenario_tests": ["official-bonus-tile-effects"]}
   },
   {
-    "display": {
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 06"
-    },
-    "effects": [],
-    "facts": {
-      "catalog_status": "slot_only",
-      "slot": 6
-    },
-    "id": "ark-nova:bonus_tile-slot-006",
+    "schema_version": "agentbga.ark_nova.card.v1",
+    "id": "ark-nova:bonus-tile-money-10",
+    "official_ref": {"component_id": "money-10", "source_ids": ["user-structured-base-255"]},
     "kind": "bonus_tile",
-    "official_ref": {
-      "component_id": null,
-      "source_ids": [
-        "capstone-rulebook-base-en"
-      ]
-    },
-    "references": [],
+    "display": {"title": "Ten money", "summary": "Gain ten money."},
+    "facts": {"catalog_status": "structured_transcription", "label_cn": "获得 10 金币"},
     "requirements": [],
-    "review": {
-      "scenario_tests": [],
-      "status": "unentered"
-    },
-    "schema_version": "agentbga.ark_nova.card.v1"
+    "effects": [{"op": "gain_money", "timing": "immediate", "args": {"amount": 10}}],
+    "references": [],
+    "review": {"status": "scenario_tested", "scenario_tests": ["official-bonus-tile-effects"]}
   },
   {
-    "display": {
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 07"
-    },
-    "effects": [],
-    "facts": {
-      "catalog_status": "slot_only",
-      "slot": 7
-    },
-    "id": "ark-nova:bonus_tile-slot-007",
+    "schema_version": "agentbga.ark_nova.card.v1",
+    "id": "ark-nova:bonus-tile-multiplier",
+    "official_ref": {"component_id": "multiplier", "source_ids": ["user-structured-base-255"]},
     "kind": "bonus_tile",
-    "official_ref": {
-      "component_id": null,
-      "source_ids": [
-        "capstone-rulebook-base-en"
-      ]
-    },
-    "references": [],
+    "display": {"title": "Multiplier token", "summary": "Choose one Action card and place a multiplier token on it."},
+    "facts": {"catalog_status": "structured_transcription", "label_cn": "在一张行动卡牌上放置双重标记"},
     "requirements": [],
-    "review": {
-      "scenario_tests": [],
-      "status": "unentered"
-    },
-    "schema_version": "agentbga.ark_nova.card.v1"
+    "effects": [{
+      "op": "choose_one", "timing": "immediate",
+      "args": {
+        "prompt": "Choose an Action card for the multiplier token",
+        "options": [
+          {"id": "animals", "label": "Animals", "effects": [{"op": "add_action_token", "timing": "immediate", "args": {"action": "animals", "token": "multiplier"}}]},
+          {"id": "cards", "label": "Cards", "effects": [{"op": "add_action_token", "timing": "immediate", "args": {"action": "cards", "token": "multiplier"}}]},
+          {"id": "build", "label": "Build", "effects": [{"op": "add_action_token", "timing": "immediate", "args": {"action": "build", "token": "multiplier"}}]},
+          {"id": "association", "label": "Association", "effects": [{"op": "add_action_token", "timing": "immediate", "args": {"action": "association", "token": "multiplier"}}]},
+          {"id": "sponsors", "label": "Sponsors", "effects": [{"op": "add_action_token", "timing": "immediate", "args": {"action": "sponsors", "token": "multiplier"}}]}
+        ]
+      }
+    }],
+    "references": [],
+    "review": {"status": "scenario_tested", "scenario_tests": ["official-bonus-tile-effects"]}
   },
   {
-    "display": {
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 08"
-    },
-    "effects": [],
-    "facts": {
-      "catalog_status": "slot_only",
-      "slot": 8
-    },
-    "id": "ark-nova:bonus_tile-slot-008",
+    "schema_version": "agentbga.ark_nova.card.v1",
+    "id": "ark-nova:bonus-tile-university",
+    "official_ref": {"component_id": "university", "source_ids": ["user-structured-base-255"]},
     "kind": "bonus_tile",
-    "official_ref": {
-      "component_id": null,
-      "source_ids": [
-        "capstone-rulebook-base-en"
-      ]
-    },
-    "references": [],
+    "display": {"title": "Available university", "summary": "Choose and take one currently available university from the Association board."},
+    "facts": {"catalog_status": "structured_transcription", "label_cn": "从协会板图选择一个可用大学"},
     "requirements": [],
-    "review": {
-      "scenario_tests": [],
-      "status": "unentered"
-    },
-    "schema_version": "agentbga.ark_nova.card.v1"
+    "effects": [{"op": "choose_bonus_association_asset", "timing": "immediate", "args": {"asset": "university"}}],
+    "references": [],
+    "review": {"status": "scenario_tested", "scenario_tests": ["official-bonus-tile-effects"]}
   },
   {
-    "display": {
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Bonus tile · slot 09"
-    },
-    "effects": [],
-    "facts": {
-      "catalog_status": "slot_only",
-      "slot": 9
-    },
-    "id": "ark-nova:bonus_tile-slot-009",
+    "schema_version": "agentbga.ark_nova.card.v1",
+    "id": "ark-nova:bonus-tile-partner-zoo",
+    "official_ref": {"component_id": "partner-zoo", "source_ids": ["user-structured-base-255"]},
     "kind": "bonus_tile",
-    "official_ref": {
-      "component_id": null,
-      "source_ids": [
-        "capstone-rulebook-base-en"
-      ]
-    },
-    "references": [],
+    "display": {"title": "Available partner zoo", "summary": "Choose and take one currently available partner zoo; taking a third still requires Association II."},
+    "facts": {"catalog_status": "structured_transcription", "label_cn": "从协会板图选择一个可用合作动物园"},
     "requirements": [],
-    "review": {
-      "scenario_tests": [],
-      "status": "unentered"
-    },
-    "schema_version": "agentbga.ark_nova.card.v1"
+    "effects": [{"op": "choose_bonus_association_asset", "timing": "immediate", "args": {"asset": "partner_zoo"}}],
+    "references": [],
+    "review": {"status": "scenario_tested", "scenario_tests": ["official-bonus-tile-effects", "partner-zoo-association-ii-gate"]}
   }
 ]

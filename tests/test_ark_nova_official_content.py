@@ -162,8 +162,8 @@ class ArkNovaOfficialContentTests(unittest.TestCase):
         catalog = build_content_catalog(pack)
 
         self.assertEqual(254, catalog["coverage"]["total"])
-        self.assertEqual(235, catalog["coverage"]["roster_indexed"])
-        self.assertEqual(234, catalog["coverage"]["semantic_entries"])
+        self.assertEqual(244, catalog["coverage"]["roster_indexed"])
+        self.assertEqual(243, catalog["coverage"]["semantic_entries"])
         self.assertEqual("401", catalog["entries"][0]["official_component_id"])
         self.assertEqual("Cheetah", catalog["entries"][0]["title"])
         self.assertEqual(
