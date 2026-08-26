@@ -32,11 +32,9 @@ def _icon_count(player: dict[str, Any], *names: str) -> int:
 
 
 def _terrain_icon_count(player: dict[str, Any], terrain: str) -> int:
-    return _icon_count(player, terrain) + sum(
-        int(card.get(f"{terrain}_requirement", 0) or 0)
-        for card in _played_cards(player)
-        if card.get("card_type") == "animal"
-    )
+    # Animal and unique-building adjacency symbols are recorded in the same
+    # authoritative icon counter when their card enters play.
+    return _icon_count(player, terrain)
 
 
 def player_public_summary(player: dict[str, Any]) -> dict[str, Any]:

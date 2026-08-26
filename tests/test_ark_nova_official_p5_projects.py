@@ -214,10 +214,12 @@ class ArkNovaOfficialP5ProjectTests(unittest.TestCase):
     def test_aquatic_counts_printed_icons_and_water_requirements(self):
         state, aquatic = self.state_with_project("ark-nova:project-128", base=False)
         player = state["players"][0]
-        player["icons"]["water"] = 1
+        # One ordinary icon plus one played requirement symbol have already
+        # been recorded in the authoritative counter.
+        player["icons"]["water"] = 2
         player["played_cards"] = [{
             "id": "water-requirement-animal", "kind": "animal",
-            "facts": {"water_requirement": 1},
+            "facts": {"water_requirement": 1}, "terrain_icons_accounted": True,
         }]
         self.assertEqual(
             ["low"],

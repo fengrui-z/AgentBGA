@@ -66,18 +66,12 @@ class ArkNovaOfficialP6FinalScoringTests(unittest.TestCase):
                     result = score_final_card(state, 0, self.card(component_id))
                     self.assertEqual(tier["conservation"], result["conservation"])
 
-    def test_terrain_requirements_are_not_terrain_icons(self):
+    def test_recorded_terrain_requirements_are_terrain_icons(self):
         state = new_semantic_state(2)
         player = state["players"][0]
-        player["played_cards"] = [
-            {"kind": "animal", "facts": {"rock_requirement": 2}},
-            {"kind": "sponsor", "facts": {"water_requirement": 2}},
-        ]
-        self.assertEqual(0, score_final_card(state, 0, self.card("010"))["metric_value"])
-        self.assertEqual(0, score_final_card(state, 0, self.card("011"))["metric_value"])
-        player["icons"].update({"rock": 1, "water": 1})
-        self.assertEqual(1, score_final_card(state, 0, self.card("010"))["metric_value"])
-        self.assertEqual(1, score_final_card(state, 0, self.card("011"))["metric_value"])
+        player["icons"].update({"rock": 2, "water": 2})
+        self.assertEqual(2, score_final_card(state, 0, self.card("010"))["metric_value"])
+        self.assertEqual(2, score_final_card(state, 0, self.card("011"))["metric_value"])
 
     def test_architectural_zoo_scores_each_map_condition(self):
         state = new_semantic_state(2)

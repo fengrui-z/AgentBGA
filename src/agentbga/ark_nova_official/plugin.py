@@ -10,6 +10,7 @@ from ..ark_nova_tracks import conservation_score_offset, conservation_target_app
 from ..game import GameRuleError
 from ..mechanics import action_accepted, hidden_items, state_digest
 from .action_domains import apply_official_action, content_entry_indexes, legal_official_actions
+from .cards import terrain_requirement_icon_counts
 from .content import ContentPack
 from .final_scoring_effects import score_final_card
 from .milestones import queue_endgame_final_scoring_discard
@@ -77,7 +78,7 @@ class ArkNovaOfficialPlugin:
         return []
 
     def legal_actions(self, state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
-        state, _ = _normalize_reputation_caps(state)
+        state, _ = _normalize_legacy_state(state)
         if seat not in self.decision_seats(state):
             return []
         if state.get("phase") == "initial_hand_selection":
@@ -93,7 +94,7 @@ class ArkNovaOfficialPlugin:
         self, state: dict[str, Any], seat: int, action: dict[str, Any],
     ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         try:
-            state, reputation_events = _normalize_reputation_caps(state)
+            state, normalization_events = _normalize_legacy_state(state)
             if state.get("phase") == "initial_hand_selection":
                 if action.get("type") != "choose_initial_hand":
                     raise SemanticRuleError("initial hand selection is required")
@@ -110,7 +111,7 @@ class ArkNovaOfficialPlugin:
             self.validate_state(next_state)
             return next_state, [
                 action_accepted(seat, deepcopy(action), rules_version=self.rules_version),
-                *reputation_events,
+                *normalization_events,
                 *events,
                 *lifecycle_events,
             ]
@@ -259,11 +260,11 @@ class ArkNovaOfficialPlugin:
     def observe(self, state: dict[str, Any], seat: int) -> dict[str, Any]:
         if not 0 <= seat < state["player_count"]:
             raise GameRuleError("seat is out of range")
-        state, _ = _normalize_reputation_caps(state)
+        state, _ = _normalize_legacy_state(state)
         return self._observe(state, seat, reveal_all_private=False)
 
     def observe_spectator(self, state: dict[str, Any]) -> dict[str, Any]:
-        state, _ = _normalize_reputation_caps(state)
+        state, _ = _normalize_legacy_state(state)
         view = self._observe(state, 0, reveal_all_private=True)
         view["viewer_mode"] = "spectator"
         return view
@@ -380,6 +381,49 @@ def _normalize_reputation_caps(
     for event in corrections:
         normalized["players"][event["seat"]]["tracks"]["reputation"] = event["value"]
     return normalized, corrections
+
+
+def _normalize_legacy_state(
+    state: dict[str, Any],
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Project legacy saves onto current reputation and terrain-icon rules."""
+
+    normalized, events = _normalize_reputation_caps(state)
+    additions: list[tuple[int, dict[str, int], list[str]]] = []
+    for player in normalized["players"]:
+        counts: dict[str, int] = {}
+        card_ids: list[str] = []
+        for card in player.get("played_cards", []):
+            if card.get("terrain_icons_accounted") is True:
+                continue
+            facts = card.get("facts", {})
+            if not isinstance(facts, Mapping):
+                continue
+            card_counts = terrain_requirement_icon_counts(facts)
+            for icon, count in card_counts.items():
+                counts[icon] = counts.get(icon, 0) + count
+            card_id = card.get("id")
+            if isinstance(card_id, str):
+                card_ids.append(card_id)
+        if card_ids:
+            additions.append((int(player["seat"]), counts, card_ids))
+    if not additions:
+        return normalized, events
+    if normalized is state:
+        normalized = deepcopy(state)
+    for seat, counts, card_ids in additions:
+        player = normalized["players"][seat]
+        for icon, count in counts.items():
+            player["icons"][icon] = int(player["icons"].get(icon, 0)) + count
+        migrated = set(card_ids)
+        for card in player.get("played_cards", []):
+            if card.get("id") in migrated:
+                card["terrain_icons_accounted"] = True
+        events.append({
+            "type": "terrain_icons_migrated", "seat": seat,
+            "icons_added": counts, "card_ids": card_ids,
+        })
+    return normalized, events
 
 
 def _physical_zoo_card_ids(state: Mapping[str, Any]) -> list[str]:

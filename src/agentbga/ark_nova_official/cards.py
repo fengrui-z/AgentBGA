@@ -61,10 +61,15 @@ def play_entry_semantics(
         "facts": deepcopy(dict(entry.facts)),
         "effects": deepcopy(list(entry.effects)),
         "semantic_context": {"pre_play_tracks": deepcopy(player["tracks"])},
+        # Since rules version 2026.08, printed rock/water adjacency symbols are
+        # also persistent player icons.  This marker lets old saved games be
+        # migrated exactly once.
+        "terrain_icons_accounted": True,
     }
     player["played_cards"].append(played)
     _add_counts(player["tags"], entry.facts.get("tags", []), "tags")
-    _add_counts(player["icons"], entry.facts.get("icons", []), "icons")
+    printed_icons = printed_icon_counts(entry.facts)
+    _add_counts(player["icons"], printed_icons, "icons")
     entry_effects = _entry_effects_for_player_count(entry, next_state["player_count"])
     play_effects = [deepcopy(dict(effect)) for effect in additional_effects]
     play_effects.extend(
@@ -97,7 +102,7 @@ def play_entry_semantics(
     # modifiers have been installed.  One trigger operation per icon type keeps
     # doubled icons deterministic while letting matching Sponsors fire once for
     # each physical icon.
-    effects.extend(_icon_entered_effects(entry.facts.get("icons", [])))
+    effects.extend(_icon_entered_effects(printed_icons))
     if entry.kind == "animal":
         effects.append({
             "op": "trigger_animal_played",
@@ -147,6 +152,39 @@ def _add_counts(target: dict[str, int], raw: Any, label: str) -> None:
             target[key] = target.get(key, 0) + count
         return
     raise SemanticRuleError(f"card fact {label} must be an array or count object")
+
+
+def terrain_requirement_icon_counts(facts: Mapping[str, Any]) -> dict[str, int]:
+    """Return terrain symbols not already represented in ``facts.icons``.
+
+    Some imported Sponsor records already carry their terrain symbol in the
+    ordinary icon field as well as the placement requirement.  Treating the
+    printed requirement as a lower bound avoids losing the symbol without
+    counting the same printed symbol twice.
+    """
+
+    explicit: dict[str, int] = {}
+    _add_counts(explicit, facts.get("icons", []), "icons")
+    counts: dict[str, int] = {}
+    for terrain in ("rock", "water"):
+        raw = facts.get(f"{terrain}_requirement", 0)
+        if raw is None:
+            raw = 0
+        if not isinstance(raw, int) or isinstance(raw, bool) or raw < 0:
+            raise SemanticRuleError(f"card fact {terrain}_requirement is invalid")
+        missing = raw - int(explicit.get(terrain, 0))
+        if missing > 0:
+            counts[terrain] = missing
+    return counts
+
+
+def printed_icon_counts(facts: Mapping[str, Any]) -> dict[str, int]:
+    """Merge ordinary icons and terrain-requirement icons on a played card."""
+
+    counts: dict[str, int] = {}
+    _add_counts(counts, facts.get("icons", []), "icons")
+    _add_counts(counts, terrain_requirement_icon_counts(facts), "terrain requirement icons")
+    return counts
 
 
 _CARD_CHOICE_OPS = frozenset({

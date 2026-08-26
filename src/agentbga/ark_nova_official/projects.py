@@ -6,6 +6,7 @@ from copy import deepcopy
 from typing import Any, Mapping
 
 from ..mechanics import axial_hex_neighbors
+from .cards import printed_icon_counts
 from .content import ContentEntry
 from .semantics import EvaluationContext, SemanticEngine, SemanticRuleError
 from .state import clone_state
@@ -480,7 +481,7 @@ def _release_animal(
     old_appeal = player["tracks"]["appeal"]
     player["tracks"]["appeal"] = max(0, old_appeal - printed_appeal)
     _remove_counts(player["tags"], facts.get("tags", []))
-    _remove_counts(player["icons"], facts.get("icons", {}))
+    _remove_counts(player["icons"], printed_icon_counts(facts))
     tucked = list(card.get("tucked_cards", []))
     state["zoo_discard"].extend(tucked)
     player["played_cards"].remove(card)

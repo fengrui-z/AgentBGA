@@ -391,11 +391,9 @@ class SemanticEngine:
             )
         if path in {"rock_icon_total", "water_icon_total"}:
             icon = path.removesuffix("_icon_total")
-            return int(player["icons"].get(icon, 0)) + sum(
-                int(card.get("facts", {}).get(f"{icon}_requirement", 0) or 0)
-                for card in player["played_cards"]
-                if isinstance(card.get("facts"), Mapping)
-            )
+            # The authoritative counter is updated when a card enters/leaves
+            # play and includes its printed terrain-adjacency symbols.
+            return int(player["icons"].get(icon, 0))
         if path in {
             "distinct_animal_category_count",
             "distinct_continent_count",

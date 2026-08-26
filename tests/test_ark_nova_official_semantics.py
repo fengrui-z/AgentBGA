@@ -290,7 +290,10 @@ class ArkNovaOfficialSemanticTests(unittest.TestCase):
             source_ids=("test-source",),
             display_title="Semantic research sponsor",
             display_summary="Project-authored vertical scenario.",
-            facts={"tags": ["science"], "icons": {"research": 2}},
+            facts={
+                "tags": ["science"], "icons": {"research": 2, "water": 1},
+                "rock_requirement": 1, "water_requirement": 2,
+            },
             requirements=({"op": "has_tag", "args": {"tag": "bear", "count": 1}},),
             effects=(
                 effect("choose_one", {"options": [
@@ -318,6 +321,9 @@ class ArkNovaOfficialSemanticTests(unittest.TestCase):
         self.assertEqual("semantic_entry_played", events[0]["type"])
         self.assertEqual(1, state["players"][0]["tags"]["science"])
         self.assertEqual(2, state["players"][0]["icons"]["research"])
+        self.assertEqual(1, state["players"][0]["icons"]["rock"])
+        self.assertEqual(2, state["players"][0]["icons"]["water"])
+        self.assertTrue(state["players"][0]["played_cards"][0]["terrain_icons_accounted"])
         funding = engine.legal_choice_actions(state, 0)[0]["action"]
         state, _ = engine.submit_choice(
             state, 0, funding["choice_id"], funding["option_ids"],
