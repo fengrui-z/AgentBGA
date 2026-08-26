@@ -275,6 +275,7 @@ class ArkNovaOfficialPlugin:
         rows = [
             _present_player(
                 player, reveal_all_private or player["seat"] == seat, state,
+                self.indexes,
             )
             for player in state["players"]
         ]
@@ -318,7 +319,12 @@ class ArkNovaOfficialPlugin:
             ],
             "deck_count": len(state["zoo_deck"]),
             "discard_count": len(state["zoo_discard"]),
-            "base_conservation_projects": _present_projects(state, self.indexes),
+            "base_conservation_projects": _present_projects(
+                state, self.indexes, base=True,
+            ),
+            "zoo_conservation_projects": _present_projects(
+                state, self.indexes, base=False,
+            ),
             "association_board": association,
             "association_display": _association_display(state),
             "public_tracks": public_tracks(projection),
@@ -511,8 +517,29 @@ def _present_card(card: Mapping[str, Any]) -> dict[str, Any]:
 
 def _present_player(
     player: Mapping[str, Any], private: bool, state: Mapping[str, Any],
+    indexes: Mapping[str, Mapping[str, Any]],
 ) -> dict[str, Any]:
     tracks = player["tracks"]
+    supported_project_details = []
+    for project_id in player["supported_projects"]:
+        entry = (
+            indexes.get("zoo_conservation_projects", {}).get(project_id)
+            or indexes.get("base_conservation_projects", {}).get(project_id)
+        )
+        board_project = next((
+            project for project in state["conservation_projects"]
+            if project.get("id") == project_id
+        ), None)
+        claim = None if board_project is None else next((
+            item for item in board_project.get("claims", [])
+            if int(item.get("seat", -1)) == int(player["seat"])
+        ), None)
+        supported_project_details.append({
+            "id": project_id,
+            "display_title": entry.display_title if entry is not None else project_id,
+            "level_id": None if claim is None else claim.get("level_id"),
+            "on_board": board_project is not None,
+        })
     played = [_present_card(card) for card in player["played_cards"]]
     final_scoring_cards = []
     if private:
@@ -541,6 +568,7 @@ def _present_player(
         ),
         "final_scoring_cards": final_scoring_cards,
         "played_cards": played,
+        "supported_project_details": supported_project_details,
         "conservation_tokens_on_map": player["project_tokens_available"],
         "upgrade_rewards_claimed": [
             2 for value in player["claimed_milestones"] if value == "conservation-2"
@@ -611,15 +639,18 @@ def _association_display(state: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _present_projects(
-    state: Mapping[str, Any], indexes: Mapping[str, Mapping[str, Any]],
+    state: Mapping[str, Any], indexes: Mapping[str, Mapping[str, Any]], *, base: bool,
 ) -> list[dict[str, Any]]:
     result = []
     for project in state["conservation_projects"]:
-        if not project.get("base"):
+        if bool(project.get("base")) != base:
             continue
         row = deepcopy(project)
         entry_id = project["id"]
-        entry = indexes.get("base_conservation_projects", {}).get(entry_id)
+        collection = (
+            "base_conservation_projects" if base else "zoo_conservation_projects"
+        )
+        entry = indexes.get(collection, {}).get(entry_id)
         levels = [] if entry is None else list(entry.facts.get("levels", []))
         reward_by_id = {
             level.get("id"): int(level.get("conservation", 0))
@@ -672,5 +703,6 @@ def _present_projects(
             }
             for claim in project.get("claims", [])
         ]
+        row["card_type"] = "conservation_project"
         result.append(row)
     return result

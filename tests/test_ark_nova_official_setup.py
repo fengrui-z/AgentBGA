@@ -1,7 +1,7 @@
 from pathlib import Path
 import unittest
 
-from agentbga.ark_nova_official import ArkNovaOfficialPlugin, SemanticEngine, load_content_pack, new_semantic_state, present_entry, setup_official_game
+from agentbga.ark_nova_official import ArkNovaOfficialPlugin, SemanticEngine, add_project_to_state, load_content_pack, new_semantic_state, present_entry, setup_official_game
 from agentbga.ark_nova_official.setup import _bonus_tiles
 
 
@@ -72,6 +72,29 @@ class ArkNovaOfficialSetupTests(unittest.TestCase):
             sum(bool(tier["blocked"]) for tier in project["tiers"]) == 1
             for project in projects
         ))
+
+    def test_zoo_project_and_player_claim_are_projected_for_web(self):
+        plugin = ArkNovaOfficialPlugin()
+        state = plugin.setup(2, seed=43)
+        entry = plugin.pack.entry("ark-nova:project-113")
+        state = add_project_to_state(
+            state, entry, base=False, instance_id="zoo-project-card-a",
+        )
+        project = next(item for item in state["conservation_projects"] if item["id"] == entry.id)
+        level_id = entry.facts["levels"][0]["id"]
+        project["claims"].append({"seat": 0, "level_id": level_id})
+        state["players"][0]["supported_projects"].append(entry.id)
+
+        view = plugin.observe(state, 0)
+        self.assertEqual(1, len(view["zoo_conservation_projects"]))
+        presented = view["zoo_conservation_projects"][0]
+        self.assertEqual("zoo-project-card-a", presented["instance_id"])
+        self.assertEqual(entry.display_title, presented["display_title"])
+        self.assertEqual(level_id, presented["claims"][0]["level_id"])
+        self.assertEqual(
+            entry.display_title,
+            view["players"][0]["supported_project_details"][0]["display_title"],
+        )
 
     def test_played_card_view_normalises_runtime_kind_for_web_grouping(self):
         plugin = ArkNovaOfficialPlugin()
