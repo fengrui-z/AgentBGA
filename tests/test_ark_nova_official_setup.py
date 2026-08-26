@@ -28,6 +28,9 @@ class ArkNovaOfficialSetupTests(unittest.TestCase):
                     for player in state["players"]
                 ))
 
+    def test_match_runner_uses_ark_nova_specific_turn_limit(self):
+        self.assertEqual(1000, ArkNovaOfficialPlugin().describe()["default_max_turns"])
+
     def test_multi_icon_cards_share_complete_engine_and_web_projection(self):
         expected = {
             "ark-nova:sponsor-246": {"rock": 2},

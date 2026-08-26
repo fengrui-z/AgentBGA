@@ -68,6 +68,7 @@ def describe() -> dict[str, Any]:
         "hidden_information": True,
         "implementation_status": "controlled_core",
         "runnable": True,
+        "default_max_turns": 1000,
         "decision_model": "player_turn_with_multiple_decision_steps",
         "action_types": list(ACTION_TYPES),
         "map": "map_zero_flat_top_polyhex_v3",

@@ -45,6 +45,10 @@ class ArkNovaOfficialPlugin:
             "hidden_information": True,
             "implementation_status": "official_base_candidate",
             "runnable": True,
+            # Ark Nova regularly needs well over 250 player turns in longer
+            # multiplayer and baseline-agent games. Keep a finite runaway
+            # guard, but use a game-appropriate ceiling.
+            "default_max_turns": 1000,
             "decision_model": "simultaneous_setup_then_player_turns",
             "action_types": ["animals", "cards", "build", "association", "sponsors"],
             "map": "map_zero_flat_top_polyhex_v3",
