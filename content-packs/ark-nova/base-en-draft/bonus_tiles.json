@@ -1,0 +1,236 @@
+[
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Bonus tile · slot 01"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 1
+    },
+    "id": "ark-nova:bonus_tile-slot-001",
+    "kind": "bonus_tile",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Bonus tile · slot 02"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 2
+    },
+    "id": "ark-nova:bonus_tile-slot-002",
+    "kind": "bonus_tile",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Bonus tile · slot 03"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 3
+    },
+    "id": "ark-nova:bonus_tile-slot-003",
+    "kind": "bonus_tile",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Bonus tile · slot 04"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 4
+    },
+    "id": "ark-nova:bonus_tile-slot-004",
+    "kind": "bonus_tile",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Bonus tile · slot 05"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 5
+    },
+    "id": "ark-nova:bonus_tile-slot-005",
+    "kind": "bonus_tile",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Bonus tile · slot 06"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 6
+    },
+    "id": "ark-nova:bonus_tile-slot-006",
+    "kind": "bonus_tile",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Bonus tile · slot 07"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 7
+    },
+    "id": "ark-nova:bonus_tile-slot-007",
+    "kind": "bonus_tile",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Bonus tile · slot 08"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 8
+    },
+    "id": "ark-nova:bonus_tile-slot-008",
+    "kind": "bonus_tile",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Bonus tile · slot 09"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 9
+    },
+    "id": "ark-nova:bonus_tile-slot-009",
+    "kind": "bonus_tile",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  }
+]

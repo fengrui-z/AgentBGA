@@ -7,6 +7,7 @@ from typing import Any
 
 from . import ark_nova, azul, brass_birmingham, century_spice_road, seven_wonders, splendor
 from .game import GamePlugin
+from .ark_nova_official.plugin import ArkNovaOfficialPlugin
 
 
 class _ModulePlugin:
@@ -56,10 +57,18 @@ class _ModulePlugin:
 
 
 class GameRegistry:
-    """Validated game-plugin collection, independent from global application state."""
+    """Validated, versioned game-plugin collection.
+
+    Multiple immutable rules versions may coexist for one game ID so persisted
+    matches always replay with the exact transition function that created them.
+    The last registered version is the default for new matches unless a caller
+    explicitly requests another version.
+    """
 
     def __init__(self, plugins: Iterable[GamePlugin] = ()):
-        self._plugins: dict[str, GamePlugin] = {}
+        self._plugins: dict[tuple[str, str], GamePlugin] = {}
+        self._versions: dict[str, list[str]] = {}
+        self._defaults: dict[str, str] = {}
         for plugin in plugins:
             self.register(plugin)
 
@@ -69,26 +78,47 @@ class GameRegistry:
         game_id = plugin.game_id
         if not isinstance(game_id, str) or not game_id or game_id.strip() != game_id:
             raise ValueError("game plugin must declare a stable non-empty game_id")
-        if game_id in self._plugins and not replace:
-            raise ValueError(f"game is already registered: {game_id}")
+        rules_version = plugin.rules_version
+        if not isinstance(rules_version, str) or not rules_version or rules_version.strip() != rules_version:
+            raise ValueError("game plugin must declare a stable non-empty rules_version")
+        key = (game_id, rules_version)
+        if key in self._plugins and not replace:
+            raise ValueError(f"game rules version is already registered: {game_id}@{rules_version}")
         description = plugin.describe()
         if description.get("id") != game_id:
             raise ValueError(f"game description id does not match plugin id: {game_id}")
         if description.get("rules_version") != plugin.rules_version:
             raise ValueError(f"game description rules version does not match plugin: {game_id}")
-        self._plugins[game_id] = plugin
+        is_new = key not in self._plugins
+        self._plugins[key] = plugin
+        versions = self._versions.setdefault(game_id, [])
+        if is_new:
+            versions.append(rules_version)
+        self._defaults[game_id] = rules_version
 
     def game_ids(self) -> tuple[str, ...]:
-        return tuple(self._plugins)
+        return tuple(self._versions)
 
-    def get(self, game_id: str) -> GamePlugin:
+    def rules_versions(self, game_id: str) -> tuple[str, ...]:
         try:
-            return self._plugins[game_id]
+            return tuple(self._versions[game_id])
         except KeyError as error:
             raise ValueError(f"unknown game: {game_id}") from error
 
+    def get(self, game_id: str, rules_version: str | None = None) -> GamePlugin:
+        try:
+            selected = rules_version if rules_version is not None else self._defaults[game_id]
+            return self._plugins[(game_id, selected)]
+        except KeyError as error:
+            if game_id not in self._versions:
+                raise ValueError(f"unknown game: {game_id}") from error
+            raise ValueError(f"unknown rules version for {game_id}: {rules_version}") from error
+
     def list_games(self) -> list[dict[str, Any]]:
-        return [plugin.describe() for plugin in self._plugins.values()]
+        return [{
+            **self.get(game_id).describe(),
+            "available_rules_versions": list(self.rules_versions(game_id)),
+        } for game_id in self.game_ids()]
 
 
 _REGISTRY = GameRegistry((
@@ -98,6 +128,7 @@ _REGISTRY = GameRegistry((
     _ModulePlugin(brass_birmingham, "brass_birmingham"),
     _ModulePlugin(century_spice_road, "century_spice_road"),
     _ModulePlugin(seven_wonders, "seven_wonders"),
+    ArkNovaOfficialPlugin(),
 ))
 
 
@@ -105,8 +136,12 @@ def game_ids() -> tuple[str, ...]:
     return _REGISTRY.game_ids()
 
 
-def get_game(game_id: str) -> GamePlugin:
-    return _REGISTRY.get(game_id)
+def game_rules_versions(game_id: str) -> tuple[str, ...]:
+    return _REGISTRY.rules_versions(game_id)
+
+
+def get_game(game_id: str, rules_version: str | None = None) -> GamePlugin:
+    return _REGISTRY.get(game_id, rules_version)
 
 
 def list_games() -> list[dict[str, Any]]:

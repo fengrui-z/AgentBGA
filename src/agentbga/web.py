@@ -33,9 +33,13 @@ class MatchHub:
             version, state, _ = store.load(match_id)
             game = store.game(match_id)
             players = store.players(match_id)
-            return {
+            views = [game.observe(state, seat) for seat in range(state["player_count"])]
+            snapshot = {
                 "match_id": match_id,
                 "game": game.game_id,
+                "rules_version": game.rules_version,
+                "content_pack_id": state.get("content_pack_id"),
+                "content_hash": state.get("content_hash"),
                 "game_description": game.describe(),
                 "version": version,
                 "status": state["status"],
@@ -44,8 +48,18 @@ class MatchHub:
                 "active_seat": state["active_seat"],
                 "phase": state["phase"],
                 "players": players,
-                "views": [game.observe(state, seat) for seat in range(state["player_count"])],
+                "views": views,
             }
+            # Only the browser receives this agent-only observer projection. Match
+            # runners continue to call game.observe(state, seat) directly.
+            spectator_observe = getattr(game, "observe_spectator", None)
+            if spectator_observe is None:
+                spectator_observe = getattr(getattr(game, "module", None), "observe_spectator", None)
+            if spectator_observe is not None and all(
+                player["backend"] != "human" for player in players
+            ):
+                snapshot["spectator_view"] = spectator_observe(state)
+            return snapshot
         finally:
             store.close()
 
@@ -98,7 +112,10 @@ class MatchHub:
         game_id = payload.get("game", "splendor")
         if not isinstance(game_id, str):
             raise ValueError("game must be a string")
-        game = get_game(game_id)
+        rules_version = payload.get("rules_version")
+        if rules_version is not None and not isinstance(rules_version, str):
+            raise ValueError("rules_version must be a string")
+        game = get_game(game_id, rules_version)
         game_description = game.describe()
         if not game_description.get("runnable", True):
             raise ValueError(
@@ -140,7 +157,10 @@ class MatchHub:
             raise ValueError("game_config must be an object")
         store = Store(self.db_path)
         try:
-            match_id, _, _ = store.create(len(configs), seed, game_id, game_config)
+            match_id, _, _ = store.create(
+                len(configs), seed, game_id, game_config,
+                rules_version=rules_version,
+            )
             store.set_players(match_id, [config.public_dict() for config in configs])
         finally:
             store.close()

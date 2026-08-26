@@ -104,9 +104,44 @@ class WebTests(unittest.TestCase):
                 ],
             })
             self.assertEqual("ark_nova", created["game"])
-            self.assertEqual("controlled_core", created["game_description"]["implementation_status"])
+            self.assertEqual("official_base_candidate", created["game_description"]["implementation_status"])
             self.assertEqual("active", created["status"])
             self.assertEqual("ark_nova", created["views"][0]["game"])
+            self.assertEqual("spectator", created["spectator_view"]["viewer_mode"])
+            self.assertTrue(all(
+                "hidden" not in card
+                for player in created["spectator_view"]["players"]
+                for card in player["initial_draw"] + player["final_scoring_cards"]
+            ))
+            self.assertEqual(
+                {"hidden": True}, created["views"][0]["players"][1]["initial_draw"][0],
+            )
+            self.assertTrue(stopped.wait(2))
+
+    def test_web_create_can_select_an_exact_rules_version(self):
+        stopped = threading.Event()
+
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "ark_nova",
+                "rules_version": "base-1.2-controlled-core.6",
+                "players": [
+                    {"name": "Red", "backend": "random"},
+                    {"name": "Blue", "backend": "random"},
+                ],
+            })
+            self.assertEqual(
+                "base-1.2-controlled-core.6",
+                created["game_description"]["rules_version"],
+            )
+            self.assertEqual("base-1.2-controlled-core.6", created["rules_version"])
             self.assertTrue(stopped.wait(2))
 
     def test_brass_setup_snapshot_uses_game_renderer_contract(self):

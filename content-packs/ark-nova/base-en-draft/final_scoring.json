@@ -1,0 +1,737 @@
+[
+  {
+    "display": {
+      "summary": "Endgame scoring card with 4 structured thresholds.",
+      "title": "Large Animal Zoo"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 4,
+      "criterion_cn": "（中文参考）统计围栏尺寸≥4的动物。",
+      "criterion_en": "Count animals with enclosure size ≥4.",
+      "reference_import_status": "structured_transcription",
+      "scoring": {
+        "metric": "large_animal_count",
+        "mode": "threshold",
+        "thresholds": [
+          {
+            "conservation": 1,
+            "requirement": 1
+          },
+          {
+            "conservation": 2,
+            "requirement": 2
+          },
+          {
+            "conservation": 3,
+            "requirement": 4
+          },
+          {
+            "conservation": 4,
+            "requirement": 5
+          }
+        ]
+      },
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 1,
+          "requirement": 1
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        },
+        {
+          "conservation": 3,
+          "requirement": 4
+        },
+        {
+          "conservation": 4,
+          "requirement": 5
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:final-001",
+    "kind": "final_scoring",
+    "official_ref": {
+      "component_id": "001",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Endgame scoring card with 4 structured thresholds.",
+      "title": "Small Animal Zoo"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 4,
+      "criterion_cn": "（中文参考）统计围栏尺寸≤2的动物。",
+      "criterion_en": "Count animals with enclosure size ≤2.",
+      "reference_import_status": "structured_transcription",
+      "scoring": {
+        "metric": "small_animal_count",
+        "mode": "threshold",
+        "thresholds": [
+          {
+            "conservation": 1,
+            "requirement": 3
+          },
+          {
+            "conservation": 2,
+            "requirement": 6
+          },
+          {
+            "conservation": 3,
+            "requirement": 8
+          },
+          {
+            "conservation": 4,
+            "requirement": 10
+          }
+        ]
+      },
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 1,
+          "requirement": 3
+        },
+        {
+          "conservation": 2,
+          "requirement": 6
+        },
+        {
+          "conservation": 3,
+          "requirement": 8
+        },
+        {
+          "conservation": 4,
+          "requirement": 10
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:final-002",
+    "kind": "final_scoring",
+    "official_ref": {
+      "component_id": "002",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Endgame scoring card with 4 structured thresholds.",
+      "title": "Research Zoo"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 4,
+      "criterion_cn": "（中文参考）统计科研图标。",
+      "criterion_en": "Count research icons.",
+      "reference_import_status": "structured_transcription",
+      "scoring": {
+        "metric": "research_icon_count",
+        "mode": "threshold",
+        "thresholds": [
+          {
+            "conservation": 1,
+            "requirement": 3
+          },
+          {
+            "conservation": 2,
+            "requirement": 4
+          },
+          {
+            "conservation": 3,
+            "requirement": 5
+          },
+          {
+            "conservation": 4,
+            "requirement": 6
+          }
+        ]
+      },
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 1,
+          "requirement": 3
+        },
+        {
+          "conservation": 2,
+          "requirement": 4
+        },
+        {
+          "conservation": 3,
+          "requirement": 5
+        },
+        {
+          "conservation": 4,
+          "requirement": 6
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:final-003",
+    "kind": "final_scoring",
+    "official_ref": {
+      "component_id": "003",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Endgame scoring card with 2 structured thresholds.",
+      "title": "Architectural Zoo"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 2,
+      "criterion_cn": "（中文参考）每满足一个地图条件得1保护分：水域全部连通、岩石全部连通、边缘全部连通、地图完全覆盖。",
+      "criterion_en": "Score 1 conservation for each achieved map condition: all water spaces connected; all rock spaces connected; all border spaces connected; zoo map completely covered.",
+      "reference_import_status": "structured_transcription",
+      "scoring": {
+        "conditions": [
+          "water_spaces_connected",
+          "rock_spaces_connected",
+          "all_border_building_spaces_covered",
+          "all_building_spaces_covered"
+        ],
+        "maximum_conservation": 4,
+        "mode": "conditions"
+      },
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 1,
+          "requirement": "each condition"
+        },
+        {
+          "conservation": 4,
+          "requirement": "max"
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:final-004",
+    "kind": "final_scoring",
+    "official_ref": {
+      "component_id": "004",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Endgame scoring card with 4 structured thresholds.",
+      "title": "Conservation Zoo"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 4,
+      "criterion_cn": "（中文参考）统计你已支持的保护项目。",
+      "criterion_en": "Count conservation projects you supported.",
+      "reference_import_status": "structured_transcription",
+      "scoring": {
+        "metric": "supported_project_count",
+        "mode": "threshold",
+        "thresholds": [
+          {
+            "conservation": 1,
+            "requirement": 3
+          },
+          {
+            "conservation": 2,
+            "requirement": 4
+          },
+          {
+            "conservation": 3,
+            "requirement": 5
+          },
+          {
+            "conservation": 4,
+            "requirement": 6
+          }
+        ]
+      },
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 1,
+          "requirement": 3
+        },
+        {
+          "conservation": 2,
+          "requirement": 4
+        },
+        {
+          "conservation": 3,
+          "requirement": 5
+        },
+        {
+          "conservation": 4,
+          "requirement": 6
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:final-005",
+    "kind": "final_scoring",
+    "official_ref": {
+      "component_id": "005",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Endgame scoring card with 4 structured thresholds.",
+      "title": "Naturalists Zoo"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 4,
+      "criterion_cn": "（中文参考）统计动物园地图上的空建筑格。",
+      "criterion_en": "Count empty building spaces on your zoo map.",
+      "reference_import_status": "structured_transcription",
+      "scoring": {
+        "metric": "empty_building_space_count",
+        "mode": "threshold",
+        "thresholds": [
+          {
+            "conservation": 1,
+            "requirement": 6
+          },
+          {
+            "conservation": 2,
+            "requirement": 12
+          },
+          {
+            "conservation": 3,
+            "requirement": 18
+          },
+          {
+            "conservation": 4,
+            "requirement": 24
+          }
+        ]
+      },
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 1,
+          "requirement": 6
+        },
+        {
+          "conservation": 2,
+          "requirement": 12
+        },
+        {
+          "conservation": 3,
+          "requirement": 18
+        },
+        {
+          "conservation": 4,
+          "requirement": 24
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:final-006",
+    "kind": "final_scoring",
+    "official_ref": {
+      "component_id": "006",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Endgame scoring card with 4 structured thresholds.",
+      "title": "Favorite Zoo"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 4,
+      "criterion_cn": "（中文参考）按声望数值计分。",
+      "criterion_en": "Use your reputation value.",
+      "reference_import_status": "structured_transcription",
+      "scoring": {
+        "metric": "reputation",
+        "mode": "threshold",
+        "thresholds": [
+          {
+            "conservation": 1,
+            "requirement": 6
+          },
+          {
+            "conservation": 2,
+            "requirement": 9
+          },
+          {
+            "conservation": 3,
+            "requirement": 12
+          },
+          {
+            "conservation": 4,
+            "requirement": 15
+          }
+        ]
+      },
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 1,
+          "requirement": 6
+        },
+        {
+          "conservation": 2,
+          "requirement": 9
+        },
+        {
+          "conservation": 3,
+          "requirement": 12
+        },
+        {
+          "conservation": 4,
+          "requirement": 15
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:final-007",
+    "kind": "final_scoring",
+    "official_ref": {
+      "component_id": "007",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Endgame scoring card with 4 structured thresholds.",
+      "title": "Sponsored Zoo"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 4,
+      "criterion_cn": "（中文参考）统计动物园中的赞助商牌。",
+      "criterion_en": "Count Sponsor cards in your zoo.",
+      "reference_import_status": "structured_transcription",
+      "scoring": {
+        "metric": "sponsor_card_count",
+        "mode": "threshold",
+        "thresholds": [
+          {
+            "conservation": 1,
+            "requirement": 3
+          },
+          {
+            "conservation": 2,
+            "requirement": 6
+          },
+          {
+            "conservation": 3,
+            "requirement": 8
+          },
+          {
+            "conservation": 4,
+            "requirement": 10
+          }
+        ]
+      },
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 1,
+          "requirement": 3
+        },
+        {
+          "conservation": 2,
+          "requirement": 6
+        },
+        {
+          "conservation": 3,
+          "requirement": 8
+        },
+        {
+          "conservation": 4,
+          "requirement": 10
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:final-008",
+    "kind": "final_scoring",
+    "official_ref": {
+      "component_id": "008",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Endgame scoring card with 2 structured thresholds.",
+      "title": "Diverse Species Zoo"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 2,
+      "criterion_cn": "（中文参考）逐个动物类别与右手玩家比较；你更多则每类1保护分，最多4分。",
+      "criterion_en": "For each animal category, compare with the player to your right; score 1 conservation when you have more, maximum 4.",
+      "reference_import_status": "structured_transcription",
+      "scoring": {
+        "categories": [
+          "bear",
+          "bird",
+          "herbivore",
+          "pet",
+          "predator",
+          "primate",
+          "reptile"
+        ],
+        "conservation_each": 1,
+        "maximum_conservation": 4,
+        "mode": "right_neighbor_categories",
+        "solo_policy": "discard_and_redraw"
+      },
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 1,
+          "requirement": "each winning category"
+        },
+        {
+          "conservation": 4,
+          "requirement": "max"
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:final-009",
+    "kind": "final_scoring",
+    "official_ref": {
+      "component_id": "009",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Endgame scoring card with 4 structured thresholds.",
+      "title": "Climbing Park"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 4,
+      "criterion_cn": "（中文参考）统计岩石图标。",
+      "criterion_en": "Count rock icons.",
+      "reference_import_status": "structured_transcription",
+      "scoring": {
+        "metric": "rock_icon_count",
+        "mode": "threshold",
+        "thresholds": [
+          {
+            "conservation": 1,
+            "requirement": 1
+          },
+          {
+            "conservation": 2,
+            "requirement": 3
+          },
+          {
+            "conservation": 3,
+            "requirement": 5
+          },
+          {
+            "conservation": 4,
+            "requirement": 7
+          }
+        ]
+      },
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 1,
+          "requirement": 1
+        },
+        {
+          "conservation": 2,
+          "requirement": 3
+        },
+        {
+          "conservation": 3,
+          "requirement": 5
+        },
+        {
+          "conservation": 4,
+          "requirement": 7
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:final-010",
+    "kind": "final_scoring",
+    "official_ref": {
+      "component_id": "010",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Endgame scoring card with 4 structured thresholds.",
+      "title": "Aquatic Park"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 4,
+      "criterion_cn": "（中文参考）统计水域图标。",
+      "criterion_en": "Count water icons.",
+      "reference_import_status": "structured_transcription",
+      "scoring": {
+        "metric": "water_icon_count",
+        "mode": "threshold",
+        "thresholds": [
+          {
+            "conservation": 1,
+            "requirement": 2
+          },
+          {
+            "conservation": 2,
+            "requirement": 4
+          },
+          {
+            "conservation": 3,
+            "requirement": 6
+          },
+          {
+            "conservation": 4,
+            "requirement": 8
+          }
+        ]
+      },
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 1,
+          "requirement": 2
+        },
+        {
+          "conservation": 2,
+          "requirement": 4
+        },
+        {
+          "conservation": 3,
+          "requirement": 6
+        },
+        {
+          "conservation": 4,
+          "requirement": 8
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:final-011",
+    "kind": "final_scoring",
+    "official_ref": {
+      "component_id": "011",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  }
+]

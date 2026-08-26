@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+import sqlite3
 
 from agentbga import splendor
 from agentbga.agents import PlayerConfig
@@ -29,9 +30,43 @@ class StoreTests(unittest.TestCase):
             match_id, version, state = store.create(3, 42, "ark_nova")
             self.assertEqual(0, version)
             self.assertEqual("ark_nova", store.game_id(match_id))
+            self.assertEqual(state["rules_version"], store.rules_version(match_id))
+            self.assertEqual(("ark_nova", state["rules_version"]), store.match_identity(match_id))
+            self.assertEqual(
+                (state["content_pack_id"], state["content_hash"]),
+                store.content_identity(match_id),
+            )
             self.assertEqual("initial_hand_selection", state["phase"])
             replay = store.replay(match_id)
             self.assertEqual(0, replay[-1]["version"])
+            store.close()
+
+    def test_old_match_table_is_migrated_for_content_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "test.sqlite3"
+            connection = sqlite3.connect(database)
+            connection.execute(
+                "CREATE TABLE matches ("
+                "id TEXT PRIMARY KEY, game_id TEXT NOT NULL, rules_version TEXT NOT NULL, "
+                "version INTEGER NOT NULL, seed INTEGER NOT NULL, state_json TEXT NOT NULL, "
+                "state_hash TEXT NOT NULL, created_at REAL NOT NULL, updated_at REAL NOT NULL)"
+            )
+            connection.commit()
+            connection.close()
+
+            store = Store(database)
+            columns = {
+                row["name"] for row in store.connection.execute("PRAGMA table_info(matches)")
+            }
+            self.assertIn("content_pack_id", columns)
+            self.assertIn("content_hash", columns)
+            store.close()
+
+    def test_create_rejects_unknown_exact_rules_version(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = Store(Path(directory) / "test.sqlite3")
+            with self.assertRaisesRegex(ValueError, "unknown rules version"):
+                store.create(2, 1, "ark_nova", rules_version="does-not-exist")
             store.close()
 
     def test_create_act_and_replay_azul(self):
@@ -50,7 +85,10 @@ class StoreTests(unittest.TestCase):
     def test_ark_nova_random_controllers_finish_and_replay_controlled_core(self):
         with tempfile.TemporaryDirectory() as directory:
             store = Store(Path(directory) / "test.sqlite3")
-            match_id, _, _ = store.create(2, 12, "ark_nova", {"turn_limit": 12})
+            match_id, _, _ = store.create(
+                2, 12, "ark_nova", {"turn_limit": 12},
+                rules_version="base-1.2-controlled-core.6",
+            )
             players = [
                 PlayerConfig.from_dict({"name": "A", "backend": "random"}, 0),
                 PlayerConfig.from_dict({"name": "B", "backend": "random"}, 1),
@@ -65,7 +103,10 @@ class StoreTests(unittest.TestCase):
     def test_ark_nova_public_runner_stream_redacts_initial_hand_ids(self):
         with tempfile.TemporaryDirectory() as directory:
             store = Store(Path(directory) / "test.sqlite3")
-            match_id, _, _ = store.create(2, 3, "ark_nova", {"turn_limit": 4})
+            match_id, _, _ = store.create(
+                2, 3, "ark_nova", {"turn_limit": 4},
+                rules_version="base-1.2-controlled-core.6",
+            )
             players = [
                 PlayerConfig.from_dict({"name": "A", "backend": "random"}, 0),
                 PlayerConfig.from_dict({"name": "B", "backend": "random"}, 1),

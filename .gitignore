@@ -8,6 +8,7 @@ build/
 .agentbga/
 *.sqlite3
 .env
+reference-input/
 web/node_modules/
 web/.next/
 web/.vinext/

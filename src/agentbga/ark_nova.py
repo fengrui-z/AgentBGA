@@ -31,18 +31,27 @@ from .mechanics import (
     private_items,
 )
 from .mechanics.zones import move_item
+from .ark_nova_map import building_shape_variants, map_zero, valid_building_shape
+from .ark_nova_tracks import appeal_income, reputation_display_slot, scoring_tracks_crossed
+from .ark_nova_presentation import (
+    association_display,
+    map_display,
+    player_public_summary,
+    public_tracks,
+)
 
 
-RULES_VERSION = "base-1.2-controlled-core.2"
+RULES_VERSION = "base-1.2-controlled-core.6"
 ACTION_TYPES = ("animals", "cards", "build", "association", "sponsors")
 CONTINENTS = ("africa", "asia", "australia", "europe", "americas")
 ANIMAL_TAGS = ("bird", "primate", "predator", "reptile", "herbivore", "bear", "petting_zoo")
-HEX_DIRECTIONS = ((1, 0), (0, 1), (-1, 1))
-BREAK_LIMITS = {2: 10, 3: 12, 4: 14}
+BREAK_LIMITS = {2: 9, 3: 12, 4: 15}
 ACTION_UPGRADE_MILESTONES = (2,)
 CONSERVATION_BONUS_MILESTONES = (5, 8)
 FINAL_CARD_CHOICE_CONSERVATION = 10
 REPUTATION_UPGRADE_MILESTONE = 5
+REPUTATION_CARDS_GATE = 10
+REPUTATION_MAXIMUM = 15
 DONATION_COSTS = (2, 5, 7, 10, 12)
 
 
@@ -61,18 +70,19 @@ def describe() -> dict[str, Any]:
         "runnable": True,
         "decision_model": "player_turn_with_multiple_decision_steps",
         "action_types": list(ACTION_TYPES),
-        "map": "symmetric_beginner_map_a_schematic",
+        "map": "map_zero_flat_top_polyhex_v3",
         "content_scope": (
             "complete research-card match with action upgrades, donations, release projects, "
             "partner discounts, primitive effects, and controlled final cards; publisher card "
-            "text and verified map footprints are deferred"
+            "text and maps beyond the supplied Map 0 transcription are deferred"
         ),
         "rules_sources": [
             "Ark Nova Rulebook, English, version 1.2",
             "Ark Nova FAQ/Errata, English, version 2",
         ],
         "win_condition": (
-            "Controlled-core threshold or turn limit, followed by deterministic ranking with "
+            "Opposing Appeal and Conservation markers meeting/crossing, or the controlled turn "
+            "limit, followed by deterministic ranking with "
             "generated final-scoring objectives. Published final-scoring cards are deferred."
         ),
     }
@@ -150,43 +160,16 @@ def _bonus_tiles() -> list[dict[str, Any]]:
              "implementation": "controlled_bonus_effect"} for index in range(1, 10)]
 
 
-def _map_a() -> dict[str, Any]:
-    cells = []
-    water = {(-2, 0), (2, 0)}
-    rock = {(0, -2), (0, 2)}
-    starter = {(-1, 0), (0, 0), (1, 0)}
-    bonuses = {
-        (-1, -1): {"type": "gain_money", "amount": 5},
-        (1, -1): {"type": "gain_x_token", "amount": 1},
-        (-1, 1): {"type": "gain_reputation", "amount": 1},
-        (1, 1): {"type": "gain_appeal", "amount": 2},
-    }
-    for q in range(-3, 4):
-        for r in range(-3, 4):
-            if abs(q + r) <= 3:
-                terrain = "water" if (q, r) in water else "rock" if (q, r) in rock else "buildable"
-                cell = {"q": q, "r": r, "terrain": terrain}
-                if (q, r) in bonuses:
-                    cell["placement_bonus"] = bonuses[(q, r)]
-                cells.append(cell)
-    return {
-        "id": "map-a", "name": "Beginner Map A",
-        "geometry_status": "schematic_controlled_footprints",
-        "cells": cells,
-        "buildings": [{
-            "id": "starting-enclosure-3", "type": "standard_enclosure", "size": 3,
-            "occupied": False, "cells": [{"q": q, "r": r} for q, r in sorted(starter)],
-        }],
-        "next_building_id": 1,
-    }
+def _map_zero() -> dict[str, Any]:
+    return map_zero()
 
 
 def new_game(players: int, seed: int, config: dict[str, Any] | None = None) -> dict[str, Any]:
     if players not in (2, 3, 4):
         raise RuleError("Ark Nova requires 2, 3, or 4 players")
     config = config or {}
-    if set(config) - {"map", "turn_limit"} or config.get("map", "a") != "a":
-        raise RuleError("the controlled core supports only beginner map A and turn_limit")
+    if set(config) - {"map", "turn_limit"} or config.get("map", "0") not in ("0", "map-0"):
+        raise RuleError("the controlled core supports only Map 0 and turn_limit")
     turn_limit = config.get("turn_limit", players * 30)
     if not isinstance(turn_limit, int) or turn_limit < players:
         raise RuleError("turn_limit must be an integer at least equal to player count")
@@ -207,11 +190,11 @@ def new_game(players: int, seed: int, config: dict[str, Any] | None = None) -> d
         rng.shuffle(other_actions)
         rows.append({
             "seat": seat, "money": 25, "x_tokens": 0, "appeal": seat,
-            "conservation": 0, "reputation": 0,
+            "conservation": 0, "reputation": 1,
             "action_cards": [{"action": action, "strength": position, "upgraded": False, "tokens": []}
                              for position, action in enumerate(["animals", *other_actions], 1)],
             "association_workers": {"active": 1, "reserve": 3, "committed": []},
-            "partner_zoos": [], "universities": [], "map": _map_a(), "hand": [],
+            "partner_zoos": [], "universities": [], "map": _map_zero(), "hand": [],
             "initial_draw": initial_draw, "initial_keep_required": 4, "played_cards": [],
             "final_scoring_cards": [finals.pop() for _ in range(2)],
             "conservation_tokens_on_map": 7, "supported_projects": [],
@@ -289,6 +272,12 @@ def _build_actions(
 ) -> list[dict[str, Any]]:
     buildable = {(cell["q"], cell["r"]) for cell in player["map"]["cells"]
                  if cell["terrain"] == "buildable"}
+    map_coordinates = {(cell["q"], cell["r"]) for cell in player["map"]["cells"]}
+    border_buildable = {
+        cell for cell in buildable if any(neighbor not in map_coordinates for neighbor in _neighbors(cell))
+    }
+    build_ii = {(cell["q"], cell["r"]) for cell in player["map"]["cells"]
+                if cell.get("requires_build_upgrade", False)}
     occupied = _occupied_cells(player)
     existing_kiosks = [tuple((building["cells"][0][key] for key in ("q", "r")))
                         for building in player["map"]["buildings"] if building["type"] == "kiosk"]
@@ -306,16 +295,22 @@ def _build_actions(
         if size > strength or player["money"] < size * 2:
             continue
         for start in sorted(buildable):
-            for dq, dr in HEX_DIRECTIONS:
-                cells = [(start[0] + dq * step, start[1] + dr * step) for step in range(size)]
+            for variant in building_shape_variants(building_type, size):
+                cells = [(start[0] + q, start[1] + r) for q, r in variant["cells"]]
                 cell_set = set(cells)
                 if len(cell_set) != size or not cell_set <= buildable or cell_set & occupied:
                     continue
-                if not any(_neighbors(cell) & occupied for cell in cell_set):
+                if cell_set & build_ii and not upgraded:
+                    continue
+                if occupied and not any(_neighbors(cell) & occupied for cell in cell_set):
+                    continue
+                if not occupied and not cell_set & border_buildable:
                     continue
                 if building_type == "kiosk" and any(_hex_distance(cells[0], other) < 3 for other in existing_kiosks):
                     continue
                 action = {"type": "place_building", "building_type": building_type, "size": size,
+                          "shape_id": variant["shape_id"], "rotation": variant["rotation"],
+                          "anchor": {"q": start[0], "r": start[1]},
                           "cost": size * 2, "cells": [{"q": q, "r": r} for q, r in sorted(cells)]}
                 choices[json.dumps(action, sort_keys=True)] = action
     return list(choices.values())
@@ -327,7 +322,7 @@ def _playable_animals(state: dict[str, Any], player: dict[str, Any], upgraded: b
     actions = []
     candidates = [(card, "hand", None) for card in player["hand"]]
     if upgraded:
-        maximum_slot = min(6, 2 + player["reputation"])
+        maximum_slot = reputation_display_slot(player["reputation"])
         candidates.extend((card, "display", slot) for slot, card in enumerate(state["card_display"], 1)
                           if slot <= maximum_slot)
     for card, source, slot in candidates:
@@ -392,7 +387,12 @@ def _association_actions(
     if strength >= 2 and "reputation" not in excluded_tasks:
         actions.append({"type": "association_task", "task": "reputation", "value": 2,
                         "workers": 1})
-    if strength >= 3 and "partner_zoo" not in excluded_tasks:
+    association_upgraded = next(
+        card["upgraded"] for card in player["action_cards"]
+        if card["action"] == "association"
+    )
+    can_take_partner_zoo = len(player["partner_zoos"]) < 2 or association_upgraded
+    if strength >= 3 and can_take_partner_zoo and "partner_zoo" not in excluded_tasks:
         for continent, available in state["association_board"]["partner_zoos"].items():
             if available and continent not in player["partner_zoos"]:
                 actions.append({"type": "association_task", "task": "partner_zoo", "value": 3,
@@ -463,7 +463,9 @@ def legal_actions(state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
         snap_at = 3 if pending.get("upgraded") else 5
         if strength >= snap_at:
             actions.extend({"type": "snap_card", "card_id": card["id"]}
-                           for card in state["card_display"])
+                           for slot, card in enumerate(state["card_display"], 1)
+                           if slot <= reputation_display_slot(player["reputation"]))
+        actions.append({"type": "cancel_action", "action_card": "cards"})
         return _wrap_actions(state, actions)
     if phase == "cards_discard":
         return _wrap_actions(state, [{"type": "discard_card", "card_id": card["id"]}
@@ -475,11 +477,15 @@ def legal_actions(state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
         )
         if pending.get("builds_done", 0) > 0:
             actions.append({"type": "finish_action"})
+        else:
+            actions.append({"type": "cancel_action", "action_card": "build"})
         return _wrap_actions(state, actions)
     if phase == "animals_play":
         actions = _playable_animals(state, player, pending.get("upgraded", False))
         if pending.get("plays_done", 0) > 0:
             actions.append({"type": "finish_action"})
+        else:
+            actions.append({"type": "cancel_action", "action_card": "animals"})
         return _wrap_actions(state, actions)
     if phase == "association_task":
         actions = _association_actions(
@@ -488,6 +494,8 @@ def legal_actions(state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
         )
         if pending.get("upgraded", False) and pending.get("tasks_done"):
             actions.append({"type": "finish_association_tasks"})
+        if not pending.get("tasks_done"):
+            actions.append({"type": "cancel_action", "action_card": "association"})
         return _wrap_actions(state, actions)
     if phase == "association_donation":
         actions = [{"type": "finish_action"}]
@@ -504,12 +512,14 @@ def legal_actions(state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
                        for card in player["hand"]
                        if card["card_type"] == "sponsor" and card["level"] <= remaining_strength)
         if pending.get("upgraded", False):
-            maximum_slot = min(6, 2 + player["reputation"])
+            maximum_slot = reputation_display_slot(player["reputation"])
             actions.extend({"type": "play_sponsor", "card_id": card["id"],
                             "source": "display", "display_slot": slot}
                            for slot, card in enumerate(state["card_display"], 1)
                            if slot <= maximum_slot and card["card_type"] == "sponsor"
                            and card["level"] <= remaining_strength)
+        if not pending.get("sponsors_played"):
+            actions.append({"type": "cancel_action", "action_card": "sponsors"})
         return _wrap_actions(state, actions)
     if phase == "break_discard":
         limit = 5 if "hand-limit-5" in player["universities"] else 3
@@ -524,6 +534,20 @@ def legal_actions(state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
         actions.extend({"type": "choose_conservation_bonus", "choice": "bonus_tile",
                         "tile_id": tile["id"]} for tile in state["game_board_bonus_tiles"])
         return _wrap_actions(state, actions)
+    if phase == "choose_map_card":
+        actions = []
+        if state["zoo_deck"] or state["zoo_discard"]:
+            actions.append({"type": "take_map_card", "source": "deck"})
+        maximum_slot = reputation_display_slot(player["reputation"])
+        actions.extend({
+            "type": "take_map_card", "source": "display", "card_id": card["id"],
+            "display_slot": slot,
+        } for slot, card in enumerate(state["card_display"], 1) if slot <= maximum_slot)
+        return _wrap_actions(state, actions)
+    if phase == "choose_clever_action":
+        return _wrap_actions(state, [{
+            "type": "clever_action_card", "action_card": card["action"], "target_strength": 1,
+        } for card in sorted(player["action_cards"], key=lambda item: item["strength"])])
     if phase == "choose_final_card":
         return _wrap_actions(state, [{"type": "keep_final_card", "card_id": card["id"]}
                                      for card in player["final_scoring_cards"]])
@@ -566,15 +590,62 @@ def _refill_display(state: dict[str, Any]) -> None:
         state["card_display"].append(card)
 
 
-def _move_break(state: dict[str, Any], steps: int) -> None:
-    advance_track(state["break_track"], steps)
+def _move_break(state: dict[str, Any], steps: int) -> int:
+    return advance_track(state["break_track"], steps)
 
 
 def _controlled_income(player: dict[str, Any]) -> int:
-    appeal_income = 5 + (player["appeal"] // 2) + (2 if player["appeal"] >= 7 else 0)
+    appeal_money = appeal_income(player["appeal"])
     sponsor_income = sum(card.get("income", 0) for card in player["played_cards"]
                          if card["card_type"] == "sponsor")
-    return appeal_income + sponsor_income
+    return appeal_money + sponsor_income
+
+
+def _gain_reputation(
+    state: dict[str, Any], player: dict[str, Any], amount: int,
+    events: list[dict[str, Any]], source_id: str,
+) -> int:
+    """Advance Reputation, applying its gate, printed rewards, and overflow."""
+
+    before = player["reputation"]
+    requested_target = before + max(0, amount)
+    cards_upgraded = _action_card(player, "cards")["upgraded"]
+    gated_target = (min(REPUTATION_CARDS_GATE - 1, requested_target)
+                    if before < REPUTATION_CARDS_GATE and not cards_upgraded
+                    else requested_target)
+    target = min(REPUTATION_MAXIMUM, gated_target)
+    player["reputation"] = target
+
+    for milestone in range(before + 1, target + 1):
+        if milestone == REPUTATION_UPGRADE_MILESTONE:
+            _queue_upgrade_source(state, player, "reputation")
+        elif milestone == 8:
+            workers = player["association_workers"]
+            if workers["reserve"]:
+                workers["reserve"] -= 1
+                workers["active"] += 1
+        elif milestone in (10, 13):
+            state["pending_rewards"].append({
+                "type": "map_take_card", "seat": player["seat"],
+                "source_id": f"reputation:{milestone}",
+            })
+        elif milestone in (11, 14):
+            conservation_before = player["conservation"]
+            adjust_resources(player, {"conservation": 1})
+            _queue_conservation_rewards(state, player, conservation_before)
+        elif milestone in (12, 15):
+            player["x_tokens"] = min(5, player["x_tokens"] + 1)
+
+    overflow = max(0, gated_target - REPUTATION_MAXIMUM)
+    if overflow:
+        adjust_resources(player, {"appeal": overflow})
+    gained = target - before
+    events.append({
+        "type": "reputation_advanced", "seat": player["seat"], "source_id": source_id,
+        "before": before, "after": target, "gained": gained, "appeal_overflow": overflow,
+        "cards_ii_gate_blocked": requested_target > gated_target,
+    })
+    return gained
 
 
 def _apply_effects(
@@ -592,13 +663,21 @@ def _apply_effects(
         elif kind == "gain_conservation":
             adjust_resources(player, {"conservation": amount})
         elif kind == "gain_reputation":
-            adjust_resources(player, {"reputation": amount})
+            amount = _gain_reputation(state, player, amount, events, source_id)
         elif kind == "gain_x_token":
             before = player["x_tokens"]
             player["x_tokens"] = min(5, before + amount)
             amount = player["x_tokens"] - before
         elif kind == "move_break":
             _move_break(state, amount)
+        elif kind == "draw_cards":
+            drawn = []
+            for _ in range(amount):
+                card = _draw_zoo_card(state)
+                if card:
+                    player["hand"].append(card)
+                    drawn.append(card["id"])
+            amount = len(drawn)
         else:  # pragma: no cover - generated content is validated below
             raise RuleError(f"unsupported controlled effect: {kind}")
         applied.append({"type": kind, "amount": amount})
@@ -616,7 +695,30 @@ def _resolve_map_bonuses(
         map_cell = by_coordinate[coordinate]
         bonus = map_cell.pop("placement_bonus", None)
         if bonus:
-            _apply_effects(state, player, [bonus], events, f"map:{coordinate[0]}:{coordinate[1]}")
+            source_id = f"map:{coordinate[0]}:{coordinate[1]}"
+            if bonus["type"] == "take_card":
+                state["pending_rewards"].append({
+                    "type": "map_take_card", "seat": player["seat"], "source_id": source_id,
+                })
+            elif bonus["type"] == "clever":
+                state["pending_rewards"].append({
+                    "type": "map_clever", "seat": player["seat"], "source_id": source_id,
+                    "target_strength": bonus["target_strength"],
+                })
+            else:
+                _apply_effects(state, player, [bonus], events, source_id)
+    buildable = {
+        (cell["q"], cell["r"]) for cell in player["map"]["cells"]
+        if cell["terrain"] == "buildable"
+    }
+    occupied = _occupied_cells(player)
+    if buildable <= occupied and not player["map"].get("completion_reward_claimed", False):
+        reward = player["map"].get("completion_reward")
+        if reward:
+            player["map"]["completion_reward_claimed"] = True
+            _apply_effects(state, player, [reward], events, "map:completion")
+            events.append({"type": "zoo_map_completed", "seat": player["seat"],
+                           "reward": deepcopy(reward)})
 
 
 def _queue_conservation_rewards(
@@ -657,8 +759,14 @@ def _begin_pending_reward(state: dict[str, Any]) -> bool:
         _set_phase(state, "choose_action_upgrade", "choose_action_card_to_upgrade")
     elif reward["type"] == "conservation_bonus":
         _set_phase(state, "choose_conservation_bonus", "choose_conservation_track_bonus")
-    else:
+    elif reward["type"] == "map_take_card":
+        _set_phase(state, "choose_map_card", "choose_map_card_from_reputation_range")
+    elif reward["type"] == "map_clever":
+        _set_phase(state, "choose_clever_action", "choose_action_card_for_clever")
+    elif reward["type"] == "final_card_choice":
         _set_phase(state, "choose_final_card", "choose_final_scoring_card")
+    else:  # pragma: no cover - state validation guards pending reward kinds
+        raise RuleError(f"unsupported pending reward: {reward['type']}")
     return True
 
 
@@ -667,7 +775,7 @@ def _resolve_break(state: dict[str, Any], events: list[dict[str, Any]]) -> None:
         for card in player["action_cards"]:
             card["tokens"] = []
         workers = player["association_workers"]
-        workers["active"] += len(workers["committed"])
+        workers["active"] += sum(item.get("workers", 1) for item in workers["committed"])
         workers["committed"] = []
     for continent in CONTINENTS:
         state["association_board"]["partner_zoos"][continent] = int(
@@ -704,7 +812,7 @@ def _begin_or_resolve_break(state: dict[str, Any], events: list[dict[str, Any]])
 
 
 def _controlled_end_triggered(player: dict[str, Any]) -> bool:
-    return player["appeal"] + player["conservation"] * 5 >= 45
+    return scoring_tracks_crossed(player["appeal"], player["conservation"])
 
 
 def _finish_player_turn(state: dict[str, Any], events: list[dict[str, Any]]) -> None:
@@ -770,7 +878,19 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
     )]
     next_state["decision_count"] += 1
 
-    if phase == "choose_action_upgrade":
+    if kind == "cancel_action":
+        pending = next_state["pending_action"] or {}
+        player["x_tokens"] += pending.get("x_tokens", 0)
+        if pending.get("action_card") == "cards":
+            track = next_state["break_track"]
+            track["position"] = max(0, track["position"] - pending.get("break_steps", 0))
+            track["triggered"] = track["position"] >= track["limit"]
+        cancelled = pending.get("action_card")
+        next_state["pending_action"] = None
+        _set_phase(next_state, "choose_action", "choose_action_card")
+        events.append({"type": "selected_action_cancelled", "seat": seat,
+                       "action_card": cancelled})
+    elif phase == "choose_action_upgrade":
         card = _action_card(player, action["action_card"])
         card["upgraded"] = True
         reward = next_state["pending_rewards"].pop(0)
@@ -791,6 +911,36 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
             _apply_effects(next_state, player, tile["effects"], events, tile["id"])
         events.append({"type": "conservation_bonus_chosen", "seat": seat,
                        "milestone": reward["milestone"], "choice": action["choice"]})
+        if not _begin_pending_reward(next_state):
+            next_state["active_seat"] = reward["resume_seat"]
+            _set_phase(next_state, "choose_action", "choose_action_card")
+    elif phase == "choose_map_card":
+        reward = next_state["pending_rewards"].pop(0)
+        if action["source"] == "display":
+            card = next(card for card in next_state["card_display"] if card["id"] == action["card_id"])
+            next_state["card_display"].remove(card)
+            player["hand"].append(card)
+            _refill_display(next_state)
+        else:
+            card = _draw_zoo_card(next_state)
+            if card is None:  # pragma: no cover - legal action requires a drawable card
+                raise RuleError("no zoo card is available")
+            player["hand"].append(card)
+        events.append({
+            "type": "map_card_taken", "seat": seat, "card_id": card["id"],
+            "source": action["source"], "source_id": reward["source_id"],
+        })
+        if not _begin_pending_reward(next_state):
+            next_state["active_seat"] = reward["resume_seat"]
+            _set_phase(next_state, "choose_action", "choose_action_card")
+    elif phase == "choose_clever_action":
+        reward = next_state["pending_rewards"].pop(0)
+        _move_action_card(player, action["action_card"])
+        events.append({
+            "type": "map_clever_resolved", "seat": seat,
+            "action_card": action["action_card"], "target_strength": reward["target_strength"],
+            "source_id": reward["source_id"],
+        })
         if not _begin_pending_reward(next_state):
             next_state["active_seat"] = reward["resume_seat"]
             _set_phase(next_state, "choose_action", "choose_action_card")
@@ -856,7 +1006,7 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
                          "sponsors": ("sponsors_choose", "choose_sponsor_or_break")}
             new_phase, decision = phase_for[action["action_card"]]
             if action["action_card"] == "cards":
-                _move_break(next_state, 2)
+                next_state["pending_action"]["break_steps"] = _move_break(next_state, 2)
             remaining = 2 if action["action_card"] == "animals" and action["strength"] >= 5 else 1
             _set_phase(next_state, new_phase, decision, action_card=action["action_card"],
                        remaining_plays=remaining)
@@ -892,6 +1042,7 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
             return next_state, events
         building = {"id": f"building-{player['map']['next_building_id']}",
                     "type": action["building_type"], "size": action["size"],
+                    "shape_id": action["shape_id"], "rotation": action["rotation"],
                     "occupied": False, "cells": action["cells"]}
         player["map"]["next_building_id"] += 1
         player["map"]["buildings"].append(building)
@@ -929,8 +1080,10 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
             conservation_before = player["conservation"]
             adjust_resources(player, {
                 "money": -action["cost"], "appeal": card["appeal"],
-                "conservation": card["conservation"], "reputation": card["reputation"],
+                "conservation": card["conservation"],
             })
+            if card["reputation"]:
+                _gain_reputation(next_state, player, card["reputation"], events, card["id"])
             _apply_effects(next_state, player, card.get("effects", []), events, card["id"])
             _queue_conservation_rewards(next_state, player, conservation_before)
             next_state["pending_action"]["plays_done"] += 1
@@ -956,20 +1109,27 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
         workers["committed"].append({"task": task, "workers": action["workers"]})
         conservation_before = player["conservation"]
         if task == "reputation":
-            reputation_before = player["reputation"]
-            adjust_resources(player, {"reputation": 2})
-            if reputation_before < REPUTATION_UPGRADE_MILESTONE <= player["reputation"]:
-                _queue_upgrade_source(next_state, player, "reputation")
+            _gain_reputation(next_state, player, 2, events, "association:reputation")
         elif task == "partner_zoo":
             player["partner_zoos"].append(action["continent"])
             next_state["association_board"]["partner_zoos"][action["continent"]] = 0
             if len(player["partner_zoos"]) == 2:
                 _queue_upgrade_source(next_state, player, "second_partner_zoo")
+            elif len(player["partner_zoos"]) == 3 and workers["reserve"]:
+                workers["reserve"] -= 1
+                workers["active"] += 1
+            elif len(player["partner_zoos"]) == 4:
+                adjust_resources(player, {"conservation": 2})
         elif task == "university":
-            player["universities"].append(action["university"])
-            next_state["association_board"]["universities"][action["university"]] = 0
+            university = action["university"]
+            player["universities"].append(university)
+            next_state["association_board"]["universities"][university] = 0
+            if university == "research-reputation":
+                _gain_reputation(next_state, player, 2, events, f"university:{university}")
             if len(player["universities"]) == 2:
                 _queue_upgrade_source(next_state, player, "second_university")
+            elif len(player["universities"]) == 3:
+                adjust_resources(player, {"conservation": 2})
         elif task == "conservation_project":
             project = next(project for project in next_state["base_conservation_projects"]
                            if project["id"] == action["project_id"])
@@ -1071,7 +1231,10 @@ def _final_card_points(player: dict[str, Any], card: dict[str, Any]) -> int:
     elif objective == "supported_projects":
         value = len(player["supported_projects"])
     else:
-        value = len(player["map"]["buildings"])
+        value = sum(
+            building.get("counts_for_controlled_scoring", True)
+            for building in player["map"]["buildings"]
+        )
     steps = value // card["per"]
     return min(card["maximum"], steps * card["points_per_step"])
 
@@ -1098,18 +1261,20 @@ def rankings(state: dict[str, Any]) -> list[dict[str, Any]]:
     )
 
 
-def observe(state: dict[str, Any], seat: int) -> dict[str, Any]:
+def _observe(state: dict[str, Any], seat: int, *, reveal_all_private: bool) -> dict[str, Any]:
     if seat < 0 or seat >= state["player_count"]:
         raise RuleError("seat is out of range")
     rows = []
     for player in state["players"]:
-        own = player["seat"] == seat
+        own = reveal_all_private or player["seat"] == seat
         row = deepcopy(player)
         row["hand_count"] = len(player["hand"])
         row["initial_draw_count"] = len(player["initial_draw"])
         row["hand"] = private_items(player["hand"], own)
         row["initial_draw"] = private_items(player["initial_draw"], own)
         row["final_scoring_cards"] = private_items(player["final_scoring_cards"], own)
+        row["public_summary"] = player_public_summary(player)
+        row["map_display"] = map_display(player)
         rows.append(row)
     return {
         "game": "ark_nova", "rules_version": state["rules_version"],
@@ -1122,10 +1287,28 @@ def observe(state: dict[str, Any], seat: int) -> dict[str, Any]:
         "game_board_bonus_tiles": deepcopy(state["game_board_bonus_tiles"]),
         "deck_count": len(state["zoo_deck"]), "discard_count": len(state["zoo_discard"]),
         "base_conservation_projects": deepcopy(state["base_conservation_projects"]),
-        "association_board": deepcopy(state["association_board"]), "players": rows,
+        "association_board": deepcopy(state["association_board"]),
+        "association_display": association_display(state),
+        "public_tracks": public_tracks(state), "players": rows,
         "rankings": rankings(state) if state["status"] == "finished" else None,
         "end_reason": state["end_reason"],
     }
+
+
+def observe(state: dict[str, Any], seat: int) -> dict[str, Any]:
+    """Return the seat-isolated observation used by human and agent players."""
+    return _observe(state, seat, reveal_all_private=False)
+
+
+def observe_spectator(state: dict[str, Any]) -> dict[str, Any]:
+    """Return an omniscient view for the Web observer in agent-only matches.
+
+    This function is deliberately separate from ``observe`` so the runner cannot
+    accidentally include another seat's private cards in an agent prompt.
+    """
+    view = _observe(state, 0, reveal_all_private=True)
+    view["viewer_mode"] = "spectator"
+    return view
 
 
 def validate_state(state: dict[str, Any]) -> None:
@@ -1138,7 +1321,8 @@ def validate_state(state: dict[str, Any]) -> None:
     seen: list[str] = [card["id"] for card in state["card_display"] + state["zoo_deck"] + state["zoo_discard"]]
     for player in state["players"]:
         if (player["money"] < 0 or player["appeal"] < 0 or player["conservation"] < 0
-                or player["reputation"] < 0 or not 0 <= player["x_tokens"] <= 5):
+                or not 0 <= player["reputation"] <= REPUTATION_MAXIMUM
+                or not 0 <= player["x_tokens"] <= 5):
             raise AssertionError("invalid player resources")
         if sorted(card["strength"] for card in player["action_cards"]) != [1, 2, 3, 4, 5]:
             raise AssertionError("action cards must occupy strengths 1 through 5")
@@ -1156,6 +1340,34 @@ def validate_state(state: dict[str, Any]) -> None:
         terrain = {(cell["q"], cell["r"]): cell["terrain"] for cell in player["map"]["cells"]}
         if any(cell not in terrain or terrain[cell] != "buildable" for cell in building_cells):
             raise AssertionError("building occupies illegal terrain")
+        if player["map"].get("schema_version") != "agentbga.ark_nova.map.v3":
+            raise AssertionError("invalid Ark Nova map schema")
+        if (player["map"].get("id") != "map-0"
+                or player["map"].get("coordinate_system") != "flat_top_axial"
+                or len(terrain) != 58
+                or sum(value == "buildable" for value in terrain.values()) != 39
+                or sum(value == "water" for value in terrain.values()) != 10
+                or sum(value == "rock" for value in terrain.values()) != 9):
+            raise AssertionError("invalid Map 0 geometry")
+        build_ii_coordinates = {
+            (cell["q"], cell["r"]) for cell in player["map"]["cells"]
+            if cell.get("requires_build_upgrade", False)
+        }
+        if build_ii_coordinates != {(3, -2), (2, -1)}:
+            raise AssertionError("invalid Map 0 Build II cells")
+        if any(not valid_building_shape(building) for building in buildings):
+            raise AssertionError("building does not match its fixed polyhex shape")
+        placement_slots = player["map"].get("placement_bonus_slots", [])
+        placement_coordinates = [(slot["q"], slot["r"]) for slot in placement_slots]
+        if len(placement_coordinates) != 12 or len(placement_coordinates) != len(set(placement_coordinates)) or any(
+            coordinate not in terrain for coordinate in placement_coordinates
+        ):
+            raise AssertionError("invalid map placement bonus slots")
+        conservation_slots = player["map"].get("conservation_reward_slots", [])
+        if [slot["milestone"] for slot in conservation_slots] != [2, 5, 8, 10]:
+            raise AssertionError("invalid map conservation reward slots")
+        if not isinstance(player["map"].get("completion_reward_claimed"), bool):
+            raise AssertionError("invalid map completion reward state")
         workers = player["association_workers"]
         if workers["active"] < 0 or workers["active"] + workers["reserve"] + sum(
             item["workers"] for item in workers["committed"]

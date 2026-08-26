@@ -1,0 +1,52 @@
+[
+  {
+    "copies": 4,
+    "id": "A-BUILD",
+    "name_cn": "建造",
+    "name_en": "Build",
+    "side_II_cn": "强度X时，可建造若干个不同建筑，总尺寸≤X；每格2金钱。解锁大型鸟舍、爬行馆，并可使用仅限建造II的格子。",
+    "side_II_en": "At strength X, build one or more different buildings whose total size is at most X; pay 2 money per hex. Large Bird Aviary and Reptile House become available and Build-II-only spaces can be used.",
+    "side_I_cn": "强度X时，建造恰好1个尺寸≤X的可用建筑；每格支付2金钱。基础可建小卖部、凉亭、普通围栏和互动动物园。",
+    "side_I_en": "At strength X, build exactly one available building of size at most X; pay 2 money per hex. Standard options include kiosk, pavilion, standard enclosure and Petting Zoo."
+  },
+  {
+    "copies": 4,
+    "id": "A-ANIMALS",
+    "name_cn": "动物",
+    "name_en": "Animals",
+    "side_II_cn": "可从手牌或声望范围打动物。强度1-2打1只，强度3+至多2只；强度5+先获得1声望。可打需要“动物II”的牌。",
+    "side_II_en": "Play animals from hand or from within reputation range. Strength 1-2: one animal; strength 3+: up to two. At strength 5+, gain 1 reputation before playing. Cards requiring Animals II are now legal.",
+    "side_I_cn": "从手牌打出动物牌。强度2-4可打1只，强度5可打至多2只；必须满足条件、围栏与费用。",
+    "side_I_en": "Play Animal cards from hand. Strength 2-4 lets you play one animal; strength 5 lets you play up to two. Meet all printed requirements, enclosure needs and costs."
+  },
+  {
+    "copies": 4,
+    "id": "A-CARDS",
+    "name_cn": "卡牌",
+    "name_en": "Cards",
+    "side_II_cn": "提升抽牌/保留效率，并在较低强度即可使用抓取；强度5通常为抽4弃1，或抓取1张符合条件的展示牌。",
+    "side_II_en": "Improved draw/keep values and Snap becomes available from lower strength. At strength 5 the standard option is draw 4 then discard 1, or Snap one eligible display card.",
+    "side_I_cn": "按强度抽牌并保留相应数量；强度5时可改用“抓取”，直接拿取声望范围内1张牌。",
+    "side_I_en": "Draw cards according to strength; at higher strength you keep more. At strength 5 you may use Snap instead of drawing: take one card from reputation range."
+  },
+  {
+    "copies": 4,
+    "id": "A-ASSOCIATION",
+    "name_cn": "协会",
+    "name_en": "Association",
+    "side_II_cn": "可执行多个不同协会任务，只要所需强度总和不超过行动强度；解锁后续伙伴动物园与更高级项目访问。至少执行1个任务后，可按当前捐款费用进行1次捐款并获得1保护分。",
+    "side_II_en": "May perform multiple different Association tasks as long as their printed strengths fit the action strength. Unlocks later partner zoos and advanced project access; after performing at least one task, you may make one donation at the next donation cost for 1 conservation.",
+    "side_I_cn": "用1名可用协会工作人员执行恰好1个任务：强度2得2声望；3取得伙伴动物园；4取得大学；5支持保护项目。休息前重复同类任务需额外工作人员。",
+    "side_I_en": "Use one active association worker for exactly one task: strength 2 gain 2 reputation; 3 take a partner zoo; 4 take a university; 5 support a conservation project. Repeating a task before the break requires extra workers."
+  },
+  {
+    "copies": 4,
+    "id": "A-SPONSORS",
+    "name_cn": "赞助商",
+    "name_en": "Sponsors",
+    "side_II_cn": "可打出若干赞助商牌，总等级≤X+1，也可使用声望范围内符合条件的牌；解锁需要“赞助商II”的牌。或推进休息X并获得2X金钱。",
+    "side_II_en": "Play one or more Sponsor cards with total levels up to X+1, including eligible cards from reputation range; Sponsors-II requirement cards become legal. Alternatively advance break X and gain 2X money.",
+    "side_I_cn": "从手牌打出恰好1张等级≤X且满足条件的赞助商牌；或将休息标记推进X并获得X金钱。",
+    "side_I_en": "Play exactly one Sponsor card from hand whose level is at most X and whose requirements you meet; alternatively advance the break X and gain X money."
+  }
+]

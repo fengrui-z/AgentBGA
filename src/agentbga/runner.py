@@ -275,7 +275,9 @@ def run_match(
     rankings = [{**row, "player": by_seat[row["seat"]]["name"], "backend": by_seat[row["seat"]]["backend"]}
                 for row in game.rankings(state)]
     result = {
-        "match_id": match_id, "game": game.game_id, "version": version, "turns": state["turn_count"],
+        "match_id": match_id, "game": game.game_id, "rules_version": game.rules_version,
+        "content_pack_id": state.get("content_pack_id"), "content_hash": state.get("content_hash"),
+        "version": version, "turns": state["turn_count"],
         "decisions": state.get("decision_count", state["turn_count"]),
         "players": [{"seat": seat, **config.public_dict()} for seat, config in enumerate(configs)],
         "rankings": rankings,

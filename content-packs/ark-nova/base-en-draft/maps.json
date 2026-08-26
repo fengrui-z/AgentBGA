@@ -1,0 +1,262 @@
+[
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Zoo map · slot 01"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 1
+    },
+    "id": "ark-nova:map-slot-001",
+    "kind": "map",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Zoo map · slot 02"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 2
+    },
+    "id": "ark-nova:map-slot-002",
+    "kind": "map",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Zoo map · slot 03"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 3
+    },
+    "id": "ark-nova:map-slot-003",
+    "kind": "map",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Zoo map · slot 04"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 4
+    },
+    "id": "ark-nova:map-slot-004",
+    "kind": "map",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Zoo map · slot 05"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 5
+    },
+    "id": "ark-nova:map-slot-005",
+    "kind": "map",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Zoo map · slot 06"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 6
+    },
+    "id": "ark-nova:map-slot-006",
+    "kind": "map",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Zoo map · slot 07"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 7
+    },
+    "id": "ark-nova:map-slot-007",
+    "kind": "map",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Zoo map · slot 08"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 8
+    },
+    "id": "ark-nova:map-slot-008",
+    "kind": "map",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Zoo map · slot 09"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 9
+    },
+    "id": "ark-nova:map-slot-009",
+    "kind": "map",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
+      "title": "Zoo map · slot 10"
+    },
+    "effects": [],
+    "facts": {
+      "catalog_status": "slot_only",
+      "slot": 10
+    },
+    "id": "ark-nova:map-slot-010",
+    "kind": "map",
+    "official_ref": {
+      "component_id": null,
+      "source_ids": [
+        "capstone-rulebook-base-en"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "unentered"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  }
+]

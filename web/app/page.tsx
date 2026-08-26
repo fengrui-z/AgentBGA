@@ -1,10 +1,19 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { ArkNovaWorkbench } from "./ark-nova-workbench";
+import {
+  ArkNovaPlayerSummary, ArkNovaTable,
+  type ArkPlayerView, type ArkView,
+} from "./ark-nova-table";
 
 // ── i18n ─────────────────────────────────────────────────────────────
 type Lang = "zh" | "en";
 type Dict = Record<string, string>;
+const ARK_ACTION_LABELS: Record<Lang, Record<string, string>> = {
+  zh: {animals: "动物", cards: "卡牌", build: "建造", association: "协会", sponsors: "赞助商"},
+  en: {animals: "Animals", cards: "Cards", build: "Build", association: "Association", sponsors: "Sponsors"},
+};
 const STR: Record<Lang, Dict> = {
   zh: {
     // hero
@@ -12,7 +21,7 @@ const STR: Record<Lang, Dict> = {
     hero_title_a: "把模型放上牌桌，",
     hero_title_b: "看见",
     hero_title_c: "每一次决策。",
-    hero_mark_1: "多游戏插件", hero_mark_2: "座位隔离观察", hero_mark_3: "完整对局引擎", hero_mark_ark: "CONTROLLED CORE",
+    hero_mark_1: "多游戏插件", hero_mark_2: "座位隔离观察", hero_mark_3: "完整对局引擎", hero_mark_ark: "SEMANTIC WORKBENCH",
     // setup
     new_table: "NEW TABLE", create_table: "创建一桌", g_human: "人类 vs Agent", g_harness: "Harness 对战",
     players_count: "PLAYERS", pick_game: "选择游戏",
@@ -47,16 +56,16 @@ const STR: Record<Lang, Dict> = {
     // player panel
     tokens: "宝石", engine: "引擎", purchased: "已购", reserved: "预留", nobles_owned: "贵族",
     // ark nova
-    ark_eyebrow: "ARK NOVA · CONTROLLED CORE",
+    ark_eyebrow: "ARK NOVA · OFFICIAL BASE CANDIDATE",
     ark_phase_select: "正在选择起始手牌", ark_phase_play: "多阶段对局进行中",
-    ark_phase_note: "回合、行动牌、建造、动物、协会、赞助商和 Break 已接通；当前使用无特殊能力的研究卡池，不代表完整商业卡池。",
+    ark_phase_note: "当前对局运行基础版官方语义候选：255 张实体卡、5 种行动牌与新手地图已接入统一规则引擎。",
     ark_tracks: "TRACKS / BREAK", ark_tracks_h: "公共轨道", cur_decision: "CURRENT DECISION",
     ark_display: "CARD DISPLAY", ark_display_h: "中央卡牌展示区", deck: "牌库", discard: "弃牌",
     ark_after_select: "起始选牌后翻开",
     ark_assoc: "ASSOCIATION BOARD", ark_assoc_h: "协会板与基础保育项目",
     ark_partner: "合作动物园", ark_uni: "大学", ark_donation: "捐款", ark_blocked: "双人封锁", ark_avail: "可用",
-    ark_zoo: "BEGINNER MAP A", ark_zoo_h: "玩家动物园", ark_zoo_unit: "3 格起始围栏 · 空置",
-    ark_zoo_note: "本里程碑的坐标为可测试的示意几何；正式 footprint 会在地图规则阶段按规则场景校准。",
+    ark_zoo: "MAP 0", ark_zoo_h: "玩家动物园", ark_zoo_unit: "新手地图 · 官方坐标 footprint",
+    ark_zoo_note: "水域、山脉、覆盖奖励与多格建筑均由后端以 axial coordinate 校验。",
     hand: "手牌", money_c: "₡",
     // brass
     brass_canal: "运河时代", brass_rail: "铁路时代", round: "轮",
@@ -91,7 +100,7 @@ const STR: Record<Lang, Dict> = {
     hero_title_a: "Put models at the table,",
     hero_title_b: "watch",
     hero_title_c: "every decision.",
-    hero_mark_1: "Multi-game plugins", hero_mark_2: "Seat-isolated views", hero_mark_3: "Full-match engine", hero_mark_ark: "CONTROLLED CORE",
+    hero_mark_1: "Multi-game plugins", hero_mark_2: "Seat-isolated views", hero_mark_3: "Full-match engine", hero_mark_ark: "SEMANTIC WORKBENCH",
     new_table: "NEW TABLE", create_table: "New table · ", g_human: "Human vs Agent", g_harness: "Harness Battle",
     players_count: "PLAYERS", pick_game: "Select game",
     f_name: "Player name", f_provider: "Harness / provider", f_backend: "Runtime", f_endpoint: "Endpoint",
@@ -120,16 +129,16 @@ const STR: Record<Lang, Dict> = {
     tier: "TIER", cards_unit: "cards",
     reserve_label: "Reserve", buy_label: "Buy",
     tokens: "Gems", engine: "Engine", purchased: "Purchased", reserved: "Reserved", nobles_owned: "Nobles",
-    ark_eyebrow: "ARK NOVA · CONTROLLED CORE",
+    ark_eyebrow: "ARK NOVA · OFFICIAL BASE CANDIDATE",
     ark_phase_select: "Selecting starting hand", ark_phase_play: "Multi-phase match in progress",
-    ark_phase_note: "Turns, action cards, building, animals, association, sponsors and Break are wired up; uses an ability-free research card pool, not the full commercial pool.",
+    ark_phase_note: "This match runs the official-base semantic candidate: all 255 physical cards, five Action cards, and Map 0 are wired into one rules engine.",
     ark_tracks: "TRACKS / BREAK", ark_tracks_h: "Public tracks", cur_decision: "CURRENT DECISION",
     ark_display: "CARD DISPLAY", ark_display_h: "Card display", deck: "Deck", discard: "Discard",
     ark_after_select: "Revealed after pick",
     ark_assoc: "ASSOCIATION BOARD", ark_assoc_h: "Association board & conservation projects",
     ark_partner: "Partner zoos", ark_uni: "Universities", ark_donation: "Donations", ark_blocked: "Two-player locked", ark_avail: "available",
-    ark_zoo: "BEGINNER MAP A", ark_zoo_h: "Player zoo", ark_zoo_unit: "3-cell starter enclosure · empty",
-    ark_zoo_note: "Coordinates are test-only schematic geometry; real footprints land in the map phase.",
+    ark_zoo: "MAP 0", ark_zoo_h: "Player zoo", ark_zoo_unit: "Beginner map · official coordinate footprint",
+    ark_zoo_note: "Water, rock, placement bonuses, and polyhex buildings are validated by the backend in axial coordinates.",
     hand: "Hand", money_c: "₡",
     brass_canal: "Canal Era", brass_rail: "Rail Era", round: "round",
     brass_actions: "ACTIONS", coal_market: "Coal market", iron_market: "Iron market", turn_order: "Turn order",
@@ -190,29 +199,6 @@ type AzulView = {
   center_has_start_marker: boolean; start_marker_holder_seat: number | null;
   factories: {id: string; tiles: AzulCounts}[]; center: AzulCounts;
   wall_pattern: AzulColor[][]; players: AzulPlayerView[];
-};
-type ArkCard = {id?: string; card_type?: string; tags?: string[]; implementation?: string; hidden?: true};
-type ArkActionCard = {action: string; strength: number; upgraded: boolean; tokens: string[]};
-type ArkMap = {
-  id: string; name: string; geometry_status: string;
-  cells: {q: number; r: number; terrain: "water" | "rock" | "buildable"}[];
-  buildings: {id: string; type: string; size: number; occupied: boolean; cells: {q: number; r: number}[]}[];
-};
-type ArkPlayerView = {
-  seat: number; money: number; x_tokens: number; appeal: number; conservation: number; reputation: number;
-  action_cards: ArkActionCard[]; association_workers: {active: number; reserve: number; committed: unknown[]};
-  partner_zoos: string[]; universities: string[]; map: ArkMap; hand_count: number; initial_draw_count: number;
-  initial_keep_required: number; hand: ArkCard[]; initial_draw: ArkCard[]; played_cards: ArkCard[]; final_scoring_cards: (ArkCard | {hidden: true})[];
-  supported_projects: string[]; upgrade_rewards_claimed: number[]; final_card_choice_resolved: boolean;
-};
-type ArkView = {
-  game: "ark_nova"; rules_version: string; implementation_status: string; status: string; phase: string;
-  turn_count: number; decision_count: number; active_seat: number; turn: {active_seat: number; decision: string; action_card: string | null; remaining_plays: number};
-  break_track: {position: number; start_marker: string; triggered: boolean}; card_display: ArkCard[];
-  game_board_bonus_tiles: {id: string; implementation: string}[];
-  deck_count: number; discard_count: number; base_conservation_projects: {id: string; tag: string; levels: number[]}[];
-  association_board: {partner_zoos: Record<string, number>; universities: Record<string, number>; blocked_two_player: string[]; donations: {seat: number; cost: number}[]};
-  players: ArkPlayerView[];
 };
 type BrassIndustry = {
   id: string; tile_id?: string; industry: string; level: number; owner: number; location: string;
@@ -294,6 +280,7 @@ type Snapshot = {
   paused: boolean; pause_pending: boolean;
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
   players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView)[];
+  spectator_view?: ArkView;
 };
 type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
@@ -330,7 +317,7 @@ const AZUL_META: Record<AzulColor, Record<Lang, string>> = {
 const GAME_COPY: Record<GameId, {eyebrow: string; name: Record<Lang,string>; description: Record<Lang,string>; badge: string; note: Record<Lang,string>}> = {
   splendor: {eyebrow: "SPLENDOR", name: {zh:"璀璨宝石",en:"Splendor"}, description: {zh:"配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；每个 Agent Harness 都可独立设置思考强度。",en:"Configure 2–4 model or human players. On your turn, pick a legal action at the table; each agent harness can use its own reasoning effort."}, badge: "PLAYABLE", note: {zh:"完整基础版引擎",en:"Full base-game engine"}},
   azul: {eyebrow: "AZUL", name: {zh:"花砖物语",en:"Azul"}, description: {zh:"从工厂展示区或中央区选取同色花砖，规划图案线并铺设墙面；兼顾相邻计分、地板罚分与终局时机。",en:"Draft one color from factories or the center, fill pattern lines and tile your wall while balancing adjacency, floor penalties and endgame timing."}, badge: "PLAYABLE BETA", note: {zh:"选砖 · 拼墙 · 空间规划",en:"Draft · tile · spatial planning"}},
-  ark_nova: {eyebrow: "ARK NOVA", name: {zh:"方舟动物园",en:"Ark Nova"}, description: {zh:"在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。",en:"Test multi-stage decisions in a controlled research-card pool: opening hand, five action cards, hex building, animal placement, association tasks and Break."}, badge: "CONTROLLED CORE V2", note: {zh:"升级 · 捐款 · 释放 · 效果系统",en:"Upgrades · donations · release · effect system"}},
+  ark_nova: {eyebrow: "ARK NOVA", name: {zh:"方舟动物园",en:"Ark Nova"}, description: {zh:"基础版 255 张实体卡、5 种行动牌与新手地图已接入可审计语义引擎，覆盖条件、费用、触发、互动、收入与终局计分。",en:"All 255 physical base cards, five Action cards, and the beginner map run through an auditable semantic engine covering requirements, costs, triggers, interaction, income, and final scoring."}, badge: "OFFICIAL BASE CANDIDATE", note: {zh:"完整卡牌语义 · Map 0 · P8 门禁",en:"Complete card semantics · Map 0 · P8 gate"}},
   brass_birmingham: {eyebrow: "BRASS: BIRMINGHAM", name: {zh:"伯明翰",en:"Brass: Birmingham"}, description: {zh:"测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。",en:"Test long-term planning in a two-era economic network: industry building, resource sourcing, merchant selling, dynamic turn order and canal-to-rail transitions."}, badge: "PLAYABLE BETA", note: {zh:"产业 · 网络 · 双时代经济",en:"Industry · network · two-era economy"}},
   century_spice_road: {eyebrow: "CENTURY: SPICE ROAD", name: {zh:"香料之路",en:"Century: Spice Road"}, description: {zh:"经营自己的商队：获取商人牌、升级或交换香料、争夺金币银币，并抢先完成高分订单。支持 2–5 名玩家。",en:"Run your caravan: acquire merchant cards, upgrade or trade spices, race for gold and silver coins to fulfill high-score orders. 2–5 players."}, badge: "CLASSIC BASE", note: {zh:"商人牌 · 香料引擎 · 订单竞速",en:"Merchant cards · spice engine · order race"}},
   seven_wonders: {eyebrow: "7 WONDERS", name: {zh:"七大奇迹",en:"7 Wonders"}, description: {zh:"在三个时代中密封选牌并传递手牌，通过生产、贸易、军事、科技与奇迹建设塑造古代文明。支持 3–7 名玩家。",en:"Draft sealed choices across three Ages, passing hands while developing production, trade, military, science and a Wonder. 3–7 players."}, badge: "SECOND EDITION BASE", note: {zh:"轮抽 · 邻城贸易 · 七维计分",en:"Draft · neighbor trade · seven-part scoring"}},
@@ -372,12 +359,12 @@ const PROVIDERS: Record<Provider, {label: Record<Lang,string>; backend: Backend;
 };
 
 function player(seed: number, backend: Backend = "openai"): PlayerForm {
-  return { id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "custom", backend, model: "", base_url: BACKENDS[backend].url, api_key: "", auth_mode: "api_key", reasoning_effort: "max" };
+  return { id: `player-${seed}-${backend}`, name: `Agent ${seed}`, provider: "custom", backend, model: "", base_url: BACKENDS[backend].url, api_key: "", auth_mode: "api_key", reasoning_effort: "max" };
 }
 
 function deepseekHarnessPlayer(seed: number, backend: "opencode" | "dsh" | "hermes" | "minimal"): PlayerForm {
   return {
-    id: crypto.randomUUID(), name: `Agent ${seed}`, provider: backend, backend,
+    id: `player-${seed}-${backend}`, name: `Agent ${seed}`, provider: backend, backend,
     model: "deepseek-v4-flash", base_url: "https://api.deepseek.com", api_key: "",
     auth_mode: "api_key", reasoning_effort: "max",
   };
@@ -385,14 +372,14 @@ function deepseekHarnessPlayer(seed: number, backend: "opencode" | "dsh" | "herm
 
 function codexHarnessPlayer(seed: number): PlayerForm {
   return {
-    id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "codex", backend: "codex",
+    id: `player-${seed}-codex`, name: `Agent ${seed}`, provider: "codex", backend: "codex",
     model: "gpt-5.6", base_url: "https://api.openai.com/v1", api_key: "",
     auth_mode: "api_key", reasoning_effort: "max",
   };
 }
 
 function humanPlayer(seed: number): PlayerForm {
-  return {id: crypto.randomUUID(), name: seed === 1 ? "你" : `玩家 ${seed}`, provider: "custom", backend: "human", model: "", base_url: "", api_key: "", auth_mode: "api_key", reasoning_effort: "max"};
+  return {id: `player-${seed}-human`, name: seed === 1 ? "你" : `玩家 ${seed}`, provider: "custom", backend: "human", model: "", base_url: "", api_key: "", auth_mode: "api_key", reasoning_effort: "max"};
 }
 
 function api(path: string) { return path; }
@@ -902,6 +889,7 @@ function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?
   if (action.type === "select_action" && action.action) return zh ? `选择 ${BL[String(action.action)] || String(action.action).toUpperCase()}行动` : `Choose ${BL[String(action.action)] || String(action.action)} action`;
   if (action.type === "select_action") return zh ? `使用 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card}，强度 ${action.strength}${action.x_tokens ? `（X +${action.x_tokens}）` : ""}` : `Use ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card}, strength ${action.strength}${action.x_tokens ? ` (X +${action.x_tokens})` : ""}`;
   if (action.type === "take_x_token") return zh ? `将 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} 移到 1 并获得 X token` : `Move ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} to 1, gain X token`;
+  if (action.type === "cancel_action") return zh ? `取消 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card}，重新选择行动牌` : `Cancel ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} and reselect`;
   if (action.type === "draw_cards") return zh ? `抽 ${action.draw_count} 张牌${action.discard_count ? `，再弃 ${action.discard_count} 张` : ""}` : `Draw ${action.draw_count} cards${action.discard_count ? `, discard ${action.discard_count}` : ""}`;
   if (action.type === "snap_card") return zh ? `拿取展示区 ${action.card_id}` : `Take display card ${action.card_id}`;
   if (action.type === "discard_card" || action.type === "break_discard") {
@@ -918,6 +906,8 @@ function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?
   if (action.type === "make_donation") return zh ? `捐款 ₡${action.cost}，获得 1 保育点` : `Donate ₡${action.cost}, gain 1 conservation`;
   if (action.type === "upgrade_action_card") return zh ? `升级 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} 行动牌` : `Upgrade ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} card`;
   if (action.type === "choose_conservation_bonus") return action.choice === "money" ? (zh ? `选择保育奖励：₡${action.amount}` : `Conservation bonus: ₡${action.amount}`) : (zh ? `选择奖励标记 ${action.tile_id}` : `Choose bonus tile ${action.tile_id}`);
+  if (action.type === "take_map_card") return action.source === "deck" ? (zh ? "地图奖励：拿取牌库顶牌" : "Map reward: take top deck card") : (zh ? `地图奖励：拿取展示区 ${action.display_slot} 的 ${action.card_id}` : `Map reward: take ${action.card_id} from display slot ${action.display_slot}`);
+  if (action.type === "clever_action_card") return zh ? `机敏：将 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} 移到强度 1` : `Clever: move ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} to strength 1`;
   if (action.type === "keep_final_card") return zh ? `保留终局牌 ${action.card_id}` : `Keep final card ${action.card_id}`;
   if (action.type === "play_sponsor") return zh ? `打出赞助商 ${action.card_id}` : `Play sponsor ${action.card_id}`;
   if (action.type === "advance_break") return zh ? `推进 Break ${action.steps} 格，获得 ₡${action.money}` : `Advance Break ${action.steps}, gain ₡${action.money}`;
@@ -972,12 +962,12 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
   zh: {
     buy_visible: "购买公开牌", buy_reserved: "购买预留牌", take_tokens: "拿取宝石",
     reserve_visible: "预留公开牌", reserve_deck: "预留牌库顶牌", choose_noble: "选择贵族", pass: "其他",
-    choose_initial_hand: "选择起始手牌", select_action: "选择行动牌", take_x_token: "替代 X-token 行动",
+    choose_initial_hand: "选择起始手牌", select_action: "选择行动牌", take_x_token: "替代 X-token 行动", cancel_action: "返回重选行动",
     draw_cards: "抽牌", snap_card: "拿取展示牌", discard_card: "弃牌", break_discard: "Break 弃牌",
     place_building: "放置建筑", play_animal: "打出动物", association_task: "协会任务",
     play_sponsor: "打出赞助商", advance_break: "推进 Break", finish_action: "结束行动",
     make_donation: "捐款", upgrade_action_card: "升级行动牌", keep_final_card: "选择终局牌",
-    choose_conservation_bonus: "选择保育奖励", finish_association_tasks: "结束协会任务",
+    choose_conservation_bonus: "选择保育奖励", take_map_card: "拿取地图奖励牌", clever_action_card: "机敏奖励", finish_association_tasks: "结束协会任务",
     discard_wild: "弃置万能牌", scout_discard_extra: "侦察弃牌", develop_tiles: "选择研发板块",
     build_industry: "选择产业与城市", build_link: "铺设运河", select_network_count: "铁路数量",
     select_network_link: "选择铁路", take_resource: "选择资源来源", sell_industry: "出售产业",
@@ -990,12 +980,12 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
   en: {
     buy_visible: "Buy visible card", buy_reserved: "Buy reserved card", take_tokens: "Take gems",
     reserve_visible: "Reserve visible card", reserve_deck: "Reserve deck card", choose_noble: "Choose noble", pass: "Other",
-    choose_initial_hand: "Choose starting hand", select_action: "Select action card", take_x_token: "X-token action",
+    choose_initial_hand: "Choose starting hand", select_action: "Select action card", take_x_token: "X-token action", cancel_action: "Cancel selected action",
     draw_cards: "Draw cards", snap_card: "Take display card", discard_card: "Discard card", break_discard: "Break discard",
     place_building: "Place building", play_animal: "Play animal", association_task: "Association task",
     play_sponsor: "Play sponsor", advance_break: "Advance Break", finish_action: "End action",
     make_donation: "Donate", upgrade_action_card: "Upgrade action card", keep_final_card: "Choose final card",
-    choose_conservation_bonus: "Conservation bonus", finish_association_tasks: "End association tasks",
+    choose_conservation_bonus: "Conservation bonus", take_map_card: "Map card reward", clever_action_card: "Clever reward", finish_association_tasks: "End association tasks",
     discard_wild: "Discard wild card", scout_discard_extra: "Scout discard", develop_tiles: "Select develop tiles",
     build_industry: "Choose industry & city", build_link: "Build canal", select_network_count: "Rail count",
     select_network_link: "Choose rail link", take_resource: "Choose resource source", sell_industry: "Sell industry",
@@ -1019,6 +1009,13 @@ function groupActions(actions: LegalAction[]) {
 
 const CARD_ACTION_TYPES = new Set(["buy_visible", "buy_reserved", "reserve_visible"]);
 const CENTURY_ACTION_TYPES = new Set(["play_merchant", "acquire_merchant", "claim_point", "rest"]);
+const ARK_TABLE_ACTION_TYPES = new Set([
+  "choose_initial_hand", "select_action", "take_x_token", "cancel_action", "draw_cards", "snap_card", "discard_card",
+  "place_building", "play_animal", "finish_action", "association_task", "make_donation",
+  "finish_association_tasks", "advance_break", "play_sponsor", "break_discard",
+  "choose_conservation_bonus", "upgrade_action_card", "keep_final_card", "take_map_card",
+  "clever_action_card",
+]);
 
 function findActionCard(action: Record<string, unknown>, view?: View) {
   const cardId = String(action.card_id ?? "");
@@ -1076,37 +1073,9 @@ function AzulActionPicker({actions, disabled, submitting, onChoose}: {actions: L
   </div>;
 }
 
-const ARK_ACTION_LABELS: Record<Lang, Record<string, string>> = {
-  zh: { animals: "动物", cards: "卡牌", build: "建造", association: "协会", sponsors: "赞助商" },
-  en: { animals: "Animals", cards: "Cards", build: "Build", association: "Association", sponsors: "Sponsors" },
-};
-
-function ArkTrack({label, value, tone}: {label: string; value: number; tone: string}) {
-  return <div className={`ark-track track-${tone}`}><span>{label}</span><div><i style={{width: `${Math.min(100, Math.max(3, value * 2.5))}%`}}/></div><b>{value}</b></div>;
-}
-
-function ArkZooMap({map}: {map: ArkMap}) {
+function ArkPlayerPanel({player, identity, active}: {player: ArkPlayerView; identity?: Snapshot["players"][number]; active: boolean}) {
   const lang = useLang();
-  const occupied = new Set(map.buildings.flatMap(building => building.cells.map(cell => `${cell.q}:${cell.r}`)));
-  return <div className="ark-map" aria-label={`${map.name} ${lang === "zh" ? "六角地图" : "hex map"}`}>
-    {map.cells.map(cell => <i key={`${cell.q}:${cell.r}`} className={`ark-hex terrain-${cell.terrain} ${occupied.has(`${cell.q}:${cell.r}`) ? "is-built" : ""}`}
-      style={{left: `calc(50% + ${cell.q * 25 + cell.r * 12.5}px)`, top: `calc(50% + ${cell.r * 22}px)`}}
-      title={`(${cell.q}, ${cell.r}) · ${cell.terrain}`}/>) }
-  </div>;
-}
-
-function ArkPlayerPanel({player: p, identity}: {player: ArkPlayerView; identity?: Snapshot["players"][number]}) {
-  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
-  return <section className="player-panel ark-player-panel">
-    <header><div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `${t("player_label")} ${p.seat + 1}`}</h3></div><div className="ark-money"><strong>{p.money}</strong><span>₡</span></div></header>
-    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{lang === "zh" ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>
-    <div className="ark-mini-tracks"><span>{zh ? "吸引力" : "Appeal"} <b>{p.appeal}</b></span><span>{zh ? "保育" : "Conservation"} <b>{p.conservation}</b></span><span>{zh ? "声望" : "Reputation"} <b>{p.reputation}</b></span></div>
-    <div className="ark-worker-row"><span>X TOKEN <b>{p.x_tokens}/5</b></span><span>{zh ? "协会工人" : "Assoc. workers"} <b>{p.association_workers.active}</b> + {p.association_workers.reserve}</span></div>
-    <div className="ark-actions">{[...p.action_cards].sort((a, b) => b.strength - a.strength).map(card => <div key={card.action} className={`ark-action action-${card.action}`}><b>{card.strength}</b><span>{ARK_ACTION_LABELS[lang][card.action]}</span>{card.upgraded && <i>Ⅱ</i>}</div>)}</div>
-    <div className="ark-hidden-row"><span>{zh ? "起始抽牌" : "Initial draw"} <b>{p.initial_draw_count}</b> / {zh ? "留" : "keep"} {p.initial_keep_required}</span><span>{zh ? "终局牌" : "Final cards"} <b>{p.final_scoring_cards.length}</b></span></div>
-    <div className="ark-hidden-row"><span>{t("ark_partner")} <b>{p.partner_zoos.length}</b></span><span>{t("ark_uni")} <b>{p.universities.length}</b></span><span>{zh ? "项目" : "Projects"} <b>{p.supported_projects.length}</b></span></div>
-    <div className="ark-hand-preview"><span>{t("hand")} {p.hand_count}</span>{p.hand.slice(0, 6).map((card, index) => <i key={card.id || index} title={card.id || "hidden"}>{card.hidden ? "?" : card.card_type?.slice(0, 1).toUpperCase()}</i>)}</div>
-  </section>;
+  return <ArkNovaPlayerSummary player={player} identity={identity} active={active} lang={lang}/>;
 }
 
 const BRASS_INDUSTRY_LABELS: Record<Lang, Record<string, string>> = {
@@ -1195,20 +1164,12 @@ function SplendorBoard({view}: {view?: View}) {
   </>;
 }
 
-function ArkNovaBoard({view, players}: {view?: ArkView; players: Snapshot["players"]}) {
-  const lang = useLang(); const t = makeT(lang);
-  if (!view) return null;
-  return <div className="ark-board">
-    <section className="ark-milestone"><div><span>{t("ark_eyebrow")}</span><h2>{view.phase === "initial_hand_selection" ? t("ark_phase_select") : t("ark_phase_play")}</h2></div><p>{t("ark_phase_note")}</p><code>{view.rules_version}</code></section>
-    <section className="ark-track-board">
-      <div><span>{t("ark_tracks")}</span><h3>{t("ark_tracks_h")}</h3></div>
-      <div className="ark-track-stack"><ArkTrack label="BREAK" value={view.break_track.position} tone="break"/><ArkTrack label="ACTIVE APPEAL" value={view.players[view.active_seat]?.appeal || 0} tone="appeal"/><ArkTrack label="ACTIVE CONSERVATION" value={view.players[view.active_seat]?.conservation || 0} tone="conservation"/><ArkTrack label="ACTIVE REPUTATION" value={view.players[view.active_seat]?.reputation || 0} tone="reputation"/></div>
-      <div className="ark-decision"><span>{t("cur_decision")}</span><strong>{view.turn.decision.replaceAll("_", " ")}</strong><small>{view.phase.replaceAll("_", " ")}</small></div>
-    </section>
-    <section className="ark-display"><header><div><span>{t("ark_display")}</span><h3>{t("ark_display_h")}</h3></div><b>{t("deck")} {view.deck_count} · {t("discard")} {view.discard_count}</b></header><div>{view.card_display.map((card, index) => <article key={card.id || index} className={card.hidden ? "is-facedown" : ""}><span>0{index + 1}</span><strong>{card.hidden ? t("ark_after_select") : card.card_type?.replaceAll("_", " ")}</strong><small>{card.tags?.join(" · ")}</small>{card.id && <code>{card.id}</code>}</article>)}</div></section>
-    <section className="ark-association"><header><span>{t("ark_assoc")}</span><h3>{t("ark_assoc_h")}</h3></header><div className="ark-projects">{view.base_conservation_projects.map(project => <article key={project.id}><b>{project.tag}</b><span>{project.levels.join(" / ")}</span><code>{project.id}</code></article>)}</div><div className="ark-association-meta"><span>{t("ark_partner")} {Object.values(view.association_board.partner_zoos).filter(Boolean).length} {t("ark_avail")}</span><span>{t("ark_uni")} {Object.values(view.association_board.universities).filter(Boolean).length} {t("ark_avail")}</span><span>{t("ark_donation")} {view.association_board.donations?.length || 0}</span>{view.association_board.blocked_two_player.length > 0 && <span>{t("ark_blocked")} {view.association_board.blocked_two_player.length}</span>}</div></section>
-    <section className="ark-zoo-section"><header><span>{t("ark_zoo")}</span><h3>{t("ark_zoo_h")}</h3></header><div>{view.players.map(player => <article key={player.seat}><div><strong>{players[player.seat]?.name || `${t("player_label")} ${player.seat + 1}`}</strong><span>{t("ark_zoo_unit")}</span></div><ArkZooMap map={player.map}/></article>)}</div><small>{t("ark_zoo_note")}</small></section>
-  </div>;
+function ArkNovaBoard({view, players, legalActions, submitting, onChoose}: {
+  view?: ArkView; players: Snapshot["players"]; legalActions: LegalAction[]; submitting: string;
+  onChoose: (item: LegalAction) => void;
+}) {
+  const lang = useLang();
+  return <ArkNovaTable view={view} identities={players} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose}/>;
 }
 
 export default function Home() {
@@ -1252,12 +1213,15 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const viewer = snapshot?.views[humanSeat];
   const splendorView = snapshot?.game === "splendor" ? viewer as View : undefined;
   const azulView = snapshot?.game === "azul" ? viewer as AzulView : undefined;
-  const arkView = snapshot?.game === "ark_nova" ? viewer as ArkView : undefined;
+  const arkView = snapshot?.game === "ark_nova"
+    ? (snapshot.spectator_view ?? viewer) as ArkView : undefined;
   const brassView = snapshot?.game === "brass_birmingham" ? viewer as BrassView : undefined;
   const centuryView = snapshot?.game === "century_spice_road" ? viewer as CenturyView : undefined;
   const sevenView = snapshot?.game === "seven_wonders" ? viewer as SevenView : undefined;
   const sevenSpectatorViews = snapshot?.game === "seven_wonders" && !snapshot.players.some(player => player.backend === "human")
     ? snapshot.views as SevenView[] : undefined;
+  const isArkTableAction = (item: LegalAction) => ARK_TABLE_ACTION_TYPES.has(String(item.action.type));
+  const arkMapInteraction = snapshot?.game === "ark_nova" && Boolean(snapshot.human_turn?.legal_actions.some(isArkTableAction));
   const maxPlayers = game === "seven_wonders" ? 7 : game === "century_spice_road" ? 5 : 4;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
 
@@ -1429,6 +1393,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     <section className="setup-card">
       <div className="game-picker" role="group" aria-label={t("pick_game")}>{(Object.keys(GAME_COPY) as GameId[]).map(id => <button key={id} className={game === id ? "selected" : ""} onClick={() => selectGame(id)}><span>{GAME_COPY[id].badge}</span><b>{GAME_COPY[id].name[lang]}</b><small>{GAME_COPY[id].note[lang]}</small></button>)}</div>
       <header><div><span>{t("new_table")}</span><h2>{t("create_table")}{GAME_COPY[game].name[lang]}</h2></div><div className="matchup-presets"><button onClick={() => setMatchup("human")}>{t("g_human")}</button><button onClick={() => setMatchup("harness")}>{t("g_harness")}</button><b>{players.length} {t("players_count")}</b></div></header>
+      {game === "ark_nova" && <ArkNovaWorkbench lang={lang}/>}
       <div className="players-config">{players.map((p, index) => <article className="player-config" key={p.id}>
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`${p.name} ${t("move_up")}`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`${p.name} ${t("move_down")}`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>{t("f_name")}</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
@@ -1453,7 +1418,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         <div className="field mini speed"><label htmlFor="match-speed">{t("f_speed")} <b>{speed}ms</b></label><input id="match-speed" type="range" min="0" max="2000" step="50" value={speed} onChange={e => setSpeed(Number(e.target.value))}/></div>
         <button className="start" disabled={starting} onClick={startMatch}>{starting ? t("starting") : t("start")}</button>
       </div>
-      {game === "ark_nova" && <div className="setup-scope-note"><b>{GAME_COPY.ark_nova.badge}</b> {zh ? "已支持行动升级、合作动物园折扣、捐款、释放动物、地图奖励、效果原语和终局目标；仍使用结构化研究卡池与示意 Map A，并非完整商业卡池复刻。" : "Supports action upgrades, partner-zoo discounts, donations, animal release, map rewards, effect primitives, final objectives; uses a structured research-card pool and schematic Map A, not the full commercial pool."}</div>}
+      {game === "ark_nova" && <div className="setup-scope-note"><b>{GAME_COPY.ark_nova.badge}</b> {zh ? "基础版 128 动物、64 赞助商、32 保育项目、11 终局计分和 5 种行动牌均已程式化；实体 255 张清单用于校验重复牌与牌库守恒。" : "The base set's 128 Animals, 64 Sponsors, 32 Conservation Projects, 11 Final Scoring cards, and five Action cards are executable; the 255-card physical roster validates duplicates and deck conservation."}</div>}
       {game === "azul" && <div className="setup-scope-note"><b>{GAME_COPY.azul.badge}</b> {zh ? "支持彩色墙基础版、100 枚具名花砖、工厂与中央区选砖、图案线、地板罚分、相邻计分、终局奖励和确定性回放；不包含灰墙玩法、扩展或出版商美术。" : "Supports the colored-wall base game, 100 identity-safe tiles, factory/center drafting, pattern lines, floor penalties, adjacency scoring, endgame bonuses and deterministic replay; no gray wall, expansions or publisher artwork."}</div>}
       {game === "brass_birmingham" && <div className="setup-scope-note"><b>{GAME_COPY.brass_birmingham.badge}</b> {zh ? "支持官方人数牌组、产业板、市场、商人、Build/Sell/Develop、单双铁路、负收入变卖、双时代计分与完整回放；界面不包含出版商美术。" : "Supports official player counts, industry board, markets, merchants, Build/Sell/Develop, single/double rail, negative-income liquidation, two-era scoring and full replay; no publisher artwork."}</div>}
       {game === "century_spice_road" && <div className="setup-scope-note"><b>{GAME_COPY.century_spice_road.badge}</b> {zh ? "完整基础牌组数值、重复交易、升级、市场压香料、商队容量、金币银币、终局与计分均已接通；不包含出版商卡图。" : "Full base-set values, repeat trades, upgrades, market spice, caravan capacity, gold/silver coins, endgame and scoring wired up; no publisher artwork."}</div>}
@@ -1475,14 +1440,16 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     {error && <div className="table-error" role="alert">{error}</div>}
     <div className="table-grid">
       <aside className="players-column">{snapshot.players.map(identity => {
-        // Render the whole table from the human seat. Without a human, seat 0 is the spectator view.
-        const visiblePlayer = viewer?.players[identity.seat];
+        // Ark Nova agent-only matches use a dedicated omniscient Web projection;
+        // player/agent observations remain seat-isolated in the runner.
+        const visiblePlayer = snapshot.game === "ark_nova"
+          ? arkView?.players[identity.seat] : viewer?.players[identity.seat];
         return snapshot.game === "splendor"
           ? <PlayerPanel key={identity.seat} player={visiblePlayer as PlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
           : snapshot.game === "azul"
             ? <AzulPlayerPanel key={identity.seat} player={visiblePlayer as AzulPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat} holdsStartMarker={azulView?.start_marker_holder_seat === identity.seat}/>
           : snapshot.game === "ark_nova"
-            ? <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity}/>
+            ? <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
             : snapshot.game === "brass_birmingham"
               ? <BrassPlayerPanel key={identity.seat} player={visiblePlayer as BrassPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
               : snapshot.game === "century_spice_road"
@@ -1493,12 +1460,12 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? t("pause_pending") : t("paused")}</strong><span>{snapshot.pause_pending ? t("pause_pending_desc") : t("paused_desc")}</span></div>}
         {snapshot.human_turn && <section className="human-turn" aria-live="polite">
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}{t("pick_action")}</h2></div><b>{snapshot.human_turn.legal_actions.length} {t("legal_opts")}</b></header>
-          {snapshot.game === "azul" ? <AzulActionPicker actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
+          {snapshot.game === "azul" ? <AzulActionPicker actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : arkMapInteraction ? <div className="ark-map-action-notice"><div><b>{lang === "zh" ? "请在对应板块直接操作" : "Act directly on the matching board"}</b><span>{lang === "zh" ? "行动牌、手牌和地图位于玩家板；展示牌与抽牌位于整体游戏板；协会事务位于协会板。" : "Action cards, hand, and map are on the player board; display and draw actions are on the main board; association tasks are on the association board."}</span></div>{snapshot.human_turn.legal_actions.filter(item => !isArkTableAction(item)).map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
             <h3>{ACTION_GROUPS[lang][kind] || kind}<span>{actions.length}</span></h3>
             <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div>
           </section>)}</div>}
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players} legalActions={snapshot.human_turn?.legal_actions || []} submitting={submittingAction} onChoose={submitHumanAction}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
         {snapshot.status === "finished" && <div className="winner-banner"><span>{t("winner")}</span><strong>{timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong><button onClick={() => { setSnapshot(null); setTimeline([]); }}>{t("play_again")}</button></div>}
       </section>
       <aside className="timeline">

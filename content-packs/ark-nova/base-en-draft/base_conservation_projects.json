@@ -1,0 +1,1076 @@
+[
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Species Diversity"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "不同动物类别",
+      "criterion_en": "different animal categories",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.distinct_animal_category_count"
+                },
+                "operator": ">=",
+                "right": 5
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 3,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.distinct_animal_category_count"
+                },
+                "operator": ">=",
+                "right": 4
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.distinct_animal_category_count"
+                },
+                "operator": ">=",
+                "right": 3
+              },
+              "op": "compare"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 3,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-101",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "101",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Habitat Diversity"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "不同洲",
+      "criterion_en": "different continents",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.distinct_continent_count"
+                },
+                "operator": ">=",
+                "right": 5
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 3,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.distinct_continent_count"
+                },
+                "operator": ">=",
+                "right": 4
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.distinct_continent_count"
+                },
+                "operator": ">=",
+                "right": 3
+              },
+              "op": "compare"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 3,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-102",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "102",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Africa"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "非洲图标",
+      "criterion_en": "Africa icons",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 5,
+                "icon": "africa"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 3,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 4,
+                "icon": "africa"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 2,
+                "icon": "africa"
+              },
+              "op": "has_icon"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 3,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-103",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "103",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Americas"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "美洲图标",
+      "criterion_en": "Americas icons",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 5,
+                "icon": "americas"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 3,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 4,
+                "icon": "americas"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 2,
+                "icon": "americas"
+              },
+              "op": "has_icon"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 3,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-104",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "104",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Australia"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "澳大利亚图标",
+      "criterion_en": "Australia icons",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 5,
+                "icon": "australia"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 4,
+                "icon": "australia"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 2,
+                "icon": "australia"
+              },
+              "op": "has_icon"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 4,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-105",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "105",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Asia"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "亚洲图标",
+      "criterion_en": "Asia icons",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 5,
+                "icon": "asia"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 3,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 4,
+                "icon": "asia"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 2,
+                "icon": "asia"
+              },
+              "op": "has_icon"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 3,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-106",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "106",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Europe"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "欧洲图标",
+      "criterion_en": "Europe icons",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 5,
+                "icon": "europe"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 4,
+                "icon": "europe"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 2,
+                "icon": "europe"
+              },
+              "op": "has_icon"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 4,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-107",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "107",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Primates"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "灵长类图标",
+      "criterion_en": "Primate icons",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 5,
+                "icon": "primate"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 4,
+                "icon": "primate"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 2,
+                "icon": "primate"
+              },
+              "op": "has_icon"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 4,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-108",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "108",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Reptiles"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "爬行类图标",
+      "criterion_en": "Reptile icons",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 5,
+                "icon": "reptile"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 4,
+                "icon": "reptile"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 2,
+                "icon": "reptile"
+              },
+              "op": "has_icon"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 4,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-109",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "109",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Predators"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "食肉动物图标",
+      "criterion_en": "Predator icons",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 5,
+                "icon": "predator"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 4,
+                "icon": "predator"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 2,
+                "icon": "predator"
+              },
+              "op": "has_icon"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 4,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-110",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "110",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Herbivores"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "食草动物图标",
+      "criterion_en": "Herbivore icons",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 5,
+                "icon": "herbivore"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 4,
+                "icon": "herbivore"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 2,
+                "icon": "herbivore"
+              },
+              "op": "has_icon"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 4,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-111",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "111",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Birds"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "criterion_cn": "鸟类图标",
+      "criterion_en": "Bird icons",
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 5,
+                "icon": "bird"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 4,
+                "icon": "bird"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 2,
+                "icon": "bird"
+              },
+              "op": "has_icon"
+            }
+          ]
+        }
+      ],
+      "reference_import_status": "structured_transcription",
+      "semantic_compile_status": "compiled",
+      "tiers": [
+        {
+          "conservation": 5,
+          "requirement": 5
+        },
+        {
+          "conservation": 4,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:base-project-112",
+    "kind": "base_conservation_project",
+    "official_ref": {
+      "component_id": "112",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "scenario_tests": [],
+      "status": "transcribed"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  }
+]

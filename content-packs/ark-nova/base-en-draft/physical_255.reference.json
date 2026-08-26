@@ -1,0 +1,2042 @@
+[
+  {
+    "copy": 1,
+    "name_cn": "大型动物园",
+    "name_en": "Large Animal Zoo",
+    "physical_no": 1,
+    "type": "Final Scoring",
+    "unique_id": "001"
+  },
+  {
+    "copy": 1,
+    "name_cn": "小型动物园",
+    "name_en": "Small Animal Zoo",
+    "physical_no": 2,
+    "type": "Final Scoring",
+    "unique_id": "002"
+  },
+  {
+    "copy": 1,
+    "name_cn": "科研动物园",
+    "name_en": "Research Zoo",
+    "physical_no": 3,
+    "type": "Final Scoring",
+    "unique_id": "003"
+  },
+  {
+    "copy": 1,
+    "name_cn": "建筑动物园",
+    "name_en": "Architectural Zoo",
+    "physical_no": 4,
+    "type": "Final Scoring",
+    "unique_id": "004"
+  },
+  {
+    "copy": 1,
+    "name_cn": "保护动物园",
+    "name_en": "Conservation Zoo",
+    "physical_no": 5,
+    "type": "Final Scoring",
+    "unique_id": "005"
+  },
+  {
+    "copy": 1,
+    "name_cn": "自然主义者动物园",
+    "name_en": "Naturalists Zoo",
+    "physical_no": 6,
+    "type": "Final Scoring",
+    "unique_id": "006"
+  },
+  {
+    "copy": 1,
+    "name_cn": "最受欢迎动物园",
+    "name_en": "Favorite Zoo",
+    "physical_no": 7,
+    "type": "Final Scoring",
+    "unique_id": "007"
+  },
+  {
+    "copy": 1,
+    "name_cn": "赞助型动物园",
+    "name_en": "Sponsored Zoo",
+    "physical_no": 8,
+    "type": "Final Scoring",
+    "unique_id": "008"
+  },
+  {
+    "copy": 1,
+    "name_cn": "多样物种动物园",
+    "name_en": "Diverse Species Zoo",
+    "physical_no": 9,
+    "type": "Final Scoring",
+    "unique_id": "009"
+  },
+  {
+    "copy": 1,
+    "name_cn": "攀岩公园",
+    "name_en": "Climbing Park",
+    "physical_no": 10,
+    "type": "Final Scoring",
+    "unique_id": "010"
+  },
+  {
+    "copy": 1,
+    "name_cn": "水域公园",
+    "name_en": "Aquatic Park",
+    "physical_no": 11,
+    "type": "Final Scoring",
+    "unique_id": "011"
+  },
+  {
+    "copy": 1,
+    "name_cn": "物种多样性",
+    "name_en": "Species Diversity",
+    "physical_no": 12,
+    "type": "Base Conservation Project",
+    "unique_id": "101"
+  },
+  {
+    "copy": 1,
+    "name_cn": "栖息地多样性",
+    "name_en": "Habitat Diversity",
+    "physical_no": 13,
+    "type": "Base Conservation Project",
+    "unique_id": "102"
+  },
+  {
+    "copy": 1,
+    "name_cn": "非洲",
+    "name_en": "Africa",
+    "physical_no": 14,
+    "type": "Base Conservation Project",
+    "unique_id": "103"
+  },
+  {
+    "copy": 1,
+    "name_cn": "美洲",
+    "name_en": "Americas",
+    "physical_no": 15,
+    "type": "Base Conservation Project",
+    "unique_id": "104"
+  },
+  {
+    "copy": 1,
+    "name_cn": "澳大利亚",
+    "name_en": "Australia",
+    "physical_no": 16,
+    "type": "Base Conservation Project",
+    "unique_id": "105"
+  },
+  {
+    "copy": 1,
+    "name_cn": "亚洲",
+    "name_en": "Asia",
+    "physical_no": 17,
+    "type": "Base Conservation Project",
+    "unique_id": "106"
+  },
+  {
+    "copy": 1,
+    "name_cn": "欧洲",
+    "name_en": "Europe",
+    "physical_no": 18,
+    "type": "Base Conservation Project",
+    "unique_id": "107"
+  },
+  {
+    "copy": 1,
+    "name_cn": "灵长类",
+    "name_en": "Primates",
+    "physical_no": 19,
+    "type": "Base Conservation Project",
+    "unique_id": "108"
+  },
+  {
+    "copy": 1,
+    "name_cn": "爬行类",
+    "name_en": "Reptiles",
+    "physical_no": 20,
+    "type": "Base Conservation Project",
+    "unique_id": "109"
+  },
+  {
+    "copy": 1,
+    "name_cn": "食肉动物",
+    "name_en": "Predators",
+    "physical_no": 21,
+    "type": "Base Conservation Project",
+    "unique_id": "110"
+  },
+  {
+    "copy": 1,
+    "name_cn": "食草动物",
+    "name_en": "Herbivores",
+    "physical_no": 22,
+    "type": "Base Conservation Project",
+    "unique_id": "111"
+  },
+  {
+    "copy": 1,
+    "name_cn": "鸟类",
+    "name_en": "Birds",
+    "physical_no": 23,
+    "type": "Base Conservation Project",
+    "unique_id": "112"
+  },
+  {
+    "copy": 1,
+    "name_cn": "巴伐利亚森林国家公园",
+    "name_en": "Bavarian Forest National Park",
+    "physical_no": 24,
+    "type": "Conservation Project",
+    "unique_id": "113"
+  },
+  {
+    "copy": 1,
+    "name_cn": "优胜美地国家公园",
+    "name_en": "Yosemite National Park",
+    "physical_no": 25,
+    "type": "Conservation Project",
+    "unique_id": "114"
+  },
+  {
+    "copy": 1,
+    "name_cn": "安通国家公园",
+    "name_en": "Angthong National Park",
+    "physical_no": 26,
+    "type": "Conservation Project",
+    "unique_id": "115"
+  },
+  {
+    "copy": 1,
+    "name_cn": "塞伦盖蒂国家公园",
+    "name_en": "Serengeti National Park",
+    "physical_no": 27,
+    "type": "Conservation Project",
+    "unique_id": "116"
+  },
+  {
+    "copy": 1,
+    "name_cn": "蓝山国家公园",
+    "name_en": "Blue Mountains National Park",
+    "physical_no": 28,
+    "type": "Conservation Project",
+    "unique_id": "117"
+  },
+  {
+    "copy": 1,
+    "name_cn": "稀树草原",
+    "name_en": "Savanna",
+    "physical_no": 29,
+    "type": "Conservation Project",
+    "unique_id": "118"
+  },
+  {
+    "copy": 1,
+    "name_cn": "低山山脉",
+    "name_en": "Low Mountain Range",
+    "physical_no": 30,
+    "type": "Conservation Project",
+    "unique_id": "119"
+  },
+  {
+    "copy": 1,
+    "name_cn": "竹林",
+    "name_en": "Bamboo Forest",
+    "physical_no": 31,
+    "type": "Conservation Project",
+    "unique_id": "120"
+  },
+  {
+    "copy": 1,
+    "name_cn": "海蚀洞",
+    "name_en": "Sea Cave",
+    "physical_no": 32,
+    "type": "Conservation Project",
+    "unique_id": "121"
+  },
+  {
+    "copy": 1,
+    "name_cn": "丛林",
+    "name_en": "Jungle",
+    "physical_no": 33,
+    "type": "Conservation Project",
+    "unique_id": "122"
+  },
+  {
+    "copy": 1,
+    "name_cn": "鸟类繁育计划",
+    "name_en": "Bird Breeding Program",
+    "physical_no": 34,
+    "type": "Conservation Project",
+    "unique_id": "123"
+  },
+  {
+    "copy": 1,
+    "name_cn": "食肉动物繁育计划",
+    "name_en": "Predator Breeding Program",
+    "physical_no": 35,
+    "type": "Conservation Project",
+    "unique_id": "124"
+  },
+  {
+    "copy": 1,
+    "name_cn": "爬行类繁育计划",
+    "name_en": "Reptile Breeding Program",
+    "physical_no": 36,
+    "type": "Conservation Project",
+    "unique_id": "125"
+  },
+  {
+    "copy": 1,
+    "name_cn": "食草动物繁育计划",
+    "name_en": "Herbivore Breeding Program",
+    "physical_no": 37,
+    "type": "Conservation Project",
+    "unique_id": "126"
+  },
+  {
+    "copy": 1,
+    "name_cn": "灵长类繁育计划",
+    "name_en": "Primate Breeding Program",
+    "physical_no": 38,
+    "type": "Conservation Project",
+    "unique_id": "127"
+  },
+  {
+    "copy": 1,
+    "name_cn": "水域",
+    "name_en": "Aquatic",
+    "physical_no": 39,
+    "type": "Conservation Project",
+    "unique_id": "128"
+  },
+  {
+    "copy": 1,
+    "name_cn": "地质",
+    "name_en": "Geological",
+    "physical_no": 40,
+    "type": "Conservation Project",
+    "unique_id": "129"
+  },
+  {
+    "copy": 1,
+    "name_cn": "小型动物",
+    "name_en": "Small Animals",
+    "physical_no": 41,
+    "type": "Conservation Project",
+    "unique_id": "130"
+  },
+  {
+    "copy": 1,
+    "name_cn": "大型动物",
+    "name_en": "Large Animals",
+    "physical_no": 42,
+    "type": "Conservation Project",
+    "unique_id": "131"
+  },
+  {
+    "copy": 1,
+    "name_cn": "科研",
+    "name_en": "Research",
+    "physical_no": 43,
+    "type": "Conservation Project",
+    "unique_id": "132"
+  },
+  {
+    "copy": 1,
+    "name_cn": "科研实验室",
+    "name_en": "Science Lab",
+    "physical_no": 44,
+    "type": "Sponsor",
+    "unique_id": "201"
+  },
+  {
+    "copy": 1,
+    "name_cn": "发言人",
+    "name_en": "Spokesperson",
+    "physical_no": 45,
+    "type": "Sponsor",
+    "unique_id": "202"
+  },
+  {
+    "copy": 1,
+    "name_cn": "兽医",
+    "name_en": "Veterinarian",
+    "physical_no": 46,
+    "type": "Sponsor",
+    "unique_id": "203"
+  },
+  {
+    "copy": 1,
+    "name_cn": "科学博物馆",
+    "name_en": "Science Museum",
+    "physical_no": 47,
+    "type": "Sponsor",
+    "unique_id": "204"
+  },
+  {
+    "copy": 1,
+    "name_cn": "大猩猩野外研究",
+    "name_en": "Gorilla Field Research",
+    "physical_no": 48,
+    "type": "Sponsor",
+    "unique_id": "205"
+  },
+  {
+    "copy": 1,
+    "name_cn": "医学突破",
+    "name_en": "Medical Breakthrough",
+    "physical_no": 49,
+    "type": "Sponsor",
+    "unique_id": "206"
+  },
+  {
+    "copy": 1,
+    "name_cn": "基础研究",
+    "name_en": "Basic Research",
+    "physical_no": 50,
+    "type": "Sponsor",
+    "unique_id": "207"
+  },
+  {
+    "copy": 1,
+    "name_cn": "科学图书馆",
+    "name_en": "Science Library",
+    "physical_no": 51,
+    "type": "Sponsor",
+    "unique_id": "208"
+  },
+  {
+    "copy": 1,
+    "name_cn": "技术研究所",
+    "name_en": "Technology Institute",
+    "physical_no": 52,
+    "type": "Sponsor",
+    "unique_id": "209"
+  },
+  {
+    "copy": 1,
+    "name_cn": "美洲专家",
+    "name_en": "Expert On The Americas",
+    "physical_no": 53,
+    "type": "Sponsor",
+    "unique_id": "210"
+  },
+  {
+    "copy": 1,
+    "name_cn": "欧洲专家",
+    "name_en": "Expert On Europe",
+    "physical_no": 54,
+    "type": "Sponsor",
+    "unique_id": "211"
+  },
+  {
+    "copy": 1,
+    "name_cn": "澳大利亚专家",
+    "name_en": "Expert On Australia",
+    "physical_no": 55,
+    "type": "Sponsor",
+    "unique_id": "212"
+  },
+  {
+    "copy": 1,
+    "name_cn": "亚洲专家",
+    "name_en": "Expert On Asia",
+    "physical_no": 56,
+    "type": "Sponsor",
+    "unique_id": "213"
+  },
+  {
+    "copy": 1,
+    "name_cn": "非洲专家",
+    "name_en": "Expert On Africa",
+    "physical_no": 57,
+    "type": "Sponsor",
+    "unique_id": "214"
+  },
+  {
+    "copy": 1,
+    "name_cn": "繁育合作",
+    "name_en": "Breeding Cooperation",
+    "physical_no": 58,
+    "type": "Sponsor",
+    "unique_id": "215"
+  },
+  {
+    "copy": 1,
+    "name_cn": "天才沟通者",
+    "name_en": "Talented Communicator",
+    "physical_no": 59,
+    "type": "Sponsor",
+    "unique_id": "216"
+  },
+  {
+    "copy": 1,
+    "name_cn": "工程师",
+    "name_en": "Engineer",
+    "physical_no": 60,
+    "type": "Sponsor",
+    "unique_id": "217"
+  },
+  {
+    "copy": 1,
+    "name_cn": "繁育计划",
+    "name_en": "Breeding Program",
+    "physical_no": 61,
+    "type": "Sponsor",
+    "unique_id": "218"
+  },
+  {
+    "copy": 1,
+    "name_cn": "多样性研究员",
+    "name_en": "Diversity Researcher",
+    "physical_no": 62,
+    "type": "Sponsor",
+    "unique_id": "219"
+  },
+  {
+    "copy": 1,
+    "name_cn": "联邦资助",
+    "name_en": "Federal Grants",
+    "physical_no": 63,
+    "type": "Sponsor",
+    "unique_id": "220"
+  },
+  {
+    "copy": 1,
+    "name_cn": "考古学家",
+    "name_en": "Archeologist",
+    "physical_no": 64,
+    "type": "Sponsor",
+    "unique_id": "221"
+  },
+  {
+    "copy": 1,
+    "name_cn": "专利公开",
+    "name_en": "Release Of Patents",
+    "physical_no": 65,
+    "type": "Sponsor",
+    "unique_id": "222"
+  },
+  {
+    "copy": 1,
+    "name_cn": "科学研究所",
+    "name_en": "Science Institute",
+    "physical_no": 66,
+    "type": "Sponsor",
+    "unique_id": "223"
+  },
+  {
+    "copy": 1,
+    "name_cn": "迁徙记录",
+    "name_en": "Migration Recording",
+    "physical_no": 67,
+    "type": "Sponsor",
+    "unique_id": "224"
+  },
+  {
+    "copy": 1,
+    "name_cn": "检疫实验室",
+    "name_en": "Quarantine Lab",
+    "physical_no": 68,
+    "type": "Sponsor",
+    "unique_id": "225"
+  },
+  {
+    "copy": 1,
+    "name_cn": "国外研究所",
+    "name_en": "Foreign Institute",
+    "physical_no": 69,
+    "type": "Sponsor",
+    "unique_id": "226"
+  },
+  {
+    "copy": 1,
+    "name_cn": "WAZA 特别任务",
+    "name_en": "WAZA Special Assignment",
+    "physical_no": 70,
+    "type": "Sponsor",
+    "unique_id": "227"
+  },
+  {
+    "copy": 1,
+    "name_cn": "WAZA 小型动物计划",
+    "name_en": "WAZA Small Animal Program",
+    "physical_no": 71,
+    "type": "Sponsor",
+    "unique_id": "228"
+  },
+  {
+    "copy": 1,
+    "name_cn": "小型动物专家",
+    "name_en": "Expert In Small Animals",
+    "physical_no": 72,
+    "type": "Sponsor",
+    "unique_id": "229"
+  },
+  {
+    "copy": 1,
+    "name_cn": "大型动物专家",
+    "name_en": "Expert In Large Animals",
+    "physical_no": 73,
+    "type": "Sponsor",
+    "unique_id": "230"
+  },
+  {
+    "copy": 1,
+    "name_cn": "灵长类赞助",
+    "name_en": "Sponsorship: Primates",
+    "physical_no": 74,
+    "type": "Sponsor",
+    "unique_id": "231"
+  },
+  {
+    "copy": 1,
+    "name_cn": "爬行类赞助",
+    "name_en": "Sponsorship: Reptiles",
+    "physical_no": 75,
+    "type": "Sponsor",
+    "unique_id": "232"
+  },
+  {
+    "copy": 1,
+    "name_cn": "秃鹫赞助",
+    "name_en": "Sponsorship: Vultures",
+    "physical_no": 76,
+    "type": "Sponsor",
+    "unique_id": "233"
+  },
+  {
+    "copy": 1,
+    "name_cn": "狮类赞助",
+    "name_en": "Sponsorship: Lions",
+    "physical_no": 77,
+    "type": "Sponsor",
+    "unique_id": "234"
+  },
+  {
+    "copy": 1,
+    "name_cn": "象类赞助",
+    "name_en": "Sponsorship: Elephants",
+    "physical_no": 78,
+    "type": "Sponsor",
+    "unique_id": "235"
+  },
+  {
+    "copy": 1,
+    "name_cn": "灵长类学家",
+    "name_en": "Primatologist",
+    "physical_no": 79,
+    "type": "Sponsor",
+    "unique_id": "236"
+  },
+  {
+    "copy": 1,
+    "name_cn": "爬虫学家",
+    "name_en": "Herpetologist",
+    "physical_no": 80,
+    "type": "Sponsor",
+    "unique_id": "237"
+  },
+  {
+    "copy": 1,
+    "name_cn": "鸟类学家",
+    "name_en": "Ornithologist",
+    "physical_no": 81,
+    "type": "Sponsor",
+    "unique_id": "238"
+  },
+  {
+    "copy": 1,
+    "name_cn": "食肉动物专家",
+    "name_en": "Expert In Predators",
+    "physical_no": 82,
+    "type": "Sponsor",
+    "unique_id": "239"
+  },
+  {
+    "copy": 1,
+    "name_cn": "食草动物专家",
+    "name_en": "Expert In Herbivores",
+    "physical_no": 83,
+    "type": "Sponsor",
+    "unique_id": "240"
+  },
+  {
+    "copy": 1,
+    "name_cn": "水文学家",
+    "name_en": "Hydrologist",
+    "physical_no": 84,
+    "type": "Sponsor",
+    "unique_id": "241"
+  },
+  {
+    "copy": 1,
+    "name_cn": "地质学家",
+    "name_en": "Geologist",
+    "physical_no": 85,
+    "type": "Sponsor",
+    "unique_id": "242"
+  },
+  {
+    "copy": 1,
+    "name_cn": "猫鼬馆",
+    "name_en": "Meerkat Den",
+    "physical_no": 86,
+    "type": "Sponsor",
+    "unique_id": "243"
+  },
+  {
+    "copy": 1,
+    "name_cn": "企鹅池",
+    "name_en": "Penguin Pool",
+    "physical_no": 87,
+    "type": "Sponsor",
+    "unique_id": "244"
+  },
+  {
+    "copy": 1,
+    "name_cn": "水族馆",
+    "name_en": "Aquarium",
+    "physical_no": 88,
+    "type": "Sponsor",
+    "unique_id": "245"
+  },
+  {
+    "copy": 1,
+    "name_cn": "缆车",
+    "name_en": "Cable Car",
+    "physical_no": 89,
+    "type": "Sponsor",
+    "unique_id": "246"
+  },
+  {
+    "copy": 1,
+    "name_cn": "狒狒岩",
+    "name_en": "Baboon Rock",
+    "physical_no": 90,
+    "type": "Sponsor",
+    "unique_id": "247"
+  },
+  {
+    "copy": 1,
+    "name_cn": "恒河猴园",
+    "name_en": "Rhesus Monkey Park",
+    "physical_no": 91,
+    "type": "Sponsor",
+    "unique_id": "248"
+  },
+  {
+    "copy": 1,
+    "name_cn": "横斑猫头鹰小屋",
+    "name_en": "Barred Owl Hut",
+    "physical_no": 92,
+    "type": "Sponsor",
+    "unique_id": "249"
+  },
+  {
+    "copy": 1,
+    "name_cn": "海龟池",
+    "name_en": "Sea Turtle Tank",
+    "physical_no": 93,
+    "type": "Sponsor",
+    "unique_id": "250"
+  },
+  {
+    "copy": 1,
+    "name_cn": "北极熊展区",
+    "name_en": "Polar Bear Exhibit",
+    "physical_no": 94,
+    "type": "Sponsor",
+    "unique_id": "251"
+  },
+  {
+    "copy": 1,
+    "name_cn": "斑鬣狗馆",
+    "name_en": "Spotted Hyena Compound",
+    "physical_no": 95,
+    "type": "Sponsor",
+    "unique_id": "252"
+  },
+  {
+    "copy": 1,
+    "name_cn": "霍加狓厩舍",
+    "name_en": "Okapi Stable",
+    "physical_no": 96,
+    "type": "Sponsor",
+    "unique_id": "253"
+  },
+  {
+    "copy": 1,
+    "name_cn": "动物园学校",
+    "name_en": "Zoo School",
+    "physical_no": 97,
+    "type": "Sponsor",
+    "unique_id": "254"
+  },
+  {
+    "copy": 1,
+    "name_cn": "探险游乐场",
+    "name_en": "Adventure Playground",
+    "physical_no": 98,
+    "type": "Sponsor",
+    "unique_id": "255"
+  },
+  {
+    "copy": 1,
+    "name_cn": "水上游乐场",
+    "name_en": "Water Playground",
+    "physical_no": 99,
+    "type": "Sponsor",
+    "unique_id": "256"
+  },
+  {
+    "copy": 1,
+    "name_cn": "侧门",
+    "name_en": "Side Entrance",
+    "physical_no": 100,
+    "type": "Sponsor",
+    "unique_id": "257"
+  },
+  {
+    "copy": 1,
+    "name_cn": "本地海鸟",
+    "name_en": "Native Seabirds",
+    "physical_no": 101,
+    "type": "Sponsor",
+    "unique_id": "258"
+  },
+  {
+    "copy": 1,
+    "name_cn": "本地蜥蜴",
+    "name_en": "Native Lizards",
+    "physical_no": 102,
+    "type": "Sponsor",
+    "unique_id": "259"
+  },
+  {
+    "copy": 1,
+    "name_cn": "本地农场动物",
+    "name_en": "Native Farm Animals",
+    "physical_no": 103,
+    "type": "Sponsor",
+    "unique_id": "260"
+  },
+  {
+    "copy": 1,
+    "name_cn": "学校导览",
+    "name_en": "Guided School Tours",
+    "physical_no": 104,
+    "type": "Sponsor",
+    "unique_id": "261"
+  },
+  {
+    "copy": 1,
+    "name_cn": "探险家",
+    "name_en": "Explorer",
+    "physical_no": 105,
+    "type": "Sponsor",
+    "unique_id": "262"
+  },
+  {
+    "copy": 1,
+    "name_cn": "WAZA 大型动物计划",
+    "name_en": "WAZA Large Animal Program",
+    "physical_no": 106,
+    "type": "Sponsor",
+    "unique_id": "263"
+  },
+  {
+    "copy": 1,
+    "name_cn": "自由放养新世界猴",
+    "name_en": "Free-Range New World Monkeys",
+    "physical_no": 107,
+    "type": "Sponsor",
+    "unique_id": "264"
+  },
+  {
+    "copy": 1,
+    "name_cn": "猎豹",
+    "name_en": "Cheetah",
+    "physical_no": 108,
+    "type": "Animal",
+    "unique_id": "401"
+  },
+  {
+    "copy": 1,
+    "name_cn": "狮子",
+    "name_en": "Lion",
+    "physical_no": 109,
+    "type": "Animal",
+    "unique_id": "402"
+  },
+  {
+    "copy": 1,
+    "name_cn": "豹",
+    "name_en": "Leopard",
+    "physical_no": 110,
+    "type": "Animal",
+    "unique_id": "403"
+  },
+  {
+    "copy": 1,
+    "name_cn": "狞猫",
+    "name_en": "Caracal",
+    "physical_no": 111,
+    "type": "Animal",
+    "unique_id": "404"
+  },
+  {
+    "copy": 1,
+    "name_cn": "耳廓狐",
+    "name_en": "Fennec Fox",
+    "physical_no": 112,
+    "type": "Animal",
+    "unique_id": "405"
+  },
+  {
+    "copy": 1,
+    "name_cn": "西伯利亚虎",
+    "name_en": "Siberian Tiger",
+    "physical_no": 113,
+    "type": "Animal",
+    "unique_id": "406"
+  },
+  {
+    "copy": 1,
+    "name_cn": "苏门答腊虎",
+    "name_en": "Sumatran Tiger",
+    "physical_no": 114,
+    "type": "Animal",
+    "unique_id": "407"
+  },
+  {
+    "copy": 1,
+    "name_cn": "懒熊",
+    "name_en": "Sloth Bear",
+    "physical_no": 115,
+    "type": "Animal",
+    "unique_id": "408"
+  },
+  {
+    "copy": 1,
+    "name_cn": "马来熊",
+    "name_en": "Sun Bear",
+    "physical_no": 116,
+    "type": "Animal",
+    "unique_id": "409"
+  },
+  {
+    "copy": 1,
+    "name_cn": "黄喉貂",
+    "name_en": "Yellow-Throated Marten",
+    "physical_no": 117,
+    "type": "Animal",
+    "unique_id": "410"
+  },
+  {
+    "copy": 1,
+    "name_cn": "灰熊",
+    "name_en": "Grizzly Bear",
+    "physical_no": 118,
+    "type": "Animal",
+    "unique_id": "411"
+  },
+  {
+    "copy": 1,
+    "name_cn": "美洲豹",
+    "name_en": "Jaguar",
+    "physical_no": 119,
+    "type": "Animal",
+    "unique_id": "412"
+  },
+  {
+    "copy": 1,
+    "name_cn": "美洲狮",
+    "name_en": "Cougar",
+    "physical_no": 120,
+    "type": "Animal",
+    "unique_id": "413"
+  },
+  {
+    "copy": 1,
+    "name_cn": "南美长鼻浣熊",
+    "name_en": "South American Coati",
+    "physical_no": 121,
+    "type": "Animal",
+    "unique_id": "414"
+  },
+  {
+    "copy": 1,
+    "name_cn": "浣熊",
+    "name_en": "Raccoon",
+    "physical_no": 122,
+    "type": "Animal",
+    "unique_id": "415"
+  },
+  {
+    "copy": 1,
+    "name_cn": "欧亚棕熊",
+    "name_en": "Eurasian Brown Bear",
+    "physical_no": 123,
+    "type": "Animal",
+    "unique_id": "416"
+  },
+  {
+    "copy": 1,
+    "name_cn": "狼",
+    "name_en": "Wolf",
+    "physical_no": 124,
+    "type": "Animal",
+    "unique_id": "417"
+  },
+  {
+    "copy": 1,
+    "name_cn": "欧亚猞猁",
+    "name_en": "Eurasian Lynx",
+    "physical_no": 125,
+    "type": "Animal",
+    "unique_id": "418"
+  },
+  {
+    "copy": 1,
+    "name_cn": "欧洲獾",
+    "name_en": "European Badger",
+    "physical_no": 126,
+    "type": "Animal",
+    "unique_id": "419"
+  },
+  {
+    "copy": 1,
+    "name_cn": "白鼬",
+    "name_en": "Stoat",
+    "physical_no": 127,
+    "type": "Animal",
+    "unique_id": "420"
+  },
+  {
+    "copy": 1,
+    "name_cn": "新西兰软毛海狗",
+    "name_en": "New Zealand Fur Seal",
+    "physical_no": 128,
+    "type": "Animal",
+    "unique_id": "421"
+  },
+  {
+    "copy": 1,
+    "name_cn": "澳大利亚海狮",
+    "name_en": "Australian Sea Lion",
+    "physical_no": 129,
+    "type": "Animal",
+    "unique_id": "422"
+  },
+  {
+    "copy": 1,
+    "name_cn": "新西兰海狮",
+    "name_en": "New Zealand Sea Lion",
+    "physical_no": 130,
+    "type": "Animal",
+    "unique_id": "423"
+  },
+  {
+    "copy": 1,
+    "name_cn": "澳洲野犬",
+    "name_en": "Australian Dingo",
+    "physical_no": 131,
+    "type": "Animal",
+    "unique_id": "424"
+  },
+  {
+    "copy": 1,
+    "name_cn": "袋獾",
+    "name_en": "Tasmanian Devil",
+    "physical_no": 132,
+    "type": "Animal",
+    "unique_id": "425"
+  },
+  {
+    "copy": 1,
+    "name_cn": "非洲草原象",
+    "name_en": "African Bush Elephant",
+    "physical_no": 133,
+    "type": "Animal",
+    "unique_id": "426"
+  },
+  {
+    "copy": 1,
+    "name_cn": "白犀牛",
+    "name_en": "White Rhinoceros",
+    "physical_no": 134,
+    "type": "Animal",
+    "unique_id": "427"
+  },
+  {
+    "copy": 1,
+    "name_cn": "长颈鹿",
+    "name_en": "Giraffe",
+    "physical_no": 135,
+    "type": "Animal",
+    "unique_id": "428"
+  },
+  {
+    "copy": 1,
+    "name_cn": "格氏斑马",
+    "name_en": "Grevy's Zebra",
+    "physical_no": 136,
+    "type": "Animal",
+    "unique_id": "429"
+  },
+  {
+    "copy": 1,
+    "name_cn": "倭河马",
+    "name_en": "Pygmy Hippopotamus",
+    "physical_no": 137,
+    "type": "Animal",
+    "unique_id": "430"
+  },
+  {
+    "copy": 1,
+    "name_cn": "亚洲象",
+    "name_en": "Asian Elephant",
+    "physical_no": 138,
+    "type": "Animal",
+    "unique_id": "431"
+  },
+  {
+    "copy": 1,
+    "name_cn": "印度犀牛",
+    "name_en": "Indian Rhinoceros",
+    "physical_no": 139,
+    "type": "Animal",
+    "unique_id": "432"
+  },
+  {
+    "copy": 1,
+    "name_cn": "大熊猫",
+    "name_en": "Giant Panda",
+    "physical_no": 140,
+    "type": "Animal",
+    "unique_id": "433"
+  },
+  {
+    "copy": 1,
+    "name_cn": "小熊猫",
+    "name_en": "Red Panda",
+    "physical_no": 141,
+    "type": "Animal",
+    "unique_id": "434"
+  },
+  {
+    "copy": 1,
+    "name_cn": "马来貘",
+    "name_en": "Malayan Tapir",
+    "physical_no": 142,
+    "type": "Animal",
+    "unique_id": "435"
+  },
+  {
+    "copy": 1,
+    "name_cn": "美洲野牛",
+    "name_en": "American Bison",
+    "physical_no": 143,
+    "type": "Animal",
+    "unique_id": "436"
+  },
+  {
+    "copy": 1,
+    "name_cn": "麝牛",
+    "name_en": "Muskox",
+    "physical_no": 144,
+    "type": "Animal",
+    "unique_id": "437"
+  },
+  {
+    "copy": 1,
+    "name_cn": "驯鹿",
+    "name_en": "Reindeer",
+    "physical_no": 145,
+    "type": "Animal",
+    "unique_id": "438"
+  },
+  {
+    "copy": 1,
+    "name_cn": "大羊驼",
+    "name_en": "Llama",
+    "physical_no": 146,
+    "type": "Animal",
+    "unique_id": "439"
+  },
+  {
+    "copy": 1,
+    "name_cn": "山貘",
+    "name_en": "Mountain Tapir",
+    "physical_no": 147,
+    "type": "Animal",
+    "unique_id": "440"
+  },
+  {
+    "copy": 1,
+    "name_cn": "欧洲野牛",
+    "name_en": "European Bison",
+    "physical_no": 148,
+    "type": "Animal",
+    "unique_id": "441"
+  },
+  {
+    "copy": 1,
+    "name_cn": "驼鹿",
+    "name_en": "Moose",
+    "physical_no": 149,
+    "type": "Animal",
+    "unique_id": "442"
+  },
+  {
+    "copy": 1,
+    "name_cn": "马鹿",
+    "name_en": "Red Deer",
+    "physical_no": 150,
+    "type": "Animal",
+    "unique_id": "443"
+  },
+  {
+    "copy": 1,
+    "name_cn": "阿尔卑斯山羊",
+    "name_en": "Alpine Ibex",
+    "physical_no": 151,
+    "type": "Animal",
+    "unique_id": "444"
+  },
+  {
+    "copy": 1,
+    "name_cn": "冠豪猪",
+    "name_en": "Crested Porcupine",
+    "physical_no": 152,
+    "type": "Animal",
+    "unique_id": "445"
+  },
+  {
+    "copy": 1,
+    "name_cn": "儒艮",
+    "name_en": "Dugong",
+    "physical_no": 153,
+    "type": "Animal",
+    "unique_id": "446"
+  },
+  {
+    "copy": 1,
+    "name_cn": "红大袋鼠",
+    "name_en": "Red Kangaroo",
+    "physical_no": 154,
+    "type": "Animal",
+    "unique_id": "447"
+  },
+  {
+    "copy": 1,
+    "name_cn": "考拉",
+    "name_en": "Koala",
+    "physical_no": 155,
+    "type": "Animal",
+    "unique_id": "448"
+  },
+  {
+    "copy": 1,
+    "name_cn": "鸭嘴兽",
+    "name_en": "Platypus",
+    "physical_no": 156,
+    "type": "Animal",
+    "unique_id": "449"
+  },
+  {
+    "copy": 1,
+    "name_cn": "普通袋熊",
+    "name_en": "Common Wombat",
+    "physical_no": 157,
+    "type": "Animal",
+    "unique_id": "450"
+  },
+  {
+    "copy": 1,
+    "name_cn": "长鼻猴",
+    "name_en": "Proboscis Monkey",
+    "physical_no": 158,
+    "type": "Animal",
+    "unique_id": "451"
+  },
+  {
+    "copy": 1,
+    "name_cn": "塞内加尔婴猴",
+    "name_en": "Senegal Bushbaby",
+    "physical_no": 159,
+    "type": "Animal",
+    "unique_id": "452"
+  },
+  {
+    "copy": 1,
+    "name_cn": "领白眉猴",
+    "name_en": "Collared Mangabey",
+    "physical_no": 160,
+    "type": "Animal",
+    "unique_id": "453"
+  },
+  {
+    "copy": 1,
+    "name_cn": "环尾狐猴",
+    "name_en": "Ring-Tailed Lemur",
+    "physical_no": 161,
+    "type": "Animal",
+    "unique_id": "454"
+  },
+  {
+    "copy": 1,
+    "name_cn": "东非黑白疣猴",
+    "name_en": "Mantled Guereza",
+    "physical_no": 162,
+    "type": "Animal",
+    "unique_id": "455"
+  },
+  {
+    "copy": 1,
+    "name_cn": "巴巴里猕猴",
+    "name_en": "Barbary Macaque",
+    "physical_no": 163,
+    "type": "Animal",
+    "unique_id": "456"
+  },
+  {
+    "copy": 1,
+    "name_cn": "山魈",
+    "name_en": "Mandrill",
+    "physical_no": 164,
+    "type": "Animal",
+    "unique_id": "457"
+  },
+  {
+    "copy": 1,
+    "name_cn": "日本猕猴",
+    "name_en": "Japanese Macaque",
+    "physical_no": 165,
+    "type": "Animal",
+    "unique_id": "458"
+  },
+  {
+    "copy": 1,
+    "name_cn": "红腿白臀叶猴",
+    "name_en": "Red-Shanked Douc",
+    "physical_no": 166,
+    "type": "Animal",
+    "unique_id": "459"
+  },
+  {
+    "copy": 1,
+    "name_cn": "暗色叶猴",
+    "name_en": "Dusky Leaf Monkey",
+    "physical_no": 167,
+    "type": "Animal",
+    "unique_id": "460"
+  },
+  {
+    "copy": 1,
+    "name_cn": "霍氏眼镜猴",
+    "name_en": "Horsfield's Tarsier",
+    "physical_no": 168,
+    "type": "Animal",
+    "unique_id": "461"
+  },
+  {
+    "copy": 1,
+    "name_cn": "北平原灰叶猴",
+    "name_en": "Northern Plains Gray Langur",
+    "physical_no": 169,
+    "type": "Animal",
+    "unique_id": "462"
+  },
+  {
+    "copy": 1,
+    "name_cn": "巴拿马白脸卷尾猴",
+    "name_en": "Panamanian White-Faced Capuchin",
+    "physical_no": 170,
+    "type": "Animal",
+    "unique_id": "463"
+  },
+  {
+    "copy": 1,
+    "name_cn": "棕蛛猴",
+    "name_en": "Brown Spider Monkey",
+    "physical_no": 171,
+    "type": "Animal",
+    "unique_id": "464"
+  },
+  {
+    "copy": 1,
+    "name_cn": "金狮面狨",
+    "name_en": "Golden Lion Tamarin",
+    "physical_no": 172,
+    "type": "Animal",
+    "unique_id": "465"
+  },
+  {
+    "copy": 1,
+    "name_cn": "玻利维亚红吼猴",
+    "name_en": "Bolivian Red Howler",
+    "physical_no": 173,
+    "type": "Animal",
+    "unique_id": "466"
+  },
+  {
+    "copy": 1,
+    "name_cn": "厄瓜多尔松鼠猴",
+    "name_en": "Ecuadorian Squirrel Monkey",
+    "physical_no": 174,
+    "type": "Animal",
+    "unique_id": "467"
+  },
+  {
+    "copy": 1,
+    "name_cn": "棉顶狨",
+    "name_en": "Cotton-Top Tamarin",
+    "physical_no": 175,
+    "type": "Animal",
+    "unique_id": "468"
+  },
+  {
+    "copy": 1,
+    "name_cn": "尼罗鳄",
+    "name_en": "Nile Crocodile",
+    "physical_no": 176,
+    "type": "Animal",
+    "unique_id": "469"
+  },
+  {
+    "copy": 1,
+    "name_cn": "西部绿曼巴",
+    "name_en": "Western Green Mamba",
+    "physical_no": 177,
+    "type": "Animal",
+    "unique_id": "470"
+  },
+  {
+    "copy": 1,
+    "name_cn": "苏卡达陆龟",
+    "name_en": "African Spurred Tortoise",
+    "physical_no": 178,
+    "type": "Animal",
+    "unique_id": "471"
+  },
+  {
+    "copy": 1,
+    "name_cn": "岩巨蜥",
+    "name_en": "Rock Monitor",
+    "physical_no": 179,
+    "type": "Animal",
+    "unique_id": "472"
+  },
+  {
+    "copy": 1,
+    "name_cn": "普通鬣蜥",
+    "name_en": "Common Agama",
+    "physical_no": 180,
+    "type": "Animal",
+    "unique_id": "473"
+  },
+  {
+    "copy": 1,
+    "name_cn": "印度岩蟒",
+    "name_en": "Indian Rock Python",
+    "physical_no": 181,
+    "type": "Animal",
+    "unique_id": "474"
+  },
+  {
+    "copy": 1,
+    "name_cn": "眼镜王蛇",
+    "name_en": "King Cobra",
+    "physical_no": 182,
+    "type": "Animal",
+    "unique_id": "475"
+  },
+  {
+    "copy": 1,
+    "name_cn": "科莫多巨蜥",
+    "name_en": "Komodo Dragon",
+    "physical_no": 183,
+    "type": "Animal",
+    "unique_id": "476"
+  },
+  {
+    "copy": 1,
+    "name_cn": "高冠变色龙",
+    "name_en": "Veiled Chameleon",
+    "physical_no": 184,
+    "type": "Animal",
+    "unique_id": "477"
+  },
+  {
+    "copy": 1,
+    "name_cn": "中国水龙",
+    "name_en": "Chinese Water Dragon",
+    "physical_no": 185,
+    "type": "Animal",
+    "unique_id": "478"
+  },
+  {
+    "copy": 1,
+    "name_cn": "密西西比短吻鳄",
+    "name_en": "American Alligator",
+    "physical_no": 186,
+    "type": "Animal",
+    "unique_id": "479"
+  },
+  {
+    "copy": 1,
+    "name_cn": "宽吻凯门鳄",
+    "name_en": "Broad-Snouted Caiman",
+    "physical_no": 187,
+    "type": "Animal",
+    "unique_id": "480"
+  },
+  {
+    "copy": 1,
+    "name_cn": "加拉帕戈斯象龟",
+    "name_en": "Galapagos Giant Tortoise",
+    "physical_no": 188,
+    "type": "Animal",
+    "unique_id": "481"
+  },
+  {
+    "copy": 1,
+    "name_cn": "森蚺",
+    "name_en": "Anaconda",
+    "physical_no": 189,
+    "type": "Animal",
+    "unique_id": "482"
+  },
+  {
+    "copy": 1,
+    "name_cn": "红尾蚺",
+    "name_en": "Boa Constrictor",
+    "physical_no": 190,
+    "type": "Animal",
+    "unique_id": "483"
+  },
+  {
+    "copy": 1,
+    "name_cn": "欧洲泽龟",
+    "name_en": "European Pond Turtle",
+    "physical_no": 191,
+    "type": "Animal",
+    "unique_id": "484"
+  },
+  {
+    "copy": 1,
+    "name_cn": "欧洲蝰蛇",
+    "name_en": "Common European Adder",
+    "physical_no": 192,
+    "type": "Animal",
+    "unique_id": "485"
+  },
+  {
+    "copy": 1,
+    "name_cn": "欧洲壁蜥",
+    "name_en": "Common Wall Lizard",
+    "physical_no": 193,
+    "type": "Animal",
+    "unique_id": "486"
+  },
+  {
+    "copy": 1,
+    "name_cn": "欧洲草蛇",
+    "name_en": "European Grass Snake",
+    "physical_no": 194,
+    "type": "Animal",
+    "unique_id": "487"
+  },
+  {
+    "copy": 1,
+    "name_cn": "蛇蜥",
+    "name_en": "Slow Worm",
+    "physical_no": 195,
+    "type": "Animal",
+    "unique_id": "488"
+  },
+  {
+    "copy": 1,
+    "name_cn": "湾鳄",
+    "name_en": "Saltwater Crocodile",
+    "physical_no": 196,
+    "type": "Animal",
+    "unique_id": "489"
+  },
+  {
+    "copy": 1,
+    "name_cn": "古氏巨蜥",
+    "name_en": "Gould's Monitor",
+    "physical_no": 197,
+    "type": "Animal",
+    "unique_id": "490"
+  },
+  {
+    "copy": 1,
+    "name_cn": "伞蜥",
+    "name_en": "Frilled Lizard",
+    "physical_no": 198,
+    "type": "Animal",
+    "unique_id": "491"
+  },
+  {
+    "copy": 1,
+    "name_cn": "内陆太攀蛇",
+    "name_en": "Inland Taipan",
+    "physical_no": 199,
+    "type": "Animal",
+    "unique_id": "492"
+  },
+  {
+    "copy": 1,
+    "name_cn": "刺魔蜥",
+    "name_en": "Thorny Devil",
+    "physical_no": 200,
+    "type": "Animal",
+    "unique_id": "493"
+  },
+  {
+    "copy": 1,
+    "name_cn": "非洲鸵鸟",
+    "name_en": "African Ostrich",
+    "physical_no": 201,
+    "type": "Animal",
+    "unique_id": "494"
+  },
+  {
+    "copy": 1,
+    "name_cn": "蛇鹫",
+    "name_en": "Secretary Bird",
+    "physical_no": 202,
+    "type": "Animal",
+    "unique_id": "495"
+  },
+  {
+    "copy": 1,
+    "name_cn": "非洲秃鹳",
+    "name_en": "Marabou",
+    "physical_no": 203,
+    "type": "Animal",
+    "unique_id": "496"
+  },
+  {
+    "copy": 1,
+    "name_cn": "小红鹳",
+    "name_en": "Lesser Flamingo",
+    "physical_no": 204,
+    "type": "Animal",
+    "unique_id": "497"
+  },
+  {
+    "copy": 1,
+    "name_cn": "鲸头鹳",
+    "name_en": "Shoebill",
+    "physical_no": 205,
+    "type": "Animal",
+    "unique_id": "498"
+  },
+  {
+    "copy": 1,
+    "name_cn": "黑兀鹫",
+    "name_en": "Cinereous Vulture",
+    "physical_no": 206,
+    "type": "Animal",
+    "unique_id": "499"
+  },
+  {
+    "copy": 1,
+    "name_cn": "长嘴兀鹫",
+    "name_en": "Long-Billed Vulture",
+    "physical_no": 207,
+    "type": "Animal",
+    "unique_id": "500"
+  },
+  {
+    "copy": 1,
+    "name_cn": "印度孔雀",
+    "name_en": "Indian Peafowl",
+    "physical_no": 208,
+    "type": "Animal",
+    "unique_id": "501"
+  },
+  {
+    "copy": 1,
+    "name_cn": "大犀鸟",
+    "name_en": "Great Hornbill",
+    "physical_no": 209,
+    "type": "Animal",
+    "unique_id": "502"
+  },
+  {
+    "copy": 1,
+    "name_cn": "雪鸮",
+    "name_en": "Snowy Owl",
+    "physical_no": 210,
+    "type": "Animal",
+    "unique_id": "503"
+  },
+  {
+    "copy": 1,
+    "name_cn": "安第斯神鹫",
+    "name_en": "Andean Condor",
+    "physical_no": 211,
+    "type": "Animal",
+    "unique_id": "504"
+  },
+  {
+    "copy": 1,
+    "name_cn": "白头海雕",
+    "name_en": "Bald Eagle",
+    "physical_no": 212,
+    "type": "Animal",
+    "unique_id": "505"
+  },
+  {
+    "copy": 1,
+    "name_cn": "王鹫",
+    "name_en": "King Vulture",
+    "physical_no": 213,
+    "type": "Animal",
+    "unique_id": "506"
+  },
+  {
+    "copy": 1,
+    "name_cn": "大美洲鸵",
+    "name_en": "Greater Rhea",
+    "physical_no": 214,
+    "type": "Animal",
+    "unique_id": "507"
+  },
+  {
+    "copy": 1,
+    "name_cn": "绯红金刚鹦鹉",
+    "name_en": "Scarlet Macaw",
+    "physical_no": 215,
+    "type": "Animal",
+    "unique_id": "508"
+  },
+  {
+    "copy": 1,
+    "name_cn": "金雕",
+    "name_en": "Golden Eagle",
+    "physical_no": 216,
+    "type": "Animal",
+    "unique_id": "509"
+  },
+  {
+    "copy": 1,
+    "name_cn": "白鹳",
+    "name_en": "White Stork",
+    "physical_no": 217,
+    "type": "Animal",
+    "unique_id": "510"
+  },
+  {
+    "copy": 1,
+    "name_cn": "大红鹳",
+    "name_en": "Greater Flamingo",
+    "physical_no": 218,
+    "type": "Animal",
+    "unique_id": "511"
+  },
+  {
+    "copy": 1,
+    "name_cn": "雕鸮",
+    "name_en": "Eurasian Eagle-Owl",
+    "physical_no": 219,
+    "type": "Animal",
+    "unique_id": "512"
+  },
+  {
+    "copy": 1,
+    "name_cn": "仓鸮",
+    "name_en": "Barn Owl",
+    "physical_no": 220,
+    "type": "Animal",
+    "unique_id": "513"
+  },
+  {
+    "copy": 1,
+    "name_cn": "鸸鹋",
+    "name_en": "Emu",
+    "physical_no": 221,
+    "type": "Animal",
+    "unique_id": "514"
+  },
+  {
+    "copy": 1,
+    "name_cn": "澳大利亚鹈鹕",
+    "name_en": "Australian Pelican",
+    "physical_no": 222,
+    "type": "Animal",
+    "unique_id": "515"
+  },
+  {
+    "copy": 1,
+    "name_cn": "北方鹤鸵",
+    "name_en": "Northern Cassowary",
+    "physical_no": 223,
+    "type": "Animal",
+    "unique_id": "516"
+  },
+  {
+    "copy": 1,
+    "name_cn": "笑翠鸟",
+    "name_en": "Laughing Kookaburra",
+    "physical_no": 224,
+    "type": "Animal",
+    "unique_id": "517"
+  },
+  {
+    "copy": 1,
+    "name_cn": "小极乐鸟",
+    "name_en": "Lesser Bird-Of-Paradise",
+    "physical_no": 225,
+    "type": "Animal",
+    "unique_id": "518"
+  },
+  {
+    "copy": 1,
+    "name_cn": "家山羊",
+    "name_en": "(Domestic) Goat",
+    "physical_no": 226,
+    "type": "Animal",
+    "unique_id": "519"
+  },
+  {
+    "copy": 1,
+    "name_cn": "绵羊",
+    "name_en": "Sheep",
+    "physical_no": 227,
+    "type": "Animal",
+    "unique_id": "520"
+  },
+  {
+    "copy": 1,
+    "name_cn": "马",
+    "name_en": "Horse",
+    "physical_no": 228,
+    "type": "Animal",
+    "unique_id": "521"
+  },
+  {
+    "copy": 1,
+    "name_cn": "驴",
+    "name_en": "Donkey",
+    "physical_no": 229,
+    "type": "Animal",
+    "unique_id": "522"
+  },
+  {
+    "copy": 1,
+    "name_cn": "家兔",
+    "name_en": "Domestic Rabbit",
+    "physical_no": 230,
+    "type": "Animal",
+    "unique_id": "523"
+  },
+  {
+    "copy": 1,
+    "name_cn": "曼加利察猪",
+    "name_en": "Mangalica",
+    "physical_no": 231,
+    "type": "Animal",
+    "unique_id": "524"
+  },
+  {
+    "copy": 1,
+    "name_cn": "豚鼠",
+    "name_en": "Guinea Pig",
+    "physical_no": 232,
+    "type": "Animal",
+    "unique_id": "525"
+  },
+  {
+    "copy": 1,
+    "name_cn": "羊驼",
+    "name_en": "Alpaca",
+    "physical_no": 233,
+    "type": "Animal",
+    "unique_id": "526"
+  },
+  {
+    "copy": 1,
+    "name_cn": "椰子吸蜜鹦鹉",
+    "name_en": "Coconut Lorikeet",
+    "physical_no": 234,
+    "type": "Animal",
+    "unique_id": "527"
+  },
+  {
+    "copy": 1,
+    "name_cn": "本氏沙袋鼠",
+    "name_en": "Bennett's Wallaby",
+    "physical_no": 235,
+    "type": "Animal",
+    "unique_id": "528"
+  },
+  {
+    "copy": 1,
+    "name_cn": "建造",
+    "name_en": "Build",
+    "physical_no": 236,
+    "type": "Action",
+    "unique_id": "A-BUILD"
+  },
+  {
+    "copy": 2,
+    "name_cn": "建造",
+    "name_en": "Build",
+    "physical_no": 237,
+    "type": "Action",
+    "unique_id": "A-BUILD"
+  },
+  {
+    "copy": 3,
+    "name_cn": "建造",
+    "name_en": "Build",
+    "physical_no": 238,
+    "type": "Action",
+    "unique_id": "A-BUILD"
+  },
+  {
+    "copy": 4,
+    "name_cn": "建造",
+    "name_en": "Build",
+    "physical_no": 239,
+    "type": "Action",
+    "unique_id": "A-BUILD"
+  },
+  {
+    "copy": 1,
+    "name_cn": "动物",
+    "name_en": "Animals",
+    "physical_no": 240,
+    "type": "Action",
+    "unique_id": "A-ANIMALS"
+  },
+  {
+    "copy": 2,
+    "name_cn": "动物",
+    "name_en": "Animals",
+    "physical_no": 241,
+    "type": "Action",
+    "unique_id": "A-ANIMALS"
+  },
+  {
+    "copy": 3,
+    "name_cn": "动物",
+    "name_en": "Animals",
+    "physical_no": 242,
+    "type": "Action",
+    "unique_id": "A-ANIMALS"
+  },
+  {
+    "copy": 4,
+    "name_cn": "动物",
+    "name_en": "Animals",
+    "physical_no": 243,
+    "type": "Action",
+    "unique_id": "A-ANIMALS"
+  },
+  {
+    "copy": 1,
+    "name_cn": "卡牌",
+    "name_en": "Cards",
+    "physical_no": 244,
+    "type": "Action",
+    "unique_id": "A-CARDS"
+  },
+  {
+    "copy": 2,
+    "name_cn": "卡牌",
+    "name_en": "Cards",
+    "physical_no": 245,
+    "type": "Action",
+    "unique_id": "A-CARDS"
+  },
+  {
+    "copy": 3,
+    "name_cn": "卡牌",
+    "name_en": "Cards",
+    "physical_no": 246,
+    "type": "Action",
+    "unique_id": "A-CARDS"
+  },
+  {
+    "copy": 4,
+    "name_cn": "卡牌",
+    "name_en": "Cards",
+    "physical_no": 247,
+    "type": "Action",
+    "unique_id": "A-CARDS"
+  },
+  {
+    "copy": 1,
+    "name_cn": "协会",
+    "name_en": "Association",
+    "physical_no": 248,
+    "type": "Action",
+    "unique_id": "A-ASSOCIATION"
+  },
+  {
+    "copy": 2,
+    "name_cn": "协会",
+    "name_en": "Association",
+    "physical_no": 249,
+    "type": "Action",
+    "unique_id": "A-ASSOCIATION"
+  },
+  {
+    "copy": 3,
+    "name_cn": "协会",
+    "name_en": "Association",
+    "physical_no": 250,
+    "type": "Action",
+    "unique_id": "A-ASSOCIATION"
+  },
+  {
+    "copy": 4,
+    "name_cn": "协会",
+    "name_en": "Association",
+    "physical_no": 251,
+    "type": "Action",
+    "unique_id": "A-ASSOCIATION"
+  },
+  {
+    "copy": 1,
+    "name_cn": "赞助商",
+    "name_en": "Sponsors",
+    "physical_no": 252,
+    "type": "Action",
+    "unique_id": "A-SPONSORS"
+  },
+  {
+    "copy": 2,
+    "name_cn": "赞助商",
+    "name_en": "Sponsors",
+    "physical_no": 253,
+    "type": "Action",
+    "unique_id": "A-SPONSORS"
+  },
+  {
+    "copy": 3,
+    "name_cn": "赞助商",
+    "name_en": "Sponsors",
+    "physical_no": 254,
+    "type": "Action",
+    "unique_id": "A-SPONSORS"
+  },
+  {
+    "copy": 4,
+    "name_cn": "赞助商",
+    "name_en": "Sponsors",
+    "physical_no": 255,
+    "type": "Action",
+    "unique_id": "A-SPONSORS"
+  }
+]

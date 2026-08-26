@@ -35,6 +35,7 @@
           "ordinal": {"type": "integer", "minimum": 1},
           "status": {"enum": ["ok", "error"]},
           "game": {"type": "string", "minLength": 1},
+          "rules_version": {"type": "string", "minLength": 1},
           "seed": {"type": "integer"},
           "player_count": {"type": "integer", "minimum": 2, "maximum": 4},
           "participants": {"type": "array", "minItems": 2, "maxItems": 4},

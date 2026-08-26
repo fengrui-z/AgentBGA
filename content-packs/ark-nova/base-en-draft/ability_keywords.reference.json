@@ -1,0 +1,425 @@
+[
+  {
+    "effect_cn": "完成当前行动后，可将任意1张行动牌移到1号位。",
+    "effect_en": "After resolving the current action, you may move any one action card to slot 1.",
+    "key": "clever",
+    "keyword": "CLEVER",
+    "name_cn": "机敏",
+    "name_en": "Clever",
+    "resource_or_marker": "action-card position"
+  },
+  {
+    "effect_cn": "可从手牌中弃掉/出售至多X张牌，每张获得4金钱。",
+    "effect_en": "You may discard/sell up to X cards from hand for 4 money each.",
+    "key": "sun_bathing",
+    "keyword": "SUN_BATHING",
+    "name_cn": "日光浴",
+    "name_en": "Sun Bathing",
+    "resource_or_marker": "money / hand cards"
+  },
+  {
+    "effect_cn": "可将至多X张手牌压在该动物下，每张获得2魅力。",
+    "effect_en": "You may tuck up to X hand cards under this animal; gain 2 appeal per card tucked.",
+    "key": "pouch",
+    "keyword": "POUCH",
+    "name_cn": "育儿袋",
+    "name_en": "Pouch",
+    "resource_or_marker": "tucked cards"
+  },
+  {
+    "effect_cn": "展示牌库顶X张牌；可拿走其中1张动物牌，其余弃掉。",
+    "effect_en": "Reveal the top X cards of the deck; keep one Animal card among them and discard the rest.",
+    "key": "hunter",
+    "keyword": "HUNTER",
+    "name_cn": "猎手",
+    "name_en": "Hunter",
+    "resource_or_marker": "deck cards"
+  },
+  {
+    "effect_cn": "从牌库抽X张牌。",
+    "effect_en": "Draw X cards from the deck.",
+    "key": "sprint",
+    "keyword": "SPRINT",
+    "name_cn": "冲刺",
+    "name_en": "Sprint",
+    "resource_or_marker": "cards"
+  },
+  {
+    "effect_cn": "按自己动物园中的食肉动物图标数量获得魅力。",
+    "effect_en": "Gain appeal based on the predator icons already present in your zoo.",
+    "key": "pack",
+    "keyword": "PACK",
+    "name_cn": "群猎",
+    "name_en": "Pack",
+    "resource_or_marker": "appeal"
+  },
+  {
+    "effect_cn": "将休息标记推进X格，并获得X金钱。",
+    "effect_en": "Advance the break marker X spaces and gain X money.",
+    "key": "jumping",
+    "keyword": "JUMPING",
+    "name_cn": "跳跃",
+    "name_en": "Jumping",
+    "resource_or_marker": "break marker / money"
+  },
+  {
+    "effect_cn": "获得1个X标记。",
+    "effect_en": "Gain an X-token.",
+    "key": "inventive",
+    "keyword": "INVENTIVE",
+    "name_cn": "巧思",
+    "name_en": "Inventive",
+    "resource_or_marker": "X-token"
+  },
+  {
+    "effect_cn": "按所有动物园中的熊图标获得X标记（不超过牌面上限）。",
+    "effect_en": "Gain X-tokens based on bear icons in all zoos, up to the card limit.",
+    "key": "inventive_bear",
+    "keyword": "INVENTIVE_BEAR",
+    "name_cn": "熊类巧思",
+    "name_en": "Inventive Bear",
+    "resource_or_marker": "X-tokens"
+  },
+  {
+    "effect_cn": "按灵长类图标达到的档位获得1/2/3个X标记。",
+    "effect_en": "Gain 1/2/3 X-tokens at the printed primate-icon thresholds.",
+    "key": "inventive_primary",
+    "keyword": "INVENTIVE_PRIMARY",
+    "name_cn": "灵长巧思",
+    "name_en": "Inventive Primate",
+    "resource_or_marker": "X-tokens"
+  },
+  {
+    "effect_cn": "行动后按图标将“协会”行动牌移到1号或5号位。",
+    "effect_en": "After this action, move Association to slot 1 or 5 as indicated by the icon.",
+    "key": "boost_association",
+    "keyword": "BOOST_ASSOCIATION",
+    "name_cn": "强化：协会",
+    "name_en": "Boost: Association",
+    "resource_or_marker": "action-card position"
+  },
+  {
+    "effect_cn": "行动后按图标将“建造”行动牌移到1号或5号位。",
+    "effect_en": "After this action, move Build to slot 1 or 5 as indicated.",
+    "key": "boost_building",
+    "keyword": "BOOST_BUILDING",
+    "name_cn": "强化：建造",
+    "name_en": "Boost: Build",
+    "resource_or_marker": "action-card position"
+  },
+  {
+    "effect_cn": "行动后按图标将“卡牌”行动牌移到1号或5号位。",
+    "effect_en": "After this action, move Cards to slot 1 or 5 as indicated.",
+    "key": "boost_card",
+    "keyword": "BOOST_CARD",
+    "name_cn": "强化：卡牌",
+    "name_en": "Boost: Cards",
+    "resource_or_marker": "action-card position"
+  },
+  {
+    "effect_cn": "行动后按图标将“赞助商”行动牌移到1号或5号位。",
+    "effect_en": "After this action, move Sponsors to slot 1 or 5 as indicated.",
+    "key": "boost_sponsors",
+    "keyword": "BOOST_SPONSORS",
+    "name_cn": "强化：赞助商",
+    "name_en": "Boost: Sponsors",
+    "resource_or_marker": "action-card position"
+  },
+  {
+    "effect_cn": "行动后按图标将“动物”行动牌移到1号或5号位。",
+    "effect_en": "After this action, move Animals to slot 1 or 5 as indicated.",
+    "key": "boost_animal",
+    "keyword": "BOOST_ANIMAL",
+    "name_cn": "强化：动物",
+    "name_en": "Boost: Animals",
+    "resource_or_marker": "action-card position"
+  },
+  {
+    "effect_cn": "当前行动后，按牌面说明额外执行一次协会行动。",
+    "effect_en": "After the current action, perform an Association action as specified by the card.",
+    "key": "action_association",
+    "keyword": "ACTION_ASSOCIATION",
+    "name_cn": "追加协会行动",
+    "name_en": "Action: Association",
+    "resource_or_marker": "extra action"
+  },
+  {
+    "effect_cn": "当前行动后，按牌面说明额外执行一次建造行动。",
+    "effect_en": "After the current action, perform a Build action as specified.",
+    "key": "action_building",
+    "keyword": "ACTION_BUILDING",
+    "name_cn": "追加建造行动",
+    "name_en": "Action: Build",
+    "resource_or_marker": "extra action"
+  },
+  {
+    "effect_cn": "当前行动后，按牌面说明额外执行一次卡牌行动。",
+    "effect_en": "After the current action, perform a Cards action as specified.",
+    "key": "action_cards",
+    "keyword": "ACTION_CARDS",
+    "name_cn": "追加卡牌行动",
+    "name_en": "Action: Cards",
+    "resource_or_marker": "extra action"
+  },
+  {
+    "effect_cn": "当前行动后，按牌面说明额外执行一次赞助商行动。",
+    "effect_en": "After the current action, perform a Sponsors action as specified.",
+    "key": "action_sponsors",
+    "keyword": "ACTION_SPONSORS",
+    "name_cn": "追加赞助商行动",
+    "name_en": "Action: Sponsors",
+    "resource_or_marker": "extra action"
+  },
+  {
+    "effect_cn": "当前行动后，按牌面说明额外执行一次动物行动。",
+    "effect_en": "After the current action, perform an Animals action as specified.",
+    "key": "action_animal",
+    "keyword": "ACTION_ANIMAL",
+    "name_cn": "追加动物行动",
+    "name_en": "Action: Animals",
+    "resource_or_marker": "extra action"
+  },
+  {
+    "effect_cn": "在“协会”行动牌上放置1个倍率标记。",
+    "effect_en": "Place a multiplier token on the Association action card.",
+    "key": "multiplier_association",
+    "keyword": "MULTIPLIER_ASSOCIATION",
+    "name_cn": "倍率：协会",
+    "name_en": "Multiplier: Association",
+    "resource_or_marker": "multiplier token"
+  },
+  {
+    "effect_cn": "在“建造”行动牌上放置1个倍率标记。",
+    "effect_en": "Place a multiplier token on the Build action card.",
+    "key": "multiplier_building",
+    "keyword": "MULTIPLIER_BUILDING",
+    "name_cn": "倍率：建造",
+    "name_en": "Multiplier: Build",
+    "resource_or_marker": "multiplier token"
+  },
+  {
+    "effect_cn": "在“卡牌”行动牌上放置1个倍率标记。",
+    "effect_en": "Place a multiplier token on the Cards action card.",
+    "key": "multiplier_card",
+    "keyword": "MULTIPLIER_CARD",
+    "name_cn": "倍率：卡牌",
+    "name_en": "Multiplier: Cards",
+    "resource_or_marker": "multiplier token"
+  },
+  {
+    "effect_cn": "在“赞助商”行动牌上放置1个倍率标记。",
+    "effect_en": "Place a multiplier token on the Sponsors action card.",
+    "key": "multiplier_sponsors",
+    "keyword": "MULTIPLIER_SPONSORS",
+    "name_cn": "倍率：赞助商",
+    "name_en": "Multiplier: Sponsors",
+    "resource_or_marker": "multiplier token"
+  },
+  {
+    "effect_cn": "在“动物”行动牌上放置1个倍率标记。",
+    "effect_en": "Place a multiplier token on the Animals action card.",
+    "key": "multiplier_animal",
+    "keyword": "MULTIPLIER_ANIMAL",
+    "name_cn": "倍率：动物",
+    "name_en": "Multiplier: Animals",
+    "resource_or_marker": "multiplier token"
+  },
+  {
+    "effect_cn": "雇用1名协会工作人员。",
+    "effect_en": "Hire one association worker.",
+    "key": "full_throated",
+    "keyword": "FULL_THROATED",
+    "name_cn": "全力鸣叫",
+    "name_en": "Full-throated",
+    "resource_or_marker": "association worker"
+  },
+  {
+    "effect_cn": "按所有动物园中相应洲图标获得魅力，不超过牌面上限。",
+    "effect_en": "Gain appeal for matching continent icons across all zoos, up to the printed cap.",
+    "key": "iconic_animal",
+    "keyword": "ICONIC_ANIMAL",
+    "name_cn": "代表性动物",
+    "name_en": "Iconic Animal",
+    "resource_or_marker": "appeal"
+  },
+  {
+    "effect_cn": "抽2张终局计分牌，保留1张并弃掉另1张。",
+    "effect_en": "Draw two final-scoring cards, keep one and discard the other.",
+    "key": "resistance",
+    "keyword": "RESISTANCE",
+    "name_cn": "抗性",
+    "name_en": "Resistance",
+    "resource_or_marker": "final-scoring cards"
+  },
+  {
+    "effect_cn": "若仍有未使用的基础保护项目，可将其中1张加入手牌。",
+    "effect_en": "If available, add an unused base conservation project to your hand.",
+    "key": "assertion",
+    "keyword": "ASSERTION",
+    "name_cn": "主张",
+    "name_en": "Assertion",
+    "resource_or_marker": "base project card"
+  },
+  {
+    "effect_cn": "至多X次循环卡牌：可弃掉展示区1张并补牌，或弃1张手牌后抽1张。",
+    "effect_en": "Up to X times, cycle a card: discard from display and refill, or discard from hand and draw.",
+    "key": "digging",
+    "keyword": "DIGGING",
+    "name_cn": "挖掘",
+    "name_en": "Digging",
+    "resource_or_marker": "cards"
+  },
+  {
+    "effect_cn": "将展示区中所有赞助商牌加入手牌。",
+    "effect_en": "Take all Sponsor cards currently in the display into your hand.",
+    "key": "sponsor_magnet",
+    "keyword": "SPONSOR_MAGNET",
+    "name_cn": "赞助商磁石",
+    "name_en": "Sponsor Magnet",
+    "resource_or_marker": "sponsor cards"
+  },
+  {
+    "effect_cn": "可与已占用且尺寸至少为指定值的食草动物围栏共享，而无需新围栏。",
+    "effect_en": "May share an occupied herbivore enclosure of at least the indicated size instead of needing a new one.",
+    "key": "flock_animal",
+    "keyword": "FLOCK_ANIMAL",
+    "name_cn": "群居动物",
+    "name_en": "Flock Animal",
+    "resource_or_marker": "enclosure"
+  },
+  {
+    "effect_cn": "若“灵长类”基础保护项目尚未在场，可将其加入游戏。",
+    "effect_en": "If the Primates base project is not in play, you may introduce it.",
+    "key": "dominance",
+    "keyword": "DOMINANCE",
+    "name_cn": "支配",
+    "name_en": "Dominance",
+    "resource_or_marker": "base project"
+  },
+  {
+    "effect_cn": "针对魅力领先玩家执行偷窃：按牌面选择获得其手牌或金钱。",
+    "effect_en": "Interact with the player leading on appeal: take a random/selected hand card or money according to the printed choice.",
+    "key": "pilfering_1",
+    "keyword": "PILFERING_1",
+    "name_cn": "偷窃1",
+    "name_en": "Pilfering 1",
+    "resource_or_marker": "opponent hand / money"
+  },
+  {
+    "effect_cn": "分别针对魅力与保护领先玩家执行牌面偷窃效果。",
+    "effect_en": "Resolve the pilfering effect against the leading players on appeal and conservation as printed.",
+    "key": "pilfering_2",
+    "keyword": "PILFERING_2",
+    "name_cn": "偷窃2",
+    "name_en": "Pilfering 2",
+    "resource_or_marker": "opponent hand / money"
+  },
+  {
+    "effect_cn": "从展示区拿取任意1张牌。",
+    "effect_en": "Take one card of your choice from the display.",
+    "key": "snapping_1",
+    "keyword": "SNAPPING_1",
+    "name_cn": "抢夺1",
+    "name_en": "Snapping 1",
+    "resource_or_marker": "display card"
+  },
+  {
+    "effect_cn": "执行2次从展示区拿牌的效果；需要时在两次之间补牌。",
+    "effect_en": "Twice take a card of your choice from the display; refill between takes when applicable.",
+    "key": "snapping_2",
+    "keyword": "SNAPPING_2",
+    "name_cn": "抢夺2",
+    "name_en": "Snapping 2",
+    "resource_or_marker": "display cards"
+  },
+  {
+    "effect_cn": "魅力轨上领先于你的玩家各获得X个毒液标记。",
+    "effect_en": "Players ahead of you on the appeal track receive X venom tokens.",
+    "key": "venom",
+    "keyword": "VENOM",
+    "name_cn": "毒液",
+    "name_en": "Venom",
+    "resource_or_marker": "venom tokens"
+  },
+  {
+    "effect_cn": "在魅力和/或保护轨领先你的玩家，按领先的轨道获得缠绕标记。",
+    "effect_en": "Players ahead of you on appeal and/or conservation receive constriction tokens according to the tracks they lead you on.",
+    "key": "constriction",
+    "keyword": "CONSTRICTION",
+    "name_cn": "缠绕",
+    "name_en": "Constriction",
+    "resource_or_marker": "constriction tokens"
+  },
+  {
+    "effect_cn": "当前行动后，可从领先对手允许的低位行动槽中复制/使用1个行动。",
+    "effect_en": "After the current action, copy/use an action from a leading opponent in one of the allowed low-numbered slots.",
+    "key": "hypnosis",
+    "keyword": "HYPNOSIS",
+    "name_cn": "催眠",
+    "name_en": "Hypnosis",
+    "resource_or_marker": "copied action"
+  },
+  {
+    "effect_cn": "洗混弃牌堆并抽X张，保留1张，其余弃掉。",
+    "effect_en": "Shuffle the discard pile, draw X cards, keep one and discard the rest.",
+    "key": "scavenging",
+    "keyword": "SCAVENGING",
+    "name_cn": "食腐",
+    "name_en": "Scavenging",
+    "resource_or_marker": "discard pile cards"
+  },
+  {
+    "effect_cn": "至多X次免费放置小卖部或凉亭。",
+    "effect_en": "Up to X times, place a kiosk or pavilion for free.",
+    "key": "posturing",
+    "keyword": "POSTURING",
+    "name_cn": "展示姿态",
+    "name_en": "Posturing",
+    "resource_or_marker": "buildings"
+  },
+  {
+    "effect_cn": "抽2张牌并保留1张。",
+    "effect_en": "Draw two cards and keep one.",
+    "key": "perception_2",
+    "keyword": "PERCEPTION_2",
+    "name_cn": "洞察2",
+    "name_en": "Perception 2",
+    "resource_or_marker": "cards"
+  },
+  {
+    "effect_cn": "抽4张牌并保留2张。",
+    "effect_en": "Draw four cards and keep two.",
+    "key": "perception_4",
+    "keyword": "PERCEPTION_4",
+    "name_cn": "洞察4",
+    "name_en": "Perception 4",
+    "resource_or_marker": "cards"
+  },
+  {
+    "effect_cn": "当前行动后，再执行1个不同的行动。",
+    "effect_en": "After the current action, take one additional different action.",
+    "key": "determination",
+    "keyword": "DETERMINATION",
+    "name_cn": "决心",
+    "name_en": "Determination",
+    "resource_or_marker": "extra action"
+  },
+  {
+    "effect_cn": "可免费放置大型鸟舍。",
+    "effect_en": "You may place the Large Bird Aviary for free.",
+    "key": "peacocking",
+    "keyword": "PEACOCKING",
+    "name_cn": "开屏",
+    "name_en": "Peacocking",
+    "resource_or_marker": "Large Bird Aviary"
+  },
+  {
+    "effect_cn": "按自己动物园中的互动动物图标数量获得魅力。",
+    "effect_en": "Gain appeal according to the number of Petting Zoo Animal icons in your zoo.",
+    "key": "petting_zoo_animal",
+    "keyword": "PETTING_ZOO_ANIMAL",
+    "name_cn": "互动动物",
+    "name_en": "Petting Zoo Animal",
+    "resource_or_marker": "appeal"
+  }
+]

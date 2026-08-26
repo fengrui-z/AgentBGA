@@ -80,12 +80,14 @@ def build_parser() -> argparse.ArgumentParser:
     games_list.add_argument("--json", action="store_true", help=argparse.SUPPRESS)
     describe = games_sub.add_parser("describe")
     describe.add_argument("game", choices=game_ids())
+    describe.add_argument("--rules-version", help="select an exact registered rules version")
     describe.add_argument("--json", action="store_true", help=argparse.SUPPRESS)
 
     match = commands.add_parser("match", help="create, inspect, and mutate matches")
     match_sub = match.add_subparsers(dest="command", required=True)
     create = match_sub.add_parser("create")
     create.add_argument("--game", default="splendor", choices=game_ids())
+    create.add_argument("--rules-version", help="select an exact registered rules version")
     create.add_argument("--players", type=int, required=True, choices=range(2, 8))
     create.add_argument("--seed", type=int)
     create.add_argument("--game-config", help="game-specific JSON object, or @path/to/config.json")
@@ -121,6 +123,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     run = commands.add_parser("run", help="create and run a complete match")
     run.add_argument("--game", choices=game_ids(), help="game for a new match (default: splendor)")
+    run.add_argument("--rules-version", help="rules version for a new match")
     run.add_argument("--players", type=int, choices=range(2, 8))
     run.add_argument("--seed", type=int)
     run.add_argument("--match-id", help="resume an existing match instead of creating one")
@@ -204,7 +207,8 @@ def execute(args: argparse.Namespace) -> int:
         return 0
 
     if args.group == "games":
-        data = list_games() if args.command == "list" else get_game(args.game).describe()
+        data = (list_games() if args.command == "list"
+                else get_game(args.game, args.rules_version).describe())
         emit(envelope(data))
         return 0
 
@@ -275,7 +279,10 @@ def execute(args: argparse.Namespace) -> int:
             if args.command == "create":
                 seed = args.seed if args.seed is not None else secrets.randbits(63)
                 game_config = _load_action(args.game_config) if args.game_config else None
-                match_id, version, state = store.create(args.players, seed, args.game, game_config)
+                match_id, version, state = store.create(
+                    args.players, seed, args.game, game_config,
+                    rules_version=args.rules_version,
+                )
                 emit(envelope({
                     "match_id": match_id, "game": args.game, "rules_version": state["rules_version"],
                     "version": version, "seed": seed, "players": args.players,
@@ -404,6 +411,9 @@ def execute(args: argparse.Namespace) -> int:
                 stored_game = store.game_id(match_id)
                 if args.game is not None and args.game != stored_game:
                     raise ValueError("--game differs from resumed match")
+                stored_rules_version = store.rules_version(match_id)
+                if args.rules_version is not None and args.rules_version != stored_rules_version:
+                    raise ValueError("--rules-version differs from resumed match")
                 if args.players is not None and args.players != state["player_count"]:
                     raise ValueError("--players differs from resumed match")
             else:
@@ -412,7 +422,10 @@ def execute(args: argparse.Namespace) -> int:
                     raise ValueError("--players must equal the number of configured players")
                 seed = args.seed if args.seed is not None else secrets.randbits(63)
                 game_config = _load_action(args.game_config) if args.game_config else None
-                match_id, _, _ = store.create(players, seed, args.game or "splendor", game_config)
+                match_id, _, _ = store.create(
+                    players, seed, args.game or "splendor", game_config,
+                    rules_version=args.rules_version,
+                )
             sink = emit if args.jsonl else None
             result = run_match(
                 store, match_id, players_config, model=args.model, base_url=args.base_url,

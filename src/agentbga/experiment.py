@@ -38,6 +38,7 @@ class ScheduledMatch:
     game: str
     seed: int
     competitors: tuple[Competitor, ...]
+    rules_version: str
     series_id: str | None = None
     series_replicate: int | None = None
     series_game_index: int | None = None
@@ -147,8 +148,24 @@ def _seeds(schedule: dict[str, Any], default_count: int = 5) -> list[int]:
     return raw
 
 
-def _validate_player_count(game_id: str, player_count: int) -> None:
-    description = get_game(game_id).describe()
+def _rules_versions(value: dict[str, Any], games: list[str]) -> dict[str, str]:
+    raw = value.get("rules_versions", {})
+    if not isinstance(raw, dict):
+        raise ValueError("rules_versions must be an object keyed by game ID")
+    extra = set(raw) - set(games)
+    if extra:
+        raise ValueError(f"rules_versions contains games not in the schedule: {', '.join(sorted(extra))}")
+    selected: dict[str, str] = {}
+    for game_id in games:
+        requested = raw.get(game_id)
+        if requested is not None and (not isinstance(requested, str) or not requested):
+            raise ValueError(f"rules_versions.{game_id} must be a non-empty string")
+        selected[game_id] = get_game(game_id, requested).rules_version
+    return selected
+
+
+def _validate_player_count(game_id: str, player_count: int, rules_version: str) -> None:
+    description = get_game(game_id, rules_version).describe()
     minimum = int(description.get("min_players", 2))
     maximum = min(4, int(description.get("max_players", 4)))
     if not minimum <= player_count <= maximum:
@@ -161,14 +178,18 @@ def schedule_experiment(value: dict[str, Any]) -> list[ScheduledMatch]:
     mode = value.get("mode")
     competitors = _competitors(value)
     games = _games(value)
+    rules_versions = _rules_versions(value, games)
     schedule = value.get("schedule", {})
     if not isinstance(schedule, dict):
         raise ValueError("schedule must be an object")
     matches: list[ScheduledMatch] = []
 
     def append(game: str, seed: int, seats: tuple[Competitor, ...], **series: Any) -> None:
-        _validate_player_count(game, len(seats))
-        matches.append(ScheduledMatch(len(matches) + 1, game, seed, seats, **series))
+        rules_version = rules_versions[game]
+        _validate_player_count(game, len(seats), rules_version)
+        matches.append(ScheduledMatch(
+            len(matches) + 1, game, seed, seats, rules_version, **series,
+        ))
 
     if mode == "duel":
         for game in games:
@@ -184,7 +205,7 @@ def schedule_experiment(value: dict[str, Any]) -> list[ScheduledMatch]:
             raise ValueError("tournament player counts must be 2, 3, or 4 and fit the field")
         for game in games:
             for count in counts:
-                _validate_player_count(game, count)
+                _validate_player_count(game, count, rules_versions[game])
                 for group in itertools.combinations(competitors, count):
                     for seed in _seeds(schedule):
                         for rotation in range(count):
@@ -336,6 +357,7 @@ def run_experiment(
             match_id, _, _ = store.create(
                 len(players), scheduled.seed, scheduled.game,
                 manifest.get("game_config"),
+                rules_version=scheduled.rules_version,
             )
             result = run_match(
                 store, match_id, players, max_turns=max_turns,
@@ -348,6 +370,7 @@ def run_experiment(
                 "ordinal": scheduled.ordinal,
                 "status": "ok",
                 "game": scheduled.game,
+                "rules_version": scheduled.rules_version,
                 "seed": scheduled.seed,
                 "player_count": len(players),
                 "participants": participants,
@@ -365,6 +388,7 @@ def run_experiment(
                 "ordinal": scheduled.ordinal,
                 "status": "error",
                 "game": scheduled.game,
+                "rules_version": scheduled.rules_version,
                 "seed": scheduled.seed,
                 "player_count": len(scheduled.competitors),
                 "participants": participants,
