@@ -1,7 +1,7 @@
 from pathlib import Path
 import unittest
 
-from agentbga.ark_nova_official import SemanticEngine, load_content_pack, new_semantic_state, setup_official_game
+from agentbga.ark_nova_official import ArkNovaOfficialPlugin, SemanticEngine, load_content_pack, new_semantic_state, setup_official_game
 from agentbga.ark_nova_official.setup import _bonus_tiles
 
 
@@ -38,6 +38,21 @@ class ArkNovaOfficialSetupTests(unittest.TestCase):
             [["high"], ["middle"], ["low"]],
             [project["blocked_levels"] for project in base_projects],
         )
+
+    def test_two_player_project_view_marks_the_exact_covered_tier(self):
+        plugin = ArkNovaOfficialPlugin()
+        view = plugin.observe(plugin.setup(2, seed=42), 0)
+        projects = view["base_conservation_projects"]
+
+        self.assertEqual(
+            ["high", "middle", "low"],
+            [next(tier["id"] for tier in project["tiers"] if tier["blocked"])
+             for project in projects],
+        )
+        self.assertTrue(all(
+            sum(bool(tier["blocked"]) for tier in project["tiers"]) == 1
+            for project in projects
+        ))
 
     def test_setup_draws_four_of_the_nine_exact_bonus_tile_faces(self):
         tiles = _bonus_tiles(self.pack.collections["bonus_tiles"])

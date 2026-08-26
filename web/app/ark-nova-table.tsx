@@ -17,7 +17,7 @@ export type ArkCard = {
   mechanism_notes?: {timing?: string; summary_cn?: string; summary_en?: string}[];
   resolved_mechanics?: {timing: string; timing_cn: string; timing_en: string; description_cn: string; description_en: string; op?: string; source?: string}[];
   criterion_cn?: string; criterion_en?: string;
-  tiers?: {id?: string; requirement?: number | string | null; conservation?: number; reputation?: number}[];
+  tiers?: {id?: string; requirement?: number | string | null; conservation?: number; reputation?: number; blocked?: boolean}[];
 };
 export type ArkActionCard = {action: string; strength: number; upgraded: boolean; tokens: string[]};
 export type ArkCell = {
@@ -607,11 +607,11 @@ function AssociationBoard({view, identities, lang, legalActions, submitting, onC
       const tiers: NonNullable<ArkProject["tiers"]> = project.tiers?.length ? project.tiers : project.levels.map(level => ({requirement: level, conservation: level}));
       return <article key={project.id} aria-label={`${title}；${criterion}`}><header><i>✓</i><div><b>{title}</b><small>{criterion || project.id}</small></div></header><div>{tiers.map((tier, index) => {
         const conservation = Number(tier.conservation ?? 0);
-        const blocked = Boolean(tier.id && project.blocked_levels?.includes(tier.id));
+        const blocked = Boolean(tier.blocked || (tier.id && project.blocked_levels?.includes(tier.id)));
         const claim = project.claims?.find(item => item.level === conservation);
         const action = taskAction("conservation_project", "project_id", project.id);
         const levelAction = action?.action.level === conservation ? action : associationActions.find(item => item.action.type === "association_task" && item.action.task === "conservation_project" && item.action.project_id === project.id && item.action.level === conservation);
-        return <span key={tier.id || index} className={`${claim ? "claimed" : ""} ${!blocked && levelAction ? "is-actionable" : ""} ${blocked ? "is-blocked" : ""}`} title={blocked ? copy(lang, "双人游戏：此槽位被遮住，不允许放置标记", "Two-player game: this slot is covered and cannot receive a token") : `${criterion} · ${copy(lang, "要求", "Requirement")} ${String(tier.requirement ?? "—")} · +${conservation} C`}><b>{String(tier.requirement ?? "—")}</b><i>+{conservation} C{Number(tier.reputation || 0) > 0 ? ` · +${tier.reputation} R` : ""}</i>{blocked ? <small>{copy(lang, "双人封锁", "2P BLOCKED")}</small> : claim ? <PlayerToken seat={claim.seat} label={playerName(identities, claim.seat, lang)}/> : levelAction ? <button disabled={Boolean(submitting)} onClick={() => onChoose?.(levelAction)}>{copy(lang, "支持", "Support")}</button> : <small>{copy(lang, "要求值", "required")}</small>}</span>;
+        return <span key={tier.id || index} aria-disabled={blocked || undefined} className={`${claim ? "claimed" : ""} ${!blocked && levelAction ? "is-actionable" : ""} ${blocked ? "is-blocked" : ""}`} title={blocked ? copy(lang, "双人游戏：此槽位被遮住，不允许放置标记", "Two-player game: this slot is covered and cannot receive a token") : `${criterion} · ${copy(lang, "要求", "Requirement")} ${String(tier.requirement ?? "—")} · +${conservation} C`}><b>{String(tier.requirement ?? "—")}</b><i>+{conservation} C{Number(tier.reputation || 0) > 0 ? ` · +${tier.reputation} R` : ""}</i>{blocked ? <strong className="ark-project-block-cover"><b>×</b><small>{copy(lang, "双人局封锁", "2P BLOCKED")}</small></strong> : claim ? <PlayerToken seat={claim.seat} label={playerName(identities, claim.seat, lang)}/> : levelAction ? <button disabled={Boolean(submitting)} onClick={() => onChoose?.(levelAction)}>{copy(lang, "支持", "Support")}</button> : <small>{copy(lang, "要求值", "required")}</small>}</span>;
       })}</div><ProjectDetailsInfo project={project} title={title} criterion={criterion} tiers={tiers} lang={lang}/></article>;
     })}</div>
     {associationActions.some(item => item.action.task === "release_animal") && <section className="ark-release-actions"><b>{copy(lang, "动物放归项目", "Animal release projects")}</b><div>{associationActions.filter(item => item.action.task === "release_animal").map(item => <button key={item.id} disabled={Boolean(submitting)} onClick={() => onChoose?.(item)}><span>{String(item.action.card_id)}</span><small>{copy(lang, "放归", "Release")} · {String(item.action.project_card_id)} · {copy(lang, "等级", "level")} {String(item.action.level)}</small></button>)}</div></section>}

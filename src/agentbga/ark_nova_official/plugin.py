@@ -536,6 +536,16 @@ def _present_projects(
                 for level in levels if isinstance(level, Mapping)
             ]
         )
+        # Imported tiers carry the human-readable requirements, while the engine
+        # levels carry the canonical high/middle/low slot identity.  Project the
+        # two together so clients never have to infer which physical slot is
+        # covered in a two-player game.
+        blocked_levels = set(project.get("blocked_levels", []))
+        for index, tier in enumerate(row["tiers"]):
+            semantic_level = levels[index] if index < len(levels) else {}
+            if isinstance(semantic_level, Mapping):
+                tier["id"] = semantic_level.get("id")
+            tier["blocked"] = tier.get("id") in blocked_levels
         row["levels"] = list(reward_by_id.values())
         row["claims"] = [
             {
