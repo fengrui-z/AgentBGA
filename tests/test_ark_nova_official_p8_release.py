@@ -23,10 +23,6 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
         for seat in range(state["player_count"]):
             action = self.plugin.legal_actions(state, seat)[0]["action"]
             state, _ = self.plugin.apply_action(state, seat, action)
-        for _ in range(2):
-            for seat in range(state["player_count"]):
-                action = self.plugin.legal_actions(state, seat)[0]["action"]
-                state, _ = self.plugin.apply_action(state, seat, action)
         return state
 
     def test_core_faces_bonus_tiles_and_all_255_four_player_physical_cards_are_executable(self):
@@ -51,7 +47,7 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
         action_cards = sum(len(player["action_cards"]) for player in state["players"])
         self.assertEqual(255, physical_card_faces + action_cards)
 
-    def test_setup_is_deterministic_private_and_includes_map_zero_starters(self):
+    def test_setup_is_deterministic_private_and_map_zero_starts_empty(self):
         first = self.plugin.setup(2, 81)
         second = self.plugin.setup(2, 81)
         self.assertEqual(first, second)
@@ -65,10 +61,7 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
         self.assertEqual("active", state["phase"])
         for player in state["players"]:
             self.assertEqual(4, len(player["hand"]))
-            self.assertEqual(
-                [("standard_enclosure", 3), ("kiosk", 1)],
-                [(item["type"], item["size"]) for item in player["map"]["buildings"]],
-            )
+            self.assertEqual([], player["map"]["buildings"])
             self.assertEqual(0, player["income"]["kiosks"])
 
     def test_web_projection_exposes_human_readable_card_facts_without_leaking_hidden_cards(self):
@@ -163,8 +156,7 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
                 state, choice["seat"], choice["choice_id"],
                 [choice["options"][0]["id"]],
             )
-        # The free size-3 enclosure is empty, so the adjacent starter kiosk
-        # provides no income yet.
+        # Map 0 begins without a kiosk, so there is no kiosk income yet.
         self.assertEqual(21, state["players"][0]["money"])
         self.assertEqual(1, state["break"]["count"])
 

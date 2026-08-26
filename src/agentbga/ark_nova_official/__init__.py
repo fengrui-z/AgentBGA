@@ -71,9 +71,7 @@ from .setup import (
     card_instance,
     choose_initial_hand,
     legal_initial_hand_actions,
-    legal_initial_map_actions,
     load_official_base_pack,
-    place_initial_map_building,
     setup_official_game,
 )
 from .semantics import (
@@ -172,8 +170,6 @@ __all__ = [
     "card_instance",
     "choose_initial_hand",
     "legal_initial_hand_actions",
-    "legal_initial_map_actions",
     "load_official_base_pack",
-    "place_initial_map_building",
     "setup_official_game",
 ]

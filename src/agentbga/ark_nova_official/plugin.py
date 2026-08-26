@@ -19,11 +19,9 @@ from .scoring import check_endgame_trigger, score_game
 from .semantics import SemanticEngine, SemanticRuleError
 from .setup import (
     choose_initial_hand,
-    legal_initial_map_actions,
     legal_initial_hand_actions,
     load_official_base_pack,
     setup_official_game,
-    place_initial_map_building,
 )
 from .state import SEMANTIC_RULES_VERSION, validate_semantic_state
 
@@ -69,7 +67,7 @@ class ArkNovaOfficialPlugin:
     def decision_seats(self, state: dict[str, Any]) -> list[int]:
         if state.get("status") == "finished":
             return []
-        if state.get("phase") in {"initial_hand_selection", "initial_map_setup"}:
+        if state.get("phase") == "initial_hand_selection":
             return list(state.get("setup_pending_seats", []))
         pending = state.get("resolution", {}).get("pending_choice")
         if isinstance(pending, Mapping):
@@ -83,8 +81,6 @@ class ArkNovaOfficialPlugin:
             return []
         if state.get("phase") == "initial_hand_selection":
             return legal_initial_hand_actions(state, seat)
-        if state.get("phase") == "initial_map_setup":
-            return legal_initial_map_actions(state, seat)
         return [
             {"id": item["id"], "action": deepcopy(item["action"])}
             for item in legal_official_actions(
@@ -101,10 +97,6 @@ class ArkNovaOfficialPlugin:
                     raise SemanticRuleError("initial hand selection is required")
                 next_state, events = choose_initial_hand(
                     state, seat, list(action.get("card_ids", [])),
-                )
-            elif state.get("phase") == "initial_map_setup":
-                next_state, events = place_initial_map_building(
-                    state, seat, action,
                 )
             else:
                 next_state, events = apply_official_action(

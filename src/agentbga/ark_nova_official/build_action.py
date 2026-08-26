@@ -234,29 +234,6 @@ def legal_free_building_placements(
     return actions
 
 
-def legal_setup_building_placements(
-    player: Mapping[str, Any], building_type: str, size: int,
-) -> list[dict[str, Any]]:
-    """Enumerate Map 0 starter placements without claiming printed bonuses."""
-    if (building_type, size) not in {("standard_enclosure", 3), ("kiosk", 1)}:
-        raise SemanticRuleError("unknown Map 0 starter building")
-    actions = _placement_actions(
-        player, size, False, set(), free=True,
-        candidate_types=[(building_type, size)],
-    )
-    bonus_cells = {
-        (cell["q"], cell["r"])
-        for cell in player["map"]["cells"] if "placement_bonus" in cell
-    }
-    return [
-        {**action, "cost": 0}
-        for action in actions
-        if not {
-            (cell["q"], cell["r"]) for cell in action["cells"]
-        } & bonus_cells
-    ]
-
-
 def legal_unique_building_placements(
     player: Mapping[str, Any], rules: Mapping[str, Any],
 ) -> list[dict[str, Any]]:

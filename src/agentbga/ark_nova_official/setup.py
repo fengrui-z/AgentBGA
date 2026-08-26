@@ -9,7 +9,6 @@ import random
 from typing import Any, Mapping, Sequence
 
 from .content import ContentEntry, ContentPack, load_content_pack
-from .build_action import legal_setup_building_placements
 from .milestones import install_official_conservation_milestones
 from .projects import install_base_projects
 from .semantics import SemanticRuleError
@@ -237,69 +236,15 @@ def choose_initial_hand(
     player["initial_draw"] = []
     next_state["setup_pending_seats"].remove(seat)
     if not next_state["setup_pending_seats"]:
-        next_state["phase"] = "initial_map_setup"
-        next_state["setup_pending_seats"] = list(range(next_state["player_count"]))
-        for row in next_state["players"]:
-            row["initial_map_setup_stage"] = "enclosure"
+        # Map 0 has no free starter enclosure or kiosk.  Those printed starter
+        # buildings belong to Map A and must not leak into the Map 0 setup.
+        next_state["phase"] = "active"
         next_state["active_seat"] = 0
     validate_semantic_state(next_state)
     return next_state, [{
         "type": "initial_hand_selected", "seat": seat,
         "kept": len(player["hand"]), "discarded": len(discarded),
     }]
-
-
-def legal_initial_map_actions(state: Mapping[str, Any], seat: int) -> list[dict[str, Any]]:
-    if state.get("phase") != "initial_map_setup" or seat not in state.get("setup_pending_seats", []):
-        return []
-    player = state["players"][seat]
-    stage = player.get("initial_map_setup_stage")
-    building_type, size = (
-        ("standard_enclosure", 3) if stage == "enclosure" else ("kiosk", 1)
-    )
-    return [
-        {
-            "id": f"setup:{stage}:{index}",
-            "action": {
-                **action, "type": "place_building", "setup_stage": stage,
-            },
-        }
-        for index, action in enumerate(
-            legal_setup_building_placements(player, building_type, size), 1,
-        )
-    ]
-
-
-def place_initial_map_building(
-    state: dict[str, Any], seat: int, action: Mapping[str, Any],
-) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    requested = dict(action)
-    if requested not in [item["action"] for item in legal_initial_map_actions(state, seat)]:
-        raise SemanticRuleError("starter building placement is not currently legal")
-    next_state = deepcopy(state)
-    player = next_state["players"][seat]
-    building = {
-        "id": f"building-{player['map']['next_building_id']}",
-        "type": requested["building_type"], "size": requested["size"],
-        "shape_id": requested["shape_id"], "rotation": requested["rotation"],
-        "occupied": False, "cells": deepcopy(requested["cells"]),
-    }
-    player["map"]["next_building_id"] += 1
-    player["map"]["buildings"].append(building)
-    if building["type"] == "kiosk":
-        player["initial_map_setup_stage"] = "complete"
-        next_state["setup_pending_seats"].remove(seat)
-    else:
-        player["initial_map_setup_stage"] = "kiosk"
-    if not next_state["setup_pending_seats"]:
-        next_state["phase"] = "active"
-        next_state["active_seat"] = 0
-    validate_semantic_state(next_state)
-    return next_state, [{
-        "type": "initial_map_building_placed", "seat": seat,
-        "stage": requested["setup_stage"], "building": deepcopy(building),
-    }]
-
 
 def _draw_two_final_cards(
     deck: list[dict[str, Any]], players: int, rng: random.Random,
