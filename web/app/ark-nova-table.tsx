@@ -5,7 +5,7 @@ import {createPortal} from "react-dom";
 
 export type ArkLang = "zh" | "en";
 export type ArkIdentity = {seat: number; name: string; backend?: string; model?: string};
-export type ArkLegalAction = {id: string; action: Record<string, unknown>};
+export type ArkLegalAction = {id: string; label?: string; action: Record<string, unknown>};
 export type ArkCard = {
   id?: string; kind?: string; card_type?: string; tags?: string[]; continent?: string; implementation?: string;
   display_title?: string; display_summary?: string;
@@ -17,8 +17,9 @@ export type ArkCard = {
   mechanism_notes?: {timing?: string; summary_cn?: string; summary_en?: string}[];
   resolved_mechanics?: {timing: string; timing_cn: string; timing_en: string; description_cn: string; description_en: string; op?: string; source?: string}[];
   live_scoring?: {conservation: number; metric?: string; metric_value?: number; conditions?: Record<string, boolean>; winning_categories?: string[]; right_neighbor_seat?: number};
-  criterion_cn?: string; criterion_en?: string;
-  tiers?: {id?: string; requirement?: number | string | null; conservation?: number; reputation?: number; blocked?: boolean}[];
+  criterion_cn?: string; criterion_en?: string; requirement_cn?: string; requirement_en?: string;
+  project_type?: string; release_icon?: string; breeding_icon?: string;
+  tiers?: {id?: string; requirement?: number | string | null; animal_size?: string; support_slot?: number; conservation?: number; reputation?: number; blocked?: boolean}[];
 };
 export type ArkActionCard = {action: string; strength: number; upgraded: boolean; tokens: string[]};
 export type ArkCell = {
@@ -195,7 +196,20 @@ function readableRequirements(card: ArkCard) {
 }
 
 function readableTiers(card: ArkCard) {
-  return (card.tiers || []).filter(tier => tier.requirement !== undefined && tier.requirement !== null);
+  return (card.tiers || []).filter(tier =>
+    tier.requirement !== undefined && tier.requirement !== null
+    || Boolean(tier.animal_size)
+    || tier.support_slot !== undefined
+    || tier.conservation !== undefined
+  );
+}
+
+function tierRequirement(tier: NonNullable<ArkCard["tiers"]>[number], card: ArkCard, lang: ArkLang) {
+  if (tier.requirement !== undefined && tier.requirement !== null) return String(tier.requirement);
+  if (tier.animal_size) return `${copy(lang, "围栏", "Enclosure")} ${tier.animal_size}`;
+  if (tier.support_slot !== undefined) return `${copy(lang, "支持位", "Support slot")} ${tier.support_slot}`;
+  if (tier.id) return tier.id.replaceAll("-", " ");
+  return copy(lang, "可用档位", "Available tier");
 }
 
 function readableMechanisms(card: ArkCard, lang: ArkLang) {
@@ -231,7 +245,10 @@ function readableCardLabel(card: ArkCard, lang: ArkLang) {
 }
 
 function cardCriterion(card: ArkCard, lang: ArkLang) {
-  return (lang === "zh" ? card.criterion_cn : card.criterion_en) || card.objective?.replaceAll("_", " ") || "";
+  return (lang === "zh"
+    ? card.criterion_cn || card.requirement_cn
+    : card.criterion_en || card.requirement_en)
+    || card.objective?.replaceAll("_", " ") || "";
 }
 
 function cardIcons(card: ArkCard) {
@@ -281,7 +298,7 @@ function CardDetailsOverlay({card, lang, open, pinned, onClose}: {
       {icons.length > 0 && <div><dt>{copy(lang, "获得图标", "Gained icons")}</dt><dd>{icons.map(([icon, count]) => `${humanIcon(icon, lang)}${count > 1 ? ` ×${count}` : ""}`).join("、")}</dd></div>}
       {criterion && <div><dt>{copy(lang, "检查内容与判定条件", "Criterion")}</dt><dd>{criterion}</dd></div>}
       {mechanisms.map((item, index) => <div key={`${item.name}-${index}`} className={`mechanic-timing-${item.timing}`}><dt>{item.name}</dt><dd>{item.text || copy(lang, "按结构化效果执行", "Resolve the structured effect")}</dd></div>)}
-      {tiers.length > 0 && <div><dt>{copy(lang, "全部档位", "All tiers")}</dt><dd className="ark-card-details-tiers">{tiers.map((tier, index) => <span key={tier.id || index}><b>{copy(lang, "条件", "Check")} {String(tier.requirement)}</b><i>→</i><strong>{copy(lang, "保护", "Conservation")} +{tier.conservation ?? 0}</strong>{Number(tier.reputation || 0) > 0 && <small>{copy(lang, "声望", "Reputation")} +{tier.reputation}</small>}</span>)}</dd></div>}
+      {tiers.length > 0 && <div><dt>{copy(lang, "全部档位", "All tiers")}</dt><dd className="ark-card-details-tiers">{tiers.map((tier, index) => <span key={tier.id || index}><b>{tierRequirement(tier, card, lang)}</b><i>→</i><strong>{copy(lang, "保护", "Conservation")} +{tier.conservation ?? 0}</strong>{Number(tier.reputation || 0) > 0 && <small>{copy(lang, "声望", "Reputation")} +{tier.reputation}</small>}</span>)}</dd></div>}
     </dl>
     {!pinned && <footer>{copy(lang, "点击卡牌上的信息按钮可固定此说明。", "Click the card's info button to pin these details.")}</footer>}
   </aside>, document.body);
@@ -322,7 +339,7 @@ function ReadableCardFace({card, lang, selectionControl}: {
     {["conservation_project", "final_scoring"].includes(card.card_type || "") && <>
       <p className="ark-readable-card-criterion"><b>{copy(lang, "检查", "Check")}</b><span>{criterion || copy(lang, "依据卡牌条件计数", "Count the card criterion")}</span></p>
       {card.card_type === "final_scoring" && card.live_scoring && <div className="ark-final-live-score"><span>{copy(lang, "当前满足", "Satisfied now")} <b>{liveScoringCount(card) ?? 0}</b></span><strong>{copy(lang, "终局预计", "Projected")} +{card.live_scoring.conservation} C</strong></div>}
-      {tiers.length > 0 && <div className="ark-readable-card-tiers" aria-label={copy(lang, "计分档位", "Scoring tiers")}>{tiers.map((tier, index) => <span key={tier.id || index} className={card.card_type === "final_scoring" && card.live_scoring && Number(tier.conservation || 0) === card.live_scoring.conservation ? "is-current" : ""}><b>{String(tier.requirement)}</b><i>→</i><strong>{copy(lang, "保护", "C")} +{tier.conservation ?? 0}</strong>{Number(tier.reputation || 0) > 0 && <small>{copy(lang, "声望", "R")} +{tier.reputation}</small>}</span>)}</div>}
+      {tiers.length > 0 && <div className="ark-readable-card-tiers" aria-label={copy(lang, "计分档位", "Scoring tiers")}>{tiers.map((tier, index) => <span key={tier.id || index} className={card.card_type === "final_scoring" && card.live_scoring && Number(tier.conservation || 0) === card.live_scoring.conservation ? "is-current" : ""}><b>{tierRequirement(tier, card, lang)}</b><i>→</i><strong>{copy(lang, "保护", "C")} +{tier.conservation ?? 0}</strong>{Number(tier.reputation || 0) > 0 && <small>{copy(lang, "声望", "R")} +{tier.reputation}</small>}</span>)}</div>}
     </>}
     {!["animal", "sponsor", "conservation_project", "final_scoring"].includes(card.card_type || "") && <p className="ark-readable-card-mechanism"><b>{copy(lang, "效果", "Effect")}</b><span>{primaryMechanism?.text || card.display_summary || copy(lang, "查看完整说明", "See details")}</span></p>}
     <button type="button" className="ark-readable-card-info" aria-label={infoLabel} aria-expanded={pinned} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onClick={() => setPinned(value => !value)}>i</button>
@@ -587,11 +604,17 @@ function AssociationBoard({view, identities, lang, legalActions, submitting, onC
   const universityStock = view.association_display?.universities || Object.entries(view.association_board.universities).map(([id, remaining]) => ({id, remaining, owners: view.players.filter(player => player.universities.includes(id)).map(player => player.seat)}));
   const committed = view.association_display?.workers || view.players.flatMap(player => player.association_workers.committed.map(item => ({...item, seat: player.seat})));
   const associationActive = view.turn.action_card === "association" || view.phase.startsWith("association_");
-  const associationActions = associationActive ? legalActions.filter(item => ["association_task", "make_donation", "finish_association_tasks", "finish_action"].includes(String(item.action.type))) : [];
+  const associationActions = associationActive ? legalActions.filter(item => ["association_task", "make_donation", "finish_association_tasks", "finish_action"].includes(actionType(item))) : [];
+  const projectActions = associationActions.filter(item => actionType(item) === "association_task" && item.action.task_id === "conservation-project");
+  const visibleCards = [...view.card_display, ...view.players.flatMap(player => [...player.hand, ...player.played_cards])].filter(knownCard);
+  const visibleCardTitle = (id: string) => {
+    const card = visibleCards.find(candidate => candidate.id === id || (candidate as ArkCard & {entry_id?: string}).entry_id === id);
+    return card ? cardTitle(card, lang) : id;
+  };
   const taskAction = (task: string, field?: string, value?: string | number) => associationActions.find(item => actionType(item) === "association_task" && (item.action.task === task || item.action.task_id === task.replaceAll("_", "-")) && (!field || item.action[field] === value));
   const reputationAction = taskAction("reputation");
   const donationAction = associationActions.find(item => actionType(item) === "make_donation");
-  const finishAction = associationActions.find(item => ["finish_association_tasks", "finish_action"].includes(String(item.action.type)));
+  const finishAction = associationActions.find(item => ["finish_association_tasks", "finish_action"].includes(actionType(item)));
   const uniMeta: Record<string, {mark: string; label: string; reward: string}> = {
     "research-2": {mark: "RS×2", label: copy(lang, "研究大学", "Research university"), reward: copy(lang, "获得 2 个研究图标", "2 research icons")},
     "research-reputation": {mark: "RS+R", label: copy(lang, "声望大学", "Reputation university"), reward: copy(lang, "研究图标 ×1、声望 +2", "1 research icon, +2 reputation")},
@@ -607,7 +630,7 @@ function AssociationBoard({view, identities, lang, legalActions, submitting, onC
         return <article key={id} className={`${remaining ? "available" : "taken"} ${action ? "is-actionable" : ""}`}><i>{meta?.mark || id.slice(0, 2).toUpperCase()}</i><div><b>{meta?.[lang] || id}</b><small>{remaining ? `${copy(lang, "本轮可领取", "Available this round")} · ${ownerText}` : `${copy(lang, "本轮已取", "Taken this round")} · ${ownerText}`}</small></div>{remaining ? action ? <button className="association-claim-button" disabled={Boolean(submitting)} onClick={() => onChoose?.(action)}>{copy(lang, "选择", "Choose")}</button> : <em>×1</em> : <span className="association-owner-tokens">{owners.map(seat => <PlayerToken key={seat} seat={seat} label={playerName(identities, seat, lang)}/>)}</span>}</article>;
       })}</div><div className="association-workers">{committed.filter(item => item.task === "partner_zoo").map((item, index) => <PlayerToken key={`${item.seat}-${index}`} seat={item.seat} label={playerName(identities, item.seat, lang)}/>)}</div></section>
       <section className="association-lane lane-four"><header><b>4</b><span>{copy(lang, "大学", "Universities")}</span></header><div className="association-stock university-stock">{universityStock.map(({id, remaining, owners}) => {
-        const meta = uniMeta[id] || {mark: "U", label: id, reward: "—"}; const action = taskAction("university", "university", id);
+        const meta = uniMeta[id] || {mark: "U", label: id, reward: "—"}; const action = taskAction("university", "university_id", id);
         const ownerText = owners.length ? `${copy(lang, "已拥有", "Owned by")} ${owners.map(seat => playerName(identities, seat, lang)).join(" · ")}` : copy(lang, "无人拥有", "Owned by none");
         return <article key={id} className={`${remaining ? "available" : "taken"} ${action ? "is-actionable" : ""}`}><i>{meta.mark}</i><div><b>{meta.label}</b><small>{remaining ? `${copy(lang, "本轮可领取", "Available this round")} · ${ownerText} · ${meta.reward}` : `${copy(lang, "本轮已取", "Taken this round")} · ${ownerText} · ${meta.reward}`}</small></div>{remaining ? action ? <button className="association-claim-button" disabled={Boolean(submitting)} onClick={() => onChoose?.(action)}>{copy(lang, "选择", "Choose")}</button> : <em>×1</em> : <span className="association-owner-tokens">{owners.map(seat => <PlayerToken key={seat} seat={seat} label={playerName(identities, seat, lang)}/>)}</span>}</article>;
       })}</div><div className="association-workers">{committed.filter(item => item.task === "university").map((item, index) => <PlayerToken key={`${item.seat}-${index}`} seat={item.seat} label={playerName(identities, item.seat, lang)}/>)}</div></section>
@@ -621,12 +644,25 @@ function AssociationBoard({view, identities, lang, legalActions, submitting, onC
         const conservation = Number(tier.conservation ?? 0);
         const blocked = Boolean(tier.blocked || (tier.id && project.blocked_levels?.includes(tier.id)));
         const claim = project.claims?.find(item => item.level === conservation);
-        const action = taskAction("conservation_project", "project_id", project.id);
-        const levelAction = action?.action.level === conservation ? action : associationActions.find(item => item.action.type === "association_task" && item.action.task === "conservation_project" && item.action.project_id === project.id && item.action.level === conservation);
+        const levelAction = projectActions.find(item => item.action.project_id === project.id && item.action.level_id === tier.id);
         return <span key={tier.id || index} aria-disabled={blocked || undefined} className={`${claim ? "claimed" : ""} ${!blocked && levelAction ? "is-actionable" : ""} ${blocked ? "is-blocked" : ""}`} title={blocked ? copy(lang, "双人游戏：此槽位被遮住，不允许放置标记", "Two-player game: this slot is covered and cannot receive a token") : `${criterion} · ${copy(lang, "要求", "Requirement")} ${String(tier.requirement ?? "—")} · +${conservation} C`}><b>{String(tier.requirement ?? "—")}</b><i>+{conservation} C{Number(tier.reputation || 0) > 0 ? ` · +${tier.reputation} R` : ""}</i>{blocked ? <strong className="ark-project-block-cover"><b>×</b><small>{copy(lang, "双人局封锁", "2P BLOCKED")}</small></strong> : claim ? <PlayerToken seat={claim.seat} label={playerName(identities, claim.seat, lang)}/> : levelAction ? <button disabled={Boolean(submitting)} onClick={() => onChoose?.(levelAction)}>{copy(lang, "支持", "Support")}</button> : <small>{copy(lang, "要求值", "required")}</small>}</span>;
       })}</div><ProjectDetailsInfo project={project} title={title} criterion={criterion} tiers={tiers} lang={lang}/></article>;
     })}</div>
-    {associationActions.some(item => item.action.task === "release_animal") && <section className="ark-release-actions"><b>{copy(lang, "动物放归项目", "Animal release projects")}</b><div>{associationActions.filter(item => item.action.task === "release_animal").map(item => <button key={item.id} disabled={Boolean(submitting)} onClick={() => onChoose?.(item)}><span>{String(item.action.card_id)}</span><small>{copy(lang, "放归", "Release")} · {String(item.action.project_card_id)} · {copy(lang, "等级", "level")} {String(item.action.level)}</small></button>)}</div></section>}
+    {projectActions.length > 0 && <section className="ark-project-actions"><header><b>{copy(lang, "可执行的保护项目", "Available conservation projects")}</b><small>{copy(lang, "每个按钮都是完整的合法选择；放归选项已绑定动物、围栏、档位与玩家板奖励。", "Each button is a complete legal choice, including animal, enclosure, tier, and player-board reward for releases.")}</small></header><div>{projectActions.map(item => {
+      const projectId = String(item.action.project_id || "");
+      const levelId = String(item.action.level_id || "");
+      const releaseAnimal = item.action.release_animal_id ? String(item.action.release_animal_id) : "";
+      const releaseEnclosure = item.action.release_enclosure_id ? String(item.action.release_enclosure_id) : "";
+      const source = item.action.source ? String(item.action.source) : "";
+      const tokenSlot = item.action.token_slot_id ? String(item.action.token_slot_id) : "";
+      const timing = item.action.token_bonus_timing ? String(item.action.token_bonus_timing) : "";
+      return <button key={item.id} disabled={Boolean(submitting)} onClick={() => onChoose?.(item)} title={item.label || projectId}>
+        <span>{item.label?.split(" · ")[0] || visibleCardTitle(projectId)}</span>
+        <b>{copy(lang, "档位", "Tier")} {levelId}{source ? ` · ${source === "hand" ? copy(lang, "来自手牌", "from hand") : copy(lang, "来自展示区", "from display")}` : ""}</b>
+        {releaseAnimal ? <small>{copy(lang, "放归动物", "Release animal")} {visibleCardTitle(releaseAnimal)}<br/>{copy(lang, "释放围栏", "Free enclosure")} {releaseEnclosure}</small> : <small>{copy(lang, "满足项目条件并获得该档奖励", "Meet the project condition and gain this tier's reward")}</small>}
+        {tokenSlot && <em>{copy(lang, "解锁玩家板", "Unlock player board")} {tokenSlot} · {timing === "after" ? copy(lang, "项目奖励后", "after project reward") : copy(lang, "项目奖励前", "before project reward")}</em>}
+      </button>;
+    })}</div></section>}
     <footer className="ark-donation-row"><b>{copy(lang, "捐款", "Donations")}</b>{(view.association_display?.donation_slots || view.association_board.donations.map((donation, index) => ({position: index + 1, cost: donation.cost, status: "claimed" as const, seat: donation.seat}))).map(slot => <span key={slot.position} className={slot.status}>{slot.seat !== null && slot.seat !== undefined ? <PlayerToken seat={slot.seat} label={playerName(identities, slot.seat, lang)}/> : <small>{slot.position}</small>}<i>{slot.cost} ₡</i></span>)}{donationAction && <button className="ark-donate-button" disabled={Boolean(submitting)} onClick={() => onChoose?.(donationAction)}>{copy(lang, "捐款", "Donate")} {String(donationAction.action.cost)} ₡</button>}{finishAction && <button className="ark-finish-association" disabled={Boolean(submitting)} onClick={() => onChoose?.(finishAction)}>{copy(lang, "结束协会行动", "Finish association")}</button>}{view.association_board.blocked_two_player.length > 0 && <em>{copy(lang, "双人封锁", "2P blocked")} × {view.association_board.blocked_two_player.length}</em>}</footer>
   </section>;
 }
@@ -853,12 +889,13 @@ function PlayerCardArea({player, lang, legalActions, submitting, onChoose, inter
       const discard = knownCard(card) ? actionFor(card, "discard_card") : undefined;
       const sponsor = knownCard(card) ? actionFor(card, "play_sponsor") : undefined;
       const animalAction = knownCard(card) ? legalActions.find(item => actionType(item) === "play_animal" && actionCardId(item) === card.id && item.action.source !== "display") : undefined;
+      const projectOptions = knownCard(card) ? legalActions.filter(item => actionType(item) === "association_task" && item.action.task_id === "conservation-project" && item.action.instance_id === card.id && item.action.source === "hand") : [];
       const animal = Boolean(animalAction);
       const selectedCard = Boolean(card.id && selected.includes(card.id));
       const animalSelected = Boolean(animal && card.id === selectedAnimal);
-      return <article key={card.id || `hidden-${index}`} aria-label={readableCardLabel(card, lang)} className={`ark-readable-card ${card.hidden ? "is-facedown" : `card-${card.card_type}`} ${selectedCard || animalSelected ? "selected" : ""} ${(discard || sponsor || animal) ? "is-actionable" : ""}`}>
+      return <article key={card.id || `hidden-${index}`} aria-label={readableCardLabel(card, lang)} className={`ark-readable-card ${card.hidden ? "is-facedown" : `card-${card.card_type}`} ${selectedCard || animalSelected ? "selected" : ""} ${(discard || sponsor || animal || projectOptions.length) ? "is-actionable" : ""}`}>
         <ReadableCardFace card={card} lang={lang} selectionControl={comboActions.length > 0 && card.id ? <button type="button" aria-label={`${selectedCard ? copy(lang, "取消选择", "Deselect") : copy(lang, "选择", "Select")} ${cardTitle(card, lang)}`} aria-pressed={selectedCard} disabled={!interactive || Boolean(submitting)} onClick={() => toggle(card.id as string)}>{selectedCard ? "✓" : "+"}</button> : undefined}/>
-        {interactive && !choosingInitial && (discard || sponsor || animal) && <footer>{discard && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(discard)}>{copy(lang, "弃掉", "Discard")}</button>}{sponsor && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(sponsor)}>{copy(lang, "打出", "Play")}</button>}{animal && card.id && <button aria-pressed={animalSelected} disabled={Boolean(submitting)} onClick={() => {onSelectAnimal(card.id as string); if (animalAction?.action.type === "select_animal_card") onChoose?.(animalAction);}}>{animalSelected ? copy(lang, "已选：去地图选围栏", "Selected: choose enclosure") : copy(lang, "选择这只动物", "Choose this animal")}</button>}</footer>}
+        {interactive && !choosingInitial && (discard || sponsor || animal || projectOptions.length > 0) && <footer>{discard && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(discard)}>{copy(lang, "弃掉", "Discard")}</button>}{sponsor && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(sponsor)}>{copy(lang, "打出", "Play")}</button>}{animal && card.id && <button aria-pressed={animalSelected} disabled={Boolean(submitting)} onClick={() => {onSelectAnimal(card.id as string); if (animalAction?.action.type === "select_animal_card") onChoose?.(animalAction);}}>{animalSelected ? copy(lang, "已选：去地图选围栏", "Selected: choose enclosure") : copy(lang, "选择这只动物", "Choose this animal")}</button>}{projectOptions.length > 0 && <span className="ark-project-option-hint">{copy(lang, `协会板有 ${projectOptions.length} 个合法方案`, `${projectOptions.length} legal choices on the Association board`)}</span>}</footer>}
       </article>;
     })}</div>
     {interactive && comboActions.length > 0 && <footer className="ark-card-selection-footer"><span>{choosingInitial ? copy(lang, "所选牌将成为起始手牌，其余进入弃牌堆。", "Selected cards become your starting hand; the rest are discarded.") : `${copy(lang, "休息阶段需弃掉", "During the Break, discard")} ${required} ${copy(lang, "张，使手牌降至上限", "cards to reach your hand limit of")} ${handLimit}。`}</span><button disabled={!comboAction || Boolean(submitting)} onClick={() => comboAction && onChoose?.(comboAction)}>{choosingInitial ? copy(lang, "确认起始手牌", "Confirm starting hand") : `${copy(lang, "确认弃牌", "Confirm discard")} ${selected.length}/${required}`}{submitting === comboAction?.id ? "…" : ""}</button></footer>}
