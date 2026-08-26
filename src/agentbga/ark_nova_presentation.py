@@ -26,26 +26,33 @@ def _played_cards(player: dict[str, Any]) -> list[dict[str, Any]]:
     return [card for card in player["played_cards"] if isinstance(card, dict) and not card.get("hidden")]
 
 
-def _tag_count(player: dict[str, Any], tag: str) -> int:
-    return sum(tag in card.get("tags", []) for card in _played_cards(player))
+def _icon_count(player: dict[str, Any], *names: str) -> int:
+    icons = player.get("icons", {})
+    return max((int(icons.get(name, 0)) for name in names), default=0)
+
+
+def _terrain_icon_count(player: dict[str, Any], terrain: str) -> int:
+    return _icon_count(player, terrain) + sum(
+        int(card.get(f"{terrain}_requirement", 0) or 0)
+        for card in _played_cards(player)
+        if card.get("card_type") == "animal"
+    )
 
 
 def player_public_summary(player: dict[str, Any]) -> dict[str, Any]:
     """Return counters and assets that are public at the physical table."""
 
     cards = _played_cards(player)
-    research_from_universities = (
-        2 * sum(value == "research-2" for value in player["universities"])
-        + sum(value == "research-reputation" for value in player["universities"])
-        + sum(value == "hand-limit-5" for value in player["universities"])
-    )
-    tag_counts = {tag: _tag_count(player, tag) for tag in (*ANIMAL_TAGS, *EXTRA_TAGS)}
-    tag_counts["research"] += research_from_universities
+    tag_counts = {tag: _icon_count(player, tag) for tag in ANIMAL_TAGS}
+    tag_counts.update({
+        "bear": _icon_count(player, "bear"),
+        "petting_zoo": _icon_count(player, "petting_zoo", "pet"),
+        "research": _icon_count(player, "research", "science"),
+        "rock": _terrain_icon_count(player, "rock"),
+        "water": _terrain_icon_count(player, "water"),
+    })
     continents = {
-        continent: sum(
-            card.get("card_type") == "animal" and card.get("continent") == continent
-            for card in cards
-        )
+        continent: _icon_count(player, continent)
         for continent in CONTINENTS
     }
     hand_limit = int(player.get(
@@ -272,6 +279,10 @@ def map_display(player: dict[str, Any]) -> dict[str, Any]:
         }
         for index in range(player["association_workers"]["reserve"])
     ]
+    project_token_status = {
+        slot["id"]: "claimed" if slot.get("claimed") else "locked"
+        for slot in player.get("project_token_slots", [])
+    }
     return {
         "placement_rewards": rewards,
         "conservation_rewards": conservation_slots,
@@ -287,18 +298,18 @@ def map_display(player: dict[str, Any]) -> dict[str, Any]:
                 {
                     "kind": "immediate_and_income",
                     "slots": [
-                        {"id": "determination", "reward": {"type": "gain_determination", "amount": 1}, "status": "locked"},
-                        {"id": "enclosure-2", "reward": {"type": "gain_enclosure", "amount": 2}, "status": "locked"},
-                        {"id": "money-5", "reward": {"type": "gain_money", "amount": 5}, "status": "locked"},
-                        {"id": "conservation-1", "reward": {"type": "gain_conservation", "amount": 1}, "status": "locked"},
+                        {"id": "card", "reward": {"type": "gain_determination", "amount": 1}, "status": project_token_status.get("card", "locked")},
+                        {"id": "enclosure-2", "reward": {"type": "gain_enclosure", "amount": 2}, "status": project_token_status.get("enclosure-2", "locked")},
+                        {"id": "money-5", "reward": {"type": "gain_money", "amount": 5}, "status": project_token_status.get("money-5", "locked")},
+                        {"id": "conservation-1", "reward": {"type": "gain_conservation", "amount": 1}, "status": project_token_status.get("conservation-1", "locked")},
                     ],
                 },
                 {
                     "kind": "immediate",
                     "slots": [
-                        {"id": "worker-1", "reward": {"type": "gain_worker", "amount": 1}, "status": "locked"},
-                        {"id": "money-12", "reward": {"type": "gain_money", "amount": 12}, "status": "locked"},
-                        {"id": "x-3", "reward": {"type": "gain_x_token", "amount": 3}, "status": "locked"},
+                        {"id": "worker-1", "reward": {"type": "gain_worker", "amount": 1}, "status": project_token_status.get("worker-1", "locked")},
+                        {"id": "money-12", "reward": {"type": "gain_money", "amount": 12}, "status": project_token_status.get("money-12", "locked")},
+                        {"id": "x-3", "reward": {"type": "gain_x_token", "amount": 3}, "status": project_token_status.get("x-3", "locked")},
                     ],
                 },
             ],

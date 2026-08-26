@@ -68,6 +68,48 @@ class ArkNovaOfficialSetupTests(unittest.TestCase):
             [card["card_type"] for card in view["players"][0]["played_cards"]],
         )
 
+    def test_public_icon_counters_follow_semantic_icons_and_terrain_requirements(self):
+        plugin = ArkNovaOfficialPlugin()
+        state = plugin.setup(2, seed=45)
+        player = state["players"][0]
+        player["icons"].update({
+            "asia": 2, "bear": 1, "pet": 1, "science": 2, "predator": 2,
+        })
+        player["played_cards"] = [{
+            "id": "animal-a", "kind": "animal",
+            "facts": {"rock_requirement": 1, "water_requirement": 2},
+            "effects": [],
+        }]
+
+        counters = plugin.observe(state, 0)["players"][0]["public_summary"]["counters"]
+        self.assertEqual(2, counters["continents"]["asia"])
+        self.assertEqual(1, counters["animals"]["bear"])
+        self.assertEqual(1, counters["animals"]["petting_zoo"])
+        self.assertEqual(2, counters["animals"]["research"])
+        self.assertEqual(2, counters["animals"]["predator"])
+        self.assertEqual(1, counters["animals"]["rock"])
+        self.assertEqual(2, counters["animals"]["water"])
+
+    def test_private_final_cards_include_live_scoring_projection(self):
+        plugin = ArkNovaOfficialPlugin()
+        state = plugin.setup(2, seed=46)
+        entry = plugin.pack.entry("ark-nova:final-001")
+        final_card = {
+            "id": "final-live-a", "entry_id": entry.id, "kind": entry.kind,
+            "facts": dict(entry.facts), "effects": list(entry.effects),
+        }
+        state["players"][0]["final_scoring_cards"] = [final_card]
+        state["players"][0]["played_cards"] = [
+            {"id": f"large-{index}", "kind": "animal", "facts": {"enclosure_size": 4}}
+            for index in range(4)
+        ]
+
+        own = plugin.observe(state, 0)["players"][0]["final_scoring_cards"][0]
+        hidden = plugin.observe(state, 1)["players"][0]["final_scoring_cards"][0]
+        self.assertEqual(4, own["live_scoring"]["metric_value"])
+        self.assertGreater(own["live_scoring"]["conservation"], 0)
+        self.assertEqual({"hidden": True}, hidden)
+
     def test_setup_draws_four_of_the_nine_exact_bonus_tile_faces(self):
         tiles = _bonus_tiles(self.pack.collections["bonus_tiles"])
         self.assertEqual(9, len(tiles))

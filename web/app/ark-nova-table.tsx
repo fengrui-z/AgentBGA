@@ -16,6 +16,7 @@ export type ArkCard = {
   abilities?: {keyword?: string; name_cn?: string; name_en?: string; effect_cn?: string; effect_en?: string; value?: unknown}[];
   mechanism_notes?: {timing?: string; summary_cn?: string; summary_en?: string}[];
   resolved_mechanics?: {timing: string; timing_cn: string; timing_en: string; description_cn: string; description_en: string; op?: string; source?: string}[];
+  live_scoring?: {conservation: number; metric?: string; metric_value?: number; conditions?: Record<string, boolean>; winning_categories?: string[]; right_neighbor_seat?: number};
   criterion_cn?: string; criterion_en?: string;
   tiers?: {id?: string; requirement?: number | string | null; conservation?: number; reputation?: number; blocked?: boolean}[];
 };
@@ -237,6 +238,15 @@ function cardIcons(card: ArkCard) {
   return Object.entries(card.icons || {}).filter(([, count]) => Number(count) > 0);
 }
 
+function liveScoringCount(card: ArkCard) {
+  const score = card.live_scoring;
+  if (!score) return undefined;
+  if (score.metric_value !== undefined) return score.metric_value;
+  if (score.conditions) return Object.values(score.conditions).filter(Boolean).length;
+  if (score.winning_categories) return score.winning_categories.length;
+  return 0;
+}
+
 function shouldShowSummary(card: ArkCard) {
   if (!card.display_summary) return false;
   if (card.card_type === "sponsor" && /^Level \d+ sponsor; timings:/i.test(card.display_summary)) return false;
@@ -264,6 +274,7 @@ function CardDetailsOverlay({card, lang, open, pinned, onClose}: {
       <span><b>{copy(lang, "轨道收益", "Track gains")}</b><strong>{copy(lang, "魅力", "Appeal")} {card.appeal ?? 0} · {copy(lang, "保护", "Conservation")} {card.conservation ?? 0} · {copy(lang, "声望", "Reputation")} {card.reputation ?? 0}</strong></span>
     </div>}
     {card.card_type === "sponsor" && <div className="ark-card-detail-stats"><span><b>{copy(lang, "行动强度", "Action strength")}</b><strong>{card.level ?? "—"}</strong></span></div>}
+    {card.card_type === "final_scoring" && card.live_scoring && <div className="ark-card-detail-stats ark-final-live-detail"><span><b>{copy(lang, "当前满足条件数", "Currently satisfied")}</b><strong>{liveScoringCount(card) ?? 0}</strong></span><span><b>{copy(lang, "预计终局保护点", "Projected final conservation")}</b><strong>+{card.live_scoring.conservation} C</strong></span></div>}
     {shouldShowSummary(card) && <p className="ark-card-details-summary">{card.display_summary}</p>}
     <dl>
       {requirements.length > 0 && <div><dt>{copy(lang, "打出要求", "Play requirements")}</dt><dd>{requirements.join("；")}</dd></div>}
@@ -310,7 +321,8 @@ function ReadableCardFace({card, lang, selectionControl}: {
     </>}
     {["conservation_project", "final_scoring"].includes(card.card_type || "") && <>
       <p className="ark-readable-card-criterion"><b>{copy(lang, "检查", "Check")}</b><span>{criterion || copy(lang, "依据卡牌条件计数", "Count the card criterion")}</span></p>
-      {tiers.length > 0 && <div className="ark-readable-card-tiers" aria-label={copy(lang, "计分档位", "Scoring tiers")}>{tiers.map((tier, index) => <span key={tier.id || index}><b>{String(tier.requirement)}</b><i>→</i><strong>{copy(lang, "保护", "C")} +{tier.conservation ?? 0}</strong>{Number(tier.reputation || 0) > 0 && <small>{copy(lang, "声望", "R")} +{tier.reputation}</small>}</span>)}</div>}
+      {card.card_type === "final_scoring" && card.live_scoring && <div className="ark-final-live-score"><span>{copy(lang, "当前满足", "Satisfied now")} <b>{liveScoringCount(card) ?? 0}</b></span><strong>{copy(lang, "终局预计", "Projected")} +{card.live_scoring.conservation} C</strong></div>}
+      {tiers.length > 0 && <div className="ark-readable-card-tiers" aria-label={copy(lang, "计分档位", "Scoring tiers")}>{tiers.map((tier, index) => <span key={tier.id || index} className={card.card_type === "final_scoring" && card.live_scoring && Number(tier.conservation || 0) === card.live_scoring.conservation ? "is-current" : ""}><b>{String(tier.requirement)}</b><i>→</i><strong>{copy(lang, "保护", "C")} +{tier.conservation ?? 0}</strong>{Number(tier.reputation || 0) > 0 && <small>{copy(lang, "声望", "R")} +{tier.reputation}</small>}</span>)}</div>}
     </>}
     {!["animal", "sponsor", "conservation_project", "final_scoring"].includes(card.card_type || "") && <p className="ark-readable-card-mechanism"><b>{copy(lang, "效果", "Effect")}</b><span>{primaryMechanism?.text || card.display_summary || copy(lang, "查看完整说明", "See details")}</span></p>}
     <button type="button" className="ark-readable-card-info" aria-label={infoLabel} aria-expanded={pinned} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onClick={() => setPinned(value => !value)}>i</button>

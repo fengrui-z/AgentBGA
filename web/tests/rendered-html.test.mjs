@@ -146,6 +146,8 @@ test("Ark Nova table exposes the public board, association, summary, and interac
   assert.match(source, /function PlayerActionControls/);
   assert.match(source, /function PlayerCardArea/);
   assert.match(source, /function FinalScoringCardArea/);
+  assert.match(source, /live_scoring/);
+  assert.match(source, /ark-final-live-score/);
   assert.match(source, /function PlayedCardArea/);
   assert.match(source, /card\.card_type \|\| card\.kind/);
   assert.match(source, /choose_initial_hand/);
@@ -170,6 +172,7 @@ test("Ark Nova table exposes the public board, association, summary, and interac
   assert.match(styles, /\.ark-action-rack/);
   assert.match(styles, /\.ark-player-cards/);
   assert.match(styles, /\.ark-final-scoring-cards/);
+  assert.match(styles, /\.ark-final-live-score/);
   assert.match(styles, /\.ark-played-card-area/);
   assert.match(styles, /\.ark-cancel-selected-action/);
   assert.match(styles, /\.ark-shared-score-track/);

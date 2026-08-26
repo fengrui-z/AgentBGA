@@ -128,6 +128,7 @@
 .ark-readable-card-tracks b{font:700 4.5px ui-monospace,monospace!important;color:#5b635b}.ark-readable-card-tracks strong{margin:1px 0 0!important;font:800 8px Georgia,serif!important;color:#263128}
 .ark-readable-card-tiers{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(35px,1fr))!important;gap:2px!important;margin:5px 0 0!important}
 .ark-readable-card-tiers>span{display:flex;align-items:center;justify-content:center;gap:2px;padding:3px 2px;background:rgba(255,255,255,.72);border:1px solid rgba(68,86,66,.22);font:700 5.5px ui-monospace,monospace}
+.ark-readable-card-tiers>span.is-current{background:#d8ead1;border-color:#58805c;box-shadow:inset 0 0 0 1px #709272}.ark-final-live-score{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:5px;padding:4px 5px;background:#ddd0e5;border-left:3px solid #785f87;color:#493b51;font:700 6px ui-monospace,monospace}.ark-final-live-score b,.ark-final-live-score strong{font-size:7px}.ark-final-live-detail{border-left:3px solid #785f87}
 .ark-readable-card-tiers i{color:#81887d;font-style:normal}.ark-readable-card-tiers strong{margin:0!important;color:#426746;font:800 5.5px ui-monospace,monospace!important}.ark-readable-card-tiers small{font-size:5px}
 .ark-readable-card-mechanism{margin-top:auto;margin-bottom:0;padding-right:20px}
 .ark-readable-card-mechanisms{display:grid;gap:2px;margin-top:auto}

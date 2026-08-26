@@ -11,6 +11,7 @@ from ..game import GameRuleError
 from ..mechanics import action_accepted, hidden_items, state_digest
 from .action_domains import apply_official_action, content_entry_indexes, legal_official_actions
 from .content import ContentPack
+from .final_scoring_effects import score_final_card
 from .milestones import queue_endgame_final_scoring_discard
 from .presentation import resolve_mechanics
 from .rounds import advance_solo_round_after_turn, queue_break, queue_solo_break
@@ -274,7 +275,9 @@ class ArkNovaOfficialPlugin:
         self, state: dict[str, Any], seat: int, *, reveal_all_private: bool,
     ) -> dict[str, Any]:
         rows = [
-            _present_player(player, reveal_all_private or player["seat"] == seat)
+            _present_player(
+                player, reveal_all_private or player["seat"] == seat, state,
+            )
             for player in state["players"]
         ]
         projection = {
@@ -407,9 +410,21 @@ def _present_card(card: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-def _present_player(player: Mapping[str, Any], private: bool) -> dict[str, Any]:
+def _present_player(
+    player: Mapping[str, Any], private: bool, state: Mapping[str, Any],
+) -> dict[str, Any]:
     tracks = player["tracks"]
     played = [_present_card(card) for card in player["played_cards"]]
+    final_scoring_cards = []
+    if private:
+        for card in player["final_scoring_cards"]:
+            presented = _present_card(card)
+            live_scoring = score_final_card(state, int(player["seat"]), card)
+            if live_scoring is not None:
+                presented["live_scoring"] = live_scoring
+            final_scoring_cards.append(presented)
+    else:
+        final_scoring_cards = hidden_items(player["final_scoring_cards"])
     row = deepcopy(dict(player))
     row.update({
         "appeal": tracks["appeal"], "conservation": tracks["conservation"],
@@ -425,10 +440,7 @@ def _present_player(player: Mapping[str, Any], private: bool) -> dict[str, Any]:
             [_present_card(card) for card in player.get("initial_draw", [])]
             if private else hidden_items(player.get("initial_draw", []))
         ),
-        "final_scoring_cards": (
-            [_present_card(card) for card in player["final_scoring_cards"]]
-            if private else hidden_items(player["final_scoring_cards"])
-        ),
+        "final_scoring_cards": final_scoring_cards,
         "played_cards": played,
         "conservation_tokens_on_map": player["project_tokens_available"],
         "upgrade_rewards_claimed": [

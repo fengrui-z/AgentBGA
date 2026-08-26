@@ -2,6 +2,7 @@ from pathlib import Path
 import unittest
 
 from agentbga.ark_nova_map import building_shape_variants
+from agentbga.ark_nova_presentation import map_display
 from agentbga.ark_nova_official import (
     SemanticEngine,
     add_project_to_state,
@@ -319,6 +320,21 @@ class ArkNovaOfficialP5ProjectTests(unittest.TestCase):
             modifier.get("id") == "project-token:money-5"
             for modifier in player["modifiers"]
         ))
+        programs = map_display({
+            **player,
+            "appeal": player["tracks"]["appeal"],
+            "conservation": player["tracks"]["conservation"],
+            "reputation": player["tracks"]["reputation"],
+            "upgrade_rewards_claimed": [],
+            "conservation_rewards_claimed": [],
+            "final_card_choice_resolved": False,
+            "conservation_tokens_on_map": player["project_tokens_available"],
+        })["player_board"]["conservation_programs"]
+        money_slot = next(
+            slot for program in programs for slot in program["slots"]
+            if slot["id"] == "money-5"
+        )
+        self.assertEqual("claimed", money_slot["status"])
         state, events = self.engine.start_effects(state, 0, [{
             "op": "take_income", "timing": "system", "args": {},
         }], source_id="test:income")
