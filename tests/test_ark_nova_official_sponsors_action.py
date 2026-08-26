@@ -175,6 +175,29 @@ class ArkNovaOfficialSponsorsActionTests(unittest.TestCase):
         ))
         self.assertEqual(["sponsors:finish"], [choice["id"] for choice in self.choices(state)])
 
+    def test_unique_building_sponsor_cannot_be_played_without_a_legal_footprint(self):
+        state = self.state
+        player = state["players"][0]
+        player["hand"] = [{
+            "id": "monkey-park-blocked", "entry_id": self.unique_ready.id,
+        }]
+        buildable = [
+            cell for cell in player["map"]["cells"] if cell["terrain"] == "buildable"
+        ]
+        player["map"]["buildings"] = [
+            {
+                "id": f"block-{index}", "type": "pavilion", "size": 1,
+                "shape_id": "pavilion-1", "rotation": 0, "occupied": False,
+                "cells": [{"q": cell["q"], "r": cell["r"]}],
+            }
+            for index, cell in enumerate(buildable)
+        ]
+        state, _ = start_action(state, 0, "sponsors")
+        self.assertNotIn(
+            "sponsors:play:monkey-park-blocked",
+            [choice["id"] for choice in self.choices(state)],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

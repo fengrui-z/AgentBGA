@@ -11,26 +11,10 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Mapping
 
+from ..ark_nova_map import unique_sponsor_building_spec
+
 
 UNIQUE_BUILDING_SPONSORS = frozenset(str(value) for value in range(243, 258))
-
-UNIQUE_BUILDING_RULES: Mapping[str, Mapping[str, Any]] = {
-    "243": {"size": 3, "adjacent_terrain": "rock", "adjacent_count": 1},
-    "244": {"size": 4, "adjacent_terrain": "water", "adjacent_count": 1},
-    "245": {"size": 4, "adjacent_terrain": "water", "adjacent_count": 2},
-    "246": {"size": 4, "adjacent_terrain": "rock", "adjacent_count": 2},
-    "247": {"size": 4, "adjacent_terrain": "rock", "adjacent_count": 1},
-    "248": {"size": 4},
-    "249": {"size": 3},
-    "250": {"size": 4, "adjacent_terrain": "water", "adjacent_count": 1},
-    "251": {"size": 4},
-    "252": {"size": 4, "adjacent_terrain": "rock", "adjacent_count": 1},
-    "253": {"size": 4},
-    "254": {"size": 3, "border_count": 2},
-    "255": {"size": 2, "adjacent_terrain": "rock", "adjacent_count": 1},
-    "256": {"size": 2, "adjacent_terrain": "water", "adjacent_count": 1},
-    "257": {"size": 2, "border_count": 2, "ignore_existing_adjacency": True},
-}
 
 _APPEAL_MAXIMUM_25 = frozenset({"207", "222", "258", "259", "260", "264"})
 _REPUTATION_MINIMUM = {
@@ -109,12 +93,28 @@ def corrected_direct_rewards(row: Mapping[str, Any]) -> dict[str, int]:
 
 
 def unique_building_rules(component_id: str) -> dict[str, Any] | None:
-    rules = UNIQUE_BUILDING_RULES.get(component_id)
-    if rules is None:
+    try:
+        spec = unique_sponsor_building_spec(int(component_id))
+    except ValueError:
+        spec = None
+    if spec is None:
         return None
+    placement = spec["placement"]
+    adjacent_terrain = None
+    adjacent_count = 0
+    for terrain in ("rock", "water"):
+        count = int(placement.get(f"min_adjacent_{terrain}_spaces", 0))
+        if count:
+            adjacent_terrain, adjacent_count = terrain, count
     return {
-        "building_type": f"unique_sponsor_{component_id}",
-        **deepcopy(dict(rules)),
+        "building_type": spec["building_type"],
+        "size": spec["size"],
+        **({"adjacent_terrain": adjacent_terrain, "adjacent_count": adjacent_count}
+           if adjacent_terrain else {}),
+        **({"border_count": int(placement["min_border_spaces"])}
+           if placement.get("min_border_spaces") else {}),
+        **({"ignore_existing_adjacency": True}
+           if placement.get("requires_adjacency_to_existing_building") is False else {}),
     }
 
 

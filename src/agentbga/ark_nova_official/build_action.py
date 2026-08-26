@@ -264,6 +264,13 @@ def legal_unique_building_placements(
         (cell["q"], cell["r"])
         for building in zoo_map["buildings"] for cell in building["cells"]
     }
+    build_two = {
+        (cell["q"], cell["r"]) for cell in zoo_map["cells"]
+        if cell.get("requires_build_upgrade")
+    }
+    build_upgraded = next(
+        card["upgraded"] for card in player["action_cards"] if card["action"] == "build"
+    )
     if any(building.get("type") == building_type for building in zoo_map["buildings"]):
         return []
     terrain_kind = None if may_cover_terrain else rules.get("adjacent_terrain")
@@ -281,8 +288,14 @@ def legal_unique_building_placements(
                 (anchor[0] + q, anchor[1] + r) for q, r in variant["cells"]
             ))
             footprint = set(cells)
+            # 1. canonical shape; 2. bounds/buildable terrain and occupancy.
             if len(footprint) != size or not footprint <= buildable or footprint & occupied:
                 continue
+            # 3. Map 0's restricted cells still require Build II when a Sponsor
+            # places the building instead of a normal Build action.
+            if footprint & build_two and not build_upgraded:
+                continue
+            # 4. normal connectivity. Side Entrance (257) is the sole override.
             if not ignore_existing:
                 if occupied and not any(
                     axial_hex_neighbors(cell) & occupied for cell in footprint
@@ -290,10 +303,12 @@ def legal_unique_building_placements(
                     continue
                 if not occupied and not footprint & border:
                     continue
-            if len(footprint & border) < border_count:
-                continue
+            # 5. printed terrain adjacency, counted as distinct terrain spaces.
             adjacent = set().union(*(axial_hex_neighbors(cell) for cell in footprint)) - footprint
             if len(adjacent & terrain_cells) < adjacent_count:
+                continue
+            # 6. printed map-border constraint.
+            if len(footprint & border) < border_count:
                 continue
             result[cells] = {
                 "type": "place_unique_sponsor_building",

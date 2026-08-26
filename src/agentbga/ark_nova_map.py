@@ -86,6 +86,67 @@ _BUILDING_SHAPES: dict[tuple[str, int], tuple[tuple[int, int], ...]] = {
     ("unique_sponsor_257", 2): ((0, 0), (1, 0)),
 }
 
+
+# Base-game Sponsor cards 243-257 each place one mandatory unique building.
+# Terrain requirements count distinct adjacent terrain hexes. Tiles rotate in
+# sixty-degree steps but are never reflected.
+_UNIQUE_SPONSOR_BUILDINGS: dict[int, dict[str, Any]] = {
+    243: {"name": "Meerkat Den", "building_type": "unique_sponsor_243", "size": 3,
+          "placement": {"min_adjacent_rock_spaces": 1}},
+    244: {"name": "Penguin Pool", "building_type": "unique_sponsor_244", "size": 4,
+          "placement": {"min_adjacent_water_spaces": 1}},
+    245: {"name": "Aquarium", "building_type": "unique_sponsor_245", "size": 4,
+          "placement": {"min_adjacent_water_spaces": 2}},
+    246: {"name": "Aerial Cableway", "building_type": "unique_sponsor_246", "size": 4,
+          "placement": {"min_adjacent_rock_spaces": 2}},
+    247: {"name": "Baboon Rock", "building_type": "unique_sponsor_247", "size": 4,
+          "placement": {"min_adjacent_rock_spaces": 1}},
+    248: {"name": "Rhesus Monkey Park", "building_type": "unique_sponsor_248", "size": 4,
+          "placement": {}},
+    249: {"name": "Barred Owl Hut", "building_type": "unique_sponsor_249", "size": 3,
+          "placement": {}},
+    250: {"name": "Sea Turtle Tank", "building_type": "unique_sponsor_250", "size": 4,
+          "placement": {"min_adjacent_water_spaces": 1}},
+    251: {"name": "Polar Bear Exhibit", "building_type": "unique_sponsor_251", "size": 4,
+          "placement": {"min_adjacent_water_spaces": 1}},
+    252: {"name": "Spotted Hyena Compound", "building_type": "unique_sponsor_252", "size": 4,
+          "placement": {"min_adjacent_rock_spaces": 1}},
+    253: {"name": "Okapi Stable", "building_type": "unique_sponsor_253", "size": 4,
+          "placement": {}},
+    254: {"name": "Zoo School", "building_type": "unique_sponsor_254", "size": 3,
+          "placement": {"min_border_spaces": 2}},
+    255: {"name": "Adventure Playground", "building_type": "unique_sponsor_255", "size": 2,
+          "placement": {"min_adjacent_rock_spaces": 1}},
+    256: {"name": "Water Playground", "building_type": "unique_sponsor_256", "size": 2,
+          "placement": {"min_adjacent_water_spaces": 1}},
+    257: {"name": "Side Entrance", "building_type": "unique_sponsor_257", "size": 2,
+          "placement": {"min_border_spaces": 2,
+                        "requires_adjacency_to_existing_building": False}},
+}
+
+
+def unique_sponsor_building_spec(card_id: int) -> dict[str, Any] | None:
+    """Return a defensive, self-contained unique-building specification."""
+
+    spec = _UNIQUE_SPONSOR_BUILDINGS.get(card_id)
+    if spec is None:
+        return None
+    result = deepcopy(spec)
+    result["card_id"] = card_id
+    result["canonical_cells"] = deepcopy(
+        _BUILDING_SHAPES[(result["building_type"], result["size"])]
+    )
+    return result
+
+
+def unique_sponsor_shape_variants(card_id: int) -> list[dict[str, Any]]:
+    """Return every distinct rotation of Sponsor ``card_id``'s building."""
+
+    spec = _UNIQUE_SPONSOR_BUILDINGS.get(card_id)
+    if spec is None:
+        return []
+    return building_shape_variants(spec["building_type"], spec["size"])
+
 # Older development builds could generate this branched size-four footprint.
 # It is retained only to keep already-running matches loadable; it must never
 # be offered as a new placement because the standard size-four enclosure is the
