@@ -351,232 +351,421 @@
         "participant_id": "gpt56-sol-codex",
         "game": "splendor",
         "successful_sessions": 32,
-        "mean_total_tokens_m": 8.05,
-        "median_total_tokens_m": 7.57
+        "mean_total_tokens_m": 8.048,
+        "median_total_tokens_m": 7.569,
+        "mean_input_tokens_m": 0.292,
+        "mean_cached_input_tokens_m": 7.731,
+        "mean_output_tokens_m": 0.025,
+        "elo": 1550,
+        "elo_rank": 5
       },
       {
         "participant_id": "gpt56-sol-codex",
         "game": "seven_wonders",
         "successful_sessions": 23,
-        "mean_total_tokens_m": 6.25,
-        "median_total_tokens_m": 6.34
+        "mean_total_tokens_m": 6.248,
+        "median_total_tokens_m": 6.339,
+        "mean_input_tokens_m": 0.333,
+        "mean_cached_input_tokens_m": 5.901,
+        "mean_output_tokens_m": 0.014,
+        "elo": 1665,
+        "elo_rank": 1
       },
       {
         "participant_id": "gpt56-sol-codex",
         "game": "brass_birmingham",
         "successful_sessions": 30,
-        "mean_total_tokens_m": 77.71,
-        "median_total_tokens_m": 75.96
+        "mean_total_tokens_m": 77.708,
+        "median_total_tokens_m": 75.964,
+        "mean_input_tokens_m": 2.448,
+        "mean_cached_input_tokens_m": 75.168,
+        "mean_output_tokens_m": 0.092,
+        "elo": 2087.6,
+        "elo_rank": 1
       },
       {
         "participant_id": "gpt56-sol-opencode",
         "game": "splendor",
         "successful_sessions": 34,
-        "mean_total_tokens_m": 6.08,
-        "median_total_tokens_m": 6.48
+        "mean_total_tokens_m": 6.075,
+        "median_total_tokens_m": 6.475,
+        "mean_input_tokens_m": 0.213,
+        "mean_cached_input_tokens_m": 5.844,
+        "mean_output_tokens_m": 0.018,
+        "elo": 1529,
+        "elo_rank": 9
       },
       {
         "participant_id": "gpt56-sol-opencode",
         "game": "seven_wonders",
         "successful_sessions": 24,
-        "mean_total_tokens_m": 4.95,
-        "median_total_tokens_m": 4.85
+        "mean_total_tokens_m": 4.948,
+        "median_total_tokens_m": 4.854,
+        "mean_input_tokens_m": 0.22,
+        "mean_cached_input_tokens_m": 4.718,
+        "mean_output_tokens_m": 0.01,
+        "elo": 1623.8,
+        "elo_rank": 2
       },
       {
         "participant_id": "gpt56-sol-opencode",
         "game": "brass_birmingham",
         "successful_sessions": 25,
-        "mean_total_tokens_m": 44.84,
-        "median_total_tokens_m": 30.43
+        "mean_total_tokens_m": 44.838,
+        "median_total_tokens_m": 30.428,
+        "mean_input_tokens_m": 0.846,
+        "mean_cached_input_tokens_m": 43.957,
+        "mean_output_tokens_m": 0.035,
+        "elo": 1696.8,
+        "elo_rank": 3
+      },
+      {
+        "participant_id": "deepseek-v4-flash-0731-dsh",
+        "game": "splendor",
+        "successful_sessions": 28,
+        "mean_total_tokens_m": 7.055,
+        "median_total_tokens_m": 6.98,
+        "mean_input_tokens_m": 0.28,
+        "mean_cached_input_tokens_m": 6.727,
+        "mean_output_tokens_m": 0.048,
+        "elo": 1531,
+        "elo_rank": 8
+      },
+      {
+        "participant_id": "deepseek-v4-flash-0731-dsh",
+        "game": "seven_wonders",
+        "successful_sessions": 20,
+        "mean_total_tokens_m": 4.4,
+        "median_total_tokens_m": 4.115,
+        "mean_input_tokens_m": 0.343,
+        "mean_cached_input_tokens_m": 4.017,
+        "mean_output_tokens_m": 0.04,
+        "elo": 1585.1,
+        "elo_rank": 4
       },
       {
         "participant_id": "deepseek-v4-pro-0813-dsh",
         "game": "splendor",
         "successful_sessions": 32,
-        "mean_total_tokens_m": 10.41,
-        "median_total_tokens_m": 10.32
+        "mean_total_tokens_m": 10.405,
+        "median_total_tokens_m": 10.316,
+        "mean_input_tokens_m": 0.419,
+        "mean_cached_input_tokens_m": 9.876,
+        "mean_output_tokens_m": 0.11,
+        "elo": 1573.8,
+        "elo_rank": 3
       },
       {
         "participant_id": "deepseek-v4-pro-0813-dsh",
         "game": "seven_wonders",
         "successful_sessions": 22,
-        "mean_total_tokens_m": 7.56,
-        "median_total_tokens_m": 8.81
+        "mean_total_tokens_m": 7.557,
+        "median_total_tokens_m": 8.812,
+        "mean_input_tokens_m": 0.475,
+        "mean_cached_input_tokens_m": 6.964,
+        "mean_output_tokens_m": 0.118,
+        "elo": 1581,
+        "elo_rank": 5
       },
       {
         "participant_id": "deepseek-v4-pro-0813-dsh",
         "game": "brass_birmingham",
         "successful_sessions": 23,
-        "mean_total_tokens_m": 54.01,
-        "median_total_tokens_m": 62.38
+        "mean_total_tokens_m": 54.007,
+        "median_total_tokens_m": 62.382,
+        "mean_input_tokens_m": 1.755,
+        "mean_cached_input_tokens_m": 52.077,
+        "mean_output_tokens_m": 0.175,
+        "elo": 1464.7,
+        "elo_rank": 5
       },
       {
         "participant_id": "deepseek-v4-pro-0813-opencode",
         "game": "splendor",
         "successful_sessions": 32,
-        "mean_total_tokens_m": 8.94,
-        "median_total_tokens_m": 8.87
+        "mean_total_tokens_m": 8.943,
+        "median_total_tokens_m": 8.865,
+        "mean_input_tokens_m": 0.245,
+        "mean_cached_input_tokens_m": 8.642,
+        "mean_output_tokens_m": 0.056,
+        "elo": 1555.4,
+        "elo_rank": 4
       },
       {
         "participant_id": "deepseek-v4-pro-0813-opencode",
         "game": "seven_wonders",
         "successful_sessions": 22,
-        "mean_total_tokens_m": 6.92,
-        "median_total_tokens_m": 6.87
+        "mean_total_tokens_m": 6.923,
+        "median_total_tokens_m": 6.874,
+        "mean_input_tokens_m": 0.297,
+        "mean_cached_input_tokens_m": 6.553,
+        "mean_output_tokens_m": 0.073,
+        "elo": 1593.9,
+        "elo_rank": 3
       },
       {
         "participant_id": "deepseek-v4-pro-0813-opencode",
         "game": "brass_birmingham",
         "successful_sessions": 19,
-        "mean_total_tokens_m": 111.09,
-        "median_total_tokens_m": 101.02
+        "mean_total_tokens_m": 111.092,
+        "median_total_tokens_m": 101.017,
+        "mean_input_tokens_m": 0.774,
+        "mean_cached_input_tokens_m": 110.162,
+        "mean_output_tokens_m": 0.156,
+        "elo": 1444.2,
+        "elo_rank": 6
       },
       {
         "participant_id": "gpt56-terra-codex",
         "game": "splendor",
         "successful_sessions": 34,
-        "mean_total_tokens_m": 8.63,
-        "median_total_tokens_m": 8.06
+        "mean_total_tokens_m": 8.634,
+        "median_total_tokens_m": 8.057,
+        "mean_input_tokens_m": 0.301,
+        "mean_cached_input_tokens_m": 8.314,
+        "mean_output_tokens_m": 0.019,
+        "elo": 1453.5,
+        "elo_rank": 10
       },
       {
         "participant_id": "gpt56-terra-codex",
         "game": "seven_wonders",
         "successful_sessions": 23,
-        "mean_total_tokens_m": 6.67,
-        "median_total_tokens_m": 6.46
+        "mean_total_tokens_m": 6.673,
+        "median_total_tokens_m": 6.456,
+        "mean_input_tokens_m": 0.375,
+        "mean_cached_input_tokens_m": 6.285,
+        "mean_output_tokens_m": 0.013,
+        "elo": 1475.4,
+        "elo_rank": 7
       },
       {
         "participant_id": "gpt56-terra-codex",
         "game": "brass_birmingham",
         "successful_sessions": 28,
         "mean_total_tokens_m": 74.41,
-        "median_total_tokens_m": 76.21
+        "median_total_tokens_m": 76.213,
+        "mean_input_tokens_m": 4.334,
+        "mean_cached_input_tokens_m": 69.993,
+        "mean_output_tokens_m": 0.083,
+        "elo": 1793.6,
+        "elo_rank": 2
       },
       {
         "participant_id": "qwen38-max-opencode",
         "game": "splendor",
         "successful_sessions": 32,
-        "mean_total_tokens_m": 10.24,
-        "median_total_tokens_m": 9.95
+        "mean_total_tokens_m": 10.235,
+        "median_total_tokens_m": 9.945,
+        "mean_input_tokens_m": 0.255,
+        "mean_cached_input_tokens_m": 9.923,
+        "mean_output_tokens_m": 0.057,
+        "elo": 1596,
+        "elo_rank": 2
       },
       {
         "participant_id": "qwen38-max-opencode",
         "game": "seven_wonders",
         "successful_sessions": 22,
-        "mean_total_tokens_m": 6.1,
-        "median_total_tokens_m": 6.27
+        "mean_total_tokens_m": 6.103,
+        "median_total_tokens_m": 6.267,
+        "mean_input_tokens_m": 0.235,
+        "mean_cached_input_tokens_m": 5.832,
+        "mean_output_tokens_m": 0.036,
+        "elo": 1542,
+        "elo_rank": 6
       },
       {
         "participant_id": "qwen38-max-opencode",
         "game": "brass_birmingham",
         "successful_sessions": 28,
-        "mean_total_tokens_m": 89.94,
-        "median_total_tokens_m": 63.39
+        "mean_total_tokens_m": 89.941,
+        "median_total_tokens_m": 63.385,
+        "mean_input_tokens_m": 0.639,
+        "mean_cached_input_tokens_m": 89.224,
+        "mean_output_tokens_m": 0.078,
+        "elo": 1406.1,
+        "elo_rank": 7
       },
       {
         "participant_id": "qwen38-max-qwen",
         "game": "splendor",
         "successful_sessions": 35,
-        "mean_total_tokens_m": 17.03,
-        "median_total_tokens_m": 16.87
+        "mean_total_tokens_m": 17.032,
+        "median_total_tokens_m": 16.867,
+        "mean_input_tokens_m": 3.075,
+        "mean_cached_input_tokens_m": 13.865,
+        "mean_output_tokens_m": 0.092,
+        "elo": 1604.4,
+        "elo_rank": 1
       },
       {
         "participant_id": "qwen38-max-qwen",
         "game": "seven_wonders",
         "successful_sessions": 24,
-        "mean_total_tokens_m": 11.32,
-        "median_total_tokens_m": 11.81
+        "mean_total_tokens_m": 11.316,
+        "median_total_tokens_m": 11.809,
+        "mean_input_tokens_m": 1.987,
+        "mean_cached_input_tokens_m": 9.267,
+        "mean_output_tokens_m": 0.062,
+        "elo": 1437,
+        "elo_rank": 9
       },
       {
         "participant_id": "qwen38-max-qwen",
         "game": "brass_birmingham",
         "successful_sessions": 28,
-        "mean_total_tokens_m": 106.78,
-        "median_total_tokens_m": 100.22
+        "mean_total_tokens_m": 106.782,
+        "median_total_tokens_m": 100.216,
+        "mean_input_tokens_m": 29.348,
+        "mean_cached_input_tokens_m": 77.277,
+        "mean_output_tokens_m": 0.157,
+        "elo": 1479.8,
+        "elo_rank": 4
       },
       {
         "participant_id": "glm52-opencode",
         "game": "splendor",
         "successful_sessions": 35,
-        "mean_total_tokens_m": 14.56,
-        "median_total_tokens_m": 12.72
+        "mean_total_tokens_m": 14.556,
+        "median_total_tokens_m": 12.716,
+        "mean_input_tokens_m": 0.43,
+        "mean_cached_input_tokens_m": 14.003,
+        "mean_output_tokens_m": 0.123,
+        "elo": 1548.7,
+        "elo_rank": 6
       },
       {
         "participant_id": "glm52-opencode",
         "game": "seven_wonders",
         "successful_sessions": 24,
-        "mean_total_tokens_m": 9.13,
-        "median_total_tokens_m": 9.51
+        "mean_total_tokens_m": 9.126,
+        "median_total_tokens_m": 9.509,
+        "mean_input_tokens_m": 0.278,
+        "mean_cached_input_tokens_m": 8.759,
+        "mean_output_tokens_m": 0.089,
+        "elo": 1439.1,
+        "elo_rank": 8
       },
       {
         "participant_id": "glm52-opencode",
         "game": "brass_birmingham",
         "successful_sessions": 26,
-        "mean_total_tokens_m": 85.25,
-        "median_total_tokens_m": 67.83
+        "mean_total_tokens_m": 85.249,
+        "median_total_tokens_m": 67.825,
+        "mean_input_tokens_m": 1.475,
+        "mean_cached_input_tokens_m": 83.686,
+        "mean_output_tokens_m": 0.088,
+        "elo": 1259.5,
+        "elo_rank": 10
       },
       {
         "participant_id": "kimi-k27-code-opencode",
         "game": "splendor",
         "successful_sessions": 31,
-        "mean_total_tokens_m": 6.61,
-        "median_total_tokens_m": 6.32
+        "mean_total_tokens_m": 6.613,
+        "median_total_tokens_m": 6.32,
+        "mean_input_tokens_m": 0.278,
+        "mean_cached_input_tokens_m": 6.305,
+        "mean_output_tokens_m": 0.03,
+        "elo": 1531.4,
+        "elo_rank": 7
       },
       {
         "participant_id": "kimi-k27-code-opencode",
         "game": "seven_wonders",
         "successful_sessions": 22,
-        "mean_total_tokens_m": 5.17,
-        "median_total_tokens_m": 5.49
+        "mean_total_tokens_m": 5.174,
+        "median_total_tokens_m": 5.492,
+        "mean_input_tokens_m": 0.265,
+        "mean_cached_input_tokens_m": 4.894,
+        "mean_output_tokens_m": 0.015,
+        "elo": 1368.6,
+        "elo_rank": 10
       },
       {
         "participant_id": "kimi-k27-code-opencode",
         "game": "brass_birmingham",
         "successful_sessions": 14,
-        "mean_total_tokens_m": 22.14,
-        "median_total_tokens_m": 17.29
+        "mean_total_tokens_m": 22.135,
+        "median_total_tokens_m": 17.286,
+        "mean_input_tokens_m": 0.562,
+        "mean_cached_input_tokens_m": 21.546,
+        "mean_output_tokens_m": 0.027,
+        "elo": 1264.1,
+        "elo_rank": 9
       },
       {
         "participant_id": "gpt56-luna-codex",
         "game": "splendor",
         "successful_sessions": 34,
-        "mean_total_tokens_m": 9.19,
-        "median_total_tokens_m": 9.32
+        "mean_total_tokens_m": 9.187,
+        "median_total_tokens_m": 9.318,
+        "mean_input_tokens_m": 0.968,
+        "mean_cached_input_tokens_m": 8.195,
+        "mean_output_tokens_m": 0.024,
+        "elo": 1251,
+        "elo_rank": 12
       },
       {
         "participant_id": "gpt56-luna-codex",
         "game": "seven_wonders",
         "successful_sessions": 23,
-        "mean_total_tokens_m": 7.14,
-        "median_total_tokens_m": 7.7
+        "mean_total_tokens_m": 7.137,
+        "median_total_tokens_m": 7.696,
+        "mean_input_tokens_m": 0.825,
+        "mean_cached_input_tokens_m": 6.295,
+        "mean_output_tokens_m": 0.017,
+        "elo": 1342.7,
+        "elo_rank": 12
       },
       {
         "participant_id": "gpt56-luna-codex",
         "game": "brass_birmingham",
         "successful_sessions": 25,
-        "mean_total_tokens_m": 54.4,
-        "median_total_tokens_m": 55.84
+        "mean_total_tokens_m": 54.404,
+        "median_total_tokens_m": 55.842,
+        "mean_input_tokens_m": 4.45,
+        "mean_cached_input_tokens_m": 49.849,
+        "mean_output_tokens_m": 0.105,
+        "elo": 1388.4,
+        "elo_rank": 8
       },
       {
         "participant_id": "qwen37-plus-opencode",
         "game": "splendor",
         "successful_sessions": 34,
-        "mean_total_tokens_m": 9.85,
-        "median_total_tokens_m": 8.34
+        "mean_total_tokens_m": 9.852,
+        "median_total_tokens_m": 8.341,
+        "mean_input_tokens_m": 0.94,
+        "mean_cached_input_tokens_m": 8.875,
+        "mean_output_tokens_m": 0.037,
+        "elo": 1275.9,
+        "elo_rank": 11
       },
       {
         "participant_id": "qwen37-plus-opencode",
         "game": "seven_wonders",
         "successful_sessions": 24,
-        "mean_total_tokens_m": 4.46,
-        "median_total_tokens_m": 4.83
+        "mean_total_tokens_m": 4.462,
+        "median_total_tokens_m": 4.829,
+        "mean_input_tokens_m": 0.524,
+        "mean_cached_input_tokens_m": 3.925,
+        "mean_output_tokens_m": 0.013,
+        "elo": 1346.4,
+        "elo_rank": 11
       },
       {
         "participant_id": "qwen37-plus-opencode",
         "game": "brass_birmingham",
         "successful_sessions": 25,
-        "mean_total_tokens_m": 39.24,
-        "median_total_tokens_m": 22.83
+        "mean_total_tokens_m": 39.237,
+        "median_total_tokens_m": 22.829,
+        "mean_input_tokens_m": 1.668,
+        "mean_cached_input_tokens_m": 37.538,
+        "mean_output_tokens_m": 0.031,
+        "elo": 1215.2,
+        "elo_rank": 11
       }
     ]
   }

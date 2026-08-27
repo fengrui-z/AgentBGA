@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import gzip
 import json
 import re
 from html.parser import HTMLParser
@@ -70,9 +72,26 @@ def _millions(value: str) -> float:
     return float(match.group())
 
 
+def _artifact_datasets(report_html: str) -> dict[str, list[dict[str, Any]]]:
+    """Read the full datasets bundled into a portable Data Analytics report."""
+
+    match = re.search(
+        r'<template[^>]*id="data-analytics-portable-artifact-payload-source"[^>]*>'
+        r"(.*?)</template>",
+        report_html,
+        re.DOTALL,
+    )
+    if not match:
+        return {}
+    encoded = re.sub(r"\s", "", match.group(1))
+    payload = json.loads(gzip.decompress(base64.b64decode(encoded)))
+    return payload.get("snapshot", {}).get("datasets", {})
+
+
 def _report_token_efficiency(report: Path, participants: dict[str, Any]) -> dict[str, Any]:
+    report_html = report.read_text(encoding="utf-8")
     parser = _ReportTableParser()
-    parser.feed(report.read_text(encoding="utf-8"))
+    parser.feed(report_html)
     identifiers = {player.get("name"): identifier for identifier, player in participants.items()}
 
     frontier_rows = parser.tables.get("Elo 与平均总 token / session data", [])
@@ -91,21 +110,59 @@ def _report_token_efficiency(report: Path, participants: dict[str, Any]) -> dict
             }
         )
 
-    game_names = {"Splendor": "splendor", "7 Wonders": "seven_wonders", "Brass": "brass_birmingham"}
-    game_rows = parser.tables.get("分游戏平均总 token / session data", [])
+    datasets = _artifact_datasets(report_html)
+    elo_by_game = {
+        (row["participant_id"], row["game"]): row
+        for row in datasets.get("game_elo", [])
+    }
     by_game = []
-    for row in game_rows:
-        if len(row) < 6 or row[3] not in identifiers or row[2] not in game_names:
+    for row in datasets.get("game_token_usage", []):
+        identifier = row.get("participant_id")
+        game = row.get("game")
+        if identifier not in participants or not game:
             continue
+        game_elo = elo_by_game.get((identifier, game), {})
         by_game.append(
             {
-                "participant_id": identifiers[row[3]],
-                "game": game_names[row[2]],
-                "successful_sessions": int(row[4]),
-                "mean_total_tokens_m": _millions(row[1]),
-                "median_total_tokens_m": _millions(row[5]),
+                "participant_id": identifier,
+                "game": game,
+                "successful_sessions": row["sessions"],
+                "mean_total_tokens_m": row["avg_total_m"],
+                "median_total_tokens_m": row["median_total_m"],
+                "mean_input_tokens_m": row["avg_uncached_input_m"],
+                "mean_cached_input_tokens_m": row["avg_cached_input_m"],
+                # Keep the three displayed components additive to the report's
+                # authoritative total. Some Qwen telemetry reports reasoning as
+                # part of output while also separating it from total_tokens.
+                "mean_output_tokens_m": round(
+                    max(
+                        row["avg_total_m"]
+                        - row["avg_uncached_input_m"]
+                        - row["avg_cached_input_m"],
+                        0,
+                    ),
+                    3,
+                ),
+                "elo": game_elo.get("elo"),
+                "elo_rank": game_elo.get("game_rank"),
             }
         )
+
+    if not by_game:
+        game_names = {"Splendor": "splendor", "7 Wonders": "seven_wonders", "Brass": "brass_birmingham"}
+        game_rows = parser.tables.get("分游戏平均总 token / session data", [])
+        for row in game_rows:
+            if len(row) < 6 or row[3] not in identifiers or row[2] not in game_names:
+                continue
+            by_game.append(
+                {
+                    "participant_id": identifiers[row[3]],
+                    "game": game_names[row[2]],
+                    "successful_sessions": int(row[4]),
+                    "mean_total_tokens_m": _millions(row[1]),
+                    "median_total_tokens_m": _millions(row[5]),
+                }
+            )
 
     if not entries:
         raise ValueError(f"Token efficiency table not found in {report}")

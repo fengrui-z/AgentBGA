@@ -109,7 +109,8 @@ test("static export contains the Frontier12 results route and public data", asyn
   const styles = await readFile(new URL("app/arena/arena.css", root), "utf8");
   const data = JSON.parse(await readFile(new URL("public/results/frontier12-2026-v2.json", root), "utf8"));
 
-  assert.match(html, /十二种智能体配置/);
+  assert.match(html, /Brettspiel Agent Arena/);
+  assert.match(html, /Euro-style board games/);
   assert.match(html, /综合排名/);
   assert.equal(data.schema_version, "agentbga.frontier12-pages.v1");
   assert.equal(data.results.completed, 322);
@@ -118,11 +119,20 @@ test("static export contains the Frontier12 results route and public data", asyn
   assert.equal(data.leaderboard[0].display_name, "GPT-5.6 Sol · Codex");
   assert.equal(data.token_efficiency.successful_sessions, 937);
   assert.equal(data.token_efficiency.entries.length, 12);
-  assert.equal(data.token_efficiency.by_game.length, 33);
+  assert.equal(data.token_efficiency.by_game.length, 35);
+  assert.equal(data.token_efficiency.by_game[0].elo, 1550);
+  assert.equal(data.token_efficiency.by_game[0].elo_rank, 5);
+  assert.equal(data.token_efficiency.by_game[0].mean_input_tokens_m, 0.292);
+  assert.equal(data.token_efficiency.by_game[0].mean_cached_input_tokens_m, 7.731);
+  assert.equal(data.token_efficiency.by_game[0].mean_output_tokens_m, 0.025);
   assert.match(source, /EfficiencyCharts/);
   assert.match(source, /Elo × 平均总 Token/);
+  assert.match(source, /分游戏 Elo × Token 构成/);
+  assert.match(source, /Input（非缓存）/);
   assert.match(source, /分游戏平均总 Token/);
   assert.match(styles, /\.scatter-stage/);
+  assert.match(styles, /\.game-tabs/);
+  assert.match(styles, /\.token-stack/);
   assert.match(styles, /\.token-heatmap/);
   assert.equal("runtime" in data, false);
 });
