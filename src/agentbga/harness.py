@@ -594,12 +594,31 @@ class HarnessAgent:
         }
         if provider_id and model_id:
             variant: dict[str, Any] = {}
+            endpoint = (self.config.base_url or "").lower()
+            deepseek_native = "deepseek" in endpoint
             if reasoning_enabled:
-                variant = {"reasoningEffort": requested_effort}
-                if "deepseek" in (self.config.base_url or "").lower():
+                # The OpenAI SDK consumes camelCase options and serializes
+                # Responses fields. Generic OpenAI-compatible providers receive
+                # variant fields as raw request-body extensions, so use the
+                # snake_case spelling expected by DashScope and similar APIs.
+                effort_key = (
+                    "reasoningEffort"
+                    if self.config.wire_api == "responses" or deepseek_native
+                    else "reasoning_effort"
+                )
+                variant = {effort_key: requested_effort}
+                if deepseek_native:
                     variant["thinking"] = {"type": "enabled"}
-            elif "deepseek" in (self.config.base_url or "").lower():
+            elif deepseek_native:
                 variant["thinking"] = {"type": "disabled"}
+            normalized_model = model_id.lower()
+            if normalized_model == "glm-5.2":
+                variant["tool_stream"] = True
+            if normalized_model == "kimi-k2.7-code":
+                # Kimi K2.7 Code is thinking-only. Send the provider switch
+                # explicitly without inventing a tunable reasoning effort.
+                variant.pop("reasoning_effort", None)
+                variant["enable_thinking"] = True
             opencode_config["provider"] = {
                 provider_id: {
                     "npm": "@ai-sdk/openai" if self.config.wire_api == "responses" else "@ai-sdk/openai-compatible",

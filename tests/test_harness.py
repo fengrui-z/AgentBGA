@@ -546,7 +546,7 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("{env:CUSTOM_KEY}", configured["provider"]["agentbga"]["options"]["apiKey"])
             # Reasoning is controlled explicitly, not inferred from the endpoint URL.
             variant = configured["provider"]["agentbga"]["models"]["custom-model"]["variants"]["max"]
-            self.assertEqual("max", variant["reasoningEffort"])
+            self.assertEqual("max", variant["reasoning_effort"])
             self.assertIn("agentbga/custom-model", opencode._command("turn"))
 
             proxied_deepseek = HarnessAgent(PlayerConfig.from_dict({
@@ -569,8 +569,31 @@ class HarnessTests(unittest.TestCase):
             non_deepseek_url._prepare_turn({"state_version": 1}, LEGAL)
             non_deepseek_config = json.loads((non_deepseek_url.session.workspace / "opencode.json").read_text())
             non_deepseek_variant = non_deepseek_config["provider"]["agentbga"]["models"]["deepseek-v4-flash"]["variants"]["high"]
+            self.assertEqual("high", non_deepseek_variant["reasoning_effort"])
             self.assertNotIn("thinking", non_deepseek_variant)
             self.assertIn("--thinking", non_deepseek_url._command("turn"))
+
+            glm = HarnessAgent(PlayerConfig.from_dict({
+                "name": "GLM", "backend": "opencode", "model": "glm-5.2",
+                "base_url": "https://dashscope.example/compatible-mode/v1",
+                "reasoning_effort": "high",
+            }, 1), "match-glm", 1, runs_root=directory)
+            glm._prepare_turn({"state_version": 1}, LEGAL)
+            glm_config = json.loads((glm.session.workspace / "opencode.json").read_text())
+            glm_variant = glm_config["provider"]["agentbga"]["models"]["glm-5.2"]["variants"]["high"]
+            self.assertEqual("high", glm_variant["reasoning_effort"])
+            self.assertTrue(glm_variant["tool_stream"])
+
+            kimi = HarnessAgent(PlayerConfig.from_dict({
+                "name": "Kimi", "backend": "opencode", "model": "kimi-k2.7-code",
+                "base_url": "https://dashscope.example/compatible-mode/v1",
+                "reasoning_effort": "none",
+            }, 1), "match-kimi", 1, runs_root=directory)
+            kimi._prepare_turn({"state_version": 1}, LEGAL)
+            kimi_config = json.loads((kimi.session.workspace / "opencode.json").read_text())
+            kimi_variant = kimi_config["provider"]["agentbga"]["models"]["kimi-k2.7-code"]["variants"]["none"]
+            self.assertEqual({"enable_thinking": True}, kimi_variant)
+            self.assertNotIn("--thinking", kimi._command("turn"))
 
             no_reasoning = HarnessAgent(PlayerConfig.from_dict({
                 "name": "OpenCode", "backend": "opencode", "model": "deepseek-v4-flash",
