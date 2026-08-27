@@ -97,6 +97,8 @@ test("static export has all assets needed by the Python server", async () => {
 
 test("static export contains the Frontier12 results route and public data", async () => {
   const html = await readFile(new URL("dist/client/arena.html", root), "utf8");
+  const source = await readFile(new URL("app/arena/page.tsx", root), "utf8");
+  const styles = await readFile(new URL("app/arena/arena.css", root), "utf8");
   const data = JSON.parse(await readFile(new URL("public/results/frontier12-2026-v2.json", root), "utf8"));
 
   assert.match(html, /十二种智能体配置/);
@@ -106,5 +108,13 @@ test("static export contains the Frontier12 results route and public data", asyn
   assert.equal(data.leaderboard.length, 12);
   assert.equal(data.leaderboard[0].participant_id, "gpt56-sol-codex");
   assert.equal(data.leaderboard[0].display_name, "GPT-5.6 Sol · Codex");
+  assert.equal(data.token_efficiency.successful_sessions, 937);
+  assert.equal(data.token_efficiency.entries.length, 12);
+  assert.equal(data.token_efficiency.by_game.length, 33);
+  assert.match(source, /EfficiencyCharts/);
+  assert.match(source, /Elo × 平均总 Token/);
+  assert.match(source, /分游戏平均总 Token/);
+  assert.match(styles, /\.scatter-stage/);
+  assert.match(styles, /\.token-heatmap/);
   assert.equal("runtime" in data, false);
 });

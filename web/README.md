@@ -27,7 +27,8 @@ from a tournament output:
 ```console
 python3 scripts/publish_frontier12_pages.py \
   /path/to/frontier12-2026-v2 \
-  web/public/results/frontier12-2026-v2.json
+  web/public/results/frontier12-2026-v2.json \
+  --report /path/to/tournament_report.html
 ```
 
 Commit the updated JSON. `.github/workflows/pages.yml` rebuilds and publishes
