@@ -214,6 +214,8 @@ def explain_predicate(operation: Mapping[str, Any], *, locale: str = "zh-CN") ->
             noun = "标签" if op == "has_tag" else "图标"
             return f"至少有 {count} 个“{key}”{noun}"
         return f"has at least {count} {key} {'tags' if op == 'has_tag' else 'icons'}"
+    if op == "matching_partner_zoo":
+        return "拥有与该动物同洲的合作动物园" if locale == "zh-CN" else "has a partner zoo from this animal's continent"
     if op == "flag_set":
         return f"状态“{args['flag']}”已启用" if locale == "zh-CN" else f"flag {args['flag']} is set"
     if op == "player_count":

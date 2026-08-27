@@ -277,14 +277,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -827,14 +821,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -2133,14 +2121,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -2929,14 +2911,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -3247,14 +3223,8 @@
         "op": "has_icon"
       },
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -4000,14 +3970,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -5463,14 +5427,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -6002,14 +5960,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -6207,14 +6159,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -8068,14 +8014,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -8355,14 +8295,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -8673,14 +8607,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -10432,14 +10360,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -10818,14 +10740,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {
@@ -11190,14 +11106,8 @@
     "references": [],
     "requirements": [
       {
-        "args": {
-          "left": {
-            "ref": "actor.partner_zoo_count"
-          },
-          "operator": ">=",
-          "right": 1
-        },
-        "op": "compare"
+        "args": {},
+        "op": "matching_partner_zoo"
       }
     ],
     "review": {

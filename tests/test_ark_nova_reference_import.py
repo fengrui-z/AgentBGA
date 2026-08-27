@@ -14,7 +14,7 @@ from agentbga.ark_nova_official.reference_import import (
     require_no_blocking_reference_gaps,
 )
 from agentbga.ark_nova_official.cards import entry_is_eligible, play_entry_semantics
-from agentbga.ark_nova_official.semantics import SemanticEngine
+from agentbga.ark_nova_official.semantics import EvaluationContext, SemanticEngine
 from agentbga.ark_nova_official.state import new_semantic_state
 
 
@@ -142,10 +142,24 @@ class ArkNovaReferenceImportTests(unittest.TestCase):
                  if card["action"] == "animals")["upgraded"] = True
             self.assertTrue(entry_is_eligible(engine, state, 0, upgraded))
 
-            partner = pack.entry("ark-nova:animal-403")
-            self.assertFalse(entry_is_eligible(engine, state, 0, partner))
-            state["players"][0]["partner_zoos"].append("africa")
-            self.assertTrue(entry_is_eligible(engine, state, 0, partner))
+            partner_animals = [
+                entry for entry in pack.collections["animals"]
+                if any(requirement["op"] == "matching_partner_zoo" for requirement in entry.requirements)
+            ]
+            self.assertEqual(15, len(partner_animals))
+            for partner in partner_animals:
+                continent = partner.facts["continents"][0]
+                requirement = next(item for item in partner.requirements if item["op"] == "matching_partner_zoo")
+                context = EvaluationContext(
+                    state=state, actor_seat=0,
+                    card={"id": partner.id, "kind": partner.kind, "facts": dict(partner.facts)},
+                )
+                state["players"][0]["partner_zoos"] = [
+                    next(value for value in ("africa", "europe", "asia", "americas", "australia") if value != continent)
+                ]
+                self.assertFalse(engine.evaluate(requirement, context), partner.display_title)
+                state["players"][0]["partner_zoos"] = [continent]
+                self.assertTrue(engine.evaluate(requirement, context), partner.display_title)
 
     def test_compiled_direct_rewards_and_sprint_execute_end_to_end(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -211,7 +225,7 @@ class ArkNovaReferenceImportTests(unittest.TestCase):
             engine = SemanticEngine()
             state = new_semantic_state(2)
             player = state["players"][0]
-            player["partner_zoos"].append("africa")
+            player["partner_zoos"].append("australia")
             player["hand"] = [{"id": "hand-a"}, {"id": "hand-b"}, {"id": "hand-c"}]
             old_money = player["money"]
 

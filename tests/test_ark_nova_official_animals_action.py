@@ -45,6 +45,7 @@ class ArkNovaOfficialAnimalsActionTests(unittest.TestCase):
         cls.small_a = cls.entries["ark-nova:animal-404"]
         cls.small_b = cls.entries["ark-nova:animal-405"]
         cls.small_display = cls.entries["ark-nova:animal-410"]
+        cls.barbary_macaque = cls.entries["ark-nova:animal-456"]
 
     def setUp(self):
         self.engine = SemanticEngine()
@@ -105,6 +106,20 @@ class ArkNovaOfficialAnimalsActionTests(unittest.TestCase):
         self.assertTrue(state["players"][0]["map"]["buildings"][0]["occupied"])
         self.assertTrue(any(event["type"] == "animal_played" for event in events))
         self.assertIn("animals:finish", [choice["id"] for choice in self.choices(state)])
+
+    def test_animal_partner_zoo_requirement_must_match_the_animals_continent(self):
+        state = self.state
+        player = state["players"][0]
+        player["money"] = 100
+        player["x_tokens"] = 1
+        player["hand"] = [{"id": "macaque-a", "entry_id": self.barbary_macaque.id}]
+        add_building(state, "enclosure-a", "standard_enclosure", 2, {(-4, 2), (-3, 1)})
+        player["partner_zoos"] = ["europe"]
+        state, _ = start_action(state, 0, "animals", x_by_execution=(1,))
+        self.assertEqual([], self.choices(state))
+
+        state["players"][0]["partner_zoos"] = ["africa"]
+        self.assertEqual(["animals:begin"], [choice["id"] for choice in self.choices(state)])
 
     def test_two_physical_copies_of_one_card_face_can_both_be_played(self):
         state = self.state

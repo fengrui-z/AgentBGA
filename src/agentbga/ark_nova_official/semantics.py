@@ -16,7 +16,7 @@ from .state import clone_state, reputation_track_limit, validate_semantic_state
 
 PREDICATE_OPS = frozenset({
     "all", "any", "not", "compare", "has_tag", "has_icon", "flag_set",
-    "player_count", "in", "custom",
+    "matching_partner_zoo", "player_count", "in", "custom",
 })
 EFFECT_OPS = frozenset({
     "noop", "gain_money", "lose_money", "pay_money", "gain_x_token",
@@ -222,6 +222,19 @@ class SemanticEngine:
             seat = self._selected_seat(args.get("seat", "actor"), context)
             count = self._integer(args.get("count", 1), context, minimum=0)
             return int(context.state["players"][seat][kind].get(key, 0)) >= count
+        if op == "matching_partner_zoo":
+            if context.card is None:
+                raise SemanticRuleError("matching_partner_zoo requires card context")
+            continents = context.card.get("facts", {}).get("continents", [])
+            if not isinstance(continents, list):
+                raise SemanticRuleError("matching_partner_zoo requires card continents")
+            seat = self._selected_seat(args.get("seat", "actor"), context)
+            owned = {
+                value if isinstance(value, str) else value.get("continent")
+                for value in context.state["players"][seat]["partner_zoos"]
+                if isinstance(value, (str, Mapping))
+            }
+            return any(continent in owned for continent in continents)
         if op == "flag_set":
             flag = args.get("flag")
             if not isinstance(flag, str) or not flag:
@@ -3412,6 +3425,10 @@ class SemanticEngine:
             if not isinstance(key, str) or not key:
                 raise SemanticRuleError(f"{op} requires a stable ID")
             self._validate_value_vocabulary(operation["args"].get("count", 1))
+        elif op == "matching_partner_zoo":
+            seat = operation["args"].get("seat", "actor")
+            if seat not in {"actor", "target"} and not isinstance(seat, int):
+                raise SemanticRuleError("matching_partner_zoo seat must select a player")
         elif op == "flag_set":
             if not isinstance(operation["args"].get("flag"), str):
                 raise SemanticRuleError("flag_set requires a flag ID")

@@ -229,7 +229,7 @@ def _facts(row: Mapping[str, Any], collection: str) -> dict[str, Any]:
     return facts
 
 
-def compile_requirement(value: str) -> dict[str, Any]:
+def compile_requirement(value: str, *, animal_context: bool = False) -> dict[str, Any]:
     """Compile the closed set of animal/icon requirements in the reference."""
     match = _COUNTED_REQUIREMENT.fullmatch(value.strip())
     if match is None:
@@ -247,6 +247,10 @@ def compile_requirement(value: str) -> dict[str, Any]:
             },
         }
     if label == "Partner Zoo":
+        if animal_context:
+            if count != 1:
+                raise ReferenceImportError("animal Partner Zoo requirement must have count 1")
+            return {"op": "matching_partner_zoo", "args": {}}
         return {
             "op": "compare",
             "args": {
@@ -268,7 +272,7 @@ def _compiled_requirements(row: Mapping[str, Any], collection: str) -> list[dict
     if not isinstance(raw, list) or any(not isinstance(value, str) for value in raw):
         _fail(f"{collection}.{row.get('id')}.requirements", "must be an array of strings")
     if collection == "animals":
-        return [compile_requirement(value) for value in raw]
+        return [compile_requirement(value, animal_context=True) for value in raw]
     if collection == "sponsors":
         component_id = str(row.get("id", ""))
         result = []
@@ -472,7 +476,7 @@ def import_reference_pack(source: str | Path, target: str | Path) -> dict[str, A
 
     manifest_path = root / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    manifest["content_version"] = "m4-reference-import.15"
+    manifest["content_version"] = "m4-reference-import.17"
     manifest["sources"] = [source for source in manifest["sources"] if source["id"] != SOURCE_ID]
     manifest["sources"].append({
         "id": SOURCE_ID,
