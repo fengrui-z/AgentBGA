@@ -660,7 +660,7 @@ function AssociationBoard({view, identities, lang, legalActions, submitting, onC
   const universityStock = view.association_display?.universities || Object.entries(view.association_board.universities).map(([id, remaining]) => ({id, remaining, owners: view.players.filter(player => player.universities.includes(id)).map(player => player.seat)}));
   const committed = view.association_display?.workers || view.players.flatMap(player => player.association_workers.committed.map(item => ({...item, seat: player.seat})));
   const associationActive = view.turn.action_card === "association" || view.phase.startsWith("association_");
-  const associationActions = associationActive ? legalActions.filter(item => ["association_task", "make_donation", "finish_association_tasks", "finish_action"].includes(actionType(item))) : [];
+  const associationActions = associationActive ? legalActions.filter(item => ["association_task", "make_donation"].includes(actionType(item))) : [];
   const projectActions = associationActions.filter(item => actionType(item) === "association_task" && item.action.task_id === "conservation-project");
   const visibleCards = [...view.card_display, ...view.players.flatMap(player => [...player.hand, ...player.played_cards])].filter(knownCard);
   const visibleCardTitle = (id: string) => {
@@ -672,7 +672,6 @@ function AssociationBoard({view, identities, lang, legalActions, submitting, onC
   const taskAction = (task: string, field?: string, value?: string | number) => associationActions.find(item => actionType(item) === "association_task" && (item.action.task === task || item.action.task_id === task.replaceAll("_", "-")) && (!field || item.action[field] === value));
   const reputationAction = taskAction("reputation");
   const donationAction = associationActions.find(item => actionType(item) === "make_donation");
-  const finishAction = associationActions.find(item => ["finish_association_tasks", "finish_action"].includes(actionType(item)));
   const uniMeta: Record<string, {mark: string; label: string; reward: string}> = {
     "research-2": {mark: "RS×2", label: copy(lang, "研究大学", "Research university"), reward: copy(lang, "获得 2 个研究图标", "2 research icons")},
     "research-reputation": {mark: "RS+R", label: copy(lang, "声望大学", "Reputation university"), reward: copy(lang, "研究图标 ×1、声望 +2", "1 research icon, +2 reputation")},
@@ -711,7 +710,7 @@ function AssociationBoard({view, identities, lang, legalActions, submitting, onC
         {tokenSlot && <em>{copy(lang, "解锁玩家板", "Unlock player board")} {tokenSlot} · {timing === "after" ? copy(lang, "项目奖励后", "after project reward") : copy(lang, "项目奖励前", "before project reward")}</em>}
       </button>;
     })}</div></section>}
-    <footer className="ark-donation-row"><b>{copy(lang, "捐款", "Donations")}</b>{(view.association_display?.donation_slots || view.association_board.donations.map((donation, index) => ({position: index + 1, cost: donation.cost, status: "claimed" as const, seat: donation.seat}))).map(slot => <span key={slot.position} className={slot.status}>{slot.seat !== null && slot.seat !== undefined ? <PlayerToken seat={slot.seat} label={playerName(identities, slot.seat, lang)}/> : <small>{slot.position}</small>}<i>{slot.cost} ₡</i></span>)}{donationAction && <button className="ark-donate-button" disabled={Boolean(submitting)} onClick={() => onChoose?.(donationAction)}>{copy(lang, "捐款", "Donate")} {String(donationAction.action.cost)} ₡</button>}{finishAction && <button className="ark-finish-association" disabled={Boolean(submitting)} onClick={() => onChoose?.(finishAction)}>{copy(lang, "结束协会行动", "Finish association")}</button>}{view.association_board.blocked_two_player.length > 0 && <em>{copy(lang, "双人封锁", "2P blocked")} × {view.association_board.blocked_two_player.length}</em>}</footer>
+    <footer className="ark-donation-row"><b>{copy(lang, "捐款", "Donations")}</b>{(view.association_display?.donation_slots || view.association_board.donations.map((donation, index) => ({position: index + 1, cost: donation.cost, status: "claimed" as const, seat: donation.seat}))).map(slot => <span key={slot.position} className={slot.status}>{slot.seat !== null && slot.seat !== undefined ? <PlayerToken seat={slot.seat} label={playerName(identities, slot.seat, lang)}/> : <small>{slot.position}</small>}<i>{slot.cost} ₡</i></span>)}{donationAction && <button className="ark-donate-button" disabled={Boolean(submitting)} onClick={() => onChoose?.(donationAction)}>{copy(lang, "捐款", "Donate")} {String(donationAction.action.cost)} ₡</button>}{view.association_board.blocked_two_player.length > 0 && <em>{copy(lang, "双人封锁", "2P blocked")} × {view.association_board.blocked_two_player.length}</em>}</footer>
   </section>;
 }
 
@@ -898,14 +897,18 @@ function PlayerActionControls({view, lang, legalActions, submitting, onChoose, i
   const draw = legalActions.find(item => actionType(item) === "draw_cards");
   const beginAnimals = legalActions.find(item => actionType(item) === "begin_animals_action");
   const advanceBreak = legalActions.find(item => actionType(item) === "advance_break");
+  const finishAssociation = view.turn.action_card === "association"
+    ? legalActions.find(item => ["finish_association_tasks", "finish_action"].includes(actionType(item)))
+    : undefined;
   const finish = view.turn.action_card !== "association" ? legalActions.find(item => actionType(item) === "finish_action") : undefined;
-  if (!interactive || (!draw && !beginAnimals && !advanceBreak && !finish)) return null;
+  if (!interactive || (!draw && !beginAnimals && !advanceBreak && !finishAssociation && !finish)) return null;
   return <section className={`ark-player-action-controls action-${view.turn.action_card || "pending"}`} aria-live="polite">
     <header><div><span>CURRENT ACTION</span><b>{ACTION_LABELS[view.turn.action_card || ""]?.[lang] || view.turn.decision.replaceAll("_", " ")}</b></div><small>{copy(lang, "在玩家版图完成当前行动", "Resolve the current action on the player board")}</small></header>
     <div>
       {draw && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(draw)}><b>{copy(lang, "从牌库抽牌", "Draw from deck")}</b><small>{copy(lang, "抽取", "Draw")} {String(draw.action.draw_count)} · {Number(draw.action.discard_count) ? `${copy(lang, "随后弃", "then discard")} ${String(draw.action.discard_count)}` : copy(lang, "无需立即弃牌", "no immediate discard")}</small></button>}
       {beginAnimals && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(beginAnimals)}><b>{copy(lang, "开始选择动物", "Begin selecting Animals")}</b><small>{copy(lang, "随后从手牌或声望范围逐张选择", "Then choose cards one at a time")}</small></button>}
       {advanceBreak && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(advanceBreak)}><b>{copy(lang, "不打赞助商：推进休息", "Skip sponsor: advance Break")}</b><small>+{String(advanceBreak.action.steps)} {copy(lang, "休息格", "Break")} · +{String(advanceBreak.action.money)} ₡</small></button>}
+      {finishAssociation && <button className="ark-finish-association" disabled={Boolean(submitting)} onClick={() => onChoose?.(finishAssociation)}><b>{copy(lang, "确认并结束协会行动", "Confirm and finish Association")}</b><small>{copy(lang, "已完成所需协会事务后结束本次行动", "Finish this action after resolving the desired Association tasks")}</small></button>}
       {finish && <button className="secondary" disabled={Boolean(submitting)} onClick={() => onChoose?.(finish)}>{copy(lang, "结束当前行动", "Finish current action")}</button>}
     </div>
   </section>;
