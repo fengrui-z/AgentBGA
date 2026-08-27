@@ -13,7 +13,11 @@ from .action_domains import apply_official_action, content_entry_indexes, legal_
 from .cards import printed_icon_counts, terrain_requirement_icon_counts
 from .content import ContentPack
 from .final_scoring_effects import score_final_card
-from .milestones import queue_endgame_final_scoring_discard
+from .milestones import (
+    OFFICIAL_REPUTATION_MILESTONE_IDS,
+    official_reputation_milestones,
+    queue_endgame_final_scoring_discard,
+)
 from .presentation import explain_predicate, resolve_mechanics
 from .rounds import advance_solo_round_after_turn, queue_break, queue_solo_break
 from .scoring import check_endgame_trigger, score_game
@@ -399,6 +403,75 @@ def _normalize_legacy_state(
     """Project legacy saves onto current reputation and terrain-icon rules."""
 
     normalized, events = _normalize_reputation_caps(state)
+    missing_reputation_milestones = (
+        OFFICIAL_REPUTATION_MILESTONE_IDS
+        - {item.get("id") for item in normalized.get("milestones", [])}
+    )
+    missing_animal_universities = [
+        category for category in ("bird", "reptile", "primate", "herbivore", "predator")
+        if f"animal-{category}" not in normalized["association_board"]["universities"]
+    ]
+    legacy_asset_seats = [
+        int(player["seat"]) for player in normalized["players"]
+        if not player.get("association_asset_icons_accounted")
+    ]
+    if missing_reputation_milestones or missing_animal_universities or legacy_asset_seats:
+        if normalized is state:
+            normalized = deepcopy(state)
+        if missing_reputation_milestones:
+            normalized["milestones"].extend(
+                item for item in official_reputation_milestones()
+                if item["id"] in missing_reputation_milestones
+            )
+            events.append({
+                "type": "reputation_milestones_migrated",
+                "milestones": sorted(missing_reputation_milestones),
+            })
+        for category in missing_animal_universities:
+            normalized["association_board"]["universities"][f"animal-{category}"] = {
+                "available": 1, "owners": [], "exclusive": True,
+            }
+        if missing_animal_universities:
+            events.append({
+                "type": "animal_universities_migrated",
+                "categories": missing_animal_universities,
+            })
+        for seat in legacy_asset_seats:
+            player = normalized["players"][seat]
+            added: dict[str, int] = {}
+            for continent in player.get("partner_zoos", []):
+                asset = continent if isinstance(continent, str) else continent.get("continent")
+                if isinstance(asset, str):
+                    player["icons"][asset] = int(player["icons"].get(asset, 0)) + 1
+                    added[asset] = added.get(asset, 0) + 1
+            player["association_asset_icons_accounted"] = True
+            events.append({
+                "type": "association_asset_icons_migrated", "seat": seat,
+                "icons_added": added,
+            })
+        if (
+            missing_reputation_milestones
+            and not normalized["resolution"]["queue"]
+            and normalized["resolution"]["pending_choice"] is None
+        ):
+            retroactive_effects = []
+            for player in normalized["players"]:
+                for milestone in official_reputation_milestones():
+                    if (
+                        milestone["id"] in missing_reputation_milestones
+                        and int(player["tracks"]["reputation"]) >= int(milestone["at"])
+                        and milestone["id"] not in player["claimed_milestones"]
+                    ):
+                        player["claimed_milestones"].append(milestone["id"])
+                        retroactive_effects.extend({
+                            **deepcopy(effect), "_semantic_target_seat": int(player["seat"]),
+                        } for effect in milestone["effects"])
+            if retroactive_effects:
+                normalized, reward_events = SemanticEngine().start_effects(
+                    normalized, int(normalized["active_seat"]), retroactive_effects,
+                    source_id="migration:reputation-milestones",
+                )
+                events.extend(reward_events)
     additions: list[tuple[int, dict[str, int], list[str]]] = []
     for player in normalized["players"]:
         counts: dict[str, int] = {}

@@ -340,11 +340,6 @@ def place_unique_building(
     effects, pending = _claim_map_rewards(player, action["cells"])
     if _map_is_complete(player) and not player["map"].get("completion_reward_claimed"):
         player["map"]["completion_reward_claimed"] = True
-        reward = player["map"].get("completion_reward", {})
-        if reward.get("type") == "gain_appeal":
-            effects.append(_effect("move_track", {
-                "track": "appeal", "amount": int(reward.get("amount", 0)),
-            }))
     effects.append(_effect("trigger_building_placed", {"cells": deepcopy(action["cells"])}))
     return next_state, effects, pending
 
@@ -367,11 +362,6 @@ def place_free_building(
         effects.insert(0, _effect("move_track", {"track": "appeal", "amount": 1}))
     if _map_is_complete(player) and not player["map"].get("completion_reward_claimed"):
         player["map"]["completion_reward_claimed"] = True
-        reward = player["map"].get("completion_reward", {})
-        if reward.get("type") == "gain_appeal":
-            effects.append(_effect("move_track", {
-                "track": "appeal", "amount": int(reward.get("amount", 0)),
-            }))
     effects.append(_effect("trigger_building_placed", {"cells": deepcopy(action["cells"])}))
     return building, effects, pending
 
@@ -434,11 +424,6 @@ def _place_building(
         ])
     if _map_is_complete(player) and not player["map"].get("completion_reward_claimed"):
         player["map"]["completion_reward_claimed"] = True
-        reward = player["map"].get("completion_reward", {})
-        if reward.get("type") == "gain_appeal":
-            direct_effects.append(_effect("move_track", {
-                "track": "appeal", "amount": int(reward.get("amount", 0)),
-            }))
     direct_effects.append(_effect(
         "trigger_building_placed", {"cells": deepcopy(action["cells"])},
     ))

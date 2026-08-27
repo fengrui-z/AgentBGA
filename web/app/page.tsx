@@ -833,6 +833,9 @@ function describeAction(item: Timeline, names: Record<number, string>, lang: Lan
   if (event.type === "harness_tool_result") return zh ? `${event.player} 收到 ${event.tool} 结果` : `${event.player} got ${event.tool} result`;
   if (event.type === "harness_finished") return zh ? `${event.player} 通过 ${event.harness} 提交 ${event.action_id}` : `${event.player} submitted ${event.action_id} via ${event.harness}`;
   if (event.type === "harness_error") return zh ? `${event.player} Harness 失败：${event.error}` : `${event.player} harness failed: ${event.error}`;
+  if (event.type === "break_triggered") return zh ? "休息阶段已触发：所有玩家依次处理休息结算" : "Break triggered: all players resolve the Break sequence";
+  if (event.type === "break_finished") return zh ? "休息阶段结束，下一位玩家继续行动" : "Break finished; play continues with the next player";
+  if (event.type === "break_hand_limit_checked") return zh ? `座位 ${Number(event.seat) + 1} 检查休息阶段手牌上限` : `Seat ${Number(event.seat) + 1} checks the Break hand limit`;
   if (!["decision", "turn"].includes(event.type)) return event.type;
   const seat = event.seat ?? 0;
   const who = event.player || names[seat] || `${zh ? "座位" : "Seat"} ${seat + 1}`;
@@ -1012,6 +1015,8 @@ const CENTURY_ACTION_TYPES = new Set(["play_merchant", "acquire_merchant", "clai
 const ARK_TABLE_ACTION_TYPES = new Set([
   "choose_initial_hand", "select_action", "take_x_token", "cancel_action", "draw_cards", "snap_card", "discard_card",
   "place_building", "play_animal", "finish_action", "association_task", "make_donation",
+  "perform_association_task", "make_association_donation", "finish_association_action",
+  "upgrade_association_reward_card",
   "place_unique_sponsor_building",
   "finish_association_tasks", "advance_break", "play_sponsor", "break_discard",
   "resolve_semantic_choice",

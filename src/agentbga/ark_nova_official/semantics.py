@@ -3163,7 +3163,9 @@ class SemanticEngine:
                         supply[key] = max(value, 1)
                     elif isinstance(value, dict) and "available" in value:
                         owners = value.get("owners", [])
-                        value["available"] = 0 if len(owners) >= state["player_count"] else 1
+                        value["available"] = 0 if (
+                            value.get("exclusive") and owners
+                        ) or len(owners) >= state["player_count"] else 1
             return [{"type": "break_association_replenished", **base_event}]
         if op == "refresh_display":
             discard_count = min(2, len(state["card_display"]))

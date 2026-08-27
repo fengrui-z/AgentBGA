@@ -125,7 +125,10 @@ def apply_official_action(
             **indexes.get("base_conservation_projects", {}),
             **indexes.get("zoo_conservation_projects", {}),
         }
-        return apply_association_execution_action(engine, state, seat, projects, requested)
+        return apply_association_execution_action(
+            engine, state, seat, projects, requested,
+            indexes.get("animals", {}),
+        )
     return apply_sponsors_execution_action(
         engine, state, seat, indexes.get("sponsors", {}), requested,
     )
@@ -154,7 +157,9 @@ def _legal_domain_actions(
             **indexes.get("base_conservation_projects", {}),
             **indexes.get("zoo_conservation_projects", {}),
         }
-        return legal_association_execution_actions(engine, state, seat, projects)
+        return legal_association_execution_actions(
+            engine, state, seat, projects, indexes.get("animals", {}),
+        )
     if action == "sponsors":
         return legal_sponsors_execution_actions(
             engine, state, seat, indexes.get("sponsors", {}),

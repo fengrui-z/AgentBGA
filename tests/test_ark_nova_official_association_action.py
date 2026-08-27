@@ -85,6 +85,53 @@ class ArkNovaOfficialAssociationActionTests(unittest.TestCase):
         self.assertEqual(0, supply["available"])
         self.assertEqual([0], supply["owners"])
 
+    def test_partner_zoo_adds_its_continent_icon(self):
+        state, _ = start_action(self.state, 0, "association")
+        europe = next(
+            choice["action"] for choice in self.choices(state)
+            if choice["action"].get("continent") == "europe"
+        )
+        state, events = self.apply(state, europe)
+        self.assertEqual(["europe"], state["players"][0]["partner_zoos"])
+        self.assertEqual(1, state["players"][0]["icons"]["europe"])
+        self.assertTrue(any(event["type"] == "zoo_icon_entered" for event in events))
+
+    def test_animal_university_is_globally_unique_and_draws_matching_animal(self):
+        bird = ContentEntry(
+            id="ark-nova:test-bird", kind="animal", official_component_id="999",
+            source_ids=("scenario",), display_title="Test Bird", display_summary="",
+            facts={"animal_categories": ["bird"]}, requirements=(), effects=(),
+            references=(), review_status="scenario_tested", scenario_tests=("association",),
+            reviewer=None, second_reviewer=None,
+        )
+        animals = {bird.id: bird}
+        state = self.state
+        state["zoo_deck"] = [{"id": "bird-copy", "entry_id": bird.id}]
+        state, _ = start_action(state, 0, "association")
+        choices = legal_association_execution_actions(
+            self.engine, state, 0, self.projects, animals,
+        )
+        action = next(
+            choice["action"] for choice in choices
+            if choice["action"].get("university_id") == "animal-bird"
+        )
+        state, events = apply_association_execution_action(
+            self.engine, state, 0, self.projects, action, animals,
+        )
+        player = state["players"][0]
+        self.assertEqual(1, player["icons"]["bird"])
+        self.assertEqual(1, player["icons"]["research"])
+        self.assertEqual(["bird-copy"], [card["id"] for card in player["hand"]])
+        self.assertTrue(any(event["type"] == "animal_university_card_drawn" for event in events))
+        supply = state["association_board"]["universities"]["animal-bird"]
+        self.assertEqual({"available": 0, "owners": [0], "exclusive": True}, supply)
+
+        replenished, _ = self.engine.start_effects(
+            state, 0, [{"op": "replenish_association", "args": {}, "timing": "system"}],
+            source_id="test:break",
+        )
+        self.assertEqual(0, replenished["association_board"]["universities"]["animal-bird"]["available"])
+
     def test_second_asset_requires_action_upgrade_choice(self):
         state = self.state
         state["players"][0]["partner_zoos"] = ["africa"]

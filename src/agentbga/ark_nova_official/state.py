@@ -60,6 +60,7 @@ def new_semantic_state(players: int, *, seed: int = 0) -> dict[str, Any]:
             "supported_projects": [],
             "partner_zoos": [],
             "universities": [],
+            "association_asset_icons_accounted": True,
             "project_tokens_available": 7,
             "project_tokens_supply": 0,
             "project_token_slots": [
@@ -118,6 +119,10 @@ def new_semantic_state(players: int, *, seed: int = 0) -> dict[str, Any]:
                 "research-2": {"available": 1, "owners": []},
                 "research-reputation": {"available": 1, "owners": []},
                 "research-hand-limit": {"available": 1, "owners": []},
+                **{
+                    f"animal-{category}": {"available": 1, "owners": [], "exclusive": True}
+                    for category in ("bird", "reptile", "primate", "herbivore", "predator")
+                },
             },
         },
         "donation_costs": [2, 5, 7, 10, 12],

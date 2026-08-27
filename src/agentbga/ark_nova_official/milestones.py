@@ -15,6 +15,10 @@ OFFICIAL_CONSERVATION_MILESTONE_IDS = frozenset({
     "conservation-8",
     "conservation-10",
 })
+OFFICIAL_REPUTATION_MILESTONE_IDS = frozenset({
+    "reputation-5", "reputation-8", "reputation-10", "reputation-11",
+    "reputation-12", "reputation-13", "reputation-14", "reputation-15",
+})
 
 
 def _system_effect(op: str, args: Mapping[str, Any] | None = None) -> dict[str, Any]:
@@ -57,6 +61,24 @@ def official_conservation_milestones() -> list[dict[str, Any]]:
     ]
 
 
+def official_reputation_milestones() -> list[dict[str, Any]]:
+    """Return official base-game rewards printed on the Reputation track."""
+    rewards = {
+        5: [_system_effect("choose_action_upgrade")],
+        8: [_system_effect("gain_association_worker", {"amount": 1})],
+        10: [_system_effect("take_map_reward_card")],
+        11: [_system_effect("move_track", {"track": "conservation", "amount": 1})],
+        12: [_system_effect("gain_x_token", {"amount": 1})],
+        13: [_system_effect("take_map_reward_card")],
+        14: [_system_effect("move_track", {"track": "conservation", "amount": 1})],
+        15: [_system_effect("gain_x_token", {"amount": 1})],
+    }
+    return [{
+        "id": f"reputation-{at}", "track": "reputation", "at": at,
+        "scope": "player", "effects": effects,
+    } for at, effects in rewards.items()]
+
+
 def install_official_conservation_milestones(
     state: dict[str, Any],
     *,
@@ -76,7 +98,9 @@ def install_official_conservation_milestones(
     existing = {item.get("id") for item in next_state.get("milestones", [])}
     if existing & OFFICIAL_CONSERVATION_MILESTONE_IDS:
         raise SemanticRuleError("official Conservation milestones are already installed")
-    next_state["milestones"].extend(official_conservation_milestones())
+    next_state["milestones"].extend([
+        *official_conservation_milestones(), *official_reputation_milestones(),
+    ])
     next_state["conservation_bonus_slots"] = {
         "5": _prepare_bonus_tiles(bonuses_at_5),
         "8": _prepare_bonus_tiles(bonuses_at_8),

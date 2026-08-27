@@ -111,7 +111,22 @@ def score_game(
         appeal = player["tracks"]["appeal"]
         conservation = player["tracks"]["conservation"]
         target = _target_number(target_by_conservation, conservation)
-        victory_points = appeal - target
+        map_reward = player.get("map", {}).get("completion_reward", {})
+        map_completion_points = (
+            int(map_reward.get("amount", 0))
+            if player.get("map", {}).get("completion_reward_claimed")
+            and map_reward.get("type") == "gain_appeal"
+            else 0
+        )
+        if map_completion_points:
+            player["score_entries"].append({
+                "kind": "map_completion", "victory_points": map_completion_points,
+            })
+            events.append({
+                "type": "map_completion_scored", "seat": player["seat"],
+                "victory_points": map_completion_points,
+            })
+        victory_points = appeal + map_completion_points - target
         supported_projects = len(player["supported_projects"])
         rows.append({
             "seat": player["seat"],
@@ -119,6 +134,7 @@ def score_game(
             "conservation": conservation,
             "target_appeal": target,
             "victory_points": victory_points,
+            "map_completion_points": map_completion_points,
             "supported_projects": supported_projects,
             "score_entries": deepcopy(player["score_entries"]),
             "rank": None,

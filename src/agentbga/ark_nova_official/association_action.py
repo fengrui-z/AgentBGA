@@ -37,6 +37,7 @@ def legal_association_execution_actions(
     state: Mapping[str, Any],
     seat: int,
     project_entries: Mapping[str, ContentEntry],
+    animal_entries: Mapping[str, ContentEntry] | None = None,
 ) -> list[dict[str, Any]]:
     """Enumerate legal Association tasks, rewards, donation, and finish."""
     try:
@@ -83,19 +84,23 @@ def apply_association_execution_action(
     seat: int,
     project_entries: Mapping[str, ContentEntry],
     action: Mapping[str, Any],
+    animal_entries: Mapping[str, ContentEntry] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     if not isinstance(action, Mapping) or not isinstance(action.get("type"), str):
         raise SemanticRuleError("Association execution action must contain a type")
     requested = dict(action)
     legal = [
         item["action"] for item in legal_association_execution_actions(
-            engine, state, seat, project_entries,
+            engine, state, seat, project_entries, animal_entries,
         )
     ]
     if requested not in legal:
         raise SemanticRuleError("Association execution choice is not currently legal")
     if requested["type"] == "perform_association_task":
-        return _perform_task(engine, state, seat, project_entries, requested)
+        return _perform_task(
+            engine, state, seat, project_entries, requested,
+            animal_entries=animal_entries or {},
+        )
     if requested["type"] == "upgrade_association_reward_card":
         return _take_upgrade_reward(state, seat, requested["action_card_id"])
     if requested["type"] == "make_association_donation":
@@ -142,7 +147,12 @@ def _task_actions(
                 })
     if remaining >= 4 and "university" not in excluded:
         owned = {_asset_id(value, "id") for value in player["universities"]}
+        owns_animal_university = any(
+            isinstance(value, str) and value.startswith("animal-") for value in owned
+        )
         for university_id, supply in state["association_board"]["universities"].items():
+            if university_id.startswith("animal-") and owns_animal_university:
+                continue
             if university_id not in owned and _supply_available(supply):
                 _append_if_workers(result, player, "university", 4, {
                     "task_id": "university", "university_id": university_id,
@@ -241,6 +251,8 @@ def _perform_task(
     seat: int,
     project_entries: Mapping[str, ContentEntry],
     action: Mapping[str, Any],
+    *,
+    animal_entries: Mapping[str, ContentEntry],
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     execution, old_resolution = _association_context(state, seat)
     next_state = clone_state(state)
@@ -274,7 +286,11 @@ def _perform_task(
     elif task_id == "partner-zoo":
         _take_partner_zoo(next_state, seat, action["continent"], resolution, semantic_effects)
     elif task_id == "university":
-        _take_university(next_state, seat, action["university_id"], resolution, semantic_effects)
+        university_events = _take_university(
+            next_state, seat, action["university_id"], resolution,
+            semantic_effects, animal_entries,
+        )
+        events.extend(university_events)
     else:
         entry = project_entries[action["project_id"]]
         introduced = False
@@ -331,6 +347,11 @@ def _take_partner_zoo(
         supply["owners"].append(seat)
     player = state["players"][seat]
     player["partner_zoos"].append(continent)
+    player["icons"][continent] = player["icons"].get(continent, 0) + 1
+    effects.append({
+        "op": "trigger_icon_entered", "timing": "immediate",
+        "args": {"icon": continent, "count": 1},
+    })
     count = len(player["partner_zoos"])
     if count == 2:
         resolution["pending_reward"] = "action_upgrade"
@@ -344,13 +365,15 @@ def _take_partner_zoo(
 def _take_university(
     state: dict[str, Any], seat: int, university_id: str,
     resolution: dict[str, Any], effects: list[dict[str, Any]],
-) -> None:
+    animal_entries: Mapping[str, ContentEntry],
+) -> list[dict[str, Any]]:
     supply = state["association_board"]["universities"][university_id]
     supply["available"] = 0
     if seat not in supply["owners"]:
         supply["owners"].append(seat)
     player = state["players"][seat]
     player["universities"].append(university_id)
+    events: list[dict[str, Any]] = []
     icon_count = 2 if university_id == "research-2" else 1
     # ``research`` is retained as the presentation-facing counter while
     # ``science`` is the canonical card-semantics icon used by the imported
@@ -361,6 +384,25 @@ def _take_university(
         "op": "trigger_icon_entered", "timing": "immediate",
         "args": {"icon": "science", "count": icon_count},
     })
+    if university_id.startswith("animal-"):
+        category = university_id.removeprefix("animal-")
+        player["icons"][category] = player["icons"].get(category, 0) + 1
+        effects.append({
+            "op": "trigger_icon_entered", "timing": "immediate",
+            "args": {"icon": category, "count": 1},
+        })
+        for index, card in enumerate(state["zoo_deck"]):
+            entry_id = card.get("entry_id", card.get("id"))
+            entry = animal_entries.get(entry_id) if isinstance(entry_id, str) else None
+            if entry is not None and category in entry.facts.get("animal_categories", []):
+                drawn = state["zoo_deck"].pop(index)
+                player["hand"].append(drawn)
+                events.append({
+                    "type": "animal_university_card_drawn", "seat": seat,
+                    "university_id": university_id, "category": category,
+                    "card_id": drawn.get("id"), "entry_id": entry.id,
+                })
+                break
     if university_id == "research-reputation":
         effects.append(_track_effect("reputation", 2))
     elif university_id == "research-hand-limit":
@@ -370,6 +412,7 @@ def _take_university(
         resolution["pending_reward"] = "action_upgrade"
     elif count == 3:
         effects.append(_track_effect("conservation", 2))
+    return events
 
 
 def _upgrade_reward_actions(state: Mapping[str, Any], seat: int) -> list[dict[str, Any]]:

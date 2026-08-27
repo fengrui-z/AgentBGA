@@ -144,6 +144,20 @@ class ArkNovaOfficialP6FinalScoringTests(unittest.TestCase):
         self.assertEqual("final_scoring_card_scored", events[0]["type"])
         self.assertEqual(4, events[0]["awarded_conservation"])
 
+    def test_map_zero_completion_adds_seven_only_during_final_scoring(self):
+        state = new_semantic_state(2)
+        state["endgame"]["final_scoring_discard_completed"] = True
+        player = state["players"][0]
+        player["tracks"]["appeal"] = 12
+        player["map"]["completion_reward_claimed"] = True
+        self.assertEqual(12, player["tracks"]["appeal"])
+        scored, events = score_game(SemanticEngine(), state, [10] * 42)
+        row = next(item for item in scored["endgame"]["results"] if item["seat"] == 0)
+        self.assertEqual(7, row["map_completion_points"])
+        self.assertEqual(9, row["victory_points"])
+        self.assertEqual(12, row["appeal"])
+        self.assertTrue(any(event["type"] == "map_completion_scored" for event in events))
+
     @staticmethod
     def _leave_empty_building_spaces(player, empty_count):
         buildable = [

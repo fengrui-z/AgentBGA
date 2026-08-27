@@ -220,6 +220,21 @@ class ArkNovaOfficialActionTests(unittest.TestCase):
         self.assertTrue(state["endgame"]["final_scoring_discard_completed"])
         self.assertIsNone(state["resolution"]["pending_choice"])
 
+    def test_reputation_five_opens_action_card_upgrade_choice(self):
+        engine = SemanticEngine()
+        state = install_official_conservation_milestones(new_semantic_state(2))
+        state, _ = engine.start_effects(
+            state, 0,
+            [effect("move_track", {"track": "reputation", "amount": 5})],
+            source_id="test:reputation",
+        )
+        choice = state["resolution"]["pending_choice"]
+        self.assertEqual("action_upgrade_reward", choice["continuation"]["type"])
+        self.assertEqual(
+            {"upgrade-animals", "upgrade-cards", "upgrade-build", "upgrade-association", "upgrade-sponsors"},
+            {option["id"] for option in choice["options"]},
+        )
+
     def test_conservation_bonus_choices_follow_player_count_and_shared_supply(self):
         engine = SemanticEngine()
         tiles = [{
