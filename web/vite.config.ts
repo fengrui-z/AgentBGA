@@ -44,6 +44,10 @@ export default defineConfig(async () => {
   const { cloudflare } = await import("@cloudflare/vite-plugin");
 
   return {
+    // GitHub project Pages serve from /<repository>; local builds stay at root.
+    base: process.env.NEXT_PUBLIC_BASE_PATH
+      ? `${process.env.NEXT_PUBLIC_BASE_PATH}/`
+      : "/",
     server: {
       ...(isCodexSeatbeltSandbox ? { watch: { useFsEvents: false, usePolling: true } } : {}),
       proxy: { "/api": "http://127.0.0.1:8765" },
