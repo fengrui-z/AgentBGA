@@ -1014,6 +1014,7 @@ const ARK_TABLE_ACTION_TYPES = new Set([
   "place_building", "play_animal", "finish_action", "association_task", "make_donation",
   "place_unique_sponsor_building",
   "finish_association_tasks", "advance_break", "play_sponsor", "break_discard",
+  "resolve_semantic_choice",
   "choose_conservation_bonus", "upgrade_action_card", "keep_final_card", "take_map_card",
   "clever_action_card",
 ]);

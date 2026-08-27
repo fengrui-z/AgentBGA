@@ -109,7 +109,11 @@ export type ArkView = {
     conservation_markers: {seat: number; value: number; position: number; score_offset: number}[];
   }};
   players: ArkPlayerView[];
-  pending_choice?: {choice_id: string; seat: number; prompt: string; options: {id: string; label: string}[]} | null;
+  pending_choice?: {
+    choice_id: string; seat: number; prompt: string; minimum?: number; maximum?: number;
+    options: {id: string; label: string}[];
+    continuation?: {type?: string; seat?: number};
+  } | null;
 };
 
 const PLAYER_COLORS = ["#b85643", "#356f91", "#718b45", "#b48828"];
@@ -853,7 +857,7 @@ function SemanticChoiceControls({view, legalActions, submitting, onChoose}: {
   onChoose?: (action: ArkLegalAction) => void;
 }) {
   const actions = legalActions.filter(item => actionType(item) === "resolve_semantic_choice");
-  if (!actions.length || !onChoose) return null;
+  if (!actions.length || !onChoose || view.pending_choice?.continuation?.type === "discard_selected_cards") return null;
   const labels = new Map((view.pending_choice?.options || []).map(option => [option.id, option.label]));
   return <section className="ark-pending-map-reward" aria-live="polite"><span>RULE CHOICE</span><h3>{view.pending_choice?.prompt || "Choose an effect"}</h3><div>{actions.map(item => {
     const ids = Array.isArray(item.action.option_ids) ? item.action.option_ids.map(String) : [];
@@ -907,21 +911,27 @@ function PlayerActionControls({view, lang, legalActions, submitting, onChoose, i
   </section>;
 }
 
-function PlayerCardArea({player, lang, legalActions, submitting, onChoose, interactive, selectedAnimal, onSelectAnimal}: {
-  player: ArkPlayerView; lang: ArkLang; legalActions: ArkLegalAction[]; submitting: string;
+function PlayerCardArea({view, player, lang, legalActions, submitting, onChoose, interactive, selectedAnimal, onSelectAnimal}: {
+  view: ArkView; player: ArkPlayerView; lang: ArkLang; legalActions: ArkLegalAction[]; submitting: string;
   onChoose?: (action: ArkLegalAction) => void; interactive: boolean;
   selectedAnimal: string; onSelectAnimal: (cardId: string) => void;
 }) {
-  const comboActions = legalActions.filter(item => ["choose_initial_hand", "break_discard"].includes(actionType(item)));
+  const semanticDiscard = view.pending_choice?.seat === player.seat
+    && view.pending_choice?.continuation?.type === "discard_selected_cards";
+  const comboActions = legalActions.filter(item => ["choose_initial_hand", "break_discard"].includes(actionType(item))
+    || (semanticDiscard && actionType(item) === "resolve_semantic_choice"));
   const choosingInitial = comboActions.some(item => actionType(item) === "choose_initial_hand");
   const cards = choosingInitial ? player.initial_draw : player.hand;
   const scope = `${player.seat}:${choosingInitial ? "initial" : "hand"}:${cards.map(card => card.id || "hidden").join("|")}`;
   const [selection, setSelection] = useState<{scope: string; ids: string[]}>({scope: "", ids: []});
   const selected = selection.scope === scope ? selection.ids : [];
-  const required = comboActions.length && Array.isArray(comboActions[0].action.card_ids) ? comboActions[0].action.card_ids.length : 0;
+  const selectionIds = (item: ArkLegalAction) => Array.isArray(item.action.card_ids)
+    ? item.action.card_ids.map(String)
+    : Array.isArray(item.action.option_ids) ? item.action.option_ids.map(String) : [];
+  const required = comboActions.length ? selectionIds(comboActions[0]).length : 0;
   const handLimit = player.public_summary?.resources.hand_limit ?? (player.universities.includes("hand-limit-5") ? 5 : 3);
-  const breakDiscard = comboActions.some(item => actionType(item) === "break_discard");
-  const comboAction = comboActions.find(item => sameCardIds(item.action.card_ids, selected));
+  const breakDiscard = semanticDiscard || comboActions.some(item => actionType(item) === "break_discard");
+  const comboAction = comboActions.find(item => sameCardIds(selectionIds(item), selected));
   const toggle = (id: string) => setSelection(current => {
     const ids = current.scope === scope ? current.ids : [];
     return {scope, ids: ids.includes(id) ? ids.filter(value => value !== id) : ids.length < required ? [...ids, id] : ids};
@@ -1026,7 +1036,7 @@ function ZooWorkspace({view, identities, lang, legalActions, submitting, onChoos
     <nav className="ark-player-tabs" aria-label={copy(lang, "选择玩家地图", "Choose player map")}>{view.players.map(item => <button key={item.seat} className={`${item.seat === seat ? "selected" : ""} ${item.seat === view.active_seat ? "active" : ""}`} onClick={() => setSelection({seat: item.seat, decision: view.decision_count})} style={{"--player-color": PLAYER_COLORS[item.seat]} as React.CSSProperties}><i>{item.seat + 1}</i><span>{playerName(identities, item.seat, lang)}</span><small>{item.seat === view.active_seat ? copy(lang, "行动中", "ACTIVE") : copy(lang, "公开地图", "PUBLIC")}</small></button>)}</nav>
     <ActionCardRack view={view} player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
     <PlayerActionControls view={view} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
-    <PlayerCardArea player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive} selectedAnimal={selectedAnimal} onSelectAnimal={onSelectAnimal}/>
+    <PlayerCardArea view={view} player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive} selectedAnimal={selectedAnimal} onSelectAnimal={onSelectAnimal}/>
     <FinalScoringCardArea player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
     <div className="ark-zoo-layout">
       <ZooMap player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} selectedAnimal={selectedAnimal}/>
