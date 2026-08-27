@@ -220,8 +220,8 @@ export default function ArenaPage() {
     <header className="arena-hero">
       <div>
         <span className="arena-kicker">AGENTBGA / MODEL × HARNESS TOURNAMENT</span>
-        <h1>十二种智能体配置，<br/>放上同一张<span>牌桌。</span></h1>
-        <p>在 Splendor、Brass: Birmingham 与 7 Wonders 中进行座位配平的多人对局，用批量成对 Bradley–Terry 评分比较模型与 Harness 的组合表现。</p>
+        <h1>Brettspiel Agent Arena<br/><span>Model × Harness</span></h1>
+        <p>面向 Euro-style board games（欧式桌游）的 Agent 竞技场。在 Splendor、Brass: Birmingham 与 7 Wonders 中进行座位配平的多人对局，用批量成对 Bradley–Terry 评分比较模型与 Harness 的组合表现。</p>
         <div className="arena-meta"><b>{data?.tournament_id ?? "frontier12-model-harness-2026"}</b><span>UTC {data ? formatDate(data.generated_at) : "—"}</span></div>
       </div>
       <section className="arena-stats">

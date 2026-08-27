@@ -109,7 +109,8 @@ test("static export contains the Frontier12 results route and public data", asyn
   const styles = await readFile(new URL("app/arena/arena.css", root), "utf8");
   const data = JSON.parse(await readFile(new URL("public/results/frontier12-2026-v2.json", root), "utf8"));
 
-  assert.match(html, /十二种智能体配置/);
+  assert.match(html, /Brettspiel Agent Arena/);
+  assert.match(html, /Euro-style board games/);
   assert.match(html, /综合排名/);
   assert.equal(data.schema_version, "agentbga.frontier12-pages.v1");
   assert.equal(data.results.completed, 322);
