@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import Link from "next/link";
+import ArenaPage from "./arena/page";
 
 // ── i18n ─────────────────────────────────────────────────────────────
 type Lang = "zh" | "en";
@@ -1311,6 +1313,11 @@ function ArkNovaBoard({view, players}: {view?: ArkView; players: Snapshot["playe
 }
 
 export default function Home() {
+  if (process.env.NEXT_PUBLIC_PAGES_RESULTS === "true") return <ArenaPage/>;
+  return <LocalHome/>;
+}
+
+function LocalHome() {
   const [lang, setLang] = useState<Lang>("zh");
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("abga-lang") : null;
@@ -1519,6 +1526,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
 
   if (!snapshot) return <main className="setup-shell">
     <section className="hero">
+      <Link className="arena-link" href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/arena`}>Frontier 12 results →</Link>
       <button className="lang-toggle" onClick={toggleLang} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
       <div className="eyebrow">{t("hero_eyebrow")} / {GAME_COPY[game].eyebrow}</div>
       <h1>{t("hero_title_a")}<br/><i>{t("hero_title_b")}</i>{t("hero_title_c")}</h1>
