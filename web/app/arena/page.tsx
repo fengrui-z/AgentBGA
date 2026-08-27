@@ -17,6 +17,8 @@ type TokenEntry = {
 type GameTokenEntry = {
   participant_id: string; game: string; successful_sessions: number;
   mean_total_tokens_m: number; median_total_tokens_m: number;
+  mean_input_tokens_m?: number; mean_cached_input_tokens_m?: number;
+  mean_output_tokens_m?: number; elo?: number; elo_rank?: number;
 };
 type TokenEfficiency = {
   source_report: string; successful_sessions: number; coverage_rate: number;
@@ -36,6 +38,7 @@ type FrontierData = {
   tournament_id: string;
 };
 type SortKey = "elo" | "pws" | "average_rank";
+type GameId = "splendor" | "seven_wonders" | "brass_birmingham";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const DATA_URL = `${BASE_PATH}/results/frontier12-2026-v2.json`;
@@ -61,6 +64,7 @@ function clamp(value: number, minimum: number, maximum: number) {
 }
 
 function EfficiencyCharts({data}: {data: FrontierData}) {
+  const [selectedGame, setSelectedGame] = useState<GameId>("splendor");
   const token = data.token_efficiency;
   if (!token) return null;
   const tokens = new Map(token.entries.map(item => [item.participant_id, item]));
@@ -69,9 +73,18 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
     return metric ? [{...metric, rating: item}] : [];
   });
   const maximumMean = Math.max(...ordered.map(item => item.mean_total_tokens_m), 1);
-  const games = ["splendor", "seven_wonders", "brass_birmingham"];
+  const games: GameId[] = ["splendor", "seven_wonders", "brass_birmingham"];
   const byGame = new Map(token.by_game.map(item => [`${item.participant_id}:${item.game}`, item]));
   const heatRows = ordered.filter(item => games.every(game => byGame.has(`${item.participant_id}:${game}`)));
+  const gameComparison = token.by_game
+    .filter(item => item.game === selectedGame && item.elo != null && item.mean_input_tokens_m != null && item.mean_cached_input_tokens_m != null && item.mean_output_tokens_m != null)
+    .flatMap(item => {
+      const rating = data.leaderboard.find(entry => entry.participant_id === item.participant_id);
+      const overall = tokens.get(item.participant_id);
+      return rating && overall ? [{...item, rating, short_name: overall.short_name}] : [];
+    })
+    .sort((left, right) => (right.elo ?? 0) - (left.elo ?? 0));
+  const maximumGameTokens = Math.max(...gameComparison.map(item => item.mean_total_tokens_m), 1);
 
   return <section className="analysis-section">
     <header className="analysis-heading">
@@ -109,6 +122,41 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
           </div>)}
         </div>
         <div className="bar-legend"><span><i/>平均</span><span><i/>中位数</span></div>
+      </figure>
+      <figure className="chart-card game-compare-card">
+        <figcaption>
+          <div><strong>分游戏 Elo × Token 构成</strong><span>游戏内 Elo 独立拟合并以 1500 为中心；Token 为每个成功 session 的平均值。</span></div>
+          <div className="game-tabs" role="tablist" aria-label="选择要比较的游戏">
+            {games.map(game => <button type="button" role="tab" aria-selected={selectedGame === game} className={selectedGame === game ? "active" : ""} key={game} onClick={() => setSelectedGame(game)}>{GAME_NAMES[game]}</button>)}
+          </div>
+        </figcaption>
+        <div className="game-compare-head"><span>配置</span><span>游戏 Elo（中心 1500）</span><span>平均 Token / session</span></div>
+        <div className="game-compare-list" role="tabpanel" aria-label={`${GAME_NAMES[selectedGame]} Elo 与 Token 构成`}>
+          {gameComparison.map(item => {
+            const elo = item.elo ?? 1500;
+            const eloDelta = elo - 1500;
+            const eloWidth = Math.min(Math.abs(eloDelta) / 600 * 50, 50);
+            const input = item.mean_input_tokens_m ?? 0;
+            const cached = item.mean_cached_input_tokens_m ?? 0;
+            const output = item.mean_output_tokens_m ?? 0;
+            return <article key={item.participant_id}>
+              <div className="game-competitor"><b>{item.elo_rank}</b><span><strong>{item.short_name}</strong><small>{item.successful_sessions} sessions</small></span></div>
+              <div className="game-elo">
+                <div aria-hidden="true"><i className={eloDelta >= 0 ? "positive" : "negative"} style={{"--elo-width": `${eloWidth}%`} as CSSProperties}/></div>
+                <strong>{elo.toFixed(1)}</strong>
+              </div>
+              <div className="game-token">
+                <div className="token-stack" role="img" aria-label={`${item.rating.display_name}: total ${item.mean_total_tokens_m.toFixed(3)}M tokens; input ${input.toFixed(3)}M; cached input ${cached.toFixed(3)}M; output ${output.toFixed(3)}M`}>
+                  <i className="token-input" style={{width: `${input / maximumGameTokens * 100}%`}} title={`Input（非缓存） ${input.toFixed(3)}M`}/>
+                  <i className="token-cached" style={{width: `${cached / maximumGameTokens * 100}%`}} title={`Cached input ${cached.toFixed(3)}M`}/>
+                  <i className="token-output" style={{width: `${output / maximumGameTokens * 100}%`}} title={`Output ${output.toFixed(3)}M`}/>
+                </div>
+                <strong>{item.mean_total_tokens_m.toFixed(2)}M</strong>
+              </div>
+            </article>;
+          })}
+        </div>
+        <div className="game-token-legend"><span><i className="token-input"/>Input（非缓存）</span><span><i className="token-cached"/>Cached input</span><span><i className="token-output"/>Output</span><small>条长按当前游戏最高总量统一缩放</small></div>
       </figure>
       <figure className="chart-card heatmap-card">
         <figcaption><strong>分游戏平均总 Token / session</strong><span>同一配置在不同流程长度下的上下文消耗；深色代表更高 Token。</span></figcaption>
