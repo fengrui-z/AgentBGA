@@ -15,12 +15,34 @@ from agentbga.harness import HarnessAgent
 from agentbga.seat_mcp import TOOLS
 from agentbga.seat_tool import call_tool
 from agentbga.store import Store
+from agentbga.usage import TokenUsageAccumulator, TokenUsageSample
 
 
 LEGAL = [{"id": "a-test", "action": {"type": "take_tokens", "take": {"blue": 2}, "return": {}}}]
 
 
 class HarnessTests(unittest.TestCase):
+    def test_qwen_resumed_usage_keeps_latest_cumulative_snapshot(self):
+        agent = HarnessAgent.__new__(HarnessAgent)
+        agent.config = mock.Mock(backend="qwen")
+        agent._match_usage = TokenUsageAccumulator()
+        agent._turn_usage = TokenUsageAccumulator()
+        agent._qwen_usage_snapshot = None
+        first = TokenUsageSample(100, 60, 0, 30, 20, "qwen.result")
+        second = TokenUsageSample(160, 100, 0, 50, 30, "qwen.result")
+
+        agent._record_stream_usage(first, {"num_turns": 2})
+        agent._turn_usage = TokenUsageAccumulator()
+        agent._record_stream_usage(second, {"num_turns": 4})
+
+        self.assertEqual(160, agent.usage_summary()["input_tokens"])
+        self.assertEqual(100, agent.usage_summary()["cached_input_tokens"])
+        self.assertEqual(50, agent.usage_summary()["output_tokens"])
+        self.assertEqual(4, agent.usage_summary()["usage_records"])
+        self.assertEqual(60, agent._turn_usage.summary()["input_tokens"])
+        self.assertEqual(40, agent._turn_usage.summary()["cached_input_tokens"])
+        self.assertEqual(20, agent._turn_usage.summary()["output_tokens"])
+
     def test_qwen_backend_is_persisted_as_a_harness(self):
         with tempfile.TemporaryDirectory() as directory:
             store = Store(Path(directory) / "matches.sqlite3")

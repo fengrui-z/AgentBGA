@@ -202,6 +202,17 @@ class TokenUsageAccumulator:
     def add_raw(self, raw: Any, *, source: str) -> None:
         self.add(normalize_token_usage(raw, source=source))
 
+    def replace(self, sample: TokenUsageSample | None, *, records: int = 1) -> None:
+        """Replace the accumulator with one authoritative cumulative snapshot."""
+        self.input_tokens = 0
+        self.cached_input_tokens = 0
+        self.cache_write_input_tokens = 0
+        self.output_tokens = 0
+        self.reasoning_output_tokens = 0
+        self.usage_records = 0
+        self.sources.clear()
+        self.add(sample, records=records)
+
     def summary(self) -> dict[str, Any]:
         if self.usage_records == 0:
             return {

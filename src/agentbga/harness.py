@@ -16,7 +16,12 @@ from typing import Any, Callable
 
 from .agents import AgentError, PlayerConfig, StreamSink
 from .memory import memory_identity, stable_session_id
-from .usage import TokenUsageAccumulator, harness_usage_samples, normalize_token_usage
+from .usage import (
+    TokenUsageAccumulator,
+    TokenUsageSample,
+    harness_usage_samples,
+    normalize_token_usage,
+)
 
 
 HarnessEventSink = Callable[[dict[str, Any]], None]
@@ -123,6 +128,7 @@ class HarnessAgent:
         self._trace_steps: list[dict[str, Any]] = []
         self._match_usage = TokenUsageAccumulator()
         self._turn_usage = TokenUsageAccumulator()
+        self._qwen_usage_snapshot: TokenUsageSample | None = None
         self.binary = shutil.which(config.backend)
         if not self.binary:
             raise AgentError(f"harness executable not found: {config.backend}")
@@ -877,6 +883,43 @@ class HarnessAgent:
         """Return exact native token usage observed by this match-local agent."""
         return self._match_usage.summary()
 
+    def _record_stream_usage(
+        self, sample: TokenUsageSample, payload: dict[str, Any]
+    ) -> None:
+        """Record per-run usage, de-duplicating Qwen's resumed-session snapshot."""
+        if self.config.backend != "qwen":
+            self._turn_usage.add(sample)
+            self._match_usage.add(sample)
+            return
+
+        previous = self._qwen_usage_snapshot
+        if previous is None:
+            delta = sample
+        else:
+            delta = TokenUsageSample(
+                input_tokens=max(0, sample.input_tokens - previous.input_tokens),
+                cached_input_tokens=max(
+                    0, sample.cached_input_tokens - previous.cached_input_tokens
+                ),
+                cache_write_input_tokens=max(
+                    0,
+                    sample.cache_write_input_tokens
+                    - previous.cache_write_input_tokens,
+                ),
+                output_tokens=max(0, sample.output_tokens - previous.output_tokens),
+                reasoning_output_tokens=max(
+                    0,
+                    sample.reasoning_output_tokens
+                    - previous.reasoning_output_tokens,
+                ),
+                source=sample.source,
+            )
+        self._turn_usage.add(delta)
+        records = payload.get("num_turns")
+        record_count = records if isinstance(records, int) and records > 0 else 1
+        self._match_usage.replace(sample, records=record_count)
+        self._qwen_usage_snapshot = sample
+
     def _emit_tool_audit(self) -> None:
         path = self.session.runtime / "tool-events.jsonl"
         if not path.is_file():
@@ -1001,8 +1044,7 @@ class HarnessAgent:
                         self._trace_steps.append({"role": "assistant", "channel": "content", "text": line})
                         continue
                     for sample in harness_usage_samples(self.config.backend, payload):
-                        self._turn_usage.add(sample)
-                        self._match_usage.add(sample)
+                        self._record_stream_usage(sample, payload)
                     session_id = self._event_session_id(payload)
                     if session_id:
                         self.session.session_id = session_id

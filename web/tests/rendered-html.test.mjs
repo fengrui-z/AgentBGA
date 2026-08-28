@@ -120,17 +120,36 @@ test("static export contains the Frontier12 results route and public data", asyn
   assert.equal(data.token_efficiency.successful_sessions, 937);
   assert.equal(data.token_efficiency.entries.length, 12);
   assert.equal(data.token_efficiency.by_game.length, 35);
+  assert.equal(data.token_efficiency.pricing.currency, "CNY");
+  assert.equal(data.token_efficiency.pricing.usd_cny, 6.7811);
+  assert.equal(data.token_efficiency.pricing.models["deepseek-v4-pro-0813"].cached_input_rmb_per_m, 0.9);
+  assert.equal(data.token_efficiency.pricing.models["gpt-5.6-sol"].output_rmb_per_m, 135.622);
+  assert.equal(data.token_efficiency.entries[0].mean_cost_rmb, 119.2838);
+  assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_output_tokens_m, 0.182);
+  assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_cost_rmb, 190.8315);
+  assert.equal(
+    Number((data.token_efficiency.entries[0].mean_input_cost_rmb + data.token_efficiency.entries[0].mean_cached_input_cost_rmb + data.token_efficiency.entries[0].mean_output_cost_rmb).toFixed(4)),
+    data.token_efficiency.entries[0].mean_cost_rmb,
+  );
   assert.equal(data.token_efficiency.by_game[0].elo, 1550);
   assert.equal(data.token_efficiency.by_game[0].elo_rank, 5);
   assert.equal(data.token_efficiency.by_game[0].mean_input_tokens_m, 0.292);
   assert.equal(data.token_efficiency.by_game[0].mean_cached_input_tokens_m, 7.731);
   assert.equal(data.token_efficiency.by_game[0].mean_output_tokens_m, 0.025);
   assert.match(source, /EfficiencyCharts/);
-  assert.match(source, /Elo × 平均总 Token/);
+  assert.match(source, /Elo × 估算 API 成本/);
+  assert.match(source, /\[2100, 1800, 1500, 1200\]/);
+  assert.match(source, /Overall/);
+  assert.match(source, /成本构成对比/);
+  assert.match(source, /计价表（RMB \/ 1M tokens）/);
+  assert.match(source, /Cached input/);
+  assert.match(source, /Output（含 reasoning）/);
   assert.match(source, /分游戏 Elo × Token 构成/);
   assert.match(source, /Input（非缓存）/);
   assert.match(source, /分游戏平均总 Token/);
   assert.match(styles, /\.scatter-stage/);
+  assert.match(styles, /\.cost-bar-row/);
+  assert.match(styles, /\.pricing-card/);
   assert.match(styles, /\.game-tabs/);
   assert.match(styles, /\.token-stack/);
   assert.match(styles, /\.token-heatmap/);

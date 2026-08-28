@@ -253,97 +253,193 @@
         "participant_id": "gpt56-sol-codex",
         "short_name": "Sol · Codex",
         "successful_sessions": 85,
-        "mean_total_tokens_m": 32.15,
+        "mean_total_tokens_m": 32.147,
         "median_total_tokens_m": 8.86,
-        "efficiency_frontier": true
+        "mean_input_tokens_m": 1.064,
+        "mean_cached_input_tokens_m": 31.037,
+        "mean_output_tokens_m": 0.046,
+        "mean_reasoning_tokens_m": 0.024,
+        "efficiency_frontier": true,
+        "mean_input_cost_rmb": 28.8604,
+        "mean_cached_input_cost_rmb": 84.1848,
+        "mean_output_cost_rmb": 6.2386,
+        "mean_cost_rmb": 119.2838
       },
       {
         "participant_id": "gpt56-sol-opencode",
         "short_name": "Sol · OC",
         "successful_sessions": 83,
-        "mean_total_tokens_m": 17.42,
-        "median_total_tokens_m": 6.56,
-        "efficiency_frontier": true
+        "mean_total_tokens_m": 17.425,
+        "median_total_tokens_m": 6.563,
+        "mean_input_tokens_m": 0.406,
+        "mean_cached_input_tokens_m": 16.998,
+        "mean_output_tokens_m": 0.021,
+        "mean_reasoning_tokens_m": 0.016,
+        "efficiency_frontier": true,
+        "mean_input_cost_rmb": 11.0125,
+        "mean_cached_input_cost_rmb": 46.1054,
+        "mean_output_cost_rmb": 2.8481,
+        "mean_cost_rmb": 59.966
       },
       {
         "participant_id": "deepseek-v4-flash-0731-dsh",
         "short_name": "DS V4 Flash · DSh",
         "successful_sessions": 48,
-        "mean_total_tokens_m": 5.95,
-        "median_total_tokens_m": 6.26,
-        "efficiency_frontier": true
+        "mean_total_tokens_m": 5.949,
+        "median_total_tokens_m": 6.256,
+        "mean_input_tokens_m": 0.306,
+        "mean_cached_input_tokens_m": 5.598,
+        "mean_output_tokens_m": 0.045,
+        "mean_reasoning_tokens_m": 0.0,
+        "efficiency_frontier": true,
+        "mean_input_cost_rmb": 0.918,
+        "mean_cached_input_cost_rmb": 1.6794,
+        "mean_output_cost_rmb": 0.405,
+        "mean_cost_rmb": 3.0024
       },
       {
         "participant_id": "deepseek-v4-pro-0813-dsh",
         "short_name": "DS V4 Pro · DSh",
         "successful_sessions": 77,
-        "mean_total_tokens_m": 22.62,
-        "median_total_tokens_m": 10.33,
-        "efficiency_frontier": false
+        "mean_total_tokens_m": 22.615,
+        "median_total_tokens_m": 10.326,
+        "mean_input_tokens_m": 0.834,
+        "mean_cached_input_tokens_m": 21.649,
+        "mean_output_tokens_m": 0.132,
+        "mean_reasoning_tokens_m": 0.0,
+        "efficiency_frontier": false,
+        "mean_input_cost_rmb": 7.506,
+        "mean_cached_input_cost_rmb": 19.4841,
+        "mean_output_cost_rmb": 3.564,
+        "mean_cost_rmb": 30.5541
       },
       {
         "participant_id": "deepseek-v4-pro-0813-opencode",
         "short_name": "DS V4 Pro · OC",
         "successful_sessions": 73,
         "mean_total_tokens_m": 34.92,
-        "median_total_tokens_m": 8.95,
-        "efficiency_frontier": false
+        "median_total_tokens_m": 8.952,
+        "mean_input_tokens_m": 0.398,
+        "mean_cached_input_tokens_m": 34.435,
+        "mean_output_tokens_m": 0.087,
+        "mean_reasoning_tokens_m": 0.078,
+        "efficiency_frontier": false,
+        "mean_input_cost_rmb": 3.582,
+        "mean_cached_input_cost_rmb": 30.9915,
+        "mean_output_cost_rmb": 2.349,
+        "mean_cost_rmb": 36.9225
       },
       {
         "participant_id": "gpt56-terra-codex",
         "short_name": "Terra · Codex",
         "successful_sessions": 85,
-        "mean_total_tokens_m": 29.77,
-        "median_total_tokens_m": 8.79,
-        "efficiency_frontier": false
+        "mean_total_tokens_m": 29.772,
+        "median_total_tokens_m": 8.787,
+        "mean_input_tokens_m": 1.65,
+        "mean_cached_input_tokens_m": 28.083,
+        "mean_output_tokens_m": 0.039,
+        "mean_reasoning_tokens_m": 0.026,
+        "efficiency_frontier": false,
+        "mean_input_cost_rmb": 22.3776,
+        "mean_cached_input_cost_rmb": 38.0862,
+        "mean_output_cost_rmb": 3.1736,
+        "mean_cost_rmb": 63.6374
       },
       {
         "participant_id": "qwen38-max-opencode",
         "short_name": "Qwen3.8 · OC",
         "successful_sessions": 82,
-        "mean_total_tokens_m": 36.34,
-        "median_total_tokens_m": 10.39,
-        "efficiency_frontier": false
+        "mean_total_tokens_m": 36.344,
+        "median_total_tokens_m": 10.393,
+        "mean_input_tokens_m": 0.381,
+        "mean_cached_input_tokens_m": 35.904,
+        "mean_output_tokens_m": 0.059,
+        "mean_reasoning_tokens_m": 0.044,
+        "efficiency_frontier": false,
+        "mean_input_cost_rmb": 4.572,
+        "mean_cached_input_cost_rmb": 53.856,
+        "mean_output_cost_rmb": 2.124,
+        "mean_cost_rmb": 60.552
       },
       {
         "participant_id": "qwen38-max-qwen",
         "short_name": "Qwen3.8 · Qwen",
         "successful_sessions": 87,
-        "mean_total_tokens_m": 44.34,
-        "median_total_tokens_m": 16.89,
-        "efficiency_frontier": false
+        "mean_total_tokens_m": 44.418,
+        "median_total_tokens_m": 16.893,
+        "mean_input_tokens_m": 11.231,
+        "mean_cached_input_tokens_m": 33.005,
+        "mean_output_tokens_m": 0.182,
+        "mean_reasoning_tokens_m": 0.077,
+        "efficiency_frontier": false,
+        "mean_input_cost_rmb": 134.772,
+        "mean_cached_input_cost_rmb": 49.5075,
+        "mean_output_cost_rmb": 6.552,
+        "mean_cost_rmb": 190.8315
       },
       {
         "participant_id": "glm52-opencode",
         "short_name": "GLM-5.2 · OC",
         "successful_sessions": 85,
-        "mean_total_tokens_m": 34.65,
-        "median_total_tokens_m": 13.42,
-        "efficiency_frontier": false
+        "mean_total_tokens_m": 34.647,
+        "median_total_tokens_m": 13.419,
+        "mean_input_tokens_m": 0.707,
+        "mean_cached_input_tokens_m": 33.837,
+        "mean_output_tokens_m": 0.103,
+        "mean_reasoning_tokens_m": 0.083,
+        "efficiency_frontier": false,
+        "mean_input_cost_rmb": 5.656,
+        "mean_cached_input_cost_rmb": 67.674,
+        "mean_output_cost_rmb": 2.884,
+        "mean_cost_rmb": 76.214
       },
       {
         "participant_id": "kimi-k27-code-opencode",
         "short_name": "Kimi K2.7 · OC",
         "successful_sessions": 67,
-        "mean_total_tokens_m": 9.38,
-        "median_total_tokens_m": 6.47,
-        "efficiency_frontier": false
+        "mean_total_tokens_m": 9.384,
+        "median_total_tokens_m": 6.467,
+        "mean_input_tokens_m": 0.333,
+        "mean_cached_input_tokens_m": 9.026,
+        "mean_output_tokens_m": 0.025,
+        "mean_reasoning_tokens_m": 0.021,
+        "efficiency_frontier": false,
+        "mean_input_cost_rmb": 2.1645,
+        "mean_cached_input_cost_rmb": 11.7338,
+        "mean_output_cost_rmb": 0.675,
+        "mean_cost_rmb": 14.5733
       },
       {
         "participant_id": "gpt56-luna-codex",
         "short_name": "Luna · Codex",
         "successful_sessions": 82,
-        "mean_total_tokens_m": 22.4,
-        "median_total_tokens_m": 9.34,
-        "efficiency_frontier": false
+        "mean_total_tokens_m": 22.397,
+        "median_total_tokens_m": 9.338,
+        "mean_input_tokens_m": 1.989,
+        "mean_cached_input_tokens_m": 20.361,
+        "mean_output_tokens_m": 0.047,
+        "mean_reasoning_tokens_m": 0.034,
+        "efficiency_frontier": false,
+        "mean_input_cost_rmb": 2.6975,
+        "mean_cached_input_cost_rmb": 2.761,
+        "mean_output_cost_rmb": 0.3825,
+        "mean_cost_rmb": 5.841
       },
       {
         "participant_id": "qwen37-plus-opencode",
         "short_name": "Qwen3.7+ · OC",
         "successful_sessions": 83,
-        "mean_total_tokens_m": 17.14,
-        "median_total_tokens_m": 8.29,
-        "efficiency_frontier": false
+        "mean_total_tokens_m": 17.144,
+        "median_total_tokens_m": 8.295,
+        "mean_input_tokens_m": 1.039,
+        "mean_cached_input_tokens_m": 16.077,
+        "mean_output_tokens_m": 0.028,
+        "mean_reasoning_tokens_m": 0.02,
+        "efficiency_frontier": false,
+        "mean_input_cost_rmb": 1.6624,
+        "mean_cached_input_cost_rmb": 5.1446,
+        "mean_output_cost_rmb": 0.1792,
+        "mean_cost_rmb": 6.9862
       }
     ],
     "by_game": [
@@ -356,20 +452,30 @@
         "mean_input_tokens_m": 0.292,
         "mean_cached_input_tokens_m": 7.731,
         "mean_output_tokens_m": 0.025,
+        "mean_reasoning_tokens_m": 0.018,
         "elo": 1550,
-        "elo_rank": 5
+        "elo_rank": 5,
+        "mean_input_cost_rmb": 7.9203,
+        "mean_cached_input_cost_rmb": 20.9696,
+        "mean_output_cost_rmb": 3.3906,
+        "mean_cost_rmb": 32.2805
       },
       {
         "participant_id": "gpt56-sol-codex",
         "game": "seven_wonders",
         "successful_sessions": 23,
-        "mean_total_tokens_m": 6.248,
+        "mean_total_tokens_m": 6.249,
         "median_total_tokens_m": 6.339,
         "mean_input_tokens_m": 0.333,
         "mean_cached_input_tokens_m": 5.901,
-        "mean_output_tokens_m": 0.014,
+        "mean_output_tokens_m": 0.015,
+        "mean_reasoning_tokens_m": 0.01,
         "elo": 1665,
-        "elo_rank": 1
+        "elo_rank": 1,
+        "mean_input_cost_rmb": 9.0324,
+        "mean_cached_input_cost_rmb": 16.0059,
+        "mean_output_cost_rmb": 2.0343,
+        "mean_cost_rmb": 27.0726
       },
       {
         "participant_id": "gpt56-sol-codex",
@@ -380,8 +486,13 @@
         "mean_input_tokens_m": 2.448,
         "mean_cached_input_tokens_m": 75.168,
         "mean_output_tokens_m": 0.092,
+        "mean_reasoning_tokens_m": 0.042,
         "elo": 2087.6,
-        "elo_rank": 1
+        "elo_rank": 1,
+        "mean_input_cost_rmb": 66.4005,
+        "mean_cached_input_cost_rmb": 203.8857,
+        "mean_output_cost_rmb": 12.4772,
+        "mean_cost_rmb": 282.7634
       },
       {
         "participant_id": "gpt56-sol-opencode",
@@ -392,20 +503,30 @@
         "mean_input_tokens_m": 0.213,
         "mean_cached_input_tokens_m": 5.844,
         "mean_output_tokens_m": 0.018,
+        "mean_reasoning_tokens_m": 0.016,
         "elo": 1529,
-        "elo_rank": 9
+        "elo_rank": 9,
+        "mean_input_cost_rmb": 5.7775,
+        "mean_cached_input_cost_rmb": 15.8513,
+        "mean_output_cost_rmb": 2.4412,
+        "mean_cost_rmb": 24.07
       },
       {
         "participant_id": "gpt56-sol-opencode",
         "game": "seven_wonders",
         "successful_sessions": 24,
-        "mean_total_tokens_m": 4.948,
+        "mean_total_tokens_m": 4.947,
         "median_total_tokens_m": 4.854,
         "mean_input_tokens_m": 0.22,
         "mean_cached_input_tokens_m": 4.718,
-        "mean_output_tokens_m": 0.01,
+        "mean_output_tokens_m": 0.009,
+        "mean_reasoning_tokens_m": 0.008,
         "elo": 1623.8,
-        "elo_rank": 2
+        "elo_rank": 2,
+        "mean_input_cost_rmb": 5.9674,
+        "mean_cached_input_cost_rmb": 12.7971,
+        "mean_output_cost_rmb": 1.2206,
+        "mean_cost_rmb": 19.9851
       },
       {
         "participant_id": "gpt56-sol-opencode",
@@ -416,8 +537,13 @@
         "mean_input_tokens_m": 0.846,
         "mean_cached_input_tokens_m": 43.957,
         "mean_output_tokens_m": 0.035,
+        "mean_reasoning_tokens_m": 0.024,
         "elo": 1696.8,
-        "elo_rank": 3
+        "elo_rank": 3,
+        "mean_input_cost_rmb": 22.9472,
+        "mean_cached_input_cost_rmb": 119.229,
+        "mean_output_cost_rmb": 4.7468,
+        "mean_cost_rmb": 146.923
       },
       {
         "participant_id": "deepseek-v4-flash-0731-dsh",
@@ -428,20 +554,30 @@
         "mean_input_tokens_m": 0.28,
         "mean_cached_input_tokens_m": 6.727,
         "mean_output_tokens_m": 0.048,
+        "mean_reasoning_tokens_m": 0,
         "elo": 1531,
-        "elo_rank": 8
+        "elo_rank": 8,
+        "mean_input_cost_rmb": 0.84,
+        "mean_cached_input_cost_rmb": 2.0181,
+        "mean_output_cost_rmb": 0.432,
+        "mean_cost_rmb": 3.2901
       },
       {
         "participant_id": "deepseek-v4-flash-0731-dsh",
         "game": "seven_wonders",
         "successful_sessions": 20,
-        "mean_total_tokens_m": 4.4,
+        "mean_total_tokens_m": 4.401,
         "median_total_tokens_m": 4.115,
         "mean_input_tokens_m": 0.343,
         "mean_cached_input_tokens_m": 4.017,
-        "mean_output_tokens_m": 0.04,
+        "mean_output_tokens_m": 0.041,
+        "mean_reasoning_tokens_m": 0,
         "elo": 1585.1,
-        "elo_rank": 4
+        "elo_rank": 4,
+        "mean_input_cost_rmb": 1.029,
+        "mean_cached_input_cost_rmb": 1.2051,
+        "mean_output_cost_rmb": 0.369,
+        "mean_cost_rmb": 2.6031
       },
       {
         "participant_id": "deepseek-v4-pro-0813-dsh",
@@ -452,8 +588,13 @@
         "mean_input_tokens_m": 0.419,
         "mean_cached_input_tokens_m": 9.876,
         "mean_output_tokens_m": 0.11,
+        "mean_reasoning_tokens_m": 0,
         "elo": 1573.8,
-        "elo_rank": 3
+        "elo_rank": 3,
+        "mean_input_cost_rmb": 3.771,
+        "mean_cached_input_cost_rmb": 8.8884,
+        "mean_output_cost_rmb": 2.97,
+        "mean_cost_rmb": 15.6294
       },
       {
         "participant_id": "deepseek-v4-pro-0813-dsh",
@@ -464,8 +605,13 @@
         "mean_input_tokens_m": 0.475,
         "mean_cached_input_tokens_m": 6.964,
         "mean_output_tokens_m": 0.118,
+        "mean_reasoning_tokens_m": 0,
         "elo": 1581,
-        "elo_rank": 5
+        "elo_rank": 5,
+        "mean_input_cost_rmb": 4.275,
+        "mean_cached_input_cost_rmb": 6.2676,
+        "mean_output_cost_rmb": 3.186,
+        "mean_cost_rmb": 13.7286
       },
       {
         "participant_id": "deepseek-v4-pro-0813-dsh",
@@ -476,8 +622,13 @@
         "mean_input_tokens_m": 1.755,
         "mean_cached_input_tokens_m": 52.077,
         "mean_output_tokens_m": 0.175,
+        "mean_reasoning_tokens_m": 0,
         "elo": 1464.7,
-        "elo_rank": 5
+        "elo_rank": 5,
+        "mean_input_cost_rmb": 15.795,
+        "mean_cached_input_cost_rmb": 46.8693,
+        "mean_output_cost_rmb": 4.725,
+        "mean_cost_rmb": 67.3893
       },
       {
         "participant_id": "deepseek-v4-pro-0813-opencode",
@@ -488,8 +639,13 @@
         "mean_input_tokens_m": 0.245,
         "mean_cached_input_tokens_m": 8.642,
         "mean_output_tokens_m": 0.056,
+        "mean_reasoning_tokens_m": 0.05,
         "elo": 1555.4,
-        "elo_rank": 4
+        "elo_rank": 4,
+        "mean_input_cost_rmb": 2.205,
+        "mean_cached_input_cost_rmb": 7.7778,
+        "mean_output_cost_rmb": 1.512,
+        "mean_cost_rmb": 11.4948
       },
       {
         "participant_id": "deepseek-v4-pro-0813-opencode",
@@ -500,44 +656,64 @@
         "mean_input_tokens_m": 0.297,
         "mean_cached_input_tokens_m": 6.553,
         "mean_output_tokens_m": 0.073,
+        "mean_reasoning_tokens_m": 0.068,
         "elo": 1593.9,
-        "elo_rank": 3
+        "elo_rank": 3,
+        "mean_input_cost_rmb": 2.673,
+        "mean_cached_input_cost_rmb": 5.8977,
+        "mean_output_cost_rmb": 1.971,
+        "mean_cost_rmb": 10.5417
       },
       {
         "participant_id": "deepseek-v4-pro-0813-opencode",
         "game": "brass_birmingham",
         "successful_sessions": 19,
-        "mean_total_tokens_m": 111.092,
+        "mean_total_tokens_m": 111.091,
         "median_total_tokens_m": 101.017,
         "mean_input_tokens_m": 0.774,
         "mean_cached_input_tokens_m": 110.162,
-        "mean_output_tokens_m": 0.156,
+        "mean_output_tokens_m": 0.155,
+        "mean_reasoning_tokens_m": 0.138,
         "elo": 1444.2,
-        "elo_rank": 6
+        "elo_rank": 6,
+        "mean_input_cost_rmb": 6.966,
+        "mean_cached_input_cost_rmb": 99.1458,
+        "mean_output_cost_rmb": 4.185,
+        "mean_cost_rmb": 110.2968
       },
       {
         "participant_id": "gpt56-terra-codex",
         "game": "splendor",
         "successful_sessions": 34,
-        "mean_total_tokens_m": 8.634,
+        "mean_total_tokens_m": 8.635,
         "median_total_tokens_m": 8.057,
         "mean_input_tokens_m": 0.301,
         "mean_cached_input_tokens_m": 8.314,
-        "mean_output_tokens_m": 0.019,
+        "mean_output_tokens_m": 0.02,
+        "mean_reasoning_tokens_m": 0.015,
         "elo": 1453.5,
-        "elo_rank": 10
+        "elo_rank": 10,
+        "mean_input_cost_rmb": 4.0822,
+        "mean_cached_input_cost_rmb": 11.2754,
+        "mean_output_cost_rmb": 1.6275,
+        "mean_cost_rmb": 16.9851
       },
       {
         "participant_id": "gpt56-terra-codex",
         "game": "seven_wonders",
         "successful_sessions": 23,
-        "mean_total_tokens_m": 6.673,
+        "mean_total_tokens_m": 6.672,
         "median_total_tokens_m": 6.456,
         "mean_input_tokens_m": 0.375,
         "mean_cached_input_tokens_m": 6.285,
-        "mean_output_tokens_m": 0.013,
+        "mean_output_tokens_m": 0.012,
+        "mean_reasoning_tokens_m": 0.009,
         "elo": 1475.4,
-        "elo_rank": 7
+        "elo_rank": 7,
+        "mean_input_cost_rmb": 5.0858,
+        "mean_cached_input_cost_rmb": 8.5237,
+        "mean_output_cost_rmb": 0.9765,
+        "mean_cost_rmb": 14.586
       },
       {
         "participant_id": "gpt56-terra-codex",
@@ -548,32 +724,47 @@
         "mean_input_tokens_m": 4.334,
         "mean_cached_input_tokens_m": 69.993,
         "mean_output_tokens_m": 0.083,
+        "mean_reasoning_tokens_m": 0.052,
         "elo": 1793.6,
-        "elo_rank": 2
+        "elo_rank": 2,
+        "mean_input_cost_rmb": 58.7786,
+        "mean_cached_input_cost_rmb": 94.9245,
+        "mean_output_cost_rmb": 6.754,
+        "mean_cost_rmb": 160.4571
       },
       {
         "participant_id": "qwen38-max-opencode",
         "game": "splendor",
         "successful_sessions": 32,
-        "mean_total_tokens_m": 10.235,
+        "mean_total_tokens_m": 10.236,
         "median_total_tokens_m": 9.945,
         "mean_input_tokens_m": 0.255,
         "mean_cached_input_tokens_m": 9.923,
-        "mean_output_tokens_m": 0.057,
+        "mean_output_tokens_m": 0.058,
+        "mean_reasoning_tokens_m": 0.046,
         "elo": 1596,
-        "elo_rank": 2
+        "elo_rank": 2,
+        "mean_input_cost_rmb": 3.06,
+        "mean_cached_input_cost_rmb": 14.8845,
+        "mean_output_cost_rmb": 2.088,
+        "mean_cost_rmb": 20.0325
       },
       {
         "participant_id": "qwen38-max-opencode",
         "game": "seven_wonders",
         "successful_sessions": 22,
-        "mean_total_tokens_m": 6.103,
+        "mean_total_tokens_m": 6.102,
         "median_total_tokens_m": 6.267,
         "mean_input_tokens_m": 0.235,
         "mean_cached_input_tokens_m": 5.832,
-        "mean_output_tokens_m": 0.036,
+        "mean_output_tokens_m": 0.035,
+        "mean_reasoning_tokens_m": 0.028,
         "elo": 1542,
-        "elo_rank": 6
+        "elo_rank": 6,
+        "mean_input_cost_rmb": 2.82,
+        "mean_cached_input_cost_rmb": 8.748,
+        "mean_output_cost_rmb": 1.26,
+        "mean_cost_rmb": 12.828
       },
       {
         "participant_id": "qwen38-max-opencode",
@@ -584,44 +775,64 @@
         "mean_input_tokens_m": 0.639,
         "mean_cached_input_tokens_m": 89.224,
         "mean_output_tokens_m": 0.078,
+        "mean_reasoning_tokens_m": 0.054,
         "elo": 1406.1,
-        "elo_rank": 7
+        "elo_rank": 7,
+        "mean_input_cost_rmb": 7.668,
+        "mean_cached_input_cost_rmb": 133.836,
+        "mean_output_cost_rmb": 2.808,
+        "mean_cost_rmb": 144.312
       },
       {
         "participant_id": "qwen38-max-qwen",
         "game": "splendor",
         "successful_sessions": 35,
-        "mean_total_tokens_m": 17.032,
+        "mean_total_tokens_m": 17.104,
         "median_total_tokens_m": 16.867,
         "mean_input_tokens_m": 3.075,
         "mean_cached_input_tokens_m": 13.865,
-        "mean_output_tokens_m": 0.092,
+        "mean_output_tokens_m": 0.164,
+        "mean_reasoning_tokens_m": 0.072,
         "elo": 1604.4,
-        "elo_rank": 1
+        "elo_rank": 1,
+        "mean_input_cost_rmb": 36.9,
+        "mean_cached_input_cost_rmb": 20.7975,
+        "mean_output_cost_rmb": 5.904,
+        "mean_cost_rmb": 63.6015
       },
       {
         "participant_id": "qwen38-max-qwen",
         "game": "seven_wonders",
         "successful_sessions": 24,
-        "mean_total_tokens_m": 11.316,
+        "mean_total_tokens_m": 11.365,
         "median_total_tokens_m": 11.809,
         "mean_input_tokens_m": 1.987,
         "mean_cached_input_tokens_m": 9.267,
-        "mean_output_tokens_m": 0.062,
+        "mean_output_tokens_m": 0.111,
+        "mean_reasoning_tokens_m": 0.048,
         "elo": 1437,
-        "elo_rank": 9
+        "elo_rank": 9,
+        "mean_input_cost_rmb": 23.844,
+        "mean_cached_input_cost_rmb": 13.9005,
+        "mean_output_cost_rmb": 3.996,
+        "mean_cost_rmb": 41.7405
       },
       {
         "participant_id": "qwen38-max-qwen",
         "game": "brass_birmingham",
         "successful_sessions": 28,
-        "mean_total_tokens_m": 106.782,
+        "mean_total_tokens_m": 106.891,
         "median_total_tokens_m": 100.216,
         "mean_input_tokens_m": 29.348,
         "mean_cached_input_tokens_m": 77.277,
-        "mean_output_tokens_m": 0.157,
+        "mean_output_tokens_m": 0.266,
+        "mean_reasoning_tokens_m": 0.109,
         "elo": 1479.8,
-        "elo_rank": 4
+        "elo_rank": 4,
+        "mean_input_cost_rmb": 352.176,
+        "mean_cached_input_cost_rmb": 115.9155,
+        "mean_output_cost_rmb": 9.576,
+        "mean_cost_rmb": 477.6675
       },
       {
         "participant_id": "glm52-opencode",
@@ -632,8 +843,13 @@
         "mean_input_tokens_m": 0.43,
         "mean_cached_input_tokens_m": 14.003,
         "mean_output_tokens_m": 0.123,
+        "mean_reasoning_tokens_m": 0.103,
         "elo": 1548.7,
-        "elo_rank": 6
+        "elo_rank": 6,
+        "mean_input_cost_rmb": 3.44,
+        "mean_cached_input_cost_rmb": 28.006,
+        "mean_output_cost_rmb": 3.444,
+        "mean_cost_rmb": 34.89
       },
       {
         "participant_id": "glm52-opencode",
@@ -644,8 +860,13 @@
         "mean_input_tokens_m": 0.278,
         "mean_cached_input_tokens_m": 8.759,
         "mean_output_tokens_m": 0.089,
+        "mean_reasoning_tokens_m": 0.075,
         "elo": 1439.1,
-        "elo_rank": 8
+        "elo_rank": 8,
+        "mean_input_cost_rmb": 2.224,
+        "mean_cached_input_cost_rmb": 17.518,
+        "mean_output_cost_rmb": 2.492,
+        "mean_cost_rmb": 22.234
       },
       {
         "participant_id": "glm52-opencode",
@@ -656,8 +877,13 @@
         "mean_input_tokens_m": 1.475,
         "mean_cached_input_tokens_m": 83.686,
         "mean_output_tokens_m": 0.088,
+        "mean_reasoning_tokens_m": 0.063,
         "elo": 1259.5,
-        "elo_rank": 10
+        "elo_rank": 10,
+        "mean_input_cost_rmb": 11.8,
+        "mean_cached_input_cost_rmb": 167.372,
+        "mean_output_cost_rmb": 2.464,
+        "mean_cost_rmb": 181.636
       },
       {
         "participant_id": "kimi-k27-code-opencode",
@@ -668,20 +894,30 @@
         "mean_input_tokens_m": 0.278,
         "mean_cached_input_tokens_m": 6.305,
         "mean_output_tokens_m": 0.03,
+        "mean_reasoning_tokens_m": 0.026,
         "elo": 1531.4,
-        "elo_rank": 7
+        "elo_rank": 7,
+        "mean_input_cost_rmb": 1.807,
+        "mean_cached_input_cost_rmb": 8.1965,
+        "mean_output_cost_rmb": 0.81,
+        "mean_cost_rmb": 10.8135
       },
       {
         "participant_id": "kimi-k27-code-opencode",
         "game": "seven_wonders",
         "successful_sessions": 22,
-        "mean_total_tokens_m": 5.174,
+        "mean_total_tokens_m": 5.175,
         "median_total_tokens_m": 5.492,
         "mean_input_tokens_m": 0.265,
         "mean_cached_input_tokens_m": 4.894,
-        "mean_output_tokens_m": 0.015,
+        "mean_output_tokens_m": 0.016,
+        "mean_reasoning_tokens_m": 0.014,
         "elo": 1368.6,
-        "elo_rank": 10
+        "elo_rank": 10,
+        "mean_input_cost_rmb": 1.7225,
+        "mean_cached_input_cost_rmb": 6.3622,
+        "mean_output_cost_rmb": 0.432,
+        "mean_cost_rmb": 8.5167
       },
       {
         "participant_id": "kimi-k27-code-opencode",
@@ -692,8 +928,13 @@
         "mean_input_tokens_m": 0.562,
         "mean_cached_input_tokens_m": 21.546,
         "mean_output_tokens_m": 0.027,
+        "mean_reasoning_tokens_m": 0.019,
         "elo": 1264.1,
-        "elo_rank": 9
+        "elo_rank": 9,
+        "mean_input_cost_rmb": 3.653,
+        "mean_cached_input_cost_rmb": 28.0098,
+        "mean_output_cost_rmb": 0.729,
+        "mean_cost_rmb": 32.3918
       },
       {
         "participant_id": "gpt56-luna-codex",
@@ -704,8 +945,13 @@
         "mean_input_tokens_m": 0.968,
         "mean_cached_input_tokens_m": 8.195,
         "mean_output_tokens_m": 0.024,
+        "mean_reasoning_tokens_m": 0.019,
         "elo": 1251,
-        "elo_rank": 12
+        "elo_rank": 12,
+        "mean_input_cost_rmb": 1.3128,
+        "mean_cached_input_cost_rmb": 1.1112,
+        "mean_output_cost_rmb": 0.1953,
+        "mean_cost_rmb": 2.6193
       },
       {
         "participant_id": "gpt56-luna-codex",
@@ -716,8 +962,13 @@
         "mean_input_tokens_m": 0.825,
         "mean_cached_input_tokens_m": 6.295,
         "mean_output_tokens_m": 0.017,
+        "mean_reasoning_tokens_m": 0.013,
         "elo": 1342.7,
-        "elo_rank": 12
+        "elo_rank": 12,
+        "mean_input_cost_rmb": 1.1189,
+        "mean_cached_input_cost_rmb": 0.8536,
+        "mean_output_cost_rmb": 0.1383,
+        "mean_cost_rmb": 2.1108
       },
       {
         "participant_id": "gpt56-luna-codex",
@@ -728,20 +979,30 @@
         "mean_input_tokens_m": 4.45,
         "mean_cached_input_tokens_m": 49.849,
         "mean_output_tokens_m": 0.105,
+        "mean_reasoning_tokens_m": 0.075,
         "elo": 1388.4,
-        "elo_rank": 8
+        "elo_rank": 8,
+        "mean_input_cost_rmb": 6.0351,
+        "mean_cached_input_cost_rmb": 6.7595,
+        "mean_output_cost_rmb": 0.8544,
+        "mean_cost_rmb": 13.649
       },
       {
         "participant_id": "qwen37-plus-opencode",
         "game": "splendor",
         "successful_sessions": 34,
-        "mean_total_tokens_m": 9.852,
+        "mean_total_tokens_m": 9.851,
         "median_total_tokens_m": 8.341,
         "mean_input_tokens_m": 0.94,
         "mean_cached_input_tokens_m": 8.875,
-        "mean_output_tokens_m": 0.037,
+        "mean_output_tokens_m": 0.036,
+        "mean_reasoning_tokens_m": 0.028,
         "elo": 1275.9,
-        "elo_rank": 11
+        "elo_rank": 11,
+        "mean_input_cost_rmb": 1.504,
+        "mean_cached_input_cost_rmb": 2.84,
+        "mean_output_cost_rmb": 0.2304,
+        "mean_cost_rmb": 4.5744
       },
       {
         "participant_id": "qwen37-plus-opencode",
@@ -752,21 +1013,141 @@
         "mean_input_tokens_m": 0.524,
         "mean_cached_input_tokens_m": 3.925,
         "mean_output_tokens_m": 0.013,
+        "mean_reasoning_tokens_m": 0.01,
         "elo": 1346.4,
-        "elo_rank": 11
+        "elo_rank": 11,
+        "mean_input_cost_rmb": 0.8384,
+        "mean_cached_input_cost_rmb": 1.256,
+        "mean_output_cost_rmb": 0.0832,
+        "mean_cost_rmb": 2.1776
       },
       {
         "participant_id": "qwen37-plus-opencode",
         "game": "brass_birmingham",
         "successful_sessions": 25,
-        "mean_total_tokens_m": 39.237,
+        "mean_total_tokens_m": 39.238,
         "median_total_tokens_m": 22.829,
         "mean_input_tokens_m": 1.668,
         "mean_cached_input_tokens_m": 37.538,
-        "mean_output_tokens_m": 0.031,
+        "mean_output_tokens_m": 0.032,
+        "mean_reasoning_tokens_m": 0.02,
         "elo": 1215.2,
-        "elo_rank": 11
+        "elo_rank": 11,
+        "mean_input_cost_rmb": 2.6688,
+        "mean_cached_input_cost_rmb": 12.0122,
+        "mean_output_cost_rmb": 0.2048,
+        "mean_cost_rmb": 14.8858
       }
-    ]
+    ],
+    "pricing": {
+      "as_of": "2026-08-28",
+      "currency": "CNY",
+      "unit": "per 1M tokens",
+      "usd_cny": 6.7811,
+      "models": {
+        "gpt-5.6-sol": {
+          "input_rmb_per_m": 27.1244,
+          "cached_input_rmb_per_m": 2.7124,
+          "output_rmb_per_m": 135.622,
+          "native_currency": "USD",
+          "native_input_per_m": 4.0,
+          "native_cached_input_per_m": 0.4,
+          "native_output_per_m": 20.0,
+          "source": "openai",
+          "source_url": "https://developers.openai.com/api/docs/models/compare"
+        },
+        "gpt-5.6-terra": {
+          "input_rmb_per_m": 13.5622,
+          "cached_input_rmb_per_m": 1.3562,
+          "output_rmb_per_m": 81.3732,
+          "native_currency": "USD",
+          "native_input_per_m": 2.0,
+          "native_cached_input_per_m": 0.2,
+          "native_output_per_m": 12.0,
+          "source": "openai",
+          "source_url": "https://developers.openai.com/api/docs/models/compare"
+        },
+        "gpt-5.6-luna": {
+          "input_rmb_per_m": 1.3562,
+          "cached_input_rmb_per_m": 0.1356,
+          "output_rmb_per_m": 8.1373,
+          "native_currency": "USD",
+          "native_input_per_m": 0.2,
+          "native_cached_input_per_m": 0.02,
+          "native_output_per_m": 1.2,
+          "source": "openai",
+          "source_url": "https://developers.openai.com/api/docs/models/compare"
+        },
+        "deepseek-v4-flash-0731": {
+          "input_rmb_per_m": 3.0,
+          "cached_input_rmb_per_m": 0.3,
+          "output_rmb_per_m": 9.0,
+          "source": "qianwen",
+          "source_url": "https://www.qianwenai.com/models/deepseek-v4-flash-0731",
+          "price_note": "busy hours (08:00–22:00 Asia/Shanghai)"
+        },
+        "deepseek-v4-pro-0813": {
+          "input_rmb_per_m": 9.0,
+          "cached_input_rmb_per_m": 0.9,
+          "output_rmb_per_m": 27.0,
+          "source": "qianwen",
+          "source_url": "https://www.qianwenai.com/models/deepseek-v4-pro-0813",
+          "price_note": "busy hours (08:00–22:00 Asia/Shanghai)"
+        },
+        "glm-5.2": {
+          "input_rmb_per_m": 8.0,
+          "cached_input_rmb_per_m": 2.0,
+          "output_rmb_per_m": 28.0,
+          "source": "qianwen",
+          "source_url": "https://www.qianwenai.com/models/glm-5.2"
+        },
+        "kimi-k2.7-code": {
+          "input_rmb_per_m": 6.5,
+          "cached_input_rmb_per_m": 1.3,
+          "output_rmb_per_m": 27.0,
+          "source": "qianwen",
+          "source_url": "https://www.qianwenai.com/models/kimi-k2.7-code"
+        },
+        "qwen3.7-plus": {
+          "input_rmb_per_m": 1.6,
+          "cached_input_rmb_per_m": 0.32,
+          "output_rmb_per_m": 6.4,
+          "source": "qianwen",
+          "source_url": "https://www.qianwenai.com/models/qwen3.7-plus",
+          "price_note": "current promotional price, input <=256K"
+        },
+        "qwen3.8-max": {
+          "input_rmb_per_m": 12.0,
+          "cached_input_rmb_per_m": 1.5,
+          "output_rmb_per_m": 36.0,
+          "source": "qianwen",
+          "source_url": "https://www.qianwenai.com/models/qwen3.8-max"
+        }
+      },
+      "sources": [
+        {
+          "id": "qianwen",
+          "label": "千问 AI 模型市场",
+          "url": "https://www.qianwenai.com/models"
+        },
+        {
+          "id": "openai",
+          "label": "OpenAI API model pricing",
+          "url": "https://developers.openai.com/api/docs/models/compare"
+        },
+        {
+          "id": "fx",
+          "label": "2026-08-28 人民币汇率中间价",
+          "url": "https://www.news.cn/20260828/8ded7ca354aa4c95b9a24a3cdd0b4fb8/c.html"
+        }
+      ],
+      "assumptions": [
+        "DeepSeek uses the published busy-hour rate (08:00–22:00 Asia/Shanghai).",
+        "Qwen3.7 Plus uses the current promotional <=256K input tier.",
+        "Output includes provider-reported reasoning tokens; reasoning is not added a second time.",
+        "GPT prices are API-equivalent estimates converted at USD/CNY 6.7811; long-context and cache-write surcharges are not applied because per-request telemetry is unavailable.",
+        "Provider telemetry is aggregated per successful session and may differ from an invoice."
+      ]
+    }
   }
 }
