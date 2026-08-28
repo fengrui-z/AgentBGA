@@ -13,16 +13,30 @@ type LeaderboardEntry = {
 type TokenEntry = {
   participant_id: string; short_name: string; successful_sessions: number;
   mean_total_tokens_m: number; median_total_tokens_m: number; efficiency_frontier: boolean;
+  mean_input_tokens_m: number; mean_cached_input_tokens_m: number; mean_output_tokens_m: number;
+  mean_input_cost_rmb: number; mean_cached_input_cost_rmb: number;
+  mean_output_cost_rmb: number; mean_cost_rmb: number;
 };
 type GameTokenEntry = {
   participant_id: string; game: string; successful_sessions: number;
   mean_total_tokens_m: number; median_total_tokens_m: number;
   mean_input_tokens_m?: number; mean_cached_input_tokens_m?: number;
   mean_output_tokens_m?: number; elo?: number; elo_rank?: number;
+  mean_input_cost_rmb?: number; mean_cached_input_cost_rmb?: number;
+  mean_output_cost_rmb?: number; mean_cost_rmb?: number;
+};
+type ModelPrice = {
+  input_rmb_per_m: number; cached_input_rmb_per_m: number; output_rmb_per_m: number;
+  source: string; source_url: string; price_note?: string; native_currency?: string;
+};
+type Pricing = {
+  as_of: string; currency: string; unit: string; usd_cny: number;
+  models: Record<string, ModelPrice>;
+  sources: {id: string; label: string; url: string}[]; assumptions: string[];
 };
 type TokenEfficiency = {
   source_report: string; successful_sessions: number; coverage_rate: number;
-  entries: TokenEntry[]; by_game: GameTokenEntry[];
+  entries: TokenEntry[]; by_game: GameTokenEntry[]; pricing: Pricing;
 };
 type FrontierData = {
   dataset_id: string; generated_at: string; leaderboard: LeaderboardEntry[];
@@ -39,6 +53,7 @@ type FrontierData = {
 };
 type SortKey = "elo" | "pws" | "average_rank";
 type GameId = "splendor" | "seven_wonders" | "brass_birmingham";
+type CostScope = "overall" | GameId;
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const DATA_URL = `${BASE_PATH}/results/frontier12-2026-v2.json`;
@@ -63,8 +78,21 @@ function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
+function niceCeiling(value: number) {
+  if (value <= 0) return 1;
+  const power = 10 ** Math.floor(Math.log10(value));
+  const normalized = value / power;
+  const step = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  return step * power;
+}
+
+function rmb(value: number) {
+  return `¥${value.toLocaleString("zh-CN", {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+}
+
 function EfficiencyCharts({data}: {data: FrontierData}) {
   const [selectedGame, setSelectedGame] = useState<GameId>("splendor");
+  const [selectedCostScope, setSelectedCostScope] = useState<CostScope>("overall");
   const token = data.token_efficiency;
   if (!token) return null;
   const tokens = new Map(token.entries.map(item => [item.participant_id, item]));
@@ -76,6 +104,47 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
   const games: GameId[] = ["splendor", "seven_wonders", "brass_birmingham"];
   const byGame = new Map(token.by_game.map(item => [`${item.participant_id}:${item.game}`, item]));
   const heatRows = ordered.filter(item => games.every(game => byGame.has(`${item.participant_id}:${game}`)));
+  const costScopes: CostScope[] = ["overall", ...games];
+  const scopeLabel = selectedCostScope === "overall" ? "Overall" : GAME_NAMES[selectedCostScope];
+  const costComparison = (selectedCostScope === "overall"
+    ? ordered.map(item => ({
+        participant_id: item.participant_id,
+        short_name: item.short_name,
+        successful_sessions: item.successful_sessions,
+        elo: item.rating.elo,
+        backend: item.rating.backend,
+        display_name: item.rating.display_name,
+        mean_input_cost_rmb: item.mean_input_cost_rmb,
+        mean_cached_input_cost_rmb: item.mean_cached_input_cost_rmb,
+        mean_output_cost_rmb: item.mean_output_cost_rmb,
+        mean_cost_rmb: item.mean_cost_rmb,
+      }))
+    : token.by_game
+        .filter(item => item.game === selectedCostScope && item.elo != null && item.mean_cost_rmb != null)
+        .flatMap(item => {
+          const rating = data.leaderboard.find(entry => entry.participant_id === item.participant_id);
+          const overall = tokens.get(item.participant_id);
+          return rating && overall ? [{
+            participant_id: item.participant_id,
+            short_name: overall.short_name,
+            successful_sessions: item.successful_sessions,
+            elo: item.elo!,
+            backend: rating.backend,
+            display_name: rating.display_name,
+            mean_input_cost_rmb: item.mean_input_cost_rmb!,
+            mean_cached_input_cost_rmb: item.mean_cached_input_cost_rmb!,
+            mean_output_cost_rmb: item.mean_output_cost_rmb!,
+            mean_cost_rmb: item.mean_cost_rmb!,
+          }] : [];
+        }));
+  const costFrontier = new Set(costComparison.filter(point => !costComparison.some(other =>
+    other.participant_id !== point.participant_id
+    && other.mean_cost_rmb <= point.mean_cost_rmb
+    && other.elo >= point.elo
+    && (other.mean_cost_rmb < point.mean_cost_rmb || other.elo > point.elo)
+  )).map(point => point.participant_id));
+  const maximumCost = niceCeiling(Math.max(...costComparison.map(item => item.mean_cost_rmb), 1));
+  const costBars = [...costComparison].sort((left, right) => left.mean_cost_rmb - right.mean_cost_rmb);
   const gameComparison = token.by_game
     .filter(item => item.game === selectedGame && item.elo != null && item.mean_input_tokens_m != null && item.mean_cached_input_tokens_m != null && item.mean_output_tokens_m != null)
     .flatMap(item => {
@@ -89,27 +158,62 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
   return <section className="analysis-section">
     <header className="analysis-heading">
       <div><span>EFFICIENCY ANALYSIS</span><h2>Elo 之外，模型要花多少上下文？</h2></div>
-      <p>复用实验报告的效率前沿、均值/中位数和分游戏热力图口径。Token 为 provider telemetry，不等同于 API 账单。</p>
+      <p>成本以成功 session 的 provider token telemetry 估算，不等同于供应商账单；分游戏 Elo 均独立拟合。</p>
     </header>
     <div className="analysis-grid">
-      <figure className="chart-card scatter-card">
-        <figcaption><strong>Elo × 平均总 Token / session</strong><span>越靠左上越优；圆点大小表示成功 sessions，描边点属于效率前沿。</span></figcaption>
+      <figure className="chart-card scatter-card cost-scatter-card">
+        <figcaption className="chart-controls-caption">
+          <div><strong>Elo × 估算 API 成本 / session</strong><span>横轴从 ¥0 开始，纵轴固定为 1200–2100；越靠左上越优，描边点属于当前视图的 Cost–Elo 前沿。</span></div>
+          <div className="game-tabs cost-scope-tabs" role="tablist" aria-label="选择总体或分游戏成本与 Elo">
+            {costScopes.map(scope => <button type="button" role="tab" aria-selected={selectedCostScope === scope} className={selectedCostScope === scope ? "active" : ""} key={scope} onClick={() => setSelectedCostScope(scope)}>{scope === "overall" ? "Overall" : GAME_NAMES[scope]}</button>)}
+          </div>
+        </figcaption>
         <div className="scatter-wrap">
           <div className="scatter-y-label">Elo ↑</div>
-          <div className="scatter-stage" role="img" aria-label="Elo 与平均总 Token 效率前沿散点图">
-            {[1700, 1600, 1500, 1400, 1300].map(value => <span className="y-tick" key={value} style={{"--tick": `${(1700 - value) / 450 * 100}%`} as CSSProperties}>{value}</span>)}
-            {[5, 15, 25, 35, 45].map(value => <span className="x-tick" key={value} style={{"--tick": `${(value - 5) / 40 * 100}%`} as CSSProperties}>{value}M</span>)}
-            {ordered.map(item => {
-              const x = clamp((item.mean_total_tokens_m - 5) / 40 * 100, 1, 99);
-              const y = clamp((1700 - item.rating.elo) / 450 * 100, 1, 99);
-              const size = 11 + (item.successful_sessions - 48) / 39 * 8;
-              return <button type="button" key={item.participant_id} aria-label={`${item.rating.display_name}: ${item.rating.elo.toFixed(1)} Elo, ${item.mean_total_tokens_m.toFixed(2)}M mean tokens, ${item.successful_sessions} sessions`} className={`scatter-point backend-${item.rating.backend} ${item.efficiency_frontier ? "is-frontier" : ""}`} style={{"--x": `${x}%`, "--y": `${y}%`, "--size": `${size}px`} as CSSProperties}>
-                {item.efficiency_frontier && <em>{item.short_name}</em>}
-                <b>{item.rating.display_name}</b><small>{item.rating.elo.toFixed(1)} Elo · {item.mean_total_tokens_m.toFixed(2)}M · {item.successful_sessions} sessions</small>
+          <div className="scatter-stage" role="img" aria-label={`${scopeLabel} Elo 与人民币估算成本散点图`}>
+            {[2100, 1800, 1500, 1200].map(value => <span className="y-tick" key={value} style={{"--tick": `${(2100 - value) / 900 * 100}%`} as CSSProperties}>{value}</span>)}
+            {[0, .25, .5, .75, 1].map(ratio => <span className="x-tick" key={ratio} style={{"--tick": `${ratio * 100}%`} as CSSProperties}>{rmb(maximumCost * ratio)}</span>)}
+            {costComparison.map(item => {
+              const x = clamp(item.mean_cost_rmb / maximumCost * 100, 1, 99);
+              const y = clamp((2100 - item.elo) / 900 * 100, 1, 99);
+              const size = 11 + clamp((item.successful_sessions - 40) / 50, 0, 1) * 8;
+              const frontier = costFrontier.has(item.participant_id);
+              return <button type="button" key={item.participant_id} aria-label={`${item.display_name}: ${item.elo.toFixed(1)} Elo, ${rmb(item.mean_cost_rmb)} per successful session, ${item.successful_sessions} sessions`} className={`scatter-point backend-${item.backend} ${frontier ? "is-frontier" : ""}`} style={{"--x": `${x}%`, "--y": `${y}%`, "--size": `${size}px`} as CSSProperties}>
+                {frontier && <em>{item.short_name}</em>}
+                <b>{item.display_name}</b><small>{item.elo.toFixed(1)} Elo · {rmb(item.mean_cost_rmb)} / session · {item.successful_sessions} sessions</small>
               </button>;
             })}
           </div>
-          <div className="scatter-x-label">平均总 Token / session →</div>
+          <div className="scatter-x-label">估算 API 成本（RMB / 成功 session）→</div>
+        </div>
+      </figure>
+      <figure className="chart-card cost-bars-card">
+        <figcaption><strong>{scopeLabel} 成本构成对比</strong><span>同一横轴下拆分 Input（非缓存）、Cached input 与 Output；按总成本从低到高排列。</span></figcaption>
+        <div className="cost-bar-list">
+          {costBars.map(item => <div className="cost-bar-row" key={item.participant_id}>
+            <span>{item.short_name}</span>
+            <div className="cost-stack" role="img" aria-label={`${item.display_name}: input ${rmb(item.mean_input_cost_rmb)}, cached input ${rmb(item.mean_cached_input_cost_rmb)}, output ${rmb(item.mean_output_cost_rmb)}, total ${rmb(item.mean_cost_rmb)}`}>
+              <i className="cost-input" style={{width: `${item.mean_input_cost_rmb / maximumCost * 100}%`}} title={`Input ${rmb(item.mean_input_cost_rmb)}`}/>
+              <i className="cost-cached" style={{width: `${item.mean_cached_input_cost_rmb / maximumCost * 100}%`}} title={`Cached input ${rmb(item.mean_cached_input_cost_rmb)}`}/>
+              <i className="cost-output" style={{width: `${item.mean_output_cost_rmb / maximumCost * 100}%`}} title={`Output ${rmb(item.mean_output_cost_rmb)}`}/>
+            </div>
+            <strong>{rmb(item.mean_cost_rmb)}</strong>
+          </div>)}
+        </div>
+        <div className="game-token-legend cost-legend"><span><i className="cost-input"/>Input（非缓存）</span><span><i className="cost-cached"/>Cached input</span><span><i className="cost-output"/>Output</span><small>RMB / 成功 session</small></div>
+      </figure>
+      <figure className="chart-card pricing-card">
+        <figcaption><strong>计价表（RMB / 1M tokens）</strong><span>千问模型市场直接采用人民币价；GPT 使用 OpenAI 官方 API 美元价按 USD/CNY {token.pricing.usd_cny} 折算。</span></figcaption>
+        <div className="pricing-scroll"><table>
+          <thead><tr><th>Model</th><th>Input</th><th>Cached input</th><th>Output</th><th>口径</th></tr></thead>
+          <tbody>{Object.entries(token.pricing.models).map(([model, price]) => <tr key={model}>
+            <th><a href={price.source_url} target="_blank" rel="noreferrer">{model}</a></th><td>{rmb(price.input_rmb_per_m)}</td><td>{rmb(price.cached_input_rmb_per_m)}</td><td>{rmb(price.output_rmb_per_m)}</td><td>{price.source === "openai" ? "OpenAI · FX 折算" : "千问 AI"}{price.price_note ? <small>{price.price_note}</small> : null}</td>
+          </tr>)}</tbody>
+        </table></div>
+        <div className="pricing-notes">
+          <p><b>估算公式</b> uncached input M × input price + cached input M × cached price + output M × output price。</p>
+          <ul>{token.pricing.assumptions.map(note => <li key={note}>{note}</li>)}</ul>
+          <p className="pricing-sources">价格日期 {token.pricing.as_of} · {token.pricing.sources.map((source, index) => <span key={source.id}>{index > 0 && " · "}<a href={source.url} target="_blank" rel="noreferrer">{source.label}</a></span>)}</p>
         </div>
       </figure>
       <figure className="chart-card bars-card">

@@ -13,6 +13,94 @@ from pathlib import Path
 from typing import Any
 
 
+USD_CNY = 6.7811
+PRICING_AS_OF = "2026-08-28"
+
+
+def _openai_rmb(input_usd: float, cached_usd: float, output_usd: float) -> dict[str, float]:
+    return {
+        "input_rmb_per_m": round(input_usd * USD_CNY, 4),
+        "cached_input_rmb_per_m": round(cached_usd * USD_CNY, 4),
+        "output_rmb_per_m": round(output_usd * USD_CNY, 4),
+        "native_currency": "USD",
+        "native_input_per_m": input_usd,
+        "native_cached_input_per_m": cached_usd,
+        "native_output_per_m": output_usd,
+        "source": "openai",
+        "source_url": "https://developers.openai.com/api/docs/models/compare",
+    }
+
+
+MODEL_PRICING: dict[str, dict[str, Any]] = {
+    "gpt-5.6-sol": _openai_rmb(4.0, 0.4, 20.0),
+    "gpt-5.6-terra": _openai_rmb(2.0, 0.2, 12.0),
+    "gpt-5.6-luna": _openai_rmb(0.2, 0.02, 1.2),
+    "deepseek-v4-flash-0731": {
+        "input_rmb_per_m": 3.0,
+        "cached_input_rmb_per_m": 0.3,
+        "output_rmb_per_m": 9.0,
+        "source": "qianwen",
+        "source_url": "https://www.qianwenai.com/models/deepseek-v4-flash-0731",
+        "price_note": "busy hours (08:00–22:00 Asia/Shanghai)",
+    },
+    "deepseek-v4-pro-0813": {
+        "input_rmb_per_m": 9.0,
+        "cached_input_rmb_per_m": 0.9,
+        "output_rmb_per_m": 27.0,
+        "source": "qianwen",
+        "source_url": "https://www.qianwenai.com/models/deepseek-v4-pro-0813",
+        "price_note": "busy hours (08:00–22:00 Asia/Shanghai)",
+    },
+    "glm-5.2": {
+        "input_rmb_per_m": 8.0,
+        "cached_input_rmb_per_m": 2.0,
+        "output_rmb_per_m": 28.0,
+        "source": "qianwen",
+        "source_url": "https://www.qianwenai.com/models/glm-5.2",
+    },
+    "kimi-k2.7-code": {
+        "input_rmb_per_m": 6.5,
+        "cached_input_rmb_per_m": 1.3,
+        "output_rmb_per_m": 27.0,
+        "source": "qianwen",
+        "source_url": "https://www.qianwenai.com/models/kimi-k2.7-code",
+    },
+    "qwen3.7-plus": {
+        "input_rmb_per_m": 1.6,
+        "cached_input_rmb_per_m": 0.32,
+        "output_rmb_per_m": 6.4,
+        "source": "qianwen",
+        "source_url": "https://www.qianwenai.com/models/qwen3.7-plus",
+        "price_note": "current promotional price, input <=256K",
+    },
+    "qwen3.8-max": {
+        "input_rmb_per_m": 12.0,
+        "cached_input_rmb_per_m": 1.5,
+        "output_rmb_per_m": 36.0,
+        "source": "qianwen",
+        "source_url": "https://www.qianwenai.com/models/qwen3.8-max",
+    },
+}
+
+PRICING_SOURCES = [
+    {
+        "id": "qianwen",
+        "label": "千问 AI 模型市场",
+        "url": "https://www.qianwenai.com/models",
+    },
+    {
+        "id": "openai",
+        "label": "OpenAI API model pricing",
+        "url": "https://developers.openai.com/api/docs/models/compare",
+    },
+    {
+        "id": "fx",
+        "label": "2026-08-28 人民币汇率中间价",
+        "url": "https://www.news.cn/20260828/8ded7ca354aa4c95b9a24a3cdd0b4fb8/c.html",
+    },
+]
+
+
 class _ReportTableParser(HTMLParser):
     """Extract the accessible chart data tables embedded in the HTML report."""
 
@@ -86,6 +174,61 @@ def _artifact_datasets(report_html: str) -> dict[str, list[dict[str, Any]]]:
     encoded = re.sub(r"\s", "", match.group(1))
     payload = json.loads(gzip.decompress(base64.b64decode(encoded)))
     return payload.get("snapshot", {}).get("datasets", {})
+
+
+def _cost_breakdown(row: dict[str, Any], pricing: dict[str, Any]) -> dict[str, float]:
+    input_cost = round(row["mean_input_tokens_m"] * pricing["input_rmb_per_m"], 4)
+    cached_cost = round(
+        row["mean_cached_input_tokens_m"] * pricing["cached_input_rmb_per_m"], 4
+    )
+    output_cost = round(row["mean_output_tokens_m"] * pricing["output_rmb_per_m"], 4)
+    return {
+        "mean_input_cost_rmb": input_cost,
+        "mean_cached_input_cost_rmb": cached_cost,
+        "mean_output_cost_rmb": output_cost,
+        "mean_cost_rmb": round(input_cost + cached_cost + output_cost, 4),
+    }
+
+
+def _attach_pricing(
+    token_efficiency: dict[str, Any], participants: dict[str, Any]
+) -> dict[str, Any]:
+    participant_prices: dict[str, dict[str, Any]] = {}
+    for identifier, player in participants.items():
+        model = str(player.get("model", "")).split("/")[-1]
+        pricing = MODEL_PRICING.get(model)
+        if pricing is None:
+            continue
+        participant_prices[identifier] = pricing
+
+    for collection in (token_efficiency["entries"], token_efficiency["by_game"]):
+        for row in collection:
+            pricing = participant_prices.get(row["participant_id"])
+            if pricing and all(
+                key in row
+                for key in (
+                    "mean_input_tokens_m",
+                    "mean_cached_input_tokens_m",
+                    "mean_output_tokens_m",
+                )
+            ):
+                row.update(_cost_breakdown(row, pricing))
+
+    token_efficiency["pricing"] = {
+        "as_of": PRICING_AS_OF,
+        "currency": "CNY",
+        "unit": "per 1M tokens",
+        "usd_cny": USD_CNY,
+        "models": MODEL_PRICING,
+        "sources": PRICING_SOURCES,
+        "assumptions": [
+            "DeepSeek uses the published busy-hour rate (08:00–22:00 Asia/Shanghai).",
+            "Qwen3.7 Plus uses the current promotional <=256K input tier.",
+            "GPT prices are API-equivalent estimates converted at USD/CNY 6.7811; long-context and cache-write surcharges are not applied because per-request telemetry is unavailable.",
+            "Provider telemetry is aggregated per successful session and may differ from an invoice.",
+        ],
+    }
+    return token_efficiency
 
 
 def _report_token_efficiency(report: Path, participants: dict[str, Any]) -> dict[str, Any]:
@@ -164,15 +307,51 @@ def _report_token_efficiency(report: Path, participants: dict[str, Any]) -> dict
                 }
             )
 
+    ranking_rows = datasets.get("ranking", [])
+    if ranking_rows and by_game:
+        game_rows_by_participant: dict[str, list[dict[str, Any]]] = {}
+        for row in by_game:
+            game_rows_by_participant.setdefault(row["participant_id"], []).append(row)
+        entries = []
+        for row in ranking_rows:
+            participant_rows = game_rows_by_participant.get(row["participant_id"], [])
+            sessions = sum(item["successful_sessions"] for item in participant_rows)
+            if not sessions:
+                continue
+
+            def weighted(field: str) -> float:
+                return round(
+                    sum(item[field] * item["successful_sessions"] for item in participant_rows)
+                    / sessions,
+                    3,
+                )
+
+            mean_input = weighted("mean_input_tokens_m")
+            mean_cached = weighted("mean_cached_input_tokens_m")
+            mean_output = weighted("mean_output_tokens_m")
+            entries.append(
+                {
+                    "participant_id": row["participant_id"],
+                    "short_name": row["short_name"],
+                    "successful_sessions": sessions,
+                    "mean_total_tokens_m": round(mean_input + mean_cached + mean_output, 3),
+                    "median_total_tokens_m": row["median_total_m"],
+                    "mean_input_tokens_m": mean_input,
+                    "mean_cached_input_tokens_m": mean_cached,
+                    "mean_output_tokens_m": mean_output,
+                    "efficiency_frontier": row["pareto"] == "是",
+                }
+            )
+
     if not entries:
         raise ValueError(f"Token efficiency table not found in {report}")
-    return {
+    return _attach_pricing({
         "source_report": report.name,
         "successful_sessions": sum(item["successful_sessions"] for item in entries),
         "coverage_rate": 1.0,
         "entries": entries,
         "by_game": by_game,
-    }
+    }, participants)
 
 
 def build_public_data(source: Path, report: Path | None = None) -> dict[str, Any]:
