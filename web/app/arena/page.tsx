@@ -14,6 +14,7 @@ type TokenEntry = {
   participant_id: string; short_name: string; successful_sessions: number;
   mean_total_tokens_m: number; median_total_tokens_m: number; efficiency_frontier: boolean;
   mean_input_tokens_m: number; mean_cached_input_tokens_m: number; mean_output_tokens_m: number;
+  mean_reasoning_tokens_m?: number;
   mean_input_cost_rmb: number; mean_cached_input_cost_rmb: number;
   mean_output_cost_rmb: number; mean_cost_rmb: number;
 };
@@ -22,6 +23,7 @@ type GameTokenEntry = {
   mean_total_tokens_m: number; median_total_tokens_m: number;
   mean_input_tokens_m?: number; mean_cached_input_tokens_m?: number;
   mean_output_tokens_m?: number; elo?: number; elo_rank?: number;
+  mean_reasoning_tokens_m?: number;
   mean_input_cost_rmb?: number; mean_cached_input_cost_rmb?: number;
   mean_output_cost_rmb?: number; mean_cost_rmb?: number;
 };
@@ -200,7 +202,7 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
             <strong>{rmb(item.mean_cost_rmb)}</strong>
           </div>)}
         </div>
-        <div className="game-token-legend cost-legend"><span><i className="cost-input"/>Input（非缓存）</span><span><i className="cost-cached"/>Cached input</span><span><i className="cost-output"/>Output</span><small>RMB / 成功 session</small></div>
+        <div className="game-token-legend cost-legend"><span><i className="cost-input"/>Input（非缓存）</span><span><i className="cost-cached"/>Cached input</span><span><i className="cost-output"/>Output（含 reasoning）</span><small>RMB / 成功 session</small></div>
       </figure>
       <figure className="chart-card pricing-card">
         <figcaption><strong>计价表（RMB / 1M tokens）</strong><span>千问模型市场直接采用人民币价；GPT 使用 OpenAI 官方 API 美元价按 USD/CNY {token.pricing.usd_cny} 折算。</span></figcaption>
@@ -211,7 +213,7 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
           </tr>)}</tbody>
         </table></div>
         <div className="pricing-notes">
-          <p><b>估算公式</b> uncached input M × input price + cached input M × cached price + output M × output price。</p>
+          <p><b>估算公式</b> uncached input M × input price + cached input M × cached price + output（含 reasoning）M × output price。</p>
           <ul>{token.pricing.assumptions.map(note => <li key={note}>{note}</li>)}</ul>
           <p className="pricing-sources">价格日期 {token.pricing.as_of} · {token.pricing.sources.map((source, index) => <span key={source.id}>{index > 0 && " · "}<a href={source.url} target="_blank" rel="noreferrer">{source.label}</a></span>)}</p>
         </div>
@@ -260,7 +262,7 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
             </article>;
           })}
         </div>
-        <div className="game-token-legend"><span><i className="token-input"/>Input（非缓存）</span><span><i className="token-cached"/>Cached input</span><span><i className="token-output"/>Output</span><small>条长按当前游戏最高总量统一缩放</small></div>
+        <div className="game-token-legend"><span><i className="token-input"/>Input（非缓存）</span><span><i className="token-cached"/>Cached input</span><span><i className="token-output"/>Output（含 reasoning）</span><small>条长按当前游戏最高总量统一缩放</small></div>
       </figure>
       <figure className="chart-card heatmap-card">
         <figcaption><strong>分游戏平均总 Token / session</strong><span>同一配置在不同流程长度下的上下文消耗；深色代表更高 Token。</span></figcaption>

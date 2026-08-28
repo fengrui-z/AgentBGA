@@ -224,6 +224,7 @@ def _attach_pricing(
         "assumptions": [
             "DeepSeek uses the published busy-hour rate (08:00–22:00 Asia/Shanghai).",
             "Qwen3.7 Plus uses the current promotional <=256K input tier.",
+            "Output includes provider-reported reasoning tokens; reasoning is not added a second time.",
             "GPT prices are API-equivalent estimates converted at USD/CNY 6.7811; long-context and cache-write surcharges are not applied because per-request telemetry is unavailable.",
             "Provider telemetry is aggregated per successful session and may differ from an invoice.",
         ],
@@ -265,27 +266,25 @@ def _report_token_efficiency(report: Path, participants: dict[str, Any]) -> dict
         if identifier not in participants or not game:
             continue
         game_elo = elo_by_game.get((identifier, game), {})
+        mean_input = row["avg_uncached_input_m"]
+        mean_cached = row["avg_cached_input_m"]
+        mean_output = row["avg_output_m"]
         by_game.append(
             {
                 "participant_id": identifier,
                 "game": game,
                 "successful_sessions": row["sessions"],
-                "mean_total_tokens_m": row["avg_total_m"],
-                "median_total_tokens_m": row["median_total_m"],
-                "mean_input_tokens_m": row["avg_uncached_input_m"],
-                "mean_cached_input_tokens_m": row["avg_cached_input_m"],
-                # Keep the three displayed components additive to the report's
-                # authoritative total. Some Qwen telemetry reports reasoning as
-                # part of output while also separating it from total_tokens.
-                "mean_output_tokens_m": round(
-                    max(
-                        row["avg_total_m"]
-                        - row["avg_uncached_input_m"]
-                        - row["avg_cached_input_m"],
-                        0,
-                    ),
-                    3,
+                "mean_total_tokens_m": round(
+                    mean_input + mean_cached + mean_output, 3
                 ),
+                "median_total_tokens_m": row["median_total_m"],
+                "mean_input_tokens_m": mean_input,
+                "mean_cached_input_tokens_m": mean_cached,
+                # Provider output includes reasoning. Qwen's recovered total
+                # omitted this subset, so rebuild the additive billable total
+                # from the three non-overlapping components above.
+                "mean_output_tokens_m": mean_output,
+                "mean_reasoning_tokens_m": row.get("avg_reasoning_m", 0),
                 "elo": game_elo.get("elo"),
                 "elo_rank": game_elo.get("game_rank"),
             }
@@ -329,6 +328,7 @@ def _report_token_efficiency(report: Path, participants: dict[str, Any]) -> dict
             mean_input = weighted("mean_input_tokens_m")
             mean_cached = weighted("mean_cached_input_tokens_m")
             mean_output = weighted("mean_output_tokens_m")
+            mean_reasoning = weighted("mean_reasoning_tokens_m")
             entries.append(
                 {
                     "participant_id": row["participant_id"],
@@ -339,6 +339,7 @@ def _report_token_efficiency(report: Path, participants: dict[str, Any]) -> dict
                     "mean_input_tokens_m": mean_input,
                     "mean_cached_input_tokens_m": mean_cached,
                     "mean_output_tokens_m": mean_output,
+                    "mean_reasoning_tokens_m": mean_reasoning,
                     "efficiency_frontier": row["pareto"] == "是",
                 }
             )

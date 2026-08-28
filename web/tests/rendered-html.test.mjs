@@ -125,6 +125,8 @@ test("static export contains the Frontier12 results route and public data", asyn
   assert.equal(data.token_efficiency.pricing.models["deepseek-v4-pro-0813"].cached_input_rmb_per_m, 0.9);
   assert.equal(data.token_efficiency.pricing.models["gpt-5.6-sol"].output_rmb_per_m, 135.622);
   assert.equal(data.token_efficiency.entries[0].mean_cost_rmb, 119.2838);
+  assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_output_tokens_m, 0.182);
+  assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_cost_rmb, 190.8315);
   assert.equal(
     Number((data.token_efficiency.entries[0].mean_input_cost_rmb + data.token_efficiency.entries[0].mean_cached_input_cost_rmb + data.token_efficiency.entries[0].mean_output_cost_rmb).toFixed(4)),
     data.token_efficiency.entries[0].mean_cost_rmb,
@@ -141,6 +143,7 @@ test("static export contains the Frontier12 results route and public data", asyn
   assert.match(source, /成本构成对比/);
   assert.match(source, /计价表（RMB \/ 1M tokens）/);
   assert.match(source, /Cached input/);
+  assert.match(source, /Output（含 reasoning）/);
   assert.match(source, /分游戏 Elo × Token 构成/);
   assert.match(source, /Input（非缓存）/);
   assert.match(source, /分游戏平均总 Token/);
