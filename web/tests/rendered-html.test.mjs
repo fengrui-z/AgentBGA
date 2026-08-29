@@ -73,6 +73,10 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(styles, /\.human-action-confirmation/);
   assert.match(styles, /\.human-action-groups button\.selected/);
   assert.match(source, /CenturyBoard/);
+  assert.match(source, /BurgundyBoard/);
+  assert.match(source, /BurgundyDuchy/);
+  assert.match(source, /castles_of_burgundy/);
+  assert.match(styles, /\.burgundy-hex-map/);
   assert.match(source, /SevenBoard/);
   assert.match(source, /SevenSpectatorHands/);
   assert.match(source, /SevenPassRoutes/);

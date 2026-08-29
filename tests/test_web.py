@@ -32,8 +32,31 @@ class WebTests(unittest.TestCase):
             finally:
                 server.shutdown()
                 server.server_close()
-            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "century_spice_road", "seven_wonders"],
+            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "castles_of_burgundy", "century_spice_road", "seven_wonders"],
                              [game["id"] for game in response["games"]])
+
+    def test_castles_of_burgundy_setup_snapshot_uses_game_renderer_contract(self):
+        stopped = threading.Event()
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "castles_of_burgundy", "seed": 42,
+                "players": [
+                    {"name": "Burgundy", "backend": "random"},
+                    {"name": "Loire", "backend": "random"},
+                ],
+            })
+            self.assertEqual("castles_of_burgundy", created["game"])
+            self.assertEqual("playable_beta", created["game_description"]["implementation_status"])
+            self.assertEqual("castles_of_burgundy", created["views"][0]["game"])
+            self.assertEqual(37, len(created["views"][0]["players"][0]["duchy"]))
+            self.assertEqual(6, len(created["views"][0]["depots"]))
+            self.assertTrue(stopped.wait(2))
 
     def test_seven_wonders_setup_snapshot_uses_game_renderer_contract(self):
         stopped = threading.Event()

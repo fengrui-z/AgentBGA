@@ -172,7 +172,7 @@ const useLang = () => useContext(LangCtx);
 
 type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "qwen" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
 type Provider = "custom" | "claude_code" | "pi" | "qwen" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
-type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road" | "seven_wonders";
+type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "castles_of_burgundy" | "century_spice_road" | "seven_wonders";
 type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "max" | "xhigh";
 type AuthMode = "api_key" | "subscription";
 type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string; auth_mode: AuthMode; reasoning_effort: ReasoningEffort };
@@ -263,6 +263,21 @@ type CenturyView = {
   point_deck_count: number; point_market: CenturyPoint[];
   coins: {gold: number; silver: number; silver_position: number}; players: CenturyPlayerView[];
 };
+type BurgundyColor = "building" | "livestock" | "monastery" | "castle" | "mine" | "ship";
+type BurgundyCell = {id: string; q: number; r: number; color: BurgundyColor; region: string; number: number; tile_id: string | null};
+type BurgundyPlayerView = {
+  seat: number; score: number; silver: number; workers: number; bridge: number;
+  storage: string[]; goods: Record<string, string[]>; sold_goods: string[]; duchy: BurgundyCell[];
+};
+type BurgundyView = {
+  game: "castles_of_burgundy"; rules_version: string; implementation_status: string;
+  viewer_seat: number; status: string; phase: string; phase_number: number; round_number: number;
+  turn_count: number; active_seat: number; turn_order: number[]; round_order: number[];
+  white_die: number; round_dice: Record<string, number[]>; remaining_dice: {index: number; value: number}[];
+  free_actions: number; bought_this_turn: boolean;
+  depots: {number: number; tiles: string[]; goods: string[]}[]; black_depot: string[];
+  color_bonus_claims: Record<BurgundyColor, number[]>; players: BurgundyPlayerView[];
+};
 type SevenResource = "wood" | "stone" | "clay" | "ore" | "glass" | "papyrus" | "cloth";
 type SevenBenefit = {
   type: string; amount?: number; resources?: SevenResource[]; directions?: ("left" | "right")[];
@@ -304,7 +319,7 @@ type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
   paused: boolean; pause_pending: boolean;
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
-  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView)[];
+  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | BurgundyView | CenturyView | SevenView)[];
 };
 type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
@@ -343,6 +358,7 @@ const GAME_COPY: Record<GameId, {eyebrow: string; name: Record<Lang,string>; des
   azul: {eyebrow: "AZUL", name: {zh:"花砖物语",en:"Azul"}, description: {zh:"从工厂展示区或中央区选取同色花砖，规划图案线并铺设墙面；兼顾相邻计分、地板罚分与终局时机。",en:"Draft one color from factories or the center, fill pattern lines and tile your wall while balancing adjacency, floor penalties and endgame timing."}, badge: "PLAYABLE BETA", note: {zh:"选砖 · 拼墙 · 空间规划",en:"Draft · tile · spatial planning"}},
   ark_nova: {eyebrow: "ARK NOVA", name: {zh:"方舟动物园",en:"Ark Nova"}, description: {zh:"在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。",en:"Test multi-stage decisions in a controlled research-card pool: opening hand, five action cards, hex building, animal placement, association tasks and Break."}, badge: "CONTROLLED CORE V2", note: {zh:"升级 · 捐款 · 释放 · 效果系统",en:"Upgrades · donations · release · effect system"}},
   brass_birmingham: {eyebrow: "BRASS: BIRMINGHAM", name: {zh:"伯明翰",en:"Brass: Birmingham"}, description: {zh:"测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。",en:"Test long-term planning in a two-era economic network: industry building, resource sourcing, merchant selling, dynamic turn order and canal-to-rail transitions."}, badge: "PLAYABLE BETA", note: {zh:"产业 · 网络 · 双时代经济",en:"Industry · network · two-era economy"}},
+  castles_of_burgundy: {eyebrow: "THE CASTLES OF BURGUNDY", name: {zh:"勃艮第城堡",en:"The Castles of Burgundy"}, description: {zh:"用双骰经营自己的领地：从仓库取板块、铺设六角区域、交易货物，并用工人修正点数，在五个阶段中建立连锁收益。",en:"Develop a duchy with two dice: take and place hexes, trade goods, adjust results with workers, and chain tile effects across five phases."}, badge: "2019 BASE", note: {zh:"骰子规划 · 六角领地 · 连锁效果",en:"Dice planning · hex duchy · combos"}},
   century_spice_road: {eyebrow: "CENTURY: SPICE ROAD", name: {zh:"香料之路",en:"Century: Spice Road"}, description: {zh:"经营自己的商队：获取商人牌、升级或交换香料、争夺金币银币，并抢先完成高分订单。支持 2–5 名玩家。",en:"Run your caravan: acquire merchant cards, upgrade or trade spices, race for gold and silver coins to fulfill high-score orders. 2–5 players."}, badge: "CLASSIC BASE", note: {zh:"商人牌 · 香料引擎 · 订单竞速",en:"Merchant cards · spice engine · order race"}},
   seven_wonders: {eyebrow: "7 WONDERS", name: {zh:"七大奇迹",en:"7 Wonders"}, description: {zh:"在三个时代中密封选牌并传递手牌，通过生产、贸易、军事、科技与奇迹建设塑造古代文明。支持 3–7 名玩家。",en:"Draft sealed choices across three Ages, passing hands while developing production, trade, military, science and a Wonder. 3–7 players."}, badge: "SECOND EDITION BASE", note: {zh:"轮抽 · 邻城贸易 · 七维计分",en:"Draft · neighbor trade · seven-part scoring"}},
 };
@@ -502,6 +518,69 @@ function CenturyBoard({view}: {view?: CenturyView}) {
     <section className="century-point-market"><header><div><span>{t("point_cards")}</span><h3>{t("order_market")}</h3></div><b>{t("deck_label")} {view.point_deck_count}</b></header><div>{view.point_market.map((card, index) => <div className="century-point-slot" key={card.id}>{index === 0 && view.coins.gold > 0 && <span className="century-coin coin-gold">{t("gold_coin")} × {view.coins.gold}</span>}{index === view.coins.silver_position && view.coins.silver > 0 && <span className="century-coin coin-silver">{t("silver_coin")} × {view.coins.silver}</span>}<CenturyPointCard card={card}/></div>)}</div></section>
     <section className="century-merchant-market"><header><div><span>{t("merchant_cards")}</span><h3>{t("trade_market")}</h3></div><b>{t("deck_label")} {view.merchant_deck_count}</b></header><div>{view.merchant_market.map((slot, index) => <div className="century-merchant-slot" key={slot.card.id}><span className="century-market-index">0{index + 1}</span><CenturyMerchantCard card={slot.card}/><div className="century-card-spices"><span>{t("card_spice")}</span><Spices pool={slot.spices} compact/></div></div>)}</div></section>
     <section className="century-legend"><span><i className="spice spice-turmeric"/>{SPICE_META.turmeric.label[lang]} · 1</span><span><i className="spice spice-saffron"/>{SPICE_META.saffron.label[lang]} · 2</span><span><i className="spice spice-cardamom"/>{SPICE_META.cardamom.label[lang]} · 3</span><span><i className="spice spice-cinnamon"/>{SPICE_META.cinnamon.label[lang]} · 4</span><small>{t("century_legend_note")}</small></section>
+  </div>;
+}
+
+const BURGUNDY_COLOR_META: Record<BurgundyColor, {symbol: string; label: Record<Lang,string>}> = {
+  building: {symbol: "⌂", label: {zh:"城镇",en:"Town"}},
+  livestock: {symbol: "♞", label: {zh:"牧场",en:"Pasture"}},
+  monastery: {symbol: "✦", label: {zh:"修道院",en:"Monastery"}},
+  castle: {symbol: "♜", label: {zh:"城堡",en:"Castle"}},
+  mine: {symbol: "◆", label: {zh:"矿山",en:"Mine"}},
+  ship: {symbol: "≈", label: {zh:"河流",en:"River"}},
+};
+
+function burgundyTileColor(tileId: string | null): BurgundyColor | null {
+  if (!tileId) return null;
+  if (tileId === "starting-castle") return "castle";
+  const id = tileId.startsWith("black-") ? tileId.slice(6) : tileId;
+  return (["building", "livestock", "monastery", "castle", "mine", "ship"] as BurgundyColor[])
+    .find(color => id.startsWith(color)) ?? null;
+}
+
+function BurgundyTile({tileId, compact = false}: {tileId: string; compact?: boolean}) {
+  const lang = useLang();
+  const color = burgundyTileColor(tileId) || "castle";
+  const black = tileId.startsWith("black-");
+  return <i className={`burgundy-tile tile-${color} ${black ? "tile-black" : ""} ${compact ? "compact" : ""}`} title={tileId}>
+    <b>{BURGUNDY_COLOR_META[color].symbol}</b><span>{compact ? "" : BURGUNDY_COLOR_META[color].label[lang]}</span>
+  </i>;
+}
+
+function BurgundyPlayerPanel({player: p, identity, active}: {player: BurgundyPlayerView; identity?: Snapshot["players"][number]; active: boolean}) {
+  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
+  const goods = Object.values(p.goods).reduce((sum, pile) => sum + pile.length, 0);
+  const placed = p.duchy.filter(cell => cell.tile_id !== null).length;
+  return <section className={`player-panel burgundy-player-panel ${active ? "active-player" : ""}`}>
+    <header><div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `${t("player_label")} ${p.seat + 1}`}</h3></div><div className="burgundy-score"><strong>{p.score}</strong><span>VP</span></div></header>
+    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{zh ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>
+    <div className="burgundy-assets"><span>◉ <b>{p.silver}</b> {zh ? "银币" : "silver"}</span><span>⚒ <b>{p.workers}</b> {zh ? "工人" : "workers"}</span><span>↥ <b>{p.bridge}</b> {zh ? "顺位" : "bridge"}</span></div>
+    <div className="burgundy-progress"><span>{zh ? "领地" : "Duchy"} <b>{placed}/37</b></span><span>{zh ? "货物" : "Goods"} <b>{goods}</b></span><span>{zh ? "已售" : "Sold"} <b>{p.sold_goods.length}</b></span></div>
+    <div className="burgundy-storage"><span>{zh ? "钥匙格" : "Hex storage"} {p.storage.length}/3</span><div>{p.storage.map(tile => <BurgundyTile key={tile} tileId={tile} compact/>)}{p.storage.length === 0 && <em>—</em>}</div></div>
+  </section>;
+}
+
+function BurgundyDuchy({player}: {player: BurgundyPlayerView}) {
+  const lang = useLang();
+  return <section className="burgundy-duchy"><header><div><span>DUCHY NO. 1</span><h3>{lang === "zh" ? `座位 ${player.seat + 1} 的领地` : `Seat ${player.seat + 1} duchy`}</h3></div><b>{player.duchy.filter(cell => cell.tile_id).length}/37</b></header>
+    <div className="burgundy-hex-map">{player.duchy.map(cell => <i key={cell.id} className={`burgundy-hex hex-${cell.color} ${cell.tile_id ? "occupied" : ""}`}
+      style={{left:`calc(50% + ${cell.q * 39 + cell.r * 19.5}px)`, top:`calc(50% + ${cell.r * 34}px)`}}
+      title={`${BURGUNDY_COLOR_META[cell.color].label[lang]} · ${cell.region} · ${cell.number}`}>
+      <small>{cell.number}</small>{cell.tile_id && <BurgundyTile tileId={cell.tile_id} compact/>}
+    </i>)}</div>
+  </section>;
+}
+
+function BurgundyBoard({view}: {view?: BurgundyView}) {
+  const lang = useLang(); const zh = lang === "zh";
+  if (!view) return null;
+  const player = view.players[view.viewer_seat];
+  return <div className="burgundy-board">
+    <section className="burgundy-status"><div><span>THE CASTLES OF BURGUNDY · 2019 BASE</span><h2>{zh ? `阶段 ${view.phase_number} · 第 ${view.round_number} 轮` : `Phase ${view.phase_number} · Round ${view.round_number}`}</h2></div><div className="burgundy-dice"><span>{zh ? "白骰" : "White"} <b>{view.white_die}</b></span>{Object.entries(view.round_dice).map(([seat, dice]) => <span key={seat}>S{Number(seat) + 1} <b>{dice.join(" · ")}</b></span>)}</div><code>{view.rules_version}</code></section>
+    <section className="burgundy-depots"><header><div><span>NUMBERED DEPOTS</span><h3>{zh ? "六座仓库" : "Six depots"}</h3></div><b>{zh ? `当前顺位 ${view.turn_order.map(seat => seat + 1).join(" → ")}` : `Order ${view.turn_order.map(seat => seat + 1).join(" → ")}`}</b></header><div>{view.depots.map(depot => <article key={depot.number}><strong>{depot.number}</strong><div>{depot.tiles.map(tile => <BurgundyTile key={tile} tileId={tile} compact/>)}{depot.tiles.length === 0 && <em>—</em>}</div><small>{zh ? "货物" : "Goods"} {depot.goods.length}</small></article>)}</div></section>
+    <section className="burgundy-black-depot"><header><span>BLACK DEPOT</span><h3>{zh ? "中央黑市" : "Central black depot"}</h3></header><div>{view.black_depot.map(tile => <BurgundyTile key={tile} tileId={tile} compact/>)}</div><small>{zh ? "每回合一次，支付 2 银币" : "Once per turn, pay 2 silver"}</small></section>
+    <BurgundyDuchy player={player}/>
+    <section className="burgundy-legend">{(Object.keys(BURGUNDY_COLOR_META) as BurgundyColor[]).map(color => <span key={color}><i className={`legend-${color}`}>{BURGUNDY_COLOR_META[color].symbol}</i>{BURGUNDY_COLOR_META[color].label[lang]}</span>)}<small>{zh ? "原创 CSS 棋盘，不包含出版商美术。" : "Original CSS board; no publisher artwork."}</small></section>
   </div>;
 }
 
@@ -877,6 +956,10 @@ function describeAction(item: Timeline, names: Record<number, string>, lang: Lan
   if (["play_merchant", "acquire_merchant", "claim_point", "rest"].includes(String(action.type))) {
     return `${who}${zh ? "：" : ": "}${humanActionText(action, lang)}`;
   }
+  if (["take_tile", "place_tile", "sell_goods", "take_workers", "buy_tile", "choose_tile",
+    "choose_goods", "sell_goods_effect", "place_tile_effect", "skip_effect", "end_turn"].includes(String(action.type))) {
+    return `${who}${zh ? "：" : ": "}${humanActionText(action, lang)}`;
+  }
   if (["choose_initial_hand", "select_action", "take_x_token", "draw_cards", "snap_card",
     "discard_card", "break_discard", "place_building", "play_animal", "association_task",
     "play_sponsor", "advance_break", "finish_action"].includes(String(action.type))) {
@@ -912,6 +995,16 @@ function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?
   }
   if (action.type === "claim_point") return zh ? `完成第 ${Number(action.position) + 1} 张订单（${action.point_id}）` : `Complete order #${Number(action.position) + 1} (${action.point_id})`;
   if (action.type === "rest") return zh ? "休息并收回所有已打出的商人牌" : "Rest and recover all played merchant cards";
+  if (action.type === "take_tile") return zh ? `用${action.source === "bonus" ? "城堡奖励" : `骰子 ${Number(action.die_index) + 1}`}从 ${action.depot} 号仓库拿取 ${action.tile_id}${action.workers ? `（工人 ${action.workers}）` : ""}` : `Use ${action.source === "bonus" ? "castle bonus" : `die ${Number(action.die_index) + 1}`} to take ${action.tile_id} from depot ${action.depot}${action.workers ? ` (${action.workers} workers)` : ""}`;
+  if (action.type === "place_tile") return zh ? `铺设 ${action.tile_id} 到 ${action.cell_id}${action.workers ? `（工人 ${action.workers}）` : ""}` : `Place ${action.tile_id} at ${action.cell_id}${action.workers ? ` (${action.workers} workers)` : ""}`;
+  if (action.type === "sell_goods" || action.type === "sell_goods_effect") return zh ? `出售 ${action.goods_type} 号货物` : `Sell goods type ${action.goods_type}`;
+  if (action.type === "take_workers") return zh ? `${action.source === "bonus" ? "用城堡奖励" : "用骰子"}获得工人` : `${action.source === "bonus" ? "Use castle bonus to" : "Use die to"} take workers`;
+  if (action.type === "buy_tile") return zh ? `支付 ${action.silver} 银币和 ${action.workers} 工人购买 ${action.tile_id}` : `Pay ${action.silver} silver and ${action.workers} workers for ${action.tile_id}`;
+  if (action.type === "choose_tile") return zh ? `选择 ${action.tile_id}（${action.depot} 号仓库）` : `Choose ${action.tile_id} from depot ${action.depot}`;
+  if (action.type === "choose_goods") return zh ? `从 ${action.depot}${action.adjacent_depot ? `、${action.adjacent_depot}` : ""} 号仓库拿取 ${Array.isArray(action.goods_types) ? action.goods_types.join("、") : ""} 号货物` : `Take goods ${Array.isArray(action.goods_types) ? action.goods_types.join(", ") : ""} from depot ${action.depot}${action.adjacent_depot ? ` and ${action.adjacent_depot}` : ""}`;
+  if (action.type === "place_tile_effect") return zh ? `市政厅铺设 ${action.tile_id} 到 ${action.cell_id}` : `Town hall places ${action.tile_id} at ${action.cell_id}`;
+  if (action.type === "skip_effect") return zh ? "跳过可选即时效果" : "Skip optional immediate effect";
+  if (action.type === "end_turn") return zh ? "结束本回合" : "End turn";
   if (action.type === "select_action" && action.action) return zh ? `选择 ${BL[String(action.action)] || String(action.action).toUpperCase()}行动` : `Choose ${BL[String(action.action)] || String(action.action)} action`;
   if (action.type === "select_action") return zh ? `使用 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card}，强度 ${action.strength}${action.x_tokens ? `（X +${action.x_tokens}）` : ""}` : `Use ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card}, strength ${action.strength}${action.x_tokens ? ` (X +${action.x_tokens})` : ""}`;
   if (action.type === "take_x_token") return zh ? `将 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} 移到 1 并获得 X token` : `Move ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} to 1, gain X token`;
@@ -996,6 +1089,9 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
     select_network_link: "选择铁路", take_resource: "选择资源来源", sell_industry: "出售产业",
     finish_sell: "结束出售", merchant_bonus_develop: "商人研发奖励", liquidate_industry: "变卖产业",
     play_merchant: "打出商人牌", acquire_merchant: "获取商人牌", claim_point: "完成订单", rest: "休息",
+    take_tile: "拿取六角板块", place_tile: "铺设六角板块", sell_goods: "出售货物", take_workers: "获得工人",
+    buy_tile: "购买黑市板块", choose_tile: "选择奖励板块", choose_goods: "选择货物", skip_effect: "跳过即时效果", end_turn: "结束回合",
+    sell_goods_effect: "仓库出售货物", place_tile_effect: "市政厅铺设板块",
     draft_tiles: "选取并放置花砖",
     build_card: "建造建筑", build_wonder: "建造奇迹", sell_card: "出售卡牌",
     build_discard: "墓园建造", skip_discard: "跳过墓园建造",
@@ -1014,6 +1110,9 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
     select_network_link: "Choose rail link", take_resource: "Choose resource source", sell_industry: "Sell industry",
     finish_sell: "End sell", merchant_bonus_develop: "Merchant develop bonus", liquidate_industry: "Liquidate industry",
     play_merchant: "Play merchant card", acquire_merchant: "Acquire merchant card", claim_point: "Complete order", rest: "Rest",
+    take_tile: "Take hex tile", place_tile: "Place hex tile", sell_goods: "Sell goods", take_workers: "Take workers",
+    buy_tile: "Buy depot tile", choose_tile: "Choose bonus tile", choose_goods: "Choose goods", skip_effect: "Skip immediate effect", end_turn: "End turn",
+    sell_goods_effect: "Warehouse goods sale", place_tile_effect: "Town hall placement",
     draft_tiles: "Draft and place tiles",
     build_card: "Construct building", build_wonder: "Construct Wonder", sell_card: "Sell card",
     build_discard: "Build from discard", skip_discard: "Skip discard build",
@@ -1382,6 +1481,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const azulView = snapshot?.game === "azul" ? viewer as AzulView : undefined;
   const arkView = snapshot?.game === "ark_nova" ? viewer as ArkView : undefined;
   const brassView = snapshot?.game === "brass_birmingham" ? viewer as BrassView : undefined;
+  const burgundyView = snapshot?.game === "castles_of_burgundy" ? viewer as BurgundyView : undefined;
   const centuryView = snapshot?.game === "century_spice_road" ? viewer as CenturyView : undefined;
   const sevenView = snapshot?.game === "seven_wonders" ? viewer as SevenView : undefined;
   const sevenSpectatorViews = snapshot?.game === "seven_wonders" && !snapshot.players.some(player => player.backend === "human")
@@ -1610,6 +1710,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       {game === "ark_nova" && <div className="setup-scope-note"><b>{GAME_COPY.ark_nova.badge}</b> {zh ? "已支持行动升级、合作动物园折扣、捐款、释放动物、地图奖励、效果原语和终局目标；仍使用结构化研究卡池与示意 Map A，并非完整商业卡池复刻。" : "Supports action upgrades, partner-zoo discounts, donations, animal release, map rewards, effect primitives, final objectives; uses a structured research-card pool and schematic Map A, not the full commercial pool."}</div>}
       {game === "azul" && <div className="setup-scope-note"><b>{GAME_COPY.azul.badge}</b> {zh ? "支持彩色墙基础版、100 枚具名花砖、工厂与中央区选砖、图案线、地板罚分、相邻计分、终局奖励和确定性回放；不包含灰墙玩法、扩展或出版商美术。" : "Supports the colored-wall base game, 100 identity-safe tiles, factory/center drafting, pattern lines, floor penalties, adjacency scoring, endgame bonuses and deterministic replay; no gray wall, expansions or publisher artwork."}</div>}
       {game === "brass_birmingham" && <div className="setup-scope-note"><b>{GAME_COPY.brass_birmingham.badge}</b> {zh ? "支持官方人数牌组、产业板、市场、商人、Build/Sell/Develop、单双铁路、负收入变卖、双时代计分与完整回放；界面不包含出版商美术。" : "Supports official player counts, industry board, markets, merchants, Build/Sell/Develop, single/double rail, negative-income liquidation, two-era scoring and full replay; no publisher artwork."}</div>}
+      {game === "castles_of_burgundy" && <div className="setup-scope-note"><b>{GAME_COPY.castles_of_burgundy.badge}</b> {zh ? "支持 164 枚六角板块、42 枚货物、双骰行动、工人修骰、六类区域、建筑即时效果、修道院能力、顺位与终局计分；使用共同 1 号领地，不含扩展和出版商美术。" : "Supports 164 hex tiles, 42 goods, two-die turns, worker adjustments, six region types, building effects, monasteries, turn order and final scoring; common duchy no. 1, no expansions or publisher artwork."}</div>}
       {game === "century_spice_road" && <div className="setup-scope-note"><b>{GAME_COPY.century_spice_road.badge}</b> {zh ? "完整基础牌组数值、重复交易、升级、市场压香料、商队容量、金币银币、终局与计分均已接通；不包含出版商卡图。" : "Full base-set values, repeat trades, upgrades, market spice, caravan capacity, gold/silver coins, endgame and scoring wired up; no publisher artwork."}</div>}
       {game === "seven_wonders" && <div className="setup-scope-note"><b>{GAME_COPY.seven_wonders.badge}</b> {zh ? "支持 148 张基础牌、日/夜双面奇迹、密封同步选牌、邻城贸易、链式建造、军事、科技、商会与七类计分；不包含扩展或出版商美术。" : "Supports all 148 base cards, Day/Night Wonders, sealed simultaneous drafting, neighbor trade, chains, military, science, guilds and seven-part scoring; no expansions or publisher artwork."}</div>}
       {error && <div className="error">{error}</div>}
@@ -1639,6 +1740,8 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
             ? <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity}/>
             : snapshot.game === "brass_birmingham"
               ? <BrassPlayerPanel key={identity.seat} player={visiblePlayer as BrassPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
+              : snapshot.game === "castles_of_burgundy"
+                ? <BurgundyPlayerPanel key={identity.seat} player={visiblePlayer as BurgundyPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
               : snapshot.game === "century_spice_road"
                 ? <CenturyPlayerPanel key={identity.seat} player={visiblePlayer as CenturyPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
                 : <SevenPlayerPanel key={identity.seat} player={visiblePlayer as SevenPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
@@ -1653,7 +1756,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
           </section>)}</div>}
           <HumanActionConfirmation selected={selectedHumanAction} brassView={brassView} issue={humanActionIssue} submitting={Boolean(submittingAction)} onConfirm={confirmHumanAction}/>
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/> : snapshot.game === "castles_of_burgundy" ? <BurgundyBoard view={burgundyView}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
         {snapshot.status === "finished" && <div className="winner-banner"><span>{t("winner")}</span><strong>{timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong><button onClick={() => { setSnapshot(null); setTimeline([]); }}>{t("play_again")}</button></div>}
       </section>
       <aside className="timeline">
