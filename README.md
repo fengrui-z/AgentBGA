@@ -44,6 +44,11 @@ cd web && npm install && npm run build && cd ..
 ./agentbga web   # http://127.0.0.1:8765
 ```
 
+The setup page lists recent SQLite matches, including tables created by
+`agentbga run` or `agentbga match create`. Click one, or open
+`http://127.0.0.1:8765/?match=MATCH_ID`, to spectate without taking over the
+runners. Pause still applies only to matches started from the web form.
+
 ## Harness backends
 
 Each seat can use one of:

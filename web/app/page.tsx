@@ -34,6 +34,9 @@ const STR: Record<Lang, Dict> = {
     match: "对局", turn: "回合", decision: "决策",
     s_finished: "已结束", s_wait_pause: "等待暂停", s_paused: "已暂停", s_active: "进行中",
     processing: "处理中…", resume: "▶ 继续对局", pause: "Ⅱ 暂停", new_match: "新对局",
+    watch_live: "观战已有牌桌", watch: "开始观战 →", watching: "正在接入…",
+    watch_id: "对局 ID", live_tables: "本地牌桌", no_tables: "还没有可观战的对局。CLI 或 Web 开桌后会出现在这里。",
+    spectator: "观战", err_watch: "无法接入对局",
     err_pause: "无法更新暂停状态", err_submit: "无法提交行动",
     err_ws: "实时连接已断开，可刷新页面后重新开始。", call_failed: "调用失败",
     pause_pending: "等待当前模型完成…", paused: "对局已暂停",
@@ -115,6 +118,9 @@ const STR: Record<Lang, Dict> = {
     match: "Match", turn: "Turn", decision: "Decision",
     s_finished: "Finished", s_wait_pause: "Waiting to pause", s_paused: "Paused", s_active: "Running",
     processing: "Working…", resume: "▶ Resume", pause: "Ⅱ Pause", new_match: "New match",
+    watch_live: "Watch an existing table", watch: "Watch →", watching: "Opening…",
+    watch_id: "Match ID", live_tables: "Local tables", no_tables: "No watchable tables yet. CLI or web matches will show up here.",
+    spectator: "Spectator", err_watch: "Failed to watch match",
     err_pause: "Failed to update pause state", err_submit: "Failed to submit action",
     err_ws: "Live connection dropped. Refresh and restart.", call_failed: "Call failed",
     pause_pending: "Waiting for the model to finish…", paused: "Match paused",
@@ -302,9 +308,14 @@ type SevenView = {
 type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
 type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
-  paused: boolean; pause_pending: boolean;
+  paused: boolean; pause_pending: boolean; mode?: "live" | "spectator" | "store";
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
   players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView)[];
+};
+type TableSummary = {
+  match_id: string; game: GameId; status: string; turn_count: number; seed: number;
+  mode?: string; active_seat?: number;
+  players: {seat: number; name: string; backend: string; model?: string}[];
 };
 type LegalAction = {id: string; action: Record<string, unknown>};
 type TimelineEvent = {
@@ -312,6 +323,7 @@ type TimelineEvent = {
   backend?: string; agent?: {latency_ms?: number; action_latency_ms?: number; process_latency_ms?: number}; action?: Record<string, unknown>;
   rankings?: {player: string}[]; channel?: "reasoning" | "content"; delta?: string; attempt?: number; version?: number;
   harness?: string; tool?: string; arguments?: unknown; result?: unknown; action_id?: string;
+  noble_id?: string; card_id?: string;
 };
 type Timeline = { seq: number; event: TimelineEvent; snapshot?: Snapshot };
 type ChatTurn = {
@@ -863,7 +875,17 @@ function describeAction(item: Timeline, names: Record<number, string>, lang: Lan
   if (event.type === "harness_tool_result") return zh ? `${event.player} 收到 ${event.tool} 结果` : `${event.player} got ${event.tool} result`;
   if (event.type === "harness_finished") return zh ? `${event.player} 通过 ${event.harness} 提交 ${event.action_id}` : `${event.player} submitted ${event.action_id} via ${event.harness}`;
   if (event.type === "harness_error") return zh ? `${event.player} Harness 失败：${event.error}` : `${event.player} harness failed: ${event.error}`;
-  if (!["decision", "turn"].includes(event.type)) return event.type;
+  if (event.type === "match_created") return zh ? "对局开始" : "Match started";
+  if (event.type === "noble_acquired") {
+    const who = event.player || names[event.seat ?? 0] || `${zh ? "座位" : "Seat"} ${(event.seat ?? 0) + 1}`;
+    return zh ? `${who} 获得贵族 ${event.noble_id}` : `${who} gains noble ${event.noble_id}`;
+  }
+  if (event.type === "card_reserved") {
+    const who = event.player || names[event.seat ?? 0] || `${zh ? "座位" : "Seat"} ${(event.seat ?? 0) + 1}`;
+    const card = event.card_id ? String(event.card_id) : (zh ? "一张牌" : "a card");
+    return zh ? `${who} 预留 ${card}` : `${who} reserves ${card}`;
+  }
+  if (!["decision", "turn", "action_accepted"].includes(event.type)) return event.type;
   const seat = event.seat ?? 0;
   const who = event.player || names[seat] || `${zh ? "座位" : "Seat"} ${seat + 1}`;
   const action = event.action ?? {};
@@ -1375,7 +1397,10 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const [controlling, setControlling] = useState(false);
   const [submittingAction, setSubmittingAction] = useState("");
   const [humanActionState, setHumanActionState] = useState<{turnKey: string; selected: LegalAction | null; requirement: string; issue: string} | null>(null);
+  const [tables, setTables] = useState<TableSummary[]>([]);
+  const [watchId, setWatchId] = useState("");
   const sourceRef = useRef<EventSource | null>(null);
+  const watchingRef = useRef(false);
   const humanTurnKey = snapshot?.human_turn ? `${snapshot.match_id}:${snapshot.human_turn.seat}:${snapshot.human_turn.version}` : "";
   const currentHumanActionState = humanActionState?.turnKey === humanTurnKey ? humanActionState : null;
   const selectedHumanAction = currentHumanActionState?.selected ?? null;
@@ -1392,6 +1417,91 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     ? snapshot.views as SevenView[] : undefined;
   const maxPlayers = game === "seven_wonders" ? 7 : game === "century_spice_road" ? 5 : 4;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
+  const spectator = snapshot?.mode === "spectator";
+
+  useEffect(() => {
+    if (snapshot) return;
+    const controller = new AbortController();
+    function loadTables() {
+      fetch(api("/api/matches"), {signal: controller.signal})
+        .then(response => response.ok ? response.json() as Promise<{matches: TableSummary[]}> : Promise.reject())
+        .then(data => setTables(data.matches || []))
+        .catch(() => {});
+    }
+    loadTables();
+    const timer = window.setInterval(loadTables, 4000);
+    return () => { controller.abort(); window.clearInterval(timer); };
+  }, [snapshot]);
+
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("match");
+    if (requested && !watchingRef.current) void watchMatch(requested);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function attachStream(matchId: string, initialVersion: number) {
+    sourceRef.current?.close();
+    const source = new EventSource(api(`/api/matches/${matchId}/events`));
+    source.addEventListener("match", raw => {
+      const item: Timeline = JSON.parse((raw as MessageEvent).data);
+      if (item.snapshot) setSnapshot(item.snapshot);
+      const event = item.event;
+      const seat = event.seat ?? 0;
+      const attempt = event.attempt ?? 1;
+      const key = `${event.version ?? item.snapshot?.version ?? initialVersion}:${seat}:${attempt}`;
+      if (event.type === "agent_started") {
+        setChat(current => [...current, {key, seat, attempt, player: event.player || `Agent ${seat + 1}`,
+          backend: event.backend || "model", reasoning: "", content: "", status: "thinking", startedAt: Date.now()}]);
+      } else if (event.type === "agent_stream" || event.type === "harness_output") {
+        setChat(current => {
+          const index = [...current].reverse().findIndex(turn => turn.seat === seat && turn.attempt === attempt && turn.status === "thinking");
+          if (index < 0) return current;
+          const actual = current.length - 1 - index;
+          return current.map((turn, i) => i === actual ? {...turn,
+            [event.channel === "reasoning" ? "reasoning" : "content"]:
+              turn[event.channel === "reasoning" ? "reasoning" : "content"] + (event.delta || "")
+          } : turn);
+        });
+      } else if (event.type === "agent_finished" || event.type === "agent_error") {
+        setChat(current => {
+          const index = [...current].reverse().findIndex(turn => turn.seat === seat && turn.attempt === attempt && turn.status === "thinking");
+          if (index < 0) return current;
+          const actual = current.length - 1 - index;
+          return current.map((turn, i) => i === actual ? {...turn,
+            status: event.type === "agent_error" ? "error" : "done",
+            actionLatencyMs: event.agent?.action_latency_ms,
+            processLatencyMs: event.agent?.process_latency_ms ?? event.agent?.latency_ms,
+            content: event.type === "agent_error" && !turn.content ? event.error || "调用失败" : turn.content,
+          } : turn);
+        });
+      }
+      if (!["agent_stream", "harness_output"].includes(event.type)) setTimeline(current => [...current, item]);
+      if (["match_finished", "match_failed"].includes(item.event.type)) source.close();
+    });
+    source.onerror = () => {
+      if (source.readyState === EventSource.CLOSED) setError(t("err_ws"));
+    };
+    sourceRef.current = source;
+  }
+
+  async function watchMatch(matchId: string) {
+    const id = matchId.trim().toLowerCase();
+    if (!id || watchingRef.current && snapshot?.match_id === id) return;
+    watchingRef.current = true;
+    setStarting(true); setError(""); setTimeline([]); setChat([]); sourceRef.current?.close();
+    try {
+      const response = await fetch(api(`/api/matches/${id}`));
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || data.error || t("err_watch"));
+      setSnapshot(data);
+      window.history.replaceState(null, "", `?match=${id}`);
+      requestAnimationFrame(() => window.scrollTo({top: 0, behavior: "smooth"}));
+      attachStream(id, data.version);
+    } catch (e) {
+      watchingRef.current = false;
+      setError(e instanceof Error ? e.message : String(e));
+    } finally { setStarting(false); }
+  }
 
   function updatePlayer(id: string, patch: Partial<PlayerForm>) {
     setPlayers(current => current.map(p => {
@@ -1472,48 +1582,9 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || "无法启动对局");
       setSnapshot(data);
+      window.history.replaceState(null, "", `?match=${data.match_id}`);
       requestAnimationFrame(() => window.scrollTo({top: 0, behavior: "smooth"}));
-      const source = new EventSource(api(`/api/matches/${data.match_id}/events`));
-      source.addEventListener("match", raw => {
-        const item: Timeline = JSON.parse((raw as MessageEvent).data);
-        if (item.snapshot) setSnapshot(item.snapshot);
-        const event = item.event;
-        const seat = event.seat ?? 0;
-        const attempt = event.attempt ?? 1;
-        const key = `${event.version ?? item.snapshot?.version ?? data.version}:${seat}:${attempt}`;
-        if (event.type === "agent_started") {
-          setChat(current => [...current, {key, seat, attempt, player: event.player || `Agent ${seat + 1}`,
-            backend: event.backend || "model", reasoning: "", content: "", status: "thinking", startedAt: Date.now()}]);
-        } else if (event.type === "agent_stream" || event.type === "harness_output") {
-          setChat(current => {
-            const index = [...current].reverse().findIndex(turn => turn.seat === seat && turn.attempt === attempt && turn.status === "thinking");
-            if (index < 0) return current;
-            const actual = current.length - 1 - index;
-            return current.map((turn, i) => i === actual ? {...turn,
-              [event.channel === "reasoning" ? "reasoning" : "content"]:
-                turn[event.channel === "reasoning" ? "reasoning" : "content"] + (event.delta || "")
-            } : turn);
-          });
-        } else if (event.type === "agent_finished" || event.type === "agent_error") {
-          setChat(current => {
-            const index = [...current].reverse().findIndex(turn => turn.seat === seat && turn.attempt === attempt && turn.status === "thinking");
-            if (index < 0) return current;
-            const actual = current.length - 1 - index;
-            return current.map((turn, i) => i === actual ? {...turn,
-              status: event.type === "agent_error" ? "error" : "done",
-              actionLatencyMs: event.agent?.action_latency_ms,
-              processLatencyMs: event.agent?.process_latency_ms ?? event.agent?.latency_ms,
-              content: event.type === "agent_error" && !turn.content ? event.error || "调用失败" : turn.content,
-            } : turn);
-          });
-        }
-        if (!["agent_stream", "harness_output"].includes(event.type)) setTimeline(current => [...current, item]);
-        if (["match_finished", "match_failed"].includes(item.event.type)) source.close();
-      });
-      source.onerror = () => {
-        if (source.readyState === EventSource.CLOSED) setError("实时连接已断开，可刷新页面后重新开始。");
-      };
-      sourceRef.current = source;
+      attachStream(data.match_id, data.version);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setStarting(false); }
   }
@@ -1585,6 +1656,28 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       <div className="hero-marks"><span>{t("hero_mark_1")}</span><span>{t("hero_mark_2")}</span><span>{game === "ark_nova" ? t("hero_mark_ark") : t("hero_mark_3")}</span></div>
     </section>
     <section className="setup-card">
+      <section className="live-tables">
+        <header>
+          <div><span>{t("live_tables")}</span><h2>{t("watch_live")}</h2></div>
+          <form className="watch-form" onSubmit={event => { event.preventDefault(); void watchMatch(watchId); }}>
+            <label htmlFor="watch-id">{t("watch_id")}</label>
+            <input id="watch-id" value={watchId} spellCheck={false} placeholder="b8323d2a27f34578" onChange={event => setWatchId(event.target.value)}/>
+            <button type="submit" disabled={starting || watchId.trim().length < 8}>{starting ? t("watching") : t("watch")}</button>
+          </form>
+        </header>
+        <div className="live-table-list">
+          {tables.length === 0 && <p className="live-table-empty">{t("no_tables")}</p>}
+          {tables.map(table => {
+            const names = table.players.map(player => player.name).filter(Boolean);
+            const title = names.length ? names.join(" vs ") : table.match_id;
+            return <button type="button" key={table.match_id} onClick={() => void watchMatch(table.match_id)}>
+              <strong>{title}</strong>
+              <span>{GAME_COPY[table.game]?.name[lang] || table.game} · {t("turn")} {table.turn_count} · {table.status === "finished" ? t("s_finished") : t("s_active")}</span>
+              <code>{table.match_id}</code>
+            </button>;
+          })}
+        </div>
+      </section>
       <div className="game-picker" role="group" aria-label={t("pick_game")}>{(Object.keys(GAME_COPY) as GameId[]).map(id => <button key={id} className={game === id ? "selected" : ""} onClick={() => selectGame(id)}><span>{GAME_COPY[id].badge}</span><b>{GAME_COPY[id].name[lang]}</b><small>{GAME_COPY[id].note[lang]}</small></button>)}</div>
       <header><div><span>{t("new_table")}</span><h2>{t("create_table")}{GAME_COPY[game].name[lang]}</h2></div><div className="matchup-presets"><button onClick={() => setMatchup("human")}>{t("g_human")}</button><button onClick={() => setMatchup("harness")}>{t("g_harness")}</button><b>{players.length} {t("players_count")}</b></div></header>
       <div className="players-config">{players.map((p, index) => <article className="player-config" key={p.id}>
@@ -1623,11 +1716,11 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
  return <main className="table-shell">
     <header className="table-header">
       <div><span className="brand-mark">ABGA</span><strong>{snapshot.game_description.name} {snapshot.game === "splendor" ? t("live_table") : snapshot.game === "century_spice_road" ? t("trade_arena") : t("controlled_arena")}</strong></div>
-      <div className="match-meta"><span>{t("match")} <code>{snapshot.match_id}</code></span><span>{t("turn")} <b>{snapshot.turn_count}</b>{snapshot.game === "ark_nova" && <> · {t("decision")} <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span><span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? t("s_finished") : snapshot.paused ? (snapshot.pause_pending ? t("s_wait_pause") : t("s_paused")) : t("s_active")}</span></div>
+      <div className="match-meta"><span>{t("match")} <code>{snapshot.match_id}</code></span><span>{t("turn")} <b>{snapshot.turn_count}</b>{snapshot.game === "ark_nova" && <> · {t("decision")} <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span>{spectator && <span className="status status-setup">{t("spectator")}</span>}<span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? t("s_finished") : snapshot.paused ? (snapshot.pause_pending ? t("s_wait_pause") : t("s_paused")) : t("s_active")}</span></div>
       <div className="table-actions">
         <button className="lang-toggle" onClick={toggleLang} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
-        <button className={`pause-button ${snapshot.paused ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? t("processing") : snapshot.paused ? t("resume") : t("pause")}</button>
-        <button onClick={() => { sourceRef.current?.close(); setSnapshot(null); setTimeline([]); setChat([]); setError(""); }}>{t("new_match")}</button>
+        {!spectator && <button className={`pause-button ${snapshot.paused ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? t("processing") : snapshot.paused ? t("resume") : t("pause")}</button>}
+        <button onClick={() => { sourceRef.current?.close(); watchingRef.current = false; setSnapshot(null); setTimeline([]); setChat([]); setError(""); window.history.replaceState(null, "", window.location.pathname); }}>{t("new_match")}</button>
       </div>
     </header>
     {error && <div className="table-error" role="alert">{error}</div>}

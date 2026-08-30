@@ -275,6 +275,36 @@ class Store:
         ).fetchall()
         return [{key: row[key] for key in row.keys() if row[key] is not None} for row in rows]
 
+    def list_matches(self, limit: int = 50) -> list[dict[str, Any]]:
+        """Return recent tables for the local spectator UI."""
+        if not isinstance(limit, int) or not 1 <= limit <= 200:
+            raise ValueError("limit must be an integer from 1 to 200")
+        rows = self.connection.execute(
+            "SELECT id, game_id, rules_version, version, seed, state_json, created_at, updated_at "
+            "FROM matches ORDER BY updated_at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        tables = []
+        for row in rows:
+            state = json.loads(row["state_json"])
+            tables.append({
+                "match_id": row["id"],
+                "game": row["game_id"],
+                "rules_version": row["rules_version"],
+                "version": row["version"],
+                "seed": row["seed"],
+                "status": state.get("status"),
+                "turn_count": state.get("turn_count", 0),
+                "decision_count": state.get("decision_count", state.get("turn_count", 0)),
+                "phase": state.get("phase"),
+                "active_seat": state.get("active_seat"),
+                "player_count": state.get("player_count"),
+                "players": self.players(row["id"]),
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+            })
+        return tables
+
     def replay(self, match_id: str) -> list[dict[str, Any]]:
         """Rebuild a match only from its seed and accepted actions."""
         _, stored_state, stored_digest = self.load(match_id)

@@ -21,6 +21,11 @@ class StoreTests(unittest.TestCase):
                 store.act(match_id, 1, 0, action)
             replay = store.replay(match_id)
             self.assertEqual(1, replay[-1]["version"])
+            tables = store.list_matches()
+            self.assertEqual(1, len(tables))
+            self.assertEqual(match_id, tables[0]["match_id"])
+            self.assertEqual("splendor", tables[0]["game"])
+            self.assertEqual(1, tables[0]["turn_count"])
             store.close()
 
     def test_create_and_load_ark_nova_setup(self):
