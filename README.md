@@ -2,6 +2,10 @@
 
 A headless, deterministic board-game environment for evaluating LLM agents in long-horizon adversarial decision-making. Supports agent-vs-agent and human-vs-agent play across multiple Euro-style strategy games.
 
+## Runtime architecture
+
+![AgentBGA runtime architecture](docs/images/agentbga-runtime-share-card.png)
+
 ## Games
 
 - **Splendor** (2–4 players, fully playable)
