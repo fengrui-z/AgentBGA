@@ -1419,26 +1419,6 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
   const spectator = snapshot?.mode === "spectator";
 
-  useEffect(() => {
-    if (snapshot) return;
-    const controller = new AbortController();
-    function loadTables() {
-      fetch(api("/api/matches"), {signal: controller.signal})
-        .then(response => response.ok ? response.json() as Promise<{matches: TableSummary[]}> : Promise.reject())
-        .then(data => setTables(data.matches || []))
-        .catch(() => {});
-    }
-    loadTables();
-    const timer = window.setInterval(loadTables, 4000);
-    return () => { controller.abort(); window.clearInterval(timer); };
-  }, [snapshot]);
-
-  useEffect(() => {
-    const requested = new URLSearchParams(window.location.search).get("match");
-    if (requested && !watchingRef.current) void watchMatch(requested);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   function attachStream(matchId: string, initialVersion: number) {
     sourceRef.current?.close();
     const source = new EventSource(api(`/api/matches/${matchId}/events`));
@@ -1502,6 +1482,26 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       setError(e instanceof Error ? e.message : String(e));
     } finally { setStarting(false); }
   }
+
+  useEffect(() => {
+    if (snapshot) return;
+    const controller = new AbortController();
+    function loadTables() {
+      fetch(api("/api/matches"), {signal: controller.signal})
+        .then(response => response.ok ? response.json() as Promise<{matches: TableSummary[]}> : Promise.reject())
+        .then(data => setTables(data.matches || []))
+        .catch(() => {});
+    }
+    loadTables();
+    const timer = window.setInterval(loadTables, 4000);
+    return () => { controller.abort(); window.clearInterval(timer); };
+  }, [snapshot]);
+
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("match");
+    if (requested && !watchingRef.current) void watchMatch(requested);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function updatePlayer(id: string, patch: Partial<PlayerForm>) {
     setPlayers(current => current.map(p => {
