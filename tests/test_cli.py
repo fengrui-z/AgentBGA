@@ -161,6 +161,30 @@ class CLITests(unittest.TestCase):
             self.assertFalse(result["ready_for_model"])
             self.assertEqual([True, False], [row["api_key_configured"] for row in result["data"]["players"]])
 
+    def test_doctor_maps_cursor_cli_and_accepts_grok_build(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "players.json"
+            config.write_text(json.dumps({
+                "schema_version": "agentbga.players.v1",
+                "players": [
+                    {"name": "Cursor", "backend": "cursor", "model": "gpt-test"},
+                    {"name": "Grok", "backend": "grok", "model": "grok-4.6"},
+                ],
+            }))
+            output = StringIO()
+            with mock.patch.dict(os.environ, {
+                "CURSOR_API_KEY": "present", "XAI_API_KEY": "present",
+            }, clear=True), mock.patch(
+                "agentbga.cli.shutil.which", side_effect=lambda name: f"/bin/{name}"
+            ) as which, redirect_stdout(output):
+                code = main(["doctor", "--players-config", str(config)])
+            self.assertEqual(0, code)
+            self.assertEqual(
+                [mock.call("cursor-agent"), mock.call("grok")], which.call_args_list,
+            )
+            result = json.loads(output.getvalue())
+            self.assertTrue(result["ready_for_model"])
+
     def test_doctor_accepts_logged_in_codex_subscription_without_api_key(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "players.json"

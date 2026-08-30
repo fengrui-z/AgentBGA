@@ -170,8 +170,8 @@ function makeT(lang: Lang) {
 const LangCtx = createContext<Lang>("zh");
 const useLang = () => useContext(LangCtx);
 
-type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "qwen" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
-type Provider = "custom" | "claude_code" | "pi" | "qwen" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
+type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "qwen" | "codex" | "cursor" | "grok" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
+type Provider = "custom" | "claude_code" | "pi" | "qwen" | "codex" | "cursor" | "grok" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
 type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road" | "seven_wonders";
 type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "max" | "xhigh";
 type AuthMode = "api_key" | "subscription";
@@ -354,6 +354,8 @@ const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: 
   pi: { label: {zh: "Pi", en: "Pi"}, url: "https://api.openai.com/v1", key: "", model: "" },
   qwen: { label: {zh: "Qwen Code", en: "Qwen Code"}, url: "https://coding.dashscope.aliyuncs.com/v1", key: "", model: "" },
   codex: { label: {zh: "Codex Harness", en: "Codex Harness"}, url: "https://api.openai.com/v1", key: "", model: "" },
+  cursor: { label: {zh: "Cursor CLI", en: "Cursor CLI"}, url: "", key: "", model: "" },
+  grok: { label: {zh: "Grok Build", en: "Grok Build"}, url: "https://api.x.ai/v1", key: "", model: "" },
   opencode: { label: {zh: "OpenCode Harness", en: "OpenCode Harness"}, url: "https://api.deepseek.com", key: "", model: "" },
   dsh: { label: {zh: "DeepSeek Harness", en: "DeepSeek Harness"}, url: "https://api.deepseek.com", key: "", model: "" },
   hermes: { label: {zh: "Hermes Agent", en: "Hermes Agent"}, url: "https://api.deepseek.com", key: "", model: "" },
@@ -361,7 +363,7 @@ const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: 
   human: { label: {zh: "人类玩家", en: "Human player"}, url: "", key: "", model: "" },
   random: { label: {zh: "随机基线", en: "Random baseline"}, url: "", key: "", model: "" },
 };
-const HARNESS_BACKENDS = new Set<Backend>(["claude", "pi", "qwen", "codex", "opencode", "dsh", "hermes", "minimal"]);
+const HARNESS_BACKENDS = new Set<Backend>(["claude", "pi", "qwen", "codex", "cursor", "grok", "opencode", "dsh", "hermes", "minimal"]);
 const REASONING_OPTIONS: {value: ReasoningEffort; label: Record<Lang,string>}[] = [
   {value: "none", label: {zh: "关闭", en: "Off"}}, {value: "minimal", label: {zh: "Minimal", en: "Minimal"}},
   {value: "low", label: {zh: "Low", en: "Low"}}, {value: "medium", label: {zh: "Medium", en: "Medium"}},
@@ -374,6 +376,8 @@ const PROVIDERS: Record<Provider, {label: Record<Lang,string>; backend: Backend;
   pi: {label: {zh:"Pi",en:"Pi"}, backend: "pi", url: "https://api.openai.com/v1", models: ["gpt-5.6"], note: {zh:"Pi 持久 session + AgentBGA 专用工具扩展；兼容自定义 OpenAI Endpoint",en:"Persistent session + AgentBGA tool extension; any OpenAI-compatible endpoint"}},
   qwen: {label: {zh:"Qwen Code",en:"Qwen Code"}, backend: "qwen", url: "https://coding.dashscope.aliyuncs.com/v1", models: ["qwen3-coder-plus"], note: {zh:"Qwen Code 持久 session + 独立 QWEN_HOME + 仅座位 MCP 工具；默认阿里云 Coding Plan Endpoint",en:"Persistent session + isolated QWEN_HOME + seat-only MCP tools; defaults to the Alibaba Cloud Coding Plan endpoint"}},
   codex: {label: {zh:"Codex",en:"Codex"}, backend: "codex", url: "https://api.openai.com/v1", models: ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "gpt-5.4", "gpt-5.4-mini", "gpt-5.3-codex-spark"], note: {zh:"可复用本机 codex login 的 ChatGPT 订阅，或使用按量 API Key；自定义 Endpoint 必须支持 Responses API",en:"Reuse the local codex login ChatGPT subscription or use a metered API key; custom endpoints must support the Responses API"}},
+  cursor: {label: {zh:"Cursor CLI",en:"Cursor CLI"}, backend: "cursor", url: "", models: ["gpt-5.6-sol", "grok-4.6"], note: {zh:"Cursor Agent CLI 持久 session + 独立数据目录 + 仅座位 MCP 工具；使用 Cursor API Key",en:"Persistent Cursor Agent CLI session + isolated data directory + seat-only MCP tools; uses a Cursor API key"}},
+  grok: {label: {zh:"Grok Build",en:"Grok Build"}, backend: "grok", url: "https://api.x.ai/v1", models: ["grok-4.6", "grok-4.5", "grok-build"], note: {zh:"xAI Grok Build CLI 持久 session + 独立 GROK_HOME + 仅座位 MCP 工具",en:"Persistent xAI Grok Build CLI session + isolated GROK_HOME + seat-only MCP tools"}},
   opencode: {label: {zh:"OpenCode",en:"OpenCode"}, backend: "opencode", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"OpenCode 持久 session + 座位隔离 MCP",en:"Persistent session + seat-isolated MCP"}},
   dsh: {label: {zh:"DeepSeek Harness",en:"DeepSeek Harness"}, backend: "dsh", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"DeepSeek Harness (dsh) headless + 座位隔离 MCP；每回合独立 session，workspace 笔记持久",en:"dsh headless + seat-isolated MCP; fresh session each turn, workspace notes persist"}},
   hermes: {label: {zh:"Hermes Agent",en:"Hermes Agent"}, backend: "hermes", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"Hermes Agent 持久 session + 独立 HERMES_HOME + 座位隔离 MCP",en:"Persistent session + isolated HERMES_HOME + seat-isolated MCP"}},
@@ -1587,7 +1591,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`${p.name} ${t("move_up")}`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`${p.name} ${t("move_down")}`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>{t("f_name")}</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
         {!(["random", "human"] as Backend[]).includes(p.backend) && <>
-          <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>{t("f_provider")}</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label={t("og_harness")}>{(["claude_code", "pi", "qwen", "codex", "opencode", "dsh", "hermes", "minimal"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup><optgroup label={t("og_direct")}>{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup></select></div>
+          <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>{t("f_provider")}</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label={t("og_harness")}>{(["claude_code", "pi", "qwen", "codex", "cursor", "grok", "opencode", "dsh", "hermes", "minimal"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup><optgroup label={t("og_direct")}>{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup></select></div>
           <div className="field backend-field"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).filter(([id]) => id !== "random").map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select></div>
           {p.backend === "codex" && <div className="field auth-field"><label htmlFor={`${p.id}-auth`}>{t("f_auth")}</label><select id={`${p.id}-auth`} value={p.auth_mode} onChange={e => updatePlayer(p.id, {auth_mode: e.target.value as AuthMode})}><option value="subscription">{t("auth_subscription")}</option><option value="api_key">{t("auth_api_key")}</option></select></div>}
           {!(p.backend === "codex" && p.auth_mode === "subscription") && <div className="field grow endpoint-field"><label htmlFor={`${p.id}-endpoint`}>{t("f_endpoint")}</label><input id={`${p.id}-endpoint`} value={p.base_url} placeholder={t("ph_endpoint")} onChange={e => updatePlayer(p.id, {provider: "custom", base_url: e.target.value})}/></div>}

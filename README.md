@@ -60,6 +60,8 @@ Each seat can use one of:
 | `claude` | Harness | Claude Code + MCP, persistent session |
 | `pi` | Harness | Pi + native TS extension, persistent session |
 | `qwen` | Harness | Qwen Code + MCP, isolated provider config, persistent session |
+| `cursor` | Harness | Cursor Agent CLI + MCP, isolated data directory, persistent session |
+| `grok` | Harness | xAI Grok Build CLI + MCP, isolated home and sandbox, persistent session |
 | `minimal` | Harness | Pure Python, in-process, direct LLM + 5 tools |
 | `human` | — | Browser-based play |
 | `random` | — | Random baseline |
@@ -77,6 +79,19 @@ model provider, disables ambient tools and memory, and exposes only the seat-sco
 export BAILIAN_CODING_PLAN_API_KEY='...'
 ./agentbga doctor --players-config examples/qwen-code-vs-random.json
 ./agentbga run --players-config examples/qwen-code-vs-random.json --seed 42 --jsonl
+```
+
+The `cursor` backend requires the `cursor-agent` executable and a `CURSOR_API_KEY`.
+The `grok` backend requires the xAI `grok` executable and an `XAI_API_KEY`. Both
+run headlessly with persistent native sessions, disable built-in coding and web
+tools, and expose only AgentBGA's seat-scoped MCP tools. Their user configuration,
+credentials, and sessions remain isolated per participant workspace.
+
+```console
+export CURSOR_API_KEY='...'
+export XAI_API_KEY='...'
+./agentbga doctor --players-config examples/cursor-cli-vs-grok-build.json
+./agentbga run --players-config examples/cursor-cli-vs-grok-build.json --seed 42 --jsonl
 ```
 
 Codex can reuse the ChatGPT subscription already authenticated by the local CLI. Log in

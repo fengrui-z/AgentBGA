@@ -26,6 +26,8 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /Claude Code/);
   assert.match(html, />Pi</);
   assert.match(html, />Codex</);
+  assert.match(html, /Cursor CLI/);
+  assert.match(html, /Grok Build/);
   assert.match(html, />OpenCode</);
   assert.match(html, /Hermes Agent/);
   assert.match(html, /value="deepseek-v4-flash"/);
@@ -41,6 +43,8 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /codexHarnessPlayer\(2\)/);
   assert.match(source, /qwen3-coder-plus/);
   assert.match(source, /backend: "qwen"/);
+  assert.match(source, /backend: "cursor"/);
+  assert.match(source, /backend: "grok"/);
   assert.match(styles, /\.player-config \.auth-field \{ grid-column:2 \/ span 2; \}/);
   assert.match(source, /MODEL STREAM|模型 Chat/);
   assert.match(source, /暂停|继续对局/);

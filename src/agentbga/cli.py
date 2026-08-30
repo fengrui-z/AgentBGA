@@ -14,7 +14,7 @@ import tempfile
 from typing import Any
 
 from . import __version__
-from .agents import AgentError, HARNESS_BACKENDS, load_players_config
+from .agents import AgentError, HARNESS_BACKENDS, harness_executable_name, load_players_config
 from .game import GameRuleError
 from .experiment import load_experiment, run_experiment, schedule_experiment
 from .registry import game_ids, get_game, list_games
@@ -223,7 +223,7 @@ def execute(args: argparse.Namespace) -> int:
                     harness_executable = True
                     executable = None
                 else:
-                    executable = shutil.which(player.backend) if harness_required else None
+                    executable = shutil.which(harness_executable_name(player.backend)) if harness_required else None
                     harness_executable = not harness_required or bool(executable)
                 auth_configured = key_configured
                 auth_status = None

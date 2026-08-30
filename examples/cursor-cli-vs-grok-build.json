@@ -1,0 +1,19 @@
+{
+  "schema_version": "agentbga.players.v1",
+  "players": [
+    {
+      "name": "Cursor CLI",
+      "backend": "cursor",
+      "model": "gpt-5.6-sol",
+      "api_key_env": "CURSOR_API_KEY",
+      "reasoning_effort": "max"
+    },
+    {
+      "name": "Grok Build",
+      "backend": "grok",
+      "model": "grok-4.6",
+      "api_key_env": "XAI_API_KEY",
+      "reasoning_effort": "max"
+    }
+  ]
+}

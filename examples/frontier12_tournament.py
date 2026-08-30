@@ -29,7 +29,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from agentbga.agents import HARNESS_BACKENDS, PlayerConfig  # noqa: E402
+from agentbga.agents import HARNESS_BACKENDS, PlayerConfig, harness_executable_name  # noqa: E402
 from agentbga.ratings import score_matches  # noqa: E402
 from agentbga.registry import get_game  # noqa: E402
 from agentbga.runner import run_match  # noqa: E402
@@ -391,7 +391,7 @@ def runtime_report(config: dict[str, Any]) -> dict[str, Any]:
     harnesses = sorted({str(row["player"]["backend"]).lower() for row in participants})
     binaries: dict[str, dict[str, Any]] = {}
     for harness in harnesses:
-        executable = shutil.which(harness)
+        executable = shutil.which(harness_executable_name(harness))
         binaries[harness] = {
             "path": executable,
             "version": _command_version(executable) if executable else None,
