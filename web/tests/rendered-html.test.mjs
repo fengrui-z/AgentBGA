@@ -37,8 +37,13 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /人类 vs Agent/);
   assert.match(html, /添加人类/);
   assert.match(html, /type="password"/);
+  assert.match(html, /观战已有牌桌/);
   const source = await readFile(new URL("app/page.tsx", root), "utf8");
   const styles = await readFile(new URL("app/globals.css", root), "utf8");
+  assert.match(source, /watchMatch/);
+  assert.match(source, /live-tables/);
+  assert.match(source, /\/api\/matches/);
+  assert.match(styles, /\.live-tables/);
   assert.match(source, /deepseekHarnessPlayer\(1, "opencode"\)/);
   assert.match(source, /codexHarnessPlayer\(2\)/);
   assert.match(source, /qwen3-coder-plus/);

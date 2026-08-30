@@ -11,8 +11,10 @@ cd ..
 ./agentbga web
 ```
 
-Open `http://127.0.0.1:8765`. During development, keep `./agentbga web`
-running and use `npm run dev`; `/api` is proxied to port 8765.
+Open `http://127.0.0.1:8765`. The setup page lists recent local matches so a
+CLI table can be watched without restarting it; `?match=MATCH_ID` opens a
+table directly. During development, keep `./agentbga web` running and use
+`npm run dev`; `/api` is proxied to port 8765.
 
 The production build uses `output: "export"` so the Python standard-library
 server can serve `dist/client` without a Node process. This UI deliberately has
