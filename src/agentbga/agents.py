@@ -20,10 +20,17 @@ class AgentError(RuntimeError):
 
 
 HARNESS_BACKENDS = frozenset({
-    "claude", "pi", "qwen", "codex", "opencode", "dsh", "hermes", "minimal",
+    "claude", "pi", "qwen", "codex", "cursor", "grok", "opencode", "dsh", "hermes",
+    "minimal",
 })
+HARNESS_EXECUTABLES = {"cursor": "cursor-agent"}
 HARNESS_REASONING_EFFORT = "max"
 REASONING_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "max", "xhigh"})
+
+
+def harness_executable_name(backend: str) -> str:
+    """Return the installed command name for a harness backend."""
+    return HARNESS_EXECUTABLES.get(backend, backend)
 
 
 @dataclass(frozen=True)
@@ -83,6 +90,8 @@ class PlayerConfig:
             "pi": ("https://api.openai.com/v1", "AGENTBGA_API_KEY"),
             "qwen": ("https://coding.dashscope.aliyuncs.com/v1", "BAILIAN_CODING_PLAN_API_KEY"),
             "codex": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
+            "cursor": (None, "CURSOR_API_KEY"),
+            "grok": ("https://api.x.ai/v1", "XAI_API_KEY"),
             "opencode": (None, "DEEPSEEK_API_KEY"),
             "dsh": ("https://api.deepseek.com", "DEEPSEEK_API_KEY"),
             "hermes": ("https://api.openai.com/v1", "OPENAI_API_KEY"),

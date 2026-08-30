@@ -61,6 +61,18 @@ class UsageTests(unittest.TestCase):
                 "output_tokens": 10, "total_tokens": 130,
             },
         })
+        cursor_result = harness_usage_samples("cursor", {
+            "type": "result", "usage": {
+                "inputTokens": 20, "cacheReadTokens": 80, "outputTokens": 10,
+            },
+        })
+        grok_end = harness_usage_samples("grok", {
+            "type": "end", "usage": {
+                "input_tokens": 20, "cache_read_input_tokens": 80,
+                "cache_creation_input_tokens": 5, "output_tokens": 30,
+                "reasoning_tokens": 12,
+            },
+        })
 
         self.assertEqual(1, len(codex))
         self.assertEqual(90, codex[0].input_tokens)
@@ -72,6 +84,12 @@ class UsageTests(unittest.TestCase):
         self.assertEqual(60, qwen_result[0].cached_input_tokens)
         self.assertEqual(30, qwen_result[0].output_tokens)
         self.assertEqual(20, qwen_result[0].reasoning_output_tokens)
+        self.assertEqual(100, cursor_result[0].input_tokens)
+        self.assertEqual(80, cursor_result[0].cached_input_tokens)
+        self.assertEqual(105, grok_end[0].input_tokens)
+        self.assertEqual(80, grok_end[0].cached_input_tokens)
+        self.assertEqual(5, grok_end[0].cache_write_input_tokens)
+        self.assertEqual(12, grok_end[0].reasoning_output_tokens)
 
     def test_normalizes_pi_direct_cache_fields(self):
         pi = normalize_token_usage({

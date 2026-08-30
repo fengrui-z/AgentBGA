@@ -14,7 +14,7 @@ import sys
 import time
 from typing import Any, Callable
 
-from .agents import AgentError, PlayerConfig, StreamSink
+from .agents import AgentError, PlayerConfig, StreamSink, harness_executable_name
 from .memory import memory_identity, stable_session_id
 from .usage import (
     TokenUsageAccumulator,
@@ -129,9 +129,10 @@ class HarnessAgent:
         self._match_usage = TokenUsageAccumulator()
         self._turn_usage = TokenUsageAccumulator()
         self._qwen_usage_snapshot: TokenUsageSample | None = None
-        self.binary = shutil.which(config.backend)
+        executable = harness_executable_name(config.backend)
+        self.binary = shutil.which(executable)
         if not self.binary:
-            raise AgentError(f"harness executable not found: {config.backend}")
+            raise AgentError(f"harness executable not found: {executable}")
         self._load_harness_session_state()
 
     def _emit(self, event_type: str, **payload: Any) -> None:
@@ -232,6 +233,29 @@ class HarnessAgent:
                         "--skip-git-repo-check", "--ignore-user-config", "--ignore-rules",
                         *overrides, self.session.session_id, prompt]
             return [self.binary, "exec", *common, "--cd", ".", prompt]
+        if self.config.backend == "cursor":
+            command = [
+                self.binary, "--print", "--trust", "--force", "--approve-mcps",
+                "--output-format", "stream-json", "--model", model,
+            ]
+            if self.session.session_id:
+                command.extend(["--resume", self.session.session_id])
+            return [*command, prompt]
+        if self.config.backend == "grok":
+            command = [
+                self.binary, "--no-auto-update", "--no-alt-screen",
+                "--output-format", "streaming-json",
+                "--permission-mode", "dontAsk",
+                "--allow", "MCPTool(agentbga__*)",
+                "--sandbox", "agentbga",
+                "--tools", "",
+                "--no-plan", "--no-subagents", "--no-memory",
+                "--disable-web-search", "--model", model,
+                "--effort", reasoning_effort,
+            ]
+            if self.session.session_id:
+                command.extend(["--resume", self.session.session_id])
+            return [*command, "-p", prompt]
         if self.config.backend == "opencode":
             selected_model = model if "/" in model else f"agentbga/{model}"
             command = [self.binary, "run", "--pure", "--format", "json", "--model", selected_model,
@@ -315,6 +339,23 @@ class HarnessAgent:
                     env[self.config.api_key_env or "OPENAI_API_KEY"] = key
                 if self.config.base_url:
                     env["OPENAI_BASE_URL"] = self.config.base_url
+        elif self.config.backend == "cursor":
+            cursor_data = self.session.workspace / ".cursor-data"
+            cursor_data.mkdir(mode=0o700, exist_ok=True)
+            env["CURSOR_DATA_DIR"] = str(cursor_data)
+            env["CURSOR_CONFIG_DIR"] = str(cursor_data)
+            if key:
+                env["CURSOR_API_KEY"] = key
+        elif self.config.backend == "grok":
+            grok_home = self.session.workspace / ".grok-home"
+            grok_home.mkdir(mode=0o700, exist_ok=True)
+            env["GROK_HOME"] = str(grok_home)
+            env["GROK_TELEMETRY_ENABLED"] = "0"
+            env["GROK_TELEMETRY_TRACE_UPLOAD"] = "0"
+            env["GROK_TELEMETRY_MIXPANEL_ENABLED"] = "0"
+            env["GROK_FEEDBACK_ENABLED"] = "0"
+            if key:
+                env["XAI_API_KEY"] = key
         elif self.config.backend == "opencode":
             for variable, dirname in (
                 ("XDG_DATA_HOME", ".opencode-data"),
@@ -419,6 +460,7 @@ class HarnessAgent:
             sys.executable, "-m", "agentbga.seat_mcp", "--context", relative_context,
             "--notes-root", ".",
         ]
+        escaped_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
         requested_effort = self.config.reasoning_effort or "max"
         reasoning_effort = self._native_reasoning_effort()
         reasoning_enabled = requested_effort != "none"
@@ -511,9 +553,81 @@ class HarnessAgent:
         (self.session.workspace / "qwen-mcp.json").write_text(
             json.dumps(qwen_mcp, ensure_ascii=False, indent=2), encoding="utf-8",
         )
+        cursor_dir = self.session.workspace / ".cursor"
+        cursor_dir.mkdir(exist_ok=True)
+        cursor_mcp = {"mcpServers": {"agentbga": {
+            "command": mcp_command[0],
+            "args": mcp_command[1:],
+            "env": {"PYTHONPATH": self._pythonpath},
+        }}}
+        (cursor_dir / "mcp.json").write_text(
+            json.dumps(cursor_mcp, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        cursor_permissions = {"version": 1, "permissions": {
+            "allow": [],
+            "deny": ["Shell(*)", "Read(**)", "Write(**)"],
+        }}
+        (cursor_dir / "cli.json").write_text(
+            json.dumps(cursor_permissions, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        cursor_data = self.session.workspace / ".cursor-data"
+        cursor_data.mkdir(mode=0o700, exist_ok=True)
+        cursor_global = {
+            **cursor_permissions,
+            "editor": {"vimMode": False},
+            "attribution": {
+                "attributeCommitsToAgent": False,
+                "attributePRsToAgent": False,
+            },
+        }
+        (cursor_data / "cli-config.json").write_text(
+            json.dumps(cursor_global, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        grok_home = self.session.workspace / ".grok-home"
+        grok_home.mkdir(mode=0o700, exist_ok=True)
+        grok_config = (
+            "[cli]\n"
+            "auto_update = false\n"
+            "[features]\n"
+            "telemetry = false\n"
+            "feedback = false\n"
+            "lsp_tools = false\n"
+            "[memory]\n"
+            "enabled = false\n"
+            "[compat.claude]\n"
+            "skills = false\n"
+            "rules = false\n"
+            "agents = false\n"
+            "mcps = false\n"
+            "hooks = false\n"
+            "sessions = false\n"
+            "[compat.cursor]\n"
+            "skills = false\n"
+            "rules = false\n"
+            "agents = false\n"
+            "mcps = false\n"
+            "hooks = false\n"
+            "sessions = false\n"
+            "[mcp_servers.agentbga]\n"
+            f"command = {json.dumps(mcp_command[0])}\n"
+            f"args = [{escaped_args}]\n"
+            f"env = {{ PYTHONPATH = {json.dumps(self._pythonpath)} }}\n"
+            "enabled = true\n"
+            "startup_timeout_sec = 30\n"
+            f"tool_timeout_sec = {max(1, int(self.timeout))}\n"
+        )
+        (grok_home / "config.toml").write_text(grok_config, encoding="utf-8")
+        python_root = Path(sys.executable).resolve().parents[1]
+        readable_roots = list(dict.fromkeys((str(package_root), str(python_root))))
+        grok_sandbox = (
+            "[profiles.agentbga]\n"
+            "extends = \"strict\"\n"
+            f"read_only = {json.dumps(readable_roots)}\n"
+            f"read_write = [{json.dumps(str(self.session.runtime))}]\n"
+        )
+        (grok_home / "sandbox.toml").write_text(grok_sandbox, encoding="utf-8")
         codex_dir = self.session.workspace / ".codex"
         codex_dir.mkdir(exist_ok=True)
-        escaped_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
         provider = ""
         provider_args: list[str] = []
         if self.config.auth_mode == "subscription":
@@ -934,6 +1048,8 @@ class HarnessAgent:
 
     @staticmethod
     def _event_text(payload: dict[str, Any]) -> str:
+        if payload.get("type") in {"result", "end"}:
+            return ""
         assistant_event = payload.get("assistantMessageEvent")
         if isinstance(assistant_event, dict) and assistant_event.get("type") in {
             "text_delta", "thinking_delta",
@@ -957,7 +1073,7 @@ class HarnessAgent:
         item = payload.get("item") or payload.get("part") or payload
         if not isinstance(item, dict):
             return ""
-        for key in ("text", "content", "output", "message"):
+        for key in ("text", "data", "content", "output", "message"):
             value = item.get(key)
             if isinstance(value, str):
                 return value
@@ -967,7 +1083,7 @@ class HarnessAgent:
     def _event_session_id(payload: dict[str, Any]) -> str | None:
         if payload.get("type") == "session" and isinstance(payload.get("id"), str):
             return payload["id"]
-        for key in ("thread_id", "session_id", "sessionID"):
+        for key in ("thread_id", "session_id", "sessionID", "sessionId"):
             value = payload.get(key)
             if isinstance(value, str) and value:
                 return value
@@ -982,6 +1098,14 @@ class HarnessAgent:
     def _tool_details(payload: dict[str, Any]) -> tuple[str, Any] | None:
         if payload.get("type") == "tool_execution_start":
             return str(payload.get("toolName") or "tool"), payload.get("args") or {}
+        cursor_call = payload.get("tool_call")
+        if isinstance(cursor_call, dict):
+            for kind, details in cursor_call.items():
+                if not isinstance(details, dict):
+                    continue
+                name = details.get("name") or details.get("toolName") or kind
+                arguments = details.get("arguments") or details.get("args") or {}
+                return str(name), arguments
         message = payload.get("message")
         if isinstance(message, dict) and isinstance(message.get("content"), list):
             for block in message["content"]:
@@ -998,8 +1122,14 @@ class HarnessAgent:
         item_type = str(item.get("type") or payload.get("type") or "")
         if "tool" not in item_type.lower() and not item.get("tool") and not item.get("name"):
             return None
-        name = item.get("tool") or item.get("name") or item.get("tool_name") or item_type
-        arguments = item.get("arguments") or item.get("input") or item.get("args") or {}
+        name = (
+            item.get("tool") or item.get("name") or item.get("tool_name")
+            or item.get("toolName") or item_type
+        )
+        arguments = (
+            item.get("arguments") or item.get("input") or item.get("args")
+            or item.get("rawInput") or {}
+        )
         return str(name), arguments
 
     def _run(self, command: list[str]) -> tuple[str, str, int]:
@@ -1059,8 +1189,14 @@ class HarnessAgent:
                     if text:
                         assistant_event = payload.get("assistantMessageEvent") or {}
                         stream_delta = ((payload.get("event") or {}).get("delta") or {})
+                        event_type = str(payload.get("type") or "").lower()
+                        event_channel = str(payload.get("channel") or "").lower()
                         channel = "reasoning" if (
-                            assistant_event.get("type") == "thinking_delta" or "thinking" in stream_delta
+                            assistant_event.get("type") == "thinking_delta"
+                            or "thinking" in stream_delta
+                            or "thinking" in event_type
+                            or "thought" in event_type
+                            or event_channel in {"reasoning", "thinking", "thought"}
                         ) else "content"
                         self._emit("harness_output", channel=channel, delta=text)
                         self._trace_steps.append({"role": "assistant", "channel": channel, "text": text})
