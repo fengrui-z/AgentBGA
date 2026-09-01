@@ -1,13 +1,13 @@
 """Minimal pure-Python game harness: direct LLM API + in-process tools.
 
 No external CLI, no MCP server, no Node.js. The LLM communicates via
-OpenAI-compatible function calling; tools (observe, legal_actions,
-submit_action, read_notes, write_notes) are implemented as Python methods
+OpenAI-compatible function calling; seat tools (compact observation, paged
+legal actions, on-demand details, submission, and notes) are implemented as Python methods
 that read/write the same seat-context files as the MCP-based harnesses.
 
 This is the most controlled harness: zero infrastructure overhead, zero
 harness-specific system prompt, zero ambient tools. The only variable is
-the LLM's own reasoning + the identical 5-tool interface every other
+the LLM's own reasoning + the identical seat-tool interface every other
 harness also sees.
 """
 
@@ -20,6 +20,7 @@ from pathlib import Path
 import time
 from typing import Any, Callable
 
+from .agent_context import prepare_seat_context
 from .agents import AgentError, PlayerConfig, StreamSink
 from .seat_tool import call_tool as _seat_call_tool
 from .harness_features import HarnessFeatures
@@ -30,6 +31,8 @@ from .memory import memory_identity, stable_session_id
 MINIMAL_SYSTEM = (
     "You are a board-game player in an AgentBGA benchmark. "
     "Call observe to see the board, legal_actions to see your options, "
+    "use inspect_card, inspect_rules, inspect_map, inspect_played_cards, or inspect_history when details matter, "
+    "and never guess a game rule that inspect_rules or inspect_card can answer. "
     "read_notes to check your strategy notes, write_notes to update them, "
     "then submit_action with exactly one legal action ID. "
     "You have no other tools. You cannot read files or run code. "
@@ -44,8 +47,55 @@ MINIMAL_TOOLS = [
     }},
     {"type": "function", "function": {
         "name": "legal_actions",
-        "description": "List the only actions legal for your seat in this decision and state version.",
-        "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
+        "description": "List legal actions. Large action spaces return groups that can be paged.",
+        "parameters": {"type": "object", "properties": {
+            "group": {"type": "string"},
+            "cursor": {"type": "integer", "minimum": 0},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+        }, "additionalProperties": False},
+    }},
+    {"type": "function", "function": {
+        "name": "inspect_card",
+        "description": "Read complete details for one visible card. Accepts detail_ref (card:zoo-421) or bare visible id (zoo-421).",
+        "parameters": {"type": "object", "properties": {
+            "card_ref": {"type": "string"},
+        }, "required": ["card_ref"], "additionalProperties": False},
+    }},
+    {"type": "function", "function": {
+        "name": "inspect_rules",
+        "description": "Read an engine-aligned Ark Nova rules topic. Call without topic to list topics; use instead of guessing action, building, income, reward, or keyword rules.",
+        "parameters": {"type": "object", "properties": {
+            "topic": {"type": "string"},
+        }, "additionalProperties": False},
+    }},
+    {"type": "function", "function": {
+        "name": "inspect_map",
+        "description": "Read a public player map, optionally selecting sections.",
+        "parameters": {"type": "object", "properties": {
+            "seat": {"type": "integer", "minimum": 0},
+            "sections": {"type": "array", "items": {
+                "enum": ["terrain", "buildings", "rewards", "player_board"]
+            }, "uniqueItems": True},
+        }, "additionalProperties": False},
+    }},
+    {"type": "function", "function": {
+        "name": "inspect_played_cards",
+        "description": "List public played cards for one seat.",
+        "parameters": {"type": "object", "properties": {
+            "seat": {"type": "integer", "minimum": 0},
+            "kind": {"type": "string"},
+            "cursor": {"type": "integer", "minimum": 0},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+        }, "additionalProperties": False},
+    }},
+    {"type": "function", "function": {
+        "name": "inspect_history",
+        "description": "Read seat-safe changes accumulated across observations.",
+        "parameters": {"type": "object", "properties": {
+            "since_version": {"type": "integer", "minimum": 0},
+            "cursor": {"type": "integer", "minimum": 0},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+        }, "additionalProperties": False},
     }},
     {"type": "function", "function": {
         "name": "submit_action",
@@ -101,12 +151,15 @@ class DirectGameAgent:
                  timeout: float = 600,
                  keep_recent: int = 10, runs_root: str | Path | None = None,
                  features: HarnessFeatures | None = None,
-                 game_id: str | None = None):
+                 game_id: str | None = None,
+                 event_sink: Callable[[dict[str, Any]], None] | None = None):
         self.config = config
         self.match_id = match_id
         self.seat = seat
         self.timeout = timeout
         self.keep_recent = keep_recent
+        self.game_id = game_id
+        self.event_sink = event_sink
         self.features = features or HarnessFeatures.baseline()
         self.profile: GameProfile | None = get_profile(game_id) if game_id else None
         self._prev_observation: dict[str, Any] | None = None
@@ -148,15 +201,13 @@ class DirectGameAgent:
     # ── context compaction ──
 
     def _maybe_compact(self) -> None:
-        """Compact old messages when the semantic_compaction feature is enabled
-        and the conversation exceeds the LLM's context window.
+        """Compact history before it can exceed the provider's input window.
 
-        Default behaviour (feature off): no compaction — context grows
-        unbounded until the LLM API itself rejects it. This is the true
-        baseline: zero harness intervention on context.
+        Semantic compaction remains an optional cognitive feature.  The larger
+        baseline threshold is a transport-safety limit: it preserves recent
+        messages and a factual digest instead of allowing a long match to fail
+        because the provider rejects the request body.
         """
-        if not self.features.semantic_compaction:
-            return
         # Accurate token estimate: include content + reasoning_content + tool_calls
         total = 0
         for m in self._messages:
@@ -164,15 +215,40 @@ class DirectGameAgent:
             total += _approx_tokens(m.get("reasoning_content", "") or "")
             for tc in m.get("tool_calls", []):
                 total += _approx_tokens(tc.get("function", {}).get("arguments", ""))
-        # Default threshold: 100K (well within most LLM context windows)
-        if total <= 100000:
+        threshold = 60000 if self.features.semantic_compaction else (
+            80000 if self.game_id == "ark_nova" else 120000
+        )
+        if total <= threshold:
             return
         keep = max(self.keep_recent * 6, 12)
         if len(self._messages) <= keep:
             return
-        old = self._messages[1:-keep]
+        recent_start = max(0, len(self._messages) - keep)
+        while recent_start > 0:
+            message = self._messages[recent_start]
+            content = message.get("content", "")
+            if (
+                message.get("role") == "user"
+                and isinstance(content, str)
+                and content.startswith("You are seat ")
+            ):
+                break
+            recent_start -= 1
+        old = self._messages[:recent_start]
+        if not old:
+            return
         compacted = self._summarize_turns(old)
-        self._messages = [self._messages[0], {"role": "system", "content": compacted}] + self._messages[-keep:]
+        self._messages = [
+            {"role": "system", "content": compacted},
+            *self._messages[recent_start:],
+        ]
+
+    def _emit(self, event_type: str, **payload: Any) -> None:
+        if self.event_sink:
+            self.event_sink({
+                "type": event_type, "harness": "minimal", "seat": self.seat,
+                "player": self.config.name, **payload,
+            })
 
     def _summarize_turns(self, old_messages: list[dict]) -> str:
         """Build a compact digest of old conversation turns using game journal."""
@@ -581,9 +657,15 @@ class DirectGameAgent:
     def _execute_tool(self, name: str, arguments: dict, observation: dict | None = None, legal: list | None = None) -> Any:
         """Execute a seat tool. For observe/legal_actions, return formatted text
         (not raw JSON) when the harness has profile + observation context."""
-        if name == "observe" and observation is not None and self.profile:
+        if (
+            name == "observe" and observation is not None and self.profile
+            and observation.get("game") == "splendor"
+        ):
             return self._format_observation(observation)
-        if name == "legal_actions" and legal is not None and self.profile:
+        if (
+            name == "legal_actions" and legal is not None and self.profile
+            and observation is not None and observation.get("game") == "splendor"
+        ):
             return self._format_legal_actions(legal, observation or {})
         context_path = self.runtime / "turn-context.json"
         return _seat_call_tool(context_path, name, arguments, notes_root=self.workspace)
@@ -748,16 +830,13 @@ class DirectGameAgent:
         audit_path = self.runtime / "tool-events.jsonl"
         submission_path.unlink(missing_ok=True)
         audit_path.unlink(missing_ok=True)
-        context = {
-            "schema_version": "agentbga.seat-context.v1",
-            "match_id": self.match_id,
-            "seat": self.seat,
-            "version": version,
-            "observation": observation,
-            "legal_actions": [{"id": item["id"], **item["action"]} for item in legal],
-        }
-        context_path.write_text(
-            json.dumps(context, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
+        prepare_seat_context(
+            context_path,
+            match_id=self.match_id,
+            seat=self.seat,
+            version=version,
+            observation=observation,
+            legal=legal,
         )
 
         # Build user message (no observation/legal_actions in it — LLM must call tools)
@@ -819,11 +898,13 @@ class DirectGameAgent:
                         args = {}
 
                     self._trace_steps.append({"role": "tool_call", "tool": name, "arguments": args, "result": None})
+                    self._emit("harness_tool_call", tool=name, arguments=args)
 
                     try:
                         result = self._execute_tool(name, args, observation=observation, legal=legal)
                     except Exception as exc:
                         result = {"error": str(exc)}
+                    self._emit("harness_tool_result", tool=name, result=result)
 
                     # Fill in result on the trace step
                     for step in reversed(self._trace_steps):
@@ -896,4 +977,7 @@ def build_minimal_agent(config: PlayerConfig, match_id: str, seat: int,
                         event_sink: Callable[[dict[str, Any]], None] | None = None,
                         features: HarnessFeatures | None = None,
                         game_id: str | None = None) -> DirectGameAgent:
-    return DirectGameAgent(config, match_id, seat, features=features, game_id=game_id)
+    return DirectGameAgent(
+        config, match_id, seat, features=features, game_id=game_id,
+        event_sink=event_sink,
+    )
