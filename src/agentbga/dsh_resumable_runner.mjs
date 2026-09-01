@@ -137,6 +137,40 @@ function compactEvents(events, firstSeq = 0) {
     .map((event) => ({ seq: event.seq, type: event.type, data: event.data }));
 }
 
+function summarizeUsage(events, firstSeq) {
+  const samples = new Map();
+  for (const event of events) {
+    if (event.seq < firstSeq) continue;
+    let current;
+    if (event.type === "assistant/chunk" && event.data?.chunk?.type === "usage") {
+      current = event.data.chunk.usage;
+    } else if (event.type === "assistant/message") {
+      current = event.data?.usage;
+    }
+    if (current === undefined || current === null) continue;
+    // Match DSh's token-meter projection: a final assistant/message replaces
+    // an early usage chunk for the same turn/step instead of double-counting.
+    samples.set(`${event.data?.turn}:${event.data?.step}`, current);
+  }
+  const usage = {
+    inputTokens: 0,
+    cacheReadTokens: 0,
+    cacheWriteTokens: 0,
+    outputTokens: 0,
+    reasoningTokens: 0,
+    modelResponses: 0,
+  };
+  for (const current of samples.values()) {
+    usage.inputTokens += Number(current.inputTokens) || 0;
+    usage.cacheReadTokens += Number(current.cacheReadTokens) || 0;
+    usage.cacheWriteTokens += Number(current.cacheWriteTokens) || 0;
+    usage.outputTokens += Number(current.outputTokens) || 0;
+    usage.reasoningTokens += Number(current.reasoningTokens) || 0;
+  }
+  usage.modelResponses = samples.size;
+  return usage;
+}
+
 export async function run(ctx, config, io) {
   validateConfig(config);
   await ctx.get("loader")?.await();
@@ -179,6 +213,7 @@ export async function run(ctx, config, io) {
   await sessions.flush(agent.session);
 
   const outcome = summarize(agent.session.events, firstSeq);
+  const tokenUsage = summarizeUsage(agent.session.events, firstSeq);
   const turnCompactions = compactEvents(agent.session.events, firstSeq);
   const allCompactions = compactEvents(agent.session.events);
   const completedAt = new Date().toISOString();
@@ -199,6 +234,7 @@ export async function run(ctx, config, io) {
     lastSeq: agent.session.seq,
     compactionEvents: turnCompactions,
     compactionEventCountTotal: allCompactions.length,
+    tokenUsage,
     outcome: outcome.reason,
     completedAt,
   });

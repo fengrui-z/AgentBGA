@@ -33,4 +33,3 @@ rules execution and are never distributed by default.
 Every content-pack manifest declares its license/provenance status and a content
 hash.  Hosted deployments must not expose a pack whose manifest disallows public
 distribution.
-

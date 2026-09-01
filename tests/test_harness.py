@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import tomllib
 import unittest
 from unittest import mock
 
@@ -14,12 +15,50 @@ from agentbga.agents import AgentError, PlayerConfig
 from agentbga.harness import HarnessAgent
 from agentbga.seat_mcp import TOOLS
 from agentbga.seat_tool import call_tool
+from agentbga.store import Store
+from agentbga.usage import TokenUsageAccumulator, TokenUsageSample
 
 
 LEGAL = [{"id": "a-test", "action": {"type": "take_tokens", "take": {"blue": 2}, "return": {}}}]
 
 
 class HarnessTests(unittest.TestCase):
+    def test_qwen_resumed_usage_keeps_latest_cumulative_snapshot(self):
+        agent = HarnessAgent.__new__(HarnessAgent)
+        agent.config = mock.Mock(backend="qwen")
+        agent._match_usage = TokenUsageAccumulator()
+        agent._turn_usage = TokenUsageAccumulator()
+        agent._qwen_usage_snapshot = None
+        first = TokenUsageSample(100, 60, 0, 30, 20, "qwen.result")
+        second = TokenUsageSample(160, 100, 0, 50, 30, "qwen.result")
+
+        agent._record_stream_usage(first, {"num_turns": 2})
+        agent._turn_usage = TokenUsageAccumulator()
+        agent._record_stream_usage(second, {"num_turns": 4})
+
+        self.assertEqual(160, agent.usage_summary()["input_tokens"])
+        self.assertEqual(100, agent.usage_summary()["cached_input_tokens"])
+        self.assertEqual(50, agent.usage_summary()["output_tokens"])
+        self.assertEqual(4, agent.usage_summary()["usage_records"])
+        self.assertEqual(60, agent._turn_usage.summary()["input_tokens"])
+        self.assertEqual(40, agent._turn_usage.summary()["cached_input_tokens"])
+        self.assertEqual(20, agent._turn_usage.summary()["output_tokens"])
+
+    def test_qwen_backend_is_persisted_as_a_harness(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = Store(Path(directory) / "matches.sqlite3")
+            match_id, _, _ = store.create(2, 7)
+            store.set_players(match_id, [
+                PlayerConfig.from_dict({
+                    "name": "Qwen Code", "backend": "qwen", "model": "qwen3-coder-plus",
+                }, 0).public_dict(),
+                PlayerConfig.from_dict({"name": "Random", "backend": "random"}, 1).public_dict(),
+            ])
+            players = store.players(match_id)
+            store.close()
+        self.assertEqual("qwen", players[0]["harness"])
+        self.assertNotIn("harness", players[1])
+
     def test_player_config_accepts_harness_backends(self):
         codex = PlayerConfig.from_dict({
             "name": "Codex + GPT", "backend": "codex", "model": "gpt-test",
@@ -40,8 +79,23 @@ class HarnessTests(unittest.TestCase):
         pi = PlayerConfig.from_dict({
             "name": "Pi", "backend": "pi", "model": "model-test",
         }, 3)
+        qwen = PlayerConfig.from_dict({
+            "name": "Qwen Code", "backend": "qwen", "model": "qwen3-coder-plus",
+        }, 4)
         self.assertEqual("ANTHROPIC_API_KEY", claude.api_key_env)
         self.assertEqual("AGENTBGA_API_KEY", pi.api_key_env)
+        self.assertEqual("BAILIAN_CODING_PLAN_API_KEY", qwen.api_key_env)
+        self.assertEqual("https://coding.dashscope.aliyuncs.com/v1", qwen.base_url)
+        cursor = PlayerConfig.from_dict({
+            "name": "Cursor CLI", "backend": "cursor", "model": "gpt-test",
+        }, 4)
+        grok = PlayerConfig.from_dict({
+            "name": "Grok Build", "backend": "grok", "model": "grok-4.6",
+        }, 4)
+        self.assertEqual("CURSOR_API_KEY", cursor.api_key_env)
+        self.assertIsNone(cursor.base_url)
+        self.assertEqual("XAI_API_KEY", grok.api_key_env)
+        self.assertEqual("https://api.x.ai/v1", grok.base_url)
         self.assertEqual("max", codex.reasoning_effort)
         self.assertEqual("max", opencode.reasoning_effort)
         dsh = PlayerConfig.from_dict({
@@ -85,6 +139,11 @@ class HarnessTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "cannot be none"):
             PlayerConfig.from_dict({
                 "name": "No Reasoning Codex", "backend": "codex", "model": "gpt-test",
+                "reasoning_effort": "none",
+            }, 6)
+        with self.assertRaisesRegex(ValueError, "qwen reasoning_effort cannot be none"):
+            PlayerConfig.from_dict({
+                "name": "No Reasoning Qwen", "backend": "qwen", "model": "qwen3-coder-plus",
                 "reasoning_effort": "none",
             }, 6)
         subscription = PlayerConfig.from_dict({
@@ -412,6 +471,50 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("xhigh", command[command.index("--thinking") + 1])
             self.assertEqual("session-3", command[command.index("--session") + 1])
 
+            qwen_config = PlayerConfig.from_dict({
+                "name": "Qwen Code", "backend": "qwen", "model": "qwen3-coder-plus",
+                "reasoning_effort": "minimal",
+            }, 4)
+            qwen = HarnessAgent(qwen_config, "match", 4, runs_root=directory)
+            qwen._prepare_turn({"state_version": 1}, LEGAL)
+            qwen.session.session_id = "qwen-session"
+            command = qwen._command("turn")
+            self.assertEqual("stream-json", command[command.index("--output-format") + 1])
+            self.assertIn("--chat-recording", command)
+            self.assertEqual("yolo", command[command.index("--approval-mode") + 1])
+            self.assertEqual("", command[command.index("--core-tools") + 1])
+            inline_mcp = json.loads(command[command.index("--mcp-config") + 1])
+            self.assertIn("agentbga", inline_mcp["mcpServers"])
+            self.assertEqual("qwen-session", command[command.index("--resume") + 1])
+            self.assertEqual("turn", command[command.index("--prompt") + 1])
+            self.assertEqual("low", qwen._native_reasoning_effort())
+
+            cursor_config = PlayerConfig.from_dict({
+                "name": "Cursor CLI", "backend": "cursor", "model": "gpt-test",
+            }, 4)
+            cursor = HarnessAgent(cursor_config, "match", 4, runs_root=directory)
+            self.assertEqual("/bin/cursor-agent", cursor.binary)
+            cursor.session.session_id = "cursor-session"
+            command = cursor._command("turn")
+            self.assertEqual("stream-json", command[command.index("--output-format") + 1])
+            self.assertIn("--approve-mcps", command)
+            self.assertIn("--trust", command)
+            self.assertEqual("cursor-session", command[command.index("--resume") + 1])
+
+            grok_config = PlayerConfig.from_dict({
+                "name": "Grok Build", "backend": "grok", "model": "grok-4.6",
+                "reasoning_effort": "xhigh",
+            }, 4)
+            grok = HarnessAgent(grok_config, "match", 4, runs_root=directory)
+            grok.session.session_id = "grok-session"
+            command = grok._command("turn")
+            self.assertEqual("streaming-json", command[command.index("--output-format") + 1])
+            self.assertEqual("agentbga", command[command.index("--sandbox") + 1])
+            self.assertEqual("MCPTool(agentbga__*)", command[command.index("--allow") + 1])
+            self.assertEqual("xhigh", command[command.index("--effort") + 1])
+            self.assertEqual("grok-session", command[command.index("--resume") + 1])
+            self.assertEqual("turn", command[command.index("-p") + 1])
+
             dsh_config = PlayerConfig.from_dict({
                 "name": "DeepSeek Harness", "backend": "dsh", "model": "deepseek-v4-flash",
             }, 4)
@@ -440,7 +543,7 @@ class HarnessTests(unittest.TestCase):
             command = hermes._command("next turn")
             self.assertEqual("hermes-session", command[command.index("--resume") + 1])
 
-    def test_claude_and_pi_generate_seat_tool_configuration(self):
+    def test_harnesses_generate_seat_tool_configuration(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", side_effect=lambda name: f"/bin/{name}"):
             for seat, backend, model in ((0, "claude", "claude-test"), (1, "pi", "model-test")):
                 config = PlayerConfig.from_dict({
@@ -462,6 +565,103 @@ class HarnessTests(unittest.TestCase):
                     extension = (agent.session.workspace / "agentbga-tools.ts").read_text()
                     self.assertIn('name: "submit_action"', extension)
 
+            qwen = HarnessAgent(PlayerConfig.from_dict({
+                "name": "Qwen Code", "backend": "qwen", "model": "qwen3-coder-plus",
+                "base_url": "https://coding.dashscope.aliyuncs.com/v1",
+                "api_key_env": "QWEN_TEST_KEY", "reasoning_effort": "high",
+            }, 0), "match-qwen", 0, runs_root=directory)
+            qwen._prepare_turn({"state_version": 1}, LEGAL)
+            qwen_settings = json.loads(
+                (qwen.session.workspace / ".qwen-home" / "settings.json").read_text()
+            )
+            provider = qwen_settings["modelProviders"]["openai"][0]
+            self.assertEqual("qwen3-coder-plus", provider["id"])
+            self.assertEqual(
+                "https://coding.dashscope.aliyuncs.com/v1", provider["baseUrl"],
+            )
+            self.assertEqual("QWEN_TEST_KEY", provider["envKey"])
+            self.assertEqual("high", qwen_settings["model"]["reasoningEffort"])
+            self.assertEqual([], qwen_settings["tools"]["core"])
+            self.assertIn("agent", qwen_settings["tools"]["disabled"])
+            self.assertIn("skill", qwen_settings["tools"]["disabled"])
+            self.assertFalse(qwen_settings["tools"]["computerUse"]["enabled"])
+            self.assertFalse(qwen_settings["memory"]["enableManagedAutoMemory"])
+            self.assertEqual(["agentbga"], qwen_settings["mcp"]["allowed"])
+            qwen_mcp = json.loads(
+                (qwen.session.workspace / "qwen-mcp.json").read_text()
+            )
+            self.assertEqual(
+                ["observe", "legal_actions", "submit_action", "read_notes", "write_notes"],
+                qwen_mcp["mcpServers"]["agentbga"]["includeTools"],
+            )
+            with mock.patch.dict(os.environ, {
+                "QWEN_TEST_KEY": "qwen-secret", "OTHER_TOKEN": "hidden", "PATH": "/bin",
+            }, clear=True):
+                qwen_environment = qwen._environment()
+            self.assertEqual("qwen-secret", qwen_environment["QWEN_TEST_KEY"])
+            self.assertNotIn("OTHER_TOKEN", qwen_environment)
+            self.assertEqual("0", qwen_environment["QWEN_USAGE_STATISTICS_ENABLED"])
+            self.assertEqual("0", qwen_environment["QWEN_TELEMETRY_ENABLED"])
+            self.assertIn("seat-0-qwen/.qwen-home", qwen_environment["QWEN_HOME"])
+
+            cursor = HarnessAgent(PlayerConfig.from_dict({
+                "name": "Cursor CLI", "backend": "cursor", "model": "gpt-test",
+                "api_key_env": "CURSOR_TEST_KEY",
+            }, 0), "match-cursor", 0, runs_root=directory)
+            cursor._prepare_turn({"state_version": 1}, LEGAL)
+            cursor_mcp = json.loads(
+                (cursor.session.workspace / ".cursor" / "mcp.json").read_text()
+            )
+            self.assertIn("agentbga", cursor_mcp["mcpServers"])
+            cursor_policy = json.loads(
+                (cursor.session.workspace / ".cursor" / "cli.json").read_text()
+            )
+            self.assertEqual(1, cursor_policy["version"])
+            self.assertIn("Shell(*)", cursor_policy["permissions"]["deny"])
+            cursor_global = json.loads(
+                (cursor.session.workspace / ".cursor-data" / "cli-config.json").read_text()
+            )
+            self.assertFalse(cursor_global["editor"]["vimMode"])
+            self.assertFalse(cursor_global["attribution"]["attributeCommitsToAgent"])
+            with mock.patch.dict(os.environ, {
+                "CURSOR_TEST_KEY": "cursor-secret", "OTHER_TOKEN": "hidden", "PATH": "/bin",
+            }, clear=True):
+                cursor_environment = cursor._environment()
+            self.assertEqual("cursor-secret", cursor_environment["CURSOR_API_KEY"])
+            self.assertNotIn("OTHER_TOKEN", cursor_environment)
+            self.assertIn("seat-0-cursor/.cursor-data", cursor_environment["CURSOR_DATA_DIR"])
+            self.assertEqual(
+                cursor_environment["CURSOR_DATA_DIR"], cursor_environment["CURSOR_CONFIG_DIR"],
+            )
+
+            grok = HarnessAgent(PlayerConfig.from_dict({
+                "name": "Grok Build", "backend": "grok", "model": "grok-4.6",
+                "api_key_env": "GROK_TEST_KEY",
+            }, 0), "match-grok", 0, runs_root=directory)
+            grok._prepare_turn({"state_version": 1}, LEGAL)
+            grok_home = grok.session.workspace / ".grok-home"
+            grok_toml = (grok_home / "config.toml").read_text()
+            self.assertIn("[mcp_servers.agentbga]", grok_toml)
+            self.assertIn("mcps = false", grok_toml)
+            grok_settings = tomllib.loads(grok_toml)
+            self.assertFalse(grok_settings["features"]["telemetry"])
+            self.assertTrue(grok_settings["mcp_servers"]["agentbga"]["enabled"])
+            grok_sandbox = (grok_home / "sandbox.toml").read_text()
+            self.assertIn("[profiles.agentbga]", grok_sandbox)
+            self.assertIn("extends = \"strict\"", grok_sandbox)
+            self.assertIn(str(grok.session.runtime), grok_sandbox)
+            sandbox_settings = tomllib.loads(grok_sandbox)["profiles"]["agentbga"]
+            self.assertEqual("strict", sandbox_settings["extends"])
+            self.assertIn(str(grok.session.runtime), sandbox_settings["read_write"])
+            with mock.patch.dict(os.environ, {
+                "GROK_TEST_KEY": "grok-secret", "OTHER_TOKEN": "hidden", "PATH": "/bin",
+            }, clear=True):
+                grok_environment = grok._environment()
+            self.assertEqual("grok-secret", grok_environment["XAI_API_KEY"])
+            self.assertNotIn("OTHER_TOKEN", grok_environment)
+            self.assertEqual("0", grok_environment["GROK_TELEMETRY_ENABLED"])
+            self.assertIn("seat-0-grok/.grok-home", grok_environment["GROK_HOME"])
+
             opencode = HarnessAgent(PlayerConfig.from_dict({
                 "name": "OpenCode", "backend": "opencode", "model": "custom-model",
                 "base_url": "https://proxy.example/v1", "api_key_env": "CUSTOM_KEY",
@@ -472,7 +672,7 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("{env:CUSTOM_KEY}", configured["provider"]["agentbga"]["options"]["apiKey"])
             # Reasoning is controlled explicitly, not inferred from the endpoint URL.
             variant = configured["provider"]["agentbga"]["models"]["custom-model"]["variants"]["max"]
-            self.assertEqual("max", variant["reasoningEffort"])
+            self.assertEqual("max", variant["reasoning_effort"])
             self.assertIn("agentbga/custom-model", opencode._command("turn"))
 
             proxied_deepseek = HarnessAgent(PlayerConfig.from_dict({
@@ -495,8 +695,31 @@ class HarnessTests(unittest.TestCase):
             non_deepseek_url._prepare_turn({"state_version": 1}, LEGAL)
             non_deepseek_config = json.loads((non_deepseek_url.session.workspace / "opencode.json").read_text())
             non_deepseek_variant = non_deepseek_config["provider"]["agentbga"]["models"]["deepseek-v4-flash"]["variants"]["high"]
+            self.assertEqual("high", non_deepseek_variant["reasoning_effort"])
             self.assertNotIn("thinking", non_deepseek_variant)
             self.assertIn("--thinking", non_deepseek_url._command("turn"))
+
+            glm = HarnessAgent(PlayerConfig.from_dict({
+                "name": "GLM", "backend": "opencode", "model": "glm-5.2",
+                "base_url": "https://dashscope.example/compatible-mode/v1",
+                "reasoning_effort": "high",
+            }, 1), "match-glm", 1, runs_root=directory)
+            glm._prepare_turn({"state_version": 1}, LEGAL)
+            glm_config = json.loads((glm.session.workspace / "opencode.json").read_text())
+            glm_variant = glm_config["provider"]["agentbga"]["models"]["glm-5.2"]["variants"]["high"]
+            self.assertEqual("high", glm_variant["reasoning_effort"])
+            self.assertTrue(glm_variant["tool_stream"])
+
+            kimi = HarnessAgent(PlayerConfig.from_dict({
+                "name": "Kimi", "backend": "opencode", "model": "kimi-k2.7-code",
+                "base_url": "https://dashscope.example/compatible-mode/v1",
+                "reasoning_effort": "none",
+            }, 1), "match-kimi", 1, runs_root=directory)
+            kimi._prepare_turn({"state_version": 1}, LEGAL)
+            kimi_config = json.loads((kimi.session.workspace / "opencode.json").read_text())
+            kimi_variant = kimi_config["provider"]["agentbga"]["models"]["kimi-k2.7-code"]["variants"]["none"]
+            self.assertEqual({"enable_thinking": True}, kimi_variant)
+            self.assertNotIn("--thinking", kimi._command("turn"))
 
             no_reasoning = HarnessAgent(PlayerConfig.from_dict({
                 "name": "OpenCode", "backend": "opencode", "model": "deepseek-v4-flash",
@@ -653,6 +876,40 @@ class HarnessTests(unittest.TestCase):
             agent._recover_hermes_session_id()
             self.assertEqual("new-tool", agent.session.session_id)
 
+    def test_hermes_reads_exact_usage_delta_from_session_database(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", return_value="/bin/hermes"):
+            config = PlayerConfig.from_dict({
+                "name": "Hermes Agent", "backend": "hermes", "model": "gpt-test",
+            }, 0)
+            agent = HarnessAgent(config, "match", 0, runs_root=directory)
+            agent.session.session_id = "session-1"
+            home = agent.session.workspace / ".hermes-home"
+            home.mkdir(exist_ok=True)
+            with sqlite3.connect(home / "state.db") as connection:
+                connection.execute(
+                    "CREATE TABLE sessions ("
+                    "id TEXT, input_tokens INTEGER, cache_read_tokens INTEGER, "
+                    "cache_write_tokens INTEGER, output_tokens INTEGER, "
+                    "reasoning_tokens INTEGER, api_call_count INTEGER)"
+                )
+                connection.execute(
+                    "INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    ("session-1", 100, 70, 5, 30, 20, 2),
+                )
+            before = {
+                "inputTokens": 40, "cacheReadTokens": 30, "cacheWriteTokens": 0,
+                "outputTokens": 10, "reasoningTokens": 5, "modelResponses": 1,
+            }
+
+            agent._record_hermes_usage(before)
+
+            usage = agent.usage_summary()
+            self.assertEqual(105, usage["input_tokens"])
+            self.assertEqual(40, usage["cached_input_tokens"])
+            self.assertEqual(20, usage["output_tokens"])
+            self.assertEqual(15, usage["reasoning_output_tokens"])
+            self.assertEqual(1, usage["usage_records"])
+
     def test_pi_json_events_stream_text_reasoning_and_session(self):
         self.assertEqual("hello", HarnessAgent._event_text({
             "type": "message_update", "assistantMessageEvent": {"type": "text_delta", "delta": "hello"},
@@ -664,6 +921,37 @@ class HarnessTests(unittest.TestCase):
             "type": "stream_event", "event": {"delta": {"text": "claude"}},
         }))
         self.assertEqual("pi-session", HarnessAgent._event_session_id({"type": "session", "id": "pi-session"}))
+        qwen_message = {
+            "type": "assistant",
+            "session_id": "qwen-session",
+            "message": {"content": [{"type": "text", "text": "qwen text"}]},
+        }
+        self.assertEqual("qwen text", HarnessAgent._event_text(qwen_message))
+        self.assertEqual("qwen-session", HarnessAgent._event_session_id(qwen_message))
+        self.assertEqual("cursor text", HarnessAgent._event_text({
+            "type": "assistant", "session_id": "cursor-session",
+            "message": {"content": [{"type": "text", "text": "cursor text"}]},
+        }))
+        self.assertEqual("grok text", HarnessAgent._event_text({
+            "type": "text", "data": "grok text",
+        }))
+        self.assertEqual("grok-session", HarnessAgent._event_session_id({
+            "type": "end", "sessionId": "grok-session",
+        }))
+        self.assertEqual("", HarnessAgent._event_text({
+            "type": "end", "text": "do not duplicate final text",
+        }))
+        self.assertEqual(("submit_action", {"action_id": "a-test"}), HarnessAgent._tool_details({
+            "type": "tool_call", "toolName": "submit_action",
+            "rawInput": {"action_id": "a-test"},
+        }))
+        self.assertEqual(("submit_action", {"action_id": "a-test"}), HarnessAgent._tool_details({
+            "type": "assistant",
+            "message": {"content": [{
+                "type": "tool_use", "name": "submit_action",
+                "input": {"action_id": "a-test"},
+            }]},
+        }))
 
     def test_harness_requires_submit_tool_and_records_tool_events(self):
         events = []

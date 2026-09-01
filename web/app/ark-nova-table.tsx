@@ -1181,7 +1181,7 @@ function ZooWorkspace({view, identities, lang, legalActions, submitting, onChoos
           view={view} player={player} lang={lang} legalActions={legalActions}
           submitting={submitting} onChoose={onChoose}
         />}
-        {interactive && <SemanticChoiceControls view={view} legalActions={legalActions} submitting={submitting} onChoose={onChoose}/>} 
+        {interactive && <SemanticChoiceControls view={view} legalActions={legalActions} submitting={submitting} onChoose={onChoose}/>}
         <PlayerBoardLists player={player} lang={lang} legalActions={interactive ? legalActions : []}/>
         <section className="ark-map-coverage"><span>{copy(lang, "地图覆盖终局奖励", "Map-completion end-game reward")}</span><p><b>{player.map_display?.coverage ? `${player.map_display.coverage.covered}/${player.map_display.coverage.total}` : "—"}</b><small>{player.map_display?.coverage?.complete ? copy(lang, "地图已完全覆盖", "Map complete") : copy(lang, "覆盖所有可建土地", "Cover all buildable land")}</small></p><p><b>{benefitLabel(player.map_display?.coverage?.reward, lang)}</b><small>{player.map_display?.coverage?.status === "claimed" ? copy(lang, "已达成，终局计分时加入", "secured; added during final scoring") : copy(lang, "待完成", "pending")}</small></p></section>
       </aside>

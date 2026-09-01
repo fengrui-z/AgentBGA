@@ -22,6 +22,11 @@ class StoreTests(unittest.TestCase):
                 store.act(match_id, 1, 0, action)
             replay = store.replay(match_id)
             self.assertEqual(1, replay[-1]["version"])
+            tables = store.list_matches()
+            self.assertEqual(1, len(tables))
+            self.assertEqual(match_id, tables[0]["match_id"])
+            self.assertEqual("splendor", tables[0]["game"])
+            self.assertEqual(1, tables[0]["turn_count"])
             store.close()
 
     def test_create_and_load_ark_nova_setup(self):
@@ -103,6 +108,8 @@ class StoreTests(unittest.TestCase):
             self.assertIn("final_track_score", report_metrics)
             self.assertIn("score", report_metrics)
             self.assertEqual(result["match_report"], store.match_report(match_id))
+            self.assertEqual([], result["harness_metrics"]["players"])
+            self.assertTrue(result["harness_metrics"]["totals"]["complete"])
             self.assertGreater(result["decisions"], result["turns"])
             self.assertEqual("finished", store.load(match_id)[1]["status"])
             self.assertEqual(result["version"], store.replay(match_id)[-1]["version"])

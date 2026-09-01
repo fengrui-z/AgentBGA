@@ -13,6 +13,7 @@ from .ark_nova_match_report import generate_match_report
 from .harness import build_harness_agent
 from .minimal_harness import build_minimal_agent
 from .store import Store
+from .usage import build_harness_metrics
 
 
 EventSink = Callable[[dict[str, Any]], None]
@@ -72,8 +73,10 @@ def run_match(
     }
     sink_lock = threading.Lock()
     harness_event_lock = threading.Lock()
+    attempt_error_lock = threading.Lock()
     interactive_human_lock = threading.Lock()
     pending_harness_events: list[tuple[int, int, dict[str, Any]]] = []
+    attempt_errors: dict[int, int] = {}
 
     def emit(event: dict[str, Any]) -> None:
         if sink:
@@ -177,6 +180,8 @@ def run_match(
             except AgentError as error:
                 flush_stream()
                 last_error = error
+                with attempt_error_lock:
+                    attempt_errors[seat] = attempt_errors.get(seat, 0) + 1
                 emit({"type": "agent_error", "version": snapshot_version,
                       "seat": seat, "player": config.name,
                       "backend": config.backend, "attempt": attempt + 1,
@@ -285,6 +290,10 @@ def run_match(
         "decisions": state.get("decision_count", state["turn_count"]),
         "players": [{"seat": seat, **config.public_dict()} for seat, config in enumerate(configs)],
         "rankings": rankings,
+        "harness_metrics": build_harness_metrics(
+            configs, model_agents, store.controller_calls(match_id),
+            store.harness_events(match_id), HARNESS_BACKENDS, attempt_errors,
+        ),
     }
     if game.game_id == "ark_nova":
         result["match_report"] = generate_match_report(store, match_id)

@@ -162,7 +162,7 @@ export function ArkNovaWorkbench({lang, compact = false}: {lang: Lang; compact?:
       <div className="ark-card-index">{filtered.slice(0, 12).map(entry => <button key={entry.id} className={`${selected?.id === entry.id ? "selected" : ""} card-${entry.collection}`} onClick={() => setSelectedId(entry.id)}>
         <span>{COLLECTION_COPY[entry.collection].short}</span><b>{entry.official_component_id ? `#${entry.official_component_id}` : "SLOT"}</b><strong>{entry.title}</strong><small>{entry.review_status === "unentered" ? (zh ? "扩展目录" : "extension roster") : (zh ? "已接入引擎" : "engine ready")}</small>
       </button>)}</div>
-      {selected && <RulesInspector entry={selected} lang={lang}/>} 
+      {selected && <RulesInspector entry={selected} lang={lang}/>}
     </div>}
     <footer><span>{zh ? "不含出版商美术与逐字牌文" : "No publisher art or verbatim card prose"}</span><code>{catalog?.pack.content_sha256.slice(0, 12) || "sha pending"}</code></footer>
   </section>;

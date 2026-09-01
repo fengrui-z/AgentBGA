@@ -1,10 +1,45 @@
+import tempfile
 import unittest
+from unittest import mock
 
 from agentbga.harness_features import HarnessFeatures
+from agentbga.agents import PlayerConfig
 from agentbga.minimal_harness import DirectGameAgent
 
 
 class MinimalHarnessTests(unittest.TestCase):
+    def test_choose_accumulates_every_provider_response(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = PlayerConfig.from_dict({
+                "name": "Minimal", "backend": "minimal", "model": "test",
+                "base_url": "https://example.test/v1",
+            }, 0)
+            agent = DirectGameAgent(config, "match", 0, runs_root=directory)
+            agent._call_llm = mock.Mock(return_value={
+                "content": "done", "reasoning_content": "",
+                "tool_calls": [{
+                    "id": "call-1", "function": {
+                        "name": "submit_action",
+                        "arguments": '{"action_id":"action-1"}',
+                    },
+                }],
+                "usage": {
+                    "prompt_tokens": 100, "completion_tokens": 20,
+                    "prompt_tokens_details": {"cached_tokens": 75},
+                    "completion_tokens_details": {"reasoning_tokens": 10},
+                },
+                "model": "test", "finish_reason": "tool_calls",
+            })
+            observation = {"game": "test", "turn_count": 0, "state_version": 0}
+            legal = [{"id": "action-1", "action": {"type": "pass"}}]
+
+            action_id, metadata = agent.choose(observation, legal)
+
+            self.assertEqual("action-1", action_id)
+            self.assertEqual(120, metadata["usage"]["total_tokens"])
+            self.assertEqual(75, metadata["usage"]["cached_input_tokens"])
+            self.assertEqual(metadata["usage"], agent.usage_summary())
+
     def test_splendor_observation_uses_unambiguous_color_names(self):
         agent = object.__new__(DirectGameAgent)
         agent.seat = 0

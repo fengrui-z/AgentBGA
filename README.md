@@ -2,6 +2,10 @@
 
 A headless, deterministic board-game environment for evaluating LLM agents in long-horizon adversarial decision-making. Supports agent-vs-agent and human-vs-agent play across multiple Euro-style strategy games.
 
+## Runtime architecture
+
+![AgentBGA runtime architecture](docs/images/agentbga-runtime-share-card.png)
+
 ## Games
 
 - **Splendor** (2–4 players, fully playable)
@@ -40,6 +44,11 @@ cd web && npm install && npm run build && cd ..
 ./agentbga web   # http://127.0.0.1:8765
 ```
 
+The setup page lists recent SQLite matches, including tables created by
+`agentbga run` or `agentbga match create`. Click one, or open
+`http://127.0.0.1:8765/?match=MATCH_ID`, to spectate without taking over the
+runners. Pause still applies only to matches started from the web form.
+
 ## Harness backends
 
 Each seat can use one of:
@@ -55,6 +64,9 @@ Each seat can use one of:
 | `hermes` | Harness | Hermes Agent + MCP, isolated home, persistent session |
 | `claude` | Harness | Claude Code + MCP, persistent session |
 | `pi` | Harness | Pi + native TS extension, persistent session |
+| `qwen` | Harness | Qwen Code + MCP, isolated provider config, persistent session |
+| `cursor` | Harness | Cursor Agent CLI + MCP, isolated data directory, persistent session |
+| `grok` | Harness | xAI Grok Build CLI + MCP, isolated home and sandbox, persistent session |
 | `minimal` | Harness | Pure Python, in-process, direct LLM + 10 seat-scoped tools |
 | `human` | — | Browser-based play |
 | `random` | — | Random baseline |
@@ -67,6 +79,30 @@ loaded only when requested. The `minimal` harness runs entirely in Python with z
 external dependencies — no CLI, no MCP server, no Node.js.
 
 The `hermes` backend requires the `hermes` executable with MCP support. AgentBGA creates a seat-local `HERMES_HOME`, configures only the seat-scoped `agentbga` MCP server, and routes the configured OpenAI-compatible endpoint through Hermes' custom provider.
+
+The `qwen` backend requires the `qwen` executable. AgentBGA creates seat-local
+`QWEN_HOME` and `QWEN_RUNTIME_DIR` directories, configures an OpenAI-compatible
+model provider, disables ambient tools and memory, and exposes only the seat-scoped
+`agentbga` MCP tools. For Alibaba Cloud Coding Plan:
+
+```console
+export BAILIAN_CODING_PLAN_API_KEY='...'
+./agentbga doctor --players-config examples/qwen-code-vs-random.json
+./agentbga run --players-config examples/qwen-code-vs-random.json --seed 42 --jsonl
+```
+
+The `cursor` backend requires the `cursor-agent` executable and a `CURSOR_API_KEY`.
+The `grok` backend requires the xAI `grok` executable and an `XAI_API_KEY`. Both
+run headlessly with persistent native sessions, disable built-in coding and web
+tools, and expose only AgentBGA's seat-scoped MCP tools. Their user configuration,
+credentials, and sessions remain isolated per participant workspace.
+
+```console
+export CURSOR_API_KEY='...'
+export XAI_API_KEY='...'
+./agentbga doctor --players-config examples/cursor-cli-vs-grok-build.json
+./agentbga run --players-config examples/cursor-cli-vs-grok-build.json --seed 42 --jsonl
+```
 
 Codex can reuse the ChatGPT subscription already authenticated by the local CLI. Log in
 once, select `auth_mode: "subscription"`, and omit `base_url` and `api_key_env`:
@@ -143,11 +179,25 @@ Runnable examples are provided in
 [`examples/experiment-tournament.json`](examples/experiment-tournament.json), and
 [`examples/experiment-series-one-sided.json`](examples/experiment-series-one-sided.json).
 
+The server-resumable 12-participant, 396-match balanced frontier tournament is
+configured in [`examples/frontier12-tournament.json`](examples/frontier12-tournament.json).
+See [`docs/frontier12-server-run.zh-CN.md`](docs/frontier12-server-run.zh-CN.md) for
+credential checks, the four-match all-participant probe, 16-worker execution, and recovery.
+
 Every run writes cumulative `agentbga.results.v1` documents atomically. `latest.json`
 is refreshed after every configured batch, `results-000020.json` is an immutable
 checkpoint, and `final.json` is the complete artifact. Set `results.emit_every` to `1`
 for every match or to `N` for every N matches. The format is defined by
 [`schemas/results-v1.schema.json`](schemas/results-v1.schema.json).
+
+Each completed match result also includes `harness_metrics`. For every harness seat it
+records provider-reported input and output tokens, cache reads and writes, uncached input,
+reasoning tokens, cache-hit rate, controller calls, failures and random fallbacks, session
+resumes, compactions, and process/action latency statistics. Match-level totals use
+`cached_input_tokens / input_tokens` for the cache-hit rate; reasoning tokens are a subset
+of output tokens and are not counted twice. If a harness or provider does not expose exact
+usage, its `token_usage.available` is `false` and `totals.complete` is `false` rather than
+substituting an estimate.
 
 Trusted upload credentials may be embedded at generation time without putting the token
 in the experiment manifest:

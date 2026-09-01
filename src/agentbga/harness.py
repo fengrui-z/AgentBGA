@@ -15,8 +15,14 @@ import time
 from typing import Any, Callable
 
 from .agent_context import CONTEXT_V2, prepare_seat_context
-from .agents import AgentError, PlayerConfig, StreamSink
+from .agents import AgentError, PlayerConfig, StreamSink, harness_executable_name
 from .memory import memory_identity, stable_session_id
+from .usage import (
+    TokenUsageAccumulator,
+    TokenUsageSample,
+    harness_usage_samples,
+    normalize_token_usage,
+)
 
 
 HarnessEventSink = Callable[[dict[str, Any]], None]
@@ -204,12 +210,17 @@ class HarnessAgent:
         self._dsh_state_path = self._dsh_home / "agentbga-session.json"
         self._dsh_metadata_path = runtime / "dsh-turn-metadata.json"
         self._dsh_turn_metadata: dict[str, Any] = {}
+        self._dsh_usage_keys: set[tuple[Any, Any]] = set()
         self._session_state_path = workspace / "agentbga-harness-session.json"
         self.trace_dir = trace_dir
         self._trace_steps: list[dict[str, Any]] = []
-        self.binary = shutil.which(config.backend)
+        self._match_usage = TokenUsageAccumulator()
+        self._turn_usage = TokenUsageAccumulator()
+        self._qwen_usage_snapshot: TokenUsageSample | None = None
+        executable = harness_executable_name(config.backend)
+        self.binary = shutil.which(executable)
         if not self.binary:
-            raise AgentError(f"harness executable not found: {config.backend}")
+            raise AgentError(f"harness executable not found: {executable}")
         self._load_harness_session_state()
 
     def _emit(self, event_type: str, **payload: Any) -> None:
@@ -224,6 +235,8 @@ class HarnessAgent:
         requested = self.config.reasoning_effort or "max"
         if self.config.backend in {"codex", "pi"} and requested == "max":
             return "xhigh"
+        if self.config.backend == "qwen" and requested == "minimal":
+            return "low"
         if self.config.backend == "claude" and requested == "xhigh":
             return "max"
         return requested
@@ -285,6 +298,22 @@ class HarnessAgent:
             if self.session.session_id:
                 command.extend(["--session", self.session.session_id])
             return [*command, prompt]
+        if self.config.backend == "qwen":
+            mcp_path = self.session.workspace / "qwen-mcp.json"
+            mcp_config = mcp_path.read_text(encoding="utf-8") if mcp_path.is_file() else "{}"
+            command = [
+                self.binary,
+                "--output-format", "stream-json",
+                "--chat-recording",
+                "--approval-mode", "yolo",
+                "--core-tools", "",
+                # Qwen Code expects the JSON payload itself here, not a path.
+                "--mcp-config", mcp_config,
+                "--model", model,
+            ]
+            if self.session.session_id:
+                command.extend(["--resume", self.session.session_id])
+            return [*command, "--prompt", prompt]
         if self.config.backend == "codex":
             overrides = getattr(self, "_codex_config_args", [])
             runtime_dir = os.path.relpath(self.session.runtime, self.session.workspace)
@@ -297,6 +326,29 @@ class HarnessAgent:
                         "--skip-git-repo-check", "--ignore-user-config", "--ignore-rules",
                         *overrides, self.session.session_id, prompt]
             return [self.binary, "exec", *common, "--cd", ".", prompt]
+        if self.config.backend == "cursor":
+            command = [
+                self.binary, "--print", "--trust", "--force", "--approve-mcps",
+                "--output-format", "stream-json", "--model", model,
+            ]
+            if self.session.session_id:
+                command.extend(["--resume", self.session.session_id])
+            return [*command, prompt]
+        if self.config.backend == "grok":
+            command = [
+                self.binary, "--no-auto-update", "--no-alt-screen",
+                "--output-format", "streaming-json",
+                "--permission-mode", "dontAsk",
+                "--allow", "MCPTool(agentbga__*)",
+                "--sandbox", "agentbga",
+                "--tools", "",
+                "--no-plan", "--no-subagents", "--no-memory",
+                "--disable-web-search", "--model", model,
+                "--effort", reasoning_effort,
+            ]
+            if self.session.session_id:
+                command.extend(["--resume", self.session.session_id])
+            return [*command, "-p", prompt]
         if self.config.backend == "opencode":
             selected_model = model if "/" in model else f"agentbga/{model}"
             command = [self.binary, "run", "--pure", "--format", "json", "--model", selected_model,
@@ -380,6 +432,23 @@ class HarnessAgent:
                     env[self.config.api_key_env or "OPENAI_API_KEY"] = key
                 if self.config.base_url:
                     env["OPENAI_BASE_URL"] = self.config.base_url
+        elif self.config.backend == "cursor":
+            cursor_data = self.session.workspace / ".cursor-data"
+            cursor_data.mkdir(mode=0o700, exist_ok=True)
+            env["CURSOR_DATA_DIR"] = str(cursor_data)
+            env["CURSOR_CONFIG_DIR"] = str(cursor_data)
+            if key:
+                env["CURSOR_API_KEY"] = key
+        elif self.config.backend == "grok":
+            grok_home = self.session.workspace / ".grok-home"
+            grok_home.mkdir(mode=0o700, exist_ok=True)
+            env["GROK_HOME"] = str(grok_home)
+            env["GROK_TELEMETRY_ENABLED"] = "0"
+            env["GROK_TELEMETRY_TRACE_UPLOAD"] = "0"
+            env["GROK_TELEMETRY_MIXPANEL_ENABLED"] = "0"
+            env["GROK_FEEDBACK_ENABLED"] = "0"
+            if key:
+                env["XAI_API_KEY"] = key
         elif self.config.backend == "opencode":
             for variable, dirname in (
                 ("XDG_DATA_HOME", ".opencode-data"),
@@ -413,6 +482,22 @@ class HarnessAgent:
             env["AGENTBGA_SEAT_CONTEXT"] = str(self.session.runtime / "turn-context.json")
             env["AGENTBGA_SEAT_SUBMISSION"] = str(self.session.runtime / "submission.json")
             env["AGENTBGA_SEAT_AUDIT"] = str(self.session.runtime / "tool-events.jsonl")
+        elif self.config.backend == "qwen":
+            qwen_home = self.session.workspace / ".qwen-home"
+            qwen_runtime = self.session.workspace / ".qwen-runtime"
+            qwen_home.mkdir(mode=0o700, exist_ok=True)
+            qwen_runtime.mkdir(mode=0o700, exist_ok=True)
+            env["QWEN_HOME"] = str(qwen_home)
+            env["QWEN_RUNTIME_DIR"] = str(qwen_runtime)
+            env["QWEN_CODE_SYSTEM_SETTINGS_PATH"] = str(qwen_home / "settings.json")
+            env["QWEN_USAGE_STATISTICS_ENABLED"] = "0"
+            env["QWEN_TELEMETRY_ENABLED"] = "0"
+            env["QWEN_CODE_SUPPRESS_YOLO_WARNING"] = "1"
+            # Make the first headless model turn wait until the seat MCP tools
+            # have completed discovery.
+            env["QWEN_CODE_LEGACY_MCP_BLOCKING"] = "1"
+            if key:
+                env[self.config.api_key_env or "BAILIAN_CODING_PLAN_API_KEY"] = key
         elif self.config.backend == "dsh":
             self._dsh_home.mkdir(parents=True, exist_ok=True)
             env["DSH_HOME"] = str(self._dsh_home)
@@ -465,6 +550,7 @@ class HarnessAgent:
             sys.executable, "-m", "agentbga.seat_mcp", "--context", relative_context,
             "--notes-root", ".",
         ]
+        escaped_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
         requested_effort = self.config.reasoning_effort or "max"
         reasoning_effort = self._native_reasoning_effort()
         reasoning_enabled = requested_effort != "none"
@@ -492,9 +578,146 @@ class HarnessAgent:
         (pi_dir / "models.json").write_text(
             json.dumps(pi_models, ensure_ascii=False, indent=2), encoding="utf-8",
         )
+        qwen_dir = self.session.workspace / ".qwen-home"
+        qwen_dir.mkdir(mode=0o700, exist_ok=True)
+        qwen_model: dict[str, Any] = {"name": self.config.model}
+        qwen_effort = self._native_reasoning_effort()
+        if qwen_effort in {"low", "medium", "high", "xhigh", "max"}:
+            qwen_model["reasoningEffort"] = qwen_effort
+        qwen_settings = {
+            "general": {"enableAutoUpdate": False},
+            "privacy": {"usageStatisticsEnabled": False},
+            "telemetry": {"enabled": False, "logPrompts": False},
+            "security": {
+                "folderTrust": {"enabled": False},
+                "auth": {"selectedType": "openai", "enforcedType": "openai"},
+            },
+            "modelProviders": {"openai": [{
+                "id": self.config.model,
+                "name": self.config.model,
+                "baseUrl": self.config.base_url,
+                "envKey": self.config.api_key_env or "BAILIAN_CODING_PLAN_API_KEY",
+            }]},
+            "model": qwen_model,
+            # Qwen Code currently uses tools.core as the registry allowlist.
+            # An empty list hides all built-in tools; the explicit command-line
+            # MCP config below remains available.
+            "tools": {
+                "core": [],
+                "disabled": [
+                    "skill", "get_goal", "update_goal", "list_agents", "task_stop",
+                    "agent", "send_message", "enter_worktree", "exit_worktree",
+                ],
+                "approvalMode": "yolo",
+                "workflowsEnabled": False,
+                "computerUse": {"enabled": False},
+                "toolSearch": {"enabled": False},
+            },
+            "context": {"fileName": []},
+            "skills": {
+                "disabledLevels": ["project", "user", "extension", "bundled"],
+            },
+            "memory": {
+                "enableManagedAutoMemory": False,
+                "enableManagedAutoDream": False,
+                "enableAutoSkill": False,
+                "enableTeamMemory": False,
+                "enableTeamMemorySync": False,
+            },
+            "experimental": {"artifact": False},
+            "mcp": {"allowed": ["agentbga"]},
+        }
+        qwen_mcp = {"mcpServers": {"agentbga": {
+            "command": mcp_command[0],
+            "args": mcp_command[1:],
+            "env": {"PYTHONPATH": self._pythonpath},
+            "trust": True,
+            "includeTools": [
+                "observe", "legal_actions", "submit_action",
+                "read_notes", "write_notes",
+            ],
+        }}}
+        (qwen_dir / "settings.json").write_text(
+            json.dumps(qwen_settings, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        (self.session.workspace / "qwen-mcp.json").write_text(
+            json.dumps(qwen_mcp, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        cursor_dir = self.session.workspace / ".cursor"
+        cursor_dir.mkdir(exist_ok=True)
+        cursor_mcp = {"mcpServers": {"agentbga": {
+            "command": mcp_command[0],
+            "args": mcp_command[1:],
+            "env": {"PYTHONPATH": self._pythonpath},
+        }}}
+        (cursor_dir / "mcp.json").write_text(
+            json.dumps(cursor_mcp, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        cursor_permissions = {"version": 1, "permissions": {
+            "allow": [],
+            "deny": ["Shell(*)", "Read(**)", "Write(**)"],
+        }}
+        (cursor_dir / "cli.json").write_text(
+            json.dumps(cursor_permissions, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        cursor_data = self.session.workspace / ".cursor-data"
+        cursor_data.mkdir(mode=0o700, exist_ok=True)
+        cursor_global = {
+            **cursor_permissions,
+            "editor": {"vimMode": False},
+            "attribution": {
+                "attributeCommitsToAgent": False,
+                "attributePRsToAgent": False,
+            },
+        }
+        (cursor_data / "cli-config.json").write_text(
+            json.dumps(cursor_global, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        grok_home = self.session.workspace / ".grok-home"
+        grok_home.mkdir(mode=0o700, exist_ok=True)
+        grok_config = (
+            "[cli]\n"
+            "auto_update = false\n"
+            "[features]\n"
+            "telemetry = false\n"
+            "feedback = false\n"
+            "lsp_tools = false\n"
+            "[memory]\n"
+            "enabled = false\n"
+            "[compat.claude]\n"
+            "skills = false\n"
+            "rules = false\n"
+            "agents = false\n"
+            "mcps = false\n"
+            "hooks = false\n"
+            "sessions = false\n"
+            "[compat.cursor]\n"
+            "skills = false\n"
+            "rules = false\n"
+            "agents = false\n"
+            "mcps = false\n"
+            "hooks = false\n"
+            "sessions = false\n"
+            "[mcp_servers.agentbga]\n"
+            f"command = {json.dumps(mcp_command[0])}\n"
+            f"args = [{escaped_args}]\n"
+            f"env = {{ PYTHONPATH = {json.dumps(self._pythonpath)} }}\n"
+            "enabled = true\n"
+            "startup_timeout_sec = 30\n"
+            f"tool_timeout_sec = {max(1, int(self.timeout))}\n"
+        )
+        (grok_home / "config.toml").write_text(grok_config, encoding="utf-8")
+        python_root = Path(sys.executable).resolve().parents[1]
+        readable_roots = list(dict.fromkeys((str(package_root), str(python_root))))
+        grok_sandbox = (
+            "[profiles.agentbga]\n"
+            "extends = \"strict\"\n"
+            f"read_only = {json.dumps(readable_roots)}\n"
+            f"read_write = [{json.dumps(str(self.session.runtime))}]\n"
+        )
+        (grok_home / "sandbox.toml").write_text(grok_sandbox, encoding="utf-8")
         codex_dir = self.session.workspace / ".codex"
         codex_dir.mkdir(exist_ok=True)
-        escaped_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
         provider = ""
         provider_args: list[str] = []
         if self.config.auth_mode == "subscription":
@@ -581,12 +804,31 @@ class HarnessAgent:
         }
         if provider_id and model_id:
             variant: dict[str, Any] = {}
+            endpoint = (self.config.base_url or "").lower()
+            deepseek_native = "deepseek" in endpoint
             if reasoning_enabled:
-                variant = {"reasoningEffort": requested_effort}
-                if "deepseek" in (self.config.base_url or "").lower():
+                # The OpenAI SDK consumes camelCase options and serializes
+                # Responses fields. Generic OpenAI-compatible providers receive
+                # variant fields as raw request-body extensions, so use the
+                # snake_case spelling expected by DashScope and similar APIs.
+                effort_key = (
+                    "reasoningEffort"
+                    if self.config.wire_api == "responses" or deepseek_native
+                    else "reasoning_effort"
+                )
+                variant = {effort_key: requested_effort}
+                if deepseek_native:
                     variant["thinking"] = {"type": "enabled"}
-            elif "deepseek" in (self.config.base_url or "").lower():
+            elif deepseek_native:
                 variant["thinking"] = {"type": "disabled"}
+            normalized_model = model_id.lower()
+            if normalized_model == "glm-5.2":
+                variant["tool_stream"] = True
+            if normalized_model == "kimi-k2.7-code":
+                # Kimi K2.7 Code is thinking-only. Send the provider switch
+                # explicitly without inventing a tunable reasoning effort.
+                variant.pop("reasoning_effort", None)
+                variant["enable_thinking"] = True
             opencode_config["provider"] = {
                 provider_id: {
                     "npm": "@ai-sdk/openai" if self.config.wire_api == "responses" else "@ai-sdk/openai-compatible",
@@ -746,6 +988,40 @@ class HarnessAgent:
         if row and isinstance(row[0], str) and row[0]:
             self.session.session_id = row[0]
 
+    def _hermes_usage_snapshot(self) -> dict[str, int]:
+        """Read exact cumulative usage from Hermes' isolated session store."""
+        empty = {
+            "inputTokens": 0, "cacheReadTokens": 0, "cacheWriteTokens": 0,
+            "outputTokens": 0, "reasoningTokens": 0, "modelResponses": 0,
+        }
+        if self.config.backend != "hermes" or not self.session.session_id:
+            return empty
+        database = self.session.workspace / ".hermes-home" / "state.db"
+        if not database.is_file():
+            return empty
+        try:
+            with sqlite3.connect(database) as connection:
+                row = connection.execute(
+                    "SELECT input_tokens,cache_read_tokens,cache_write_tokens,"
+                    "output_tokens,reasoning_tokens,api_call_count "
+                    "FROM sessions WHERE id = ?", (self.session.session_id,),
+                ).fetchone()
+        except sqlite3.Error:
+            return empty
+        if row is None:
+            return empty
+        return {key: max(0, int(value or 0)) for key, value in zip(empty, row)}
+
+    def _record_hermes_usage(self, before: dict[str, int]) -> None:
+        if self.config.backend != "hermes":
+            return
+        after = self._hermes_usage_snapshot()
+        delta = {key: max(0, after[key] - before.get(key, 0)) for key in after}
+        sample = normalize_token_usage(delta, source="hermes.session_db")
+        records = delta["modelResponses"]
+        self._turn_usage.add(sample, records=records if records > 0 else 1)
+        self._match_usage.add(sample, records=records if records > 0 else 1)
+
     def _load_harness_session_state(self) -> None:
         if self.config.backend == "dsh" or not self._session_state_path.is_file():
             return
@@ -797,6 +1073,56 @@ class HarnessAgent:
         resume_count = metadata.get("resumeCount")
         if isinstance(resume_count, int) and resume_count >= 0:
             self.session.resume_count = resume_count
+        token_usage = metadata.get("tokenUsage")
+        usage_key = (metadata.get("firstSeq"), metadata.get("lastSeq"))
+        if isinstance(token_usage, dict) and usage_key not in self._dsh_usage_keys:
+            sample = normalize_token_usage(token_usage, source="dsh.assistant_message")
+            records = token_usage.get("modelResponses")
+            record_count = records if isinstance(records, int) and records > 0 else 1
+            self._turn_usage.add(sample, records=record_count)
+            self._match_usage.add(sample, records=record_count)
+            self._dsh_usage_keys.add(usage_key)
+
+    def usage_summary(self) -> dict[str, Any]:
+        """Return exact native token usage observed by this match-local agent."""
+        return self._match_usage.summary()
+
+    def _record_stream_usage(
+        self, sample: TokenUsageSample, payload: dict[str, Any]
+    ) -> None:
+        """Record per-run usage, de-duplicating Qwen's resumed-session snapshot."""
+        if self.config.backend != "qwen":
+            self._turn_usage.add(sample)
+            self._match_usage.add(sample)
+            return
+
+        previous = self._qwen_usage_snapshot
+        if previous is None:
+            delta = sample
+        else:
+            delta = TokenUsageSample(
+                input_tokens=max(0, sample.input_tokens - previous.input_tokens),
+                cached_input_tokens=max(
+                    0, sample.cached_input_tokens - previous.cached_input_tokens
+                ),
+                cache_write_input_tokens=max(
+                    0,
+                    sample.cache_write_input_tokens
+                    - previous.cache_write_input_tokens,
+                ),
+                output_tokens=max(0, sample.output_tokens - previous.output_tokens),
+                reasoning_output_tokens=max(
+                    0,
+                    sample.reasoning_output_tokens
+                    - previous.reasoning_output_tokens,
+                ),
+                source=sample.source,
+            )
+        self._turn_usage.add(delta)
+        records = payload.get("num_turns")
+        record_count = records if isinstance(records, int) and records > 0 else 1
+        self._match_usage.replace(sample, records=record_count)
+        self._qwen_usage_snapshot = sample
 
     def _emit_tool_audit(self) -> None:
         path = self.session.runtime / "tool-events.jsonl"
@@ -812,6 +1138,8 @@ class HarnessAgent:
 
     @staticmethod
     def _event_text(payload: dict[str, Any]) -> str:
+        if payload.get("type") in {"result", "end"}:
+            return ""
         assistant_event = payload.get("assistantMessageEvent")
         if isinstance(assistant_event, dict) and assistant_event.get("type") in {
             "text_delta", "thinking_delta",
@@ -824,10 +1152,18 @@ class HarnessAgent:
                 for key in ("text", "thinking"):
                     if isinstance(delta.get(key), str):
                         return delta[key]
+        message = payload.get("message")
+        if isinstance(message, dict) and isinstance(message.get("content"), list):
+            text_blocks = [
+                block["text"] for block in message["content"]
+                if isinstance(block, dict) and isinstance(block.get("text"), str)
+            ]
+            if text_blocks:
+                return "".join(text_blocks)
         item = payload.get("item") or payload.get("part") or payload
         if not isinstance(item, dict):
             return ""
-        for key in ("text", "content", "output", "message"):
+        for key in ("text", "data", "content", "output", "message"):
             value = item.get(key)
             if isinstance(value, str):
                 return value
@@ -837,7 +1173,7 @@ class HarnessAgent:
     def _event_session_id(payload: dict[str, Any]) -> str | None:
         if payload.get("type") == "session" and isinstance(payload.get("id"), str):
             return payload["id"]
-        for key in ("thread_id", "session_id", "sessionID"):
+        for key in ("thread_id", "session_id", "sessionID", "sessionId"):
             value = payload.get(key)
             if isinstance(value, str) and value:
                 return value
@@ -852,14 +1188,38 @@ class HarnessAgent:
     def _tool_details(payload: dict[str, Any]) -> tuple[str, Any] | None:
         if payload.get("type") == "tool_execution_start":
             return str(payload.get("toolName") or "tool"), payload.get("args") or {}
+        cursor_call = payload.get("tool_call")
+        if isinstance(cursor_call, dict):
+            for kind, details in cursor_call.items():
+                if not isinstance(details, dict):
+                    continue
+                name = details.get("name") or details.get("toolName") or kind
+                arguments = details.get("arguments") or details.get("args") or {}
+                return str(name), arguments
+        message = payload.get("message")
+        if isinstance(message, dict) and isinstance(message.get("content"), list):
+            for block in message["content"]:
+                if not isinstance(block, dict):
+                    continue
+                if str(block.get("type") or "").lower() not in {"tool_use", "tool_call"}:
+                    continue
+                name = block.get("name") or block.get("tool_name") or "tool"
+                arguments = block.get("input") or block.get("arguments") or {}
+                return str(name), arguments
         item = payload.get("item") or payload.get("part") or payload
         if not isinstance(item, dict):
             return None
         item_type = str(item.get("type") or payload.get("type") or "")
         if "tool" not in item_type.lower() and not item.get("tool") and not item.get("name"):
             return None
-        name = item.get("tool") or item.get("name") or item.get("tool_name") or item_type
-        arguments = item.get("arguments") or item.get("input") or item.get("args") or {}
+        name = (
+            item.get("tool") or item.get("name") or item.get("tool_name")
+            or item.get("toolName") or item_type
+        )
+        arguments = (
+            item.get("arguments") or item.get("input") or item.get("args")
+            or item.get("rawInput") or {}
+        )
         return str(name), arguments
 
     def _run(self, command: list[str]) -> tuple[str, str, int]:
@@ -903,6 +1263,8 @@ class HarnessAgent:
                         self._emit("harness_output", channel="content", delta=line + "\n")
                         self._trace_steps.append({"role": "assistant", "channel": "content", "text": line})
                         continue
+                    for sample in harness_usage_samples(self.config.backend, payload):
+                        self._record_stream_usage(sample, payload)
                     session_id = self._event_session_id(payload)
                     if session_id:
                         self.session.session_id = session_id
@@ -917,8 +1279,14 @@ class HarnessAgent:
                     if text:
                         assistant_event = payload.get("assistantMessageEvent") or {}
                         stream_delta = ((payload.get("event") or {}).get("delta") or {})
+                        event_type = str(payload.get("type") or "").lower()
+                        event_channel = str(payload.get("channel") or "").lower()
                         channel = "reasoning" if (
-                            assistant_event.get("type") == "thinking_delta" or "thinking" in stream_delta
+                            assistant_event.get("type") == "thinking_delta"
+                            or "thinking" in stream_delta
+                            or "thinking" in event_type
+                            or "thought" in event_type
+                            or event_channel in {"reasoning", "thinking", "thought"}
                         ) else "content"
                         self._emit("harness_output", channel=channel, delta=text)
                         self._trace_steps.append({"role": "assistant", "channel": channel, "text": text})
@@ -1052,6 +1420,7 @@ class HarnessAgent:
         on_stream: StreamSink | None = None,
     ) -> tuple[str, dict[str, Any]]:
         submission_path = self._prepare_turn(observation, legal)
+        self._turn_usage = TokenUsageAccumulator()
         prompt = TURN_PROMPT.format(
             seat=self.session.seat,
             version=observation.get("state_version", observation.get("turn_count")),
@@ -1061,11 +1430,13 @@ class HarnessAgent:
         started = time.monotonic()
         started_wall = time.time()
         turn_resumed = bool(self.session.session_id)
+        hermes_usage_before = self._hermes_usage_snapshot()
         self._trace_steps = []
         try:
             raw, stderr, returncode = self._run(self._command(prompt))
         except AgentError as error:
             self._recover_hermes_session_id()
+            self._record_hermes_usage(hermes_usage_before)
             self._recover_dsh_turn_metadata()
             self._save_harness_session_state()
             process_latency_ms = round((time.monotonic() - started) * 1000, 3)
@@ -1081,6 +1452,7 @@ class HarnessAgent:
             )
             raise
         self._recover_hermes_session_id()
+        self._record_hermes_usage(hermes_usage_before)
         self._recover_dsh_turn_metadata()
         process_latency_ms = round((time.monotonic() - started) * 1000, 3)
         action_latency_ms = self._action_latency_ms(submission_path, started_wall)
@@ -1136,6 +1508,9 @@ class HarnessAgent:
             "action_latency_ms": action_latency_ms,
             "process_latency_ms": process_latency_ms,
         }
+        turn_usage = self._turn_usage.summary()
+        if turn_usage["available"]:
+            metadata["usage"] = turn_usage
         self._emit("harness_finished", action_id=action_id,
                    latency_ms=process_latency_ms,
                    action_latency_ms=action_latency_ms,

@@ -603,6 +603,77 @@ class WebTests(unittest.TestCase):
             self.assertIsNone(response["human_turn"])
             self.assertTrue(finished.wait(2))
 
+    def test_watch_attaches_cli_match_and_follows_store_actions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db = Path(directory) / "matches.sqlite3"
+            store = Store(db)
+            match_id, version, state = store.create(2, 42, "splendor")
+            store.set_players(match_id, [
+                PlayerConfig.from_dict(
+                    {"name": "Grok 4.5", "backend": "grok", "model": "grok-4.5"}, 0,
+                ).public_dict(),
+                PlayerConfig.from_dict(
+                    {"name": "Grok 4.6", "backend": "grok", "model": "grok-4.6"}, 1,
+                ).public_dict(),
+            ])
+            action = store.game(match_id).legal_actions(state, 0)[0]["action"]
+            version, state, _ = store.act(match_id, 0, version, action)
+            store.close()
+
+            hub = MatchHub(db)
+            watched = hub.watch(match_id)
+            self.assertEqual("spectator", watched["mode"])
+            self.assertEqual("splendor", watched["game"])
+            self.assertEqual(1, watched["turn_count"])
+            self.assertEqual("Grok 4.5", watched["players"][0]["name"])
+            self.assertEqual("Grok 4.6", watched["players"][1]["name"])
+            with self.assertRaisesRegex(ValueError, "spectator"):
+                hub.set_paused(match_id, True)
+
+            store = Store(db)
+            _, state, _ = store.load(match_id)
+            action = store.game(match_id).legal_actions(state, 1)[0]["action"]
+            store.act(match_id, 1, version, action)
+            store.close()
+
+            snapshot = hub.get(match_id)
+            deadline = time.monotonic() + 2
+            while snapshot["turn_count"] < 2 and time.monotonic() < deadline:
+                time.sleep(0.05)
+                snapshot = hub.get(match_id)
+            self.assertEqual(2, snapshot["turn_count"])
+            self.assertEqual(match_id, hub.list_tables()[0]["match_id"])
+            self.assertEqual("spectator", hub.list_tables()[0]["mode"])
+
+    def test_http_lists_and_watches_existing_match(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "index.html").write_text("<h1>AgentBGA</h1>", encoding="utf-8")
+            db = root / "matches.sqlite3"
+            store = Store(db)
+            match_id, _, _ = store.create(2, 7, "splendor")
+            store.set_players(match_id, [
+                {"name": "A", "backend": "random"},
+                {"name": "B", "backend": "random"},
+            ])
+            store.close()
+            handler = type("TestWebHandler", (WebHandler,), {
+                "hub": MatchHub(db), "static_dir": root,
+            })
+            server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                base = f"http://127.0.0.1:{server.server_port}"
+                listed = json.load(urllib.request.urlopen(base + "/api/matches"))
+                self.assertEqual(match_id, listed["matches"][0]["match_id"])
+                watched = json.load(urllib.request.urlopen(base + f"/api/matches/{match_id}"))
+                self.assertEqual("spectator", watched["mode"])
+                self.assertEqual("A", watched["players"][0]["name"])
+            finally:
+                server.shutdown()
+                server.server_close()
+
     def test_web_server_refuses_nonlocal_bind_and_missing_build(self):
         with self.assertRaisesRegex(ValueError, "localhost"):
             serve("0.0.0.0", 8765)

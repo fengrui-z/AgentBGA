@@ -1,0 +1,17 @@
+{
+  "schema_version": "agentbga.players.v1",
+  "players": [
+    {
+      "name": "Qwen Code",
+      "backend": "qwen",
+      "model": "qwen3-coder-plus",
+      "base_url": "https://coding.dashscope.aliyuncs.com/v1",
+      "api_key_env": "BAILIAN_CODING_PLAN_API_KEY",
+      "reasoning_effort": "max"
+    },
+    {
+      "name": "Random",
+      "backend": "random"
+    }
+  ]
+}

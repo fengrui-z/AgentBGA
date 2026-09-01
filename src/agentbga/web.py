@@ -18,7 +18,7 @@ from .agents import PlayerConfig
 from .ark_nova_match_report import generate_match_report
 from .registry import get_game, list_games
 from .runner import run_match
-from .store import Store
+from .store import MatchNotFound, Store
 
 
 class MatchHub:
@@ -76,6 +76,7 @@ class MatchHub:
         )
         return {
             **snapshot,
+            "mode": record.get("mode", "live"),
             "paused": bool(record["paused"]),
             "pause_pending": bool(
                 record["paused"] and record["running"] and not record["at_pause_gate"]
@@ -102,9 +103,16 @@ class MatchHub:
         lightweight = {
             "agent_stream", "harness_output", "harness_tool_call", "harness_tool_result",
         }
-        snapshot = None if event.get("type") in lightweight else self._snapshot(match_id)
+        snapshot = None
+        if event.get("type") not in lightweight:
+            try:
+                snapshot = self._snapshot(match_id)
+            except MatchNotFound:
+                event = {**event, "type": "match_failed", "error": event.get("error") or "match disappeared"}
         with self.condition:
-            record = self.matches[match_id]
+            record = self.matches.get(match_id)
+            if record is None:
+                return
             if event.get("type") in {"match_finished", "match_failed"}:
                 record["running"] = False
                 record["paused"] = False
@@ -176,6 +184,7 @@ class MatchHub:
                 "events": [], "snapshot": snapshot, "running": bool(game_description.get("runnable", True)),
                 "paused": False, "at_pause_gate": False,
                 "human_pending": {}, "human_submissions": {},
+                "mode": "live",
             }
             record["snapshot"] = self._with_runtime(snapshot, record)
             self.matches[match_id] = record
@@ -193,6 +202,8 @@ class MatchHub:
             if match_id not in self.matches:
                 raise KeyError(match_id)
             record = self.matches[match_id]
+            if record.get("mode") == "spectator":
+                raise ValueError("spectator tables cannot be paused from this process")
             if not record["running"]:
                 raise ValueError("match is no longer running")
             if record["paused"] == paused:
@@ -304,24 +315,135 @@ class MatchHub:
         with self.lock:
             if match_id in self.matches:
                 return dict(self.matches[match_id]["snapshot"])
-        # Finished matches are immutable and can be reconstructed from SQLite
-        # after a Web-service restart.  Active matches remain in-memory only so
-        # this path never pretends that an interrupted runner is still live.
-        snapshot = self._snapshot(match_id)
-        if snapshot.get("status") != "finished":
-            raise KeyError(match_id)
+        return self.watch(match_id)
+
+    def list_tables(self) -> list[dict[str, Any]]:
+        store = Store(self.db_path)
+        try:
+            tables = store.list_matches()
+        finally:
+            store.close()
+        with self.lock:
+            for table in tables:
+                record = self.matches.get(table["match_id"])
+                table["mode"] = record.get("mode", "store") if record else "store"
+                table["paused"] = bool(record["paused"]) if record else False
+        return tables
+
+    def watch(self, match_id: str) -> dict[str, Any]:
+        """Attach a spectator feed to a match that already exists in SQLite."""
         with self.condition:
-            if match_id not in self.matches:
-                record = {
-                    "events": [], "snapshot": snapshot, "running": False,
-                    "paused": False, "at_pause_gate": False,
-                    "human_pending": {}, "human_submissions": {},
-                }
-                record["snapshot"] = self._with_runtime(snapshot, record)
-                self.matches[match_id] = record
-            return dict(self.matches[match_id]["snapshot"])
+            if match_id in self.matches:
+                return dict(self.matches[match_id]["snapshot"])
+        try:
+            snapshot = self._snapshot(match_id)
+        except MatchNotFound as error:
+            raise KeyError(match_id) from error
+        store = Store(self.db_path)
+        try:
+            players = {row["seat"]: row for row in store.players(match_id)}
+            rows = store.events(match_id)
+        finally:
+            store.close()
+        record = {
+            "events": [], "snapshot": snapshot, "running": snapshot["status"] == "active",
+            "paused": False, "at_pause_gate": False,
+            "human_pending": {}, "human_submissions": {},
+            "mode": "spectator", "finished_emitted": snapshot["status"] != "active",
+        }
+        record["snapshot"] = self._with_runtime(snapshot, record)
+        for index, row in enumerate(rows):
+            last = index == len(rows) - 1
+            self._append_locked(
+                record, self._ui_event_from_store(row, players),
+                record["snapshot"] if last else None,
+            )
+        if snapshot["status"] != "active":
+            self._append_locked(
+                record, self._finished_event(match_id, snapshot), record["snapshot"],
+            )
+        with self.condition:
+            if match_id in self.matches:
+                return dict(self.matches[match_id]["snapshot"])
+            self.matches[match_id] = record
+            created = dict(record["snapshot"])
+        if record["running"]:
+            thread = threading.Thread(
+                target=self._watch_store, args=(match_id,), daemon=True,
+                name=f"agentbga-watch-{match_id}",
+            )
+            thread.start()
+        return created
+
+    def _watch_store(self, match_id: str) -> None:
+        while True:
+            with self.condition:
+                record = self.matches.get(match_id)
+                if record is None or not record["running"]:
+                    return
+                after = record["events"][-1]["seq"] if record["events"] else -1
+            store = Store(self.db_path)
+            try:
+                snapshot = self._snapshot(match_id)
+                players = {row["seat"]: row for row in store.players(match_id)}
+                rows = store.events(match_id, after)
+            except MatchNotFound:
+                self._publish(match_id, {"type": "match_failed", "error": "match disappeared"})
+                return
+            finally:
+                store.close()
+            for row in rows:
+                self._publish(match_id, self._ui_event_from_store(row, players))
+            if snapshot["status"] != "active":
+                with self.condition:
+                    already = bool(self.matches.get(match_id, {}).get("finished_emitted"))
+                    if match_id in self.matches:
+                        self.matches[match_id]["finished_emitted"] = True
+                if not already:
+                    self._publish(match_id, self._finished_event(match_id, snapshot))
+                return
+            time.sleep(0.35)
+
+    @staticmethod
+    def _ui_event_from_store(row: dict[str, Any], players: dict[int, dict[str, Any]]) -> dict[str, Any]:
+        raw = dict(row["event"])
+        seat = row.get("seat") if row.get("seat") is not None else raw.get("seat")
+        identity = players.get(seat, {}) if isinstance(seat, int) else {}
+        if raw.get("type") == "action_accepted":
+            return {
+                "type": "turn", "seat": seat, "player": identity.get("name"),
+                "backend": identity.get("backend"), "model": identity.get("model"),
+                "action": raw.get("action"), "version": row.get("version"),
+            }
+        if identity:
+            raw.setdefault("player", identity.get("name"))
+            raw.setdefault("backend", identity.get("backend"))
+        if row.get("version") is not None:
+            raw.setdefault("version", row["version"])
+        if seat is not None:
+            raw.setdefault("seat", seat)
+        return raw
+
+    @staticmethod
+    def _finished_event(match_id: str, snapshot: dict[str, Any]) -> dict[str, Any]:
+        names = {row["seat"]: row for row in snapshot.get("players") or []}
+        view = (snapshot.get("views") or [{}])[0]
+        rankings = [
+            {**row, **({"player": names[row["seat"]]["name"], "backend": names[row["seat"]].get("backend")}
+                       if row.get("seat") in names else {})}
+            for row in (view.get("rankings") or [])
+        ]
+        return {
+            "type": "match_finished", "match_id": match_id, "game": snapshot.get("game"),
+            "version": snapshot.get("version"), "turns": snapshot.get("turn_count"),
+            "decisions": snapshot.get("decision_count", snapshot.get("turn_count")),
+            "players": snapshot.get("players") or [], "rankings": rankings,
+            "match_report": snapshot.get("match_report"),
+        }
 
     def events_after(self, match_id: str, after: int, wait: float = 15) -> tuple[list[dict[str, Any]], bool]:
+        if match_id not in self.matches:
+            self.watch(match_id)
         deadline = time.monotonic() + wait
         with self.condition:
             if match_id not in self.matches:
@@ -384,11 +506,14 @@ class WebHandler(BaseHTTPRequestHandler):
             except (ValueError, json.JSONDecodeError) as error:
                 self._json(HTTPStatus.CONFLICT, {"error": "invalid_human_action", "message": str(error)})
             return
-        control = re_match(r"^/api/matches/([a-f0-9]+)/(pause|resume)$", path)
+        control = re_match(r"^/api/matches/([a-f0-9]+)/(pause|resume|watch)$", path)
         if control:
             match_id, action = control
             try:
-                self._json(HTTPStatus.OK, self.hub.set_paused(match_id, action == "pause"))
+                if action == "watch":
+                    self._json(HTTPStatus.OK, self.hub.watch(match_id))
+                else:
+                    self._json(HTTPStatus.OK, self.hub.set_paused(match_id, action == "pause"))
             except KeyError:
                 self._json(HTTPStatus.NOT_FOUND, {"error": "match_not_found"})
             except ValueError as error:
@@ -421,6 +546,9 @@ class WebHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.OK, {
                 "games": [game for game in list_games() if game.get("runnable", True)],
             })
+            return
+        if path == "/api/matches":
+            self._json(HTTPStatus.OK, {"matches": self.hub.list_tables()})
             return
         match = re_match(r"^/api/matches/([a-f0-9]+)(/events)?$", path)
         if match:

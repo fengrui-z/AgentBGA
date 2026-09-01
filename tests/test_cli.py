@@ -165,21 +165,22 @@ class CLITests(unittest.TestCase):
                 "schema_version": "agentbga.players.v1",
                 "players": [
                     {"name": "Claude", "backend": "claude", "model": "claude-test"},
+                    {"name": "Qwen Code", "backend": "qwen", "model": "qwen3-coder-plus"},
                     {"name": "Codex", "backend": "codex", "model": "gpt-test"},
                     {"name": "OpenCode", "backend": "opencode", "model": "deepseek/test"},
-                    {"name": "DeepSeek Harness", "backend": "dsh", "model": "deepseek-v4-flash"},
                 ],
             }))
             output = StringIO()
             with mock.patch.dict(os.environ, {
                 "ANTHROPIC_API_KEY": "present", "AGENTBGA_API_KEY": "present",
                 "OPENAI_API_KEY": "present", "DEEPSEEK_API_KEY": "present",
+                "BAILIAN_CODING_PLAN_API_KEY": "present",
             }, clear=True), mock.patch("agentbga.cli.shutil.which", return_value="/bin/harness"), redirect_stdout(output):
                 code = main(["doctor", "--players-config", str(config)])
             self.assertEqual(0, code)
             result = json.loads(output.getvalue())
             self.assertEqual(
-                ["claude", "codex", "opencode", "dsh"],
+                ["claude", "qwen", "codex", "opencode"],
                 [row["backend"] for row in result["data"]["players"]],
             )
 
@@ -200,6 +201,30 @@ class CLITests(unittest.TestCase):
             result = json.loads(output.getvalue())
             self.assertFalse(result["ready_for_model"])
             self.assertEqual([True, False], [row["api_key_configured"] for row in result["data"]["players"]])
+
+    def test_doctor_maps_cursor_cli_and_accepts_grok_build(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "players.json"
+            config.write_text(json.dumps({
+                "schema_version": "agentbga.players.v1",
+                "players": [
+                    {"name": "Cursor", "backend": "cursor", "model": "gpt-test"},
+                    {"name": "Grok", "backend": "grok", "model": "grok-4.6"},
+                ],
+            }))
+            output = StringIO()
+            with mock.patch.dict(os.environ, {
+                "CURSOR_API_KEY": "present", "XAI_API_KEY": "present",
+            }, clear=True), mock.patch(
+                "agentbga.cli.shutil.which", side_effect=lambda name: f"/bin/{name}"
+            ) as which, redirect_stdout(output):
+                code = main(["doctor", "--players-config", str(config)])
+            self.assertEqual(0, code)
+            self.assertEqual(
+                [mock.call("cursor-agent"), mock.call("grok")], which.call_args_list,
+            )
+            result = json.loads(output.getvalue())
+            self.assertTrue(result["ready_for_model"])
 
     def test_doctor_accepts_logged_in_codex_subscription_without_api_key(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -8,7 +8,7 @@ test("static export contains the AgentBGA match setup", async () => {
   const html = await readFile(new URL("dist/client/index.html", root), "utf8");
 
   assert.match(html, /<html lang="zh-CN">/);
-  assert.match(html, /<title>AgentBGA · Semantic Board Game Arena<\/title>/);
+  assert.match(html, /<title>AgentBGA · Long-Horizon Game Arena<\/title>/);
   assert.match(html, /创建一桌.*璀璨宝石/);
   assert.match(html, /方舟动物园/);
   assert.match(html, /花砖物语/);
@@ -26,6 +26,8 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /Claude Code/);
   assert.match(html, />Pi</);
   assert.match(html, />Codex</);
+  assert.match(html, /Cursor CLI/);
+  assert.match(html, /Grok Build/);
   assert.match(html, />OpenCode</);
   assert.match(html, /Hermes Agent/);
   assert.match(html, /value="deepseek-v4-flash"/);
@@ -35,10 +37,19 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /人类 vs Agent/);
   assert.match(html, /添加人类/);
   assert.match(html, /type="password"/);
+  assert.match(html, /观战已有牌桌/);
   const source = await readFile(new URL("app/page.tsx", root), "utf8");
   const styles = await readFile(new URL("app/globals.css", root), "utf8");
+  assert.match(source, /watchMatch/);
+  assert.match(source, /live-tables/);
+  assert.match(source, /\/api\/matches/);
+  assert.match(styles, /\.live-tables/);
   assert.match(source, /deepseekHarnessPlayer\(1, "opencode"\)/);
   assert.match(source, /codexHarnessPlayer\(2\)/);
+  assert.match(source, /qwen3-coder-plus/);
+  assert.match(source, /backend: "qwen"/);
+  assert.match(source, /backend: "cursor"/);
+  assert.match(source, /backend: "grok"/);
   assert.match(styles, /\.player-config \.auth-field \{ grid-column:2 \/ span 2; \}/);
   assert.match(source, /MODEL STREAM|模型 Chat/);
   assert.match(source, /暂停|继续对局/);
@@ -47,6 +58,11 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.doesNotMatch(source, /className="winner-banner"/);
   assert.match(styles, /\.winner-summary/);
   assert.match(source, /human_turn|submitHumanAction/);
+  assert.match(source, /function HumanActionConfirmation/);
+  assert.match(source, /confirmHumanAction/);
+  assert.match(source, /select_action_required/);
+  assert.match(source, /azul_source_required/);
+  assert.match(source, /selectedActionId/);
   assert.match(source, /随机座次|movePlayer/);
   assert.match(source, /ArkNovaBoard/);
   assert.match(source, /ArkNovaWorkbench/);
@@ -56,6 +72,20 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /azul-player-board-row/);
   assert.match(source, /AZUL_FLOOR_PENALTIES = \[-1, -1, -2, -2, -2, -3, -3\]/);
   assert.match(source, /BrassBoard/);
+  assert.match(source, /function BrassLiveMap/);
+  assert.match(source, /BRASS_MAP_POINTS/);
+  assert.match(source, /brass-route-layer/);
+  assert.match(source, /is-expanded/);
+  assert.match(source, /专注地图/);
+  assert.match(source, /humanActions\.filter\(item => item\.action\.connection_id/);
+  assert.doesNotMatch(source, /onChoose=\{submitHumanAction\}/);
+  assert.match(source, /onChoose=\{item => stageHumanAction\(item\)\}/);
+  assert.match(styles, /\.brass-live-map/);
+  assert.match(styles, /\.brass-route\.actionable/);
+  assert.match(styles, /\.brass-live-map\.is-expanded/);
+  assert.match(styles, /\.brass-map-slots button\.actionable/);
+  assert.match(styles, /\.human-action-confirmation/);
+  assert.match(styles, /\.human-action-groups button\.selected/);
   assert.match(source, /CenturyBoard/);
   assert.match(source, /SevenBoard/);
   assert.match(source, /SevenSpectatorHands/);
@@ -238,4 +268,57 @@ test("static export has all assets needed by the Python server", async () => {
   assert.ok(refs.length >= 2);
   await Promise.all(refs.map(path => access(path)));
   await access(new URL("dist/client/index.rsc", root));
+});
+
+test("static export contains the Frontier12 results route and public data", async () => {
+  const html = await readFile(new URL("dist/client/arena.html", root), "utf8");
+  const source = await readFile(new URL("app/arena/page.tsx", root), "utf8");
+  const styles = await readFile(new URL("app/arena/arena.css", root), "utf8");
+  const data = JSON.parse(await readFile(new URL("public/results/frontier12-2026-v2.json", root), "utf8"));
+
+  assert.match(html, /Brettspiel Agent Arena/);
+  assert.match(html, /Euro-style board games/);
+  assert.match(html, /综合排名/);
+  assert.equal(data.schema_version, "agentbga.frontier12-pages.v1");
+  assert.equal(data.results.completed, 322);
+  assert.equal(data.leaderboard.length, 12);
+  assert.equal(data.leaderboard[0].participant_id, "gpt56-sol-codex");
+  assert.equal(data.leaderboard[0].display_name, "GPT-5.6 Sol · Codex");
+  assert.equal(data.token_efficiency.successful_sessions, 937);
+  assert.equal(data.token_efficiency.entries.length, 12);
+  assert.equal(data.token_efficiency.by_game.length, 35);
+  assert.equal(data.token_efficiency.pricing.currency, "CNY");
+  assert.equal(data.token_efficiency.pricing.usd_cny, 6.7811);
+  assert.equal(data.token_efficiency.pricing.models["deepseek-v4-pro-0813"].cached_input_rmb_per_m, 0.9);
+  assert.equal(data.token_efficiency.pricing.models["gpt-5.6-sol"].output_rmb_per_m, 135.622);
+  assert.equal(data.token_efficiency.entries[0].mean_cost_rmb, 119.2838);
+  assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_output_tokens_m, 0.182);
+  assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_cost_rmb, 190.8315);
+  assert.equal(
+    Number((data.token_efficiency.entries[0].mean_input_cost_rmb + data.token_efficiency.entries[0].mean_cached_input_cost_rmb + data.token_efficiency.entries[0].mean_output_cost_rmb).toFixed(4)),
+    data.token_efficiency.entries[0].mean_cost_rmb,
+  );
+  assert.equal(data.token_efficiency.by_game[0].elo, 1550);
+  assert.equal(data.token_efficiency.by_game[0].elo_rank, 5);
+  assert.equal(data.token_efficiency.by_game[0].mean_input_tokens_m, 0.292);
+  assert.equal(data.token_efficiency.by_game[0].mean_cached_input_tokens_m, 7.731);
+  assert.equal(data.token_efficiency.by_game[0].mean_output_tokens_m, 0.025);
+  assert.match(source, /EfficiencyCharts/);
+  assert.match(source, /Elo × 估算 API 成本/);
+  assert.match(source, /\[2100, 1800, 1500, 1200\]/);
+  assert.match(source, /Overall/);
+  assert.match(source, /成本构成对比/);
+  assert.match(source, /计价表（RMB \/ 1M tokens）/);
+  assert.match(source, /Cached input/);
+  assert.match(source, /Output（含 reasoning）/);
+  assert.match(source, /分游戏 Elo × Token 构成/);
+  assert.match(source, /Input（非缓存）/);
+  assert.match(source, /分游戏平均总 Token/);
+  assert.match(styles, /\.scatter-stage/);
+  assert.match(styles, /\.cost-bar-row/);
+  assert.match(styles, /\.pricing-card/);
+  assert.match(styles, /\.game-tabs/);
+  assert.match(styles, /\.token-stack/);
+  assert.match(styles, /\.token-heatmap/);
+  assert.equal("runtime" in data, false);
 });

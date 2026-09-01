@@ -26,6 +26,7 @@ from .seat_tool import call_tool as _seat_call_tool
 from .harness_features import HarnessFeatures
 from .game_profile import GameProfile, detect_phase, group_actions, get_profile
 from .memory import memory_identity, stable_session_id
+from .usage import TokenUsageAccumulator
 
 
 MINIMAL_SYSTEM = (
@@ -180,7 +181,13 @@ class DirectGameAgent:
         self.participant_id = identity.participant_id
         self._messages: list[dict[str, Any]] = []
         self._trace_steps: list[dict[str, Any]] = []
+        self._match_usage = TokenUsageAccumulator()
+        self._turn_usage = TokenUsageAccumulator()
         self._load_session()
+
+    def usage_summary(self) -> dict[str, Any]:
+        """Return all provider-reported token usage accumulated this match."""
+        return self._match_usage.summary()
 
     # ── session persistence ──
 
@@ -822,6 +829,7 @@ class DirectGameAgent:
         version = observation.get("state_version", observation.get("turn_count"))
         started = time.monotonic()
         self._trace_steps = []
+        self._turn_usage = TokenUsageAccumulator()
 
         # Write turn-context.json (same as HarnessAgent._prepare_turn does for
         # MCP harnesses — the seat_tool.call_tool reads this file).
@@ -854,6 +862,8 @@ class DirectGameAgent:
         try:
             for _ in range(max_rounds):
                 response = self._call_llm(on_stream=on_stream)
+                self._turn_usage.add_raw(response.get("usage"), source="minimal.api")
+                self._match_usage.add_raw(response.get("usage"), source="minimal.api")
 
                 # Build the assistant message. If the LLM returned tool_calls,
                 # the message MUST include both content and tool_calls so that
@@ -963,6 +973,9 @@ class DirectGameAgent:
             "participant_id": self.participant_id,
             "latency_ms": latency,
         }
+        turn_usage = self._turn_usage.summary()
+        if turn_usage["available"]:
+            metadata["usage"] = turn_usage
         return action_id, metadata
 
 

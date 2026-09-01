@@ -1,6 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import Link from "next/link";
+import ArenaPage from "./arena/page";
 import { ArkNovaWorkbench } from "./ark-nova-workbench";
 import { ArkNovaMatchReport, type ArkNovaMatchReportData } from "./ark-nova-match-report";
 import {
@@ -44,6 +46,9 @@ const STR: Record<Lang, Dict> = {
     match: "对局", turn: "回合", decision: "决策",
     s_finished: "已结束", s_wait_pause: "等待暂停", s_paused: "已暂停", s_active: "进行中",
     processing: "处理中…", resume: "▶ 继续对局", pause: "Ⅱ 暂停", new_match: "新对局",
+    watch_live: "观战已有牌桌", watch: "开始观战 →", watching: "正在接入…",
+    watch_id: "对局 ID", live_tables: "本地牌桌", no_tables: "还没有可观战的对局。CLI 或 Web 开桌后会出现在这里。",
+    spectator: "观战", err_watch: "无法接入对局",
     err_pause: "无法更新暂停状态", err_submit: "无法提交行动",
     err_ws: "实时连接已断开，可刷新页面后重新开始。", call_failed: "调用失败",
     pause_pending: "等待当前模型完成…", paused: "对局已暂停",
@@ -52,6 +57,10 @@ const STR: Record<Lang, Dict> = {
     // human turn
     your_turn: "YOUR TURN · SEAT", pick_action: "，请选择行动", legal_opts: "个合法选项",
     submitting: "提交中…", returning: "归还", buying: "支付", reserving: "预留",
+    confirm_action: "确认操作", confirm_submit: "确认并提交 →", selection_ready: "已选择",
+    confirm_idle: "尚未选择完整操作", confirm_help: "点击选项只会暂存；确认后才会正式提交。",
+    select_action_required: "请先点选一个操作，再按确认。", selection_expired: "当前选择已失效，请根据最新局面重新选择。",
+    azul_source_required: "请先选择砖块来源。", azul_color_required: "请选择要拿取的颜色。", azul_destination_required: "请选择图案线或地板线。",
     // splendor board
     supply: "供应区", gem_bank: "宝石银行", nobles: "贵族", available: "AVAILABLE",
     tier: "TIER", cards_unit: "张",
@@ -122,6 +131,9 @@ const STR: Record<Lang, Dict> = {
     match: "Match", turn: "Turn", decision: "Decision",
     s_finished: "Finished", s_wait_pause: "Waiting to pause", s_paused: "Paused", s_active: "Running",
     processing: "Working…", resume: "▶ Resume", pause: "Ⅱ Pause", new_match: "New match",
+    watch_live: "Watch an existing table", watch: "Watch →", watching: "Opening…",
+    watch_id: "Match ID", live_tables: "Local tables", no_tables: "No watchable tables yet. CLI or web matches will show up here.",
+    spectator: "Spectator", err_watch: "Failed to watch match",
     err_pause: "Failed to update pause state", err_submit: "Failed to submit action",
     err_ws: "Live connection dropped. Refresh and restart.", call_failed: "Call failed",
     pause_pending: "Waiting for the model to finish…", paused: "Match paused",
@@ -129,6 +141,10 @@ const STR: Record<Lang, Dict> = {
     paused_desc: "The table stops at a safe turn boundary. Click Resume to continue.",
     your_turn: "YOUR TURN · SEAT", pick_action: ", choose an action", legal_opts: "legal options",
     submitting: "Submitting…", returning: "Return", buying: "Pay", reserving: "Reserve",
+    confirm_action: "CONFIRM ACTION", confirm_submit: "Confirm & submit →", selection_ready: "SELECTED",
+    confirm_idle: "No complete action selected", confirm_help: "Choosing only stages an action; it is submitted after confirmation.",
+    select_action_required: "Choose an action before confirming.", selection_expired: "This choice is no longer legal. Choose again from the latest position.",
+    azul_source_required: "Choose a tile source first.", azul_color_required: "Choose the color to draft.", azul_destination_required: "Choose a pattern line or the floor.",
     supply: "Supply", gem_bank: "Gem Bank", nobles: "Nobles", available: "AVAILABLE",
     tier: "TIER", cards_unit: "cards",
     reserve_label: "Reserve", buy_label: "Buy",
@@ -173,8 +189,8 @@ function makeT(lang: Lang) {
 const LangCtx = createContext<Lang>("zh");
 const useLang = () => useContext(LangCtx);
 
-type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
-type Provider = "custom" | "claude_code" | "pi" | "codex" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
+type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "qwen" | "codex" | "cursor" | "grok" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
+type Provider = "custom" | "claude_code" | "pi" | "qwen" | "codex" | "cursor" | "grok" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
 type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road" | "seven_wonders";
 type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "max" | "xhigh";
 type AuthMode = "api_key" | "subscription";
@@ -227,6 +243,7 @@ type BrassView = {
   };
   players: BrassPlayerView[];
 };
+type BrassMapPoint = {x: number; y: number; kind: "industry" | "merchant" | "farm"};
 type SpiceName = "turmeric" | "saffron" | "cardamom" | "cinnamon";
 type SpicePool = Record<SpiceName, number>;
 type CenturyMerchant = {id: string; kind: "gain" | "upgrade" | "trade"; upgrades: number; input: SpicePool; output: SpicePool};
@@ -281,11 +298,16 @@ type SevenView = {
 type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
 type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
-  paused: boolean; pause_pending: boolean;
+  paused: boolean; pause_pending: boolean; mode?: "live" | "spectator" | "store";
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
   players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView)[];
   spectator_view?: ArkView;
   match_report?: ArkNovaMatchReportData;
+};
+type TableSummary = {
+  match_id: string; game: GameId; status: string; turn_count: number; seed: number;
+  mode?: string; active_seat?: number;
+  players: {seat: number; name: string; backend: string; model?: string}[];
 };
 type LegalAction = {id: string; label?: string; benefit_summary?: string; benefit_summary_cn?: string; action: Record<string, unknown>};
 type TimelineEvent = {
@@ -293,6 +315,7 @@ type TimelineEvent = {
   backend?: string; agent?: {latency_ms?: number; action_latency_ms?: number; process_latency_ms?: number}; action?: Record<string, unknown>;
   rankings?: {player: string}[]; channel?: "reasoning" | "content"; delta?: string; attempt?: number; version?: number;
   harness?: string; tool?: string; arguments?: unknown; result?: unknown; action_id?: string;
+  noble_id?: string; card_id?: string;
 };
 type Timeline = { seq: number; event: TimelineEvent; snapshot?: Snapshot };
 type ChatTurn = {
@@ -333,7 +356,10 @@ const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: 
   gemini: { label: {zh: "Gemini", en: "Gemini"}, url: "https://generativelanguage.googleapis.com/v1beta", key: "", model: "" },
   claude: { label: {zh: "Claude Code", en: "Claude Code"}, url: "https://api.anthropic.com", key: "", model: "" },
   pi: { label: {zh: "Pi", en: "Pi"}, url: "https://api.openai.com/v1", key: "", model: "" },
+  qwen: { label: {zh: "Qwen Code", en: "Qwen Code"}, url: "https://coding.dashscope.aliyuncs.com/v1", key: "", model: "" },
   codex: { label: {zh: "Codex Harness", en: "Codex Harness"}, url: "https://api.openai.com/v1", key: "", model: "" },
+  cursor: { label: {zh: "Cursor CLI", en: "Cursor CLI"}, url: "", key: "", model: "" },
+  grok: { label: {zh: "Grok Build", en: "Grok Build"}, url: "https://api.x.ai/v1", key: "", model: "" },
   opencode: { label: {zh: "OpenCode Harness", en: "OpenCode Harness"}, url: "https://api.deepseek.com", key: "", model: "" },
   dsh: { label: {zh: "DeepSeek Harness", en: "DeepSeek Harness"}, url: "https://api.deepseek.com", key: "", model: "" },
   hermes: { label: {zh: "Hermes Agent", en: "Hermes Agent"}, url: "https://api.deepseek.com", key: "", model: "" },
@@ -341,7 +367,7 @@ const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: 
   human: { label: {zh: "人类玩家", en: "Human player"}, url: "", key: "", model: "" },
   random: { label: {zh: "随机基线", en: "Random baseline"}, url: "", key: "", model: "" },
 };
-const HARNESS_BACKENDS = new Set<Backend>(["claude", "pi", "codex", "opencode", "dsh", "hermes", "minimal"]);
+const HARNESS_BACKENDS = new Set<Backend>(["claude", "pi", "qwen", "codex", "cursor", "grok", "opencode", "dsh", "hermes", "minimal"]);
 const REASONING_OPTIONS: {value: ReasoningEffort; label: Record<Lang,string>}[] = [
   {value: "none", label: {zh: "关闭", en: "Off"}}, {value: "minimal", label: {zh: "Minimal", en: "Minimal"}},
   {value: "low", label: {zh: "Low", en: "Low"}}, {value: "medium", label: {zh: "Medium", en: "Medium"}},
@@ -352,7 +378,10 @@ const PROVIDERS: Record<Provider, {label: Record<Lang,string>; backend: Backend;
   custom: {label: {zh:"自定义 / 本地模型",en:"Custom / Local"}, backend: "openai", url: "", models: [], note: {zh:"网关代理、本地模型、特殊 endpoint：手动填 Endpoint + 模型 ID。运行时选对应的执行方式",en:"Gateway, local model, or special endpoint: enter endpoint + model ID. Pick the runtime separately"}},
   claude_code: {label: {zh:"Claude Code",en:"Claude Code"}, backend: "claude", url: "https://api.anthropic.com", models: ["claude-sonnet-4-6", "claude-opus-4-6"], note: {zh:"Claude Code 持久 session + 座位隔离 MCP",en:"Persistent session + seat-isolated MCP"}},
   pi: {label: {zh:"Pi",en:"Pi"}, backend: "pi", url: "https://api.openai.com/v1", models: ["gpt-5.6"], note: {zh:"Pi 持久 session + AgentBGA 专用工具扩展；兼容自定义 OpenAI Endpoint",en:"Persistent session + AgentBGA tool extension; any OpenAI-compatible endpoint"}},
+  qwen: {label: {zh:"Qwen Code",en:"Qwen Code"}, backend: "qwen", url: "https://coding.dashscope.aliyuncs.com/v1", models: ["qwen3-coder-plus"], note: {zh:"Qwen Code 持久 session + 独立 QWEN_HOME + 仅座位 MCP 工具；默认阿里云 Coding Plan Endpoint",en:"Persistent session + isolated QWEN_HOME + seat-only MCP tools; defaults to the Alibaba Cloud Coding Plan endpoint"}},
   codex: {label: {zh:"Codex",en:"Codex"}, backend: "codex", url: "https://api.openai.com/v1", models: ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "gpt-5.4", "gpt-5.4-mini", "gpt-5.3-codex-spark"], note: {zh:"可复用本机 codex login 的 ChatGPT 订阅，或使用按量 API Key；自定义 Endpoint 必须支持 Responses API",en:"Reuse the local codex login ChatGPT subscription or use a metered API key; custom endpoints must support the Responses API"}},
+  cursor: {label: {zh:"Cursor CLI",en:"Cursor CLI"}, backend: "cursor", url: "", models: ["gpt-5.6-sol", "grok-4.6"], note: {zh:"Cursor Agent CLI 持久 session + 独立数据目录 + 仅座位 MCP 工具；使用 Cursor API Key",en:"Persistent Cursor Agent CLI session + isolated data directory + seat-only MCP tools; uses a Cursor API key"}},
+  grok: {label: {zh:"Grok Build",en:"Grok Build"}, backend: "grok", url: "https://api.x.ai/v1", models: ["grok-4.6", "grok-4.5", "grok-build"], note: {zh:"xAI Grok Build CLI 持久 session + 独立 GROK_HOME + 仅座位 MCP 工具",en:"Persistent xAI Grok Build CLI session + isolated GROK_HOME + seat-only MCP tools"}},
   opencode: {label: {zh:"OpenCode",en:"OpenCode"}, backend: "opencode", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"OpenCode 持久 session + 座位隔离 MCP",en:"Persistent session + seat-isolated MCP"}},
   dsh: {label: {zh:"DeepSeek Harness",en:"DeepSeek Harness"}, backend: "dsh", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"DeepSeek Harness (dsh) headless + 座位隔离 MCP；每回合独立 session，workspace 笔记持久",en:"dsh headless + seat-isolated MCP; fresh session each turn, workspace notes persist"}},
   hermes: {label: {zh:"Hermes Agent",en:"Hermes Agent"}, backend: "hermes", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"Hermes Agent 持久 session + 独立 HERMES_HOME + 座位隔离 MCP",en:"Persistent session + isolated HERMES_HOME + seat-isolated MCP"}},
@@ -700,7 +729,7 @@ function sevenPaymentSummary(action: Record<string, unknown>, lang: Lang, names?
   return parts.length ? parts.join(zh ? "；" : "; ") : (zh ? "使用自己的生产能力" : "Use your own production");
 }
 
-function SevenActionPicker({actions, view, names, disabled, submitting, onChoose}: {actions: LegalAction[]; view?: SevenView; names: Record<number, string>; disabled: boolean; submitting: string; onChoose: (item: LegalAction) => void}) {
+function SevenActionPicker({actions, view, names, disabled, submitting, selectedId, onChoose}: {actions: LegalAction[]; view?: SevenView; names: Record<number, string>; disabled: boolean; submitting: string; selectedId: string; onChoose: (item: LegalAction) => void}) {
   const lang = useLang(); const zh = lang === "zh";
   const viewer = view?.players.find(player => player.seat === view.viewer_seat);
   const cards = viewer?.hand.filter((card): card is SevenCard => !("hidden" in card)) || [];
@@ -713,9 +742,9 @@ function SevenActionPicker({actions, view, names, disabled, submitting, onChoose
       const label = kind === "sell_card" ? (zh ? "出售这张牌 · 获得 💰3" : "Sell this card · gain 💰3")
         : kind === "build_wonder" ? (zh ? `用于建造奇迹第 ${item.action.stage} 阶段 · ${payment}` : `Use for Wonder stage ${item.action.stage} · ${payment}`)
         : (zh ? `建造这张牌 · ${payment}` : `Build this card · ${payment}`);
-      return <button key={item.id} className={`seven-action-option option-${kind}`} disabled={disabled} title={item.id} onClick={() => onChoose(item)}><b>{kind === "sell_card" ? "💰" : kind === "build_wonder" ? "◆" : "🏛️"}</b><span>{label}</span>{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>;
+      return <button key={item.id} className={`seven-action-option option-${kind} ${selectedId === item.id ? "selected" : ""}`} disabled={disabled} title={item.id} aria-pressed={selectedId === item.id} onClick={() => onChoose(item)}><b>{kind === "sell_card" ? "💰" : kind === "build_wonder" ? "◆" : "🏛️"}</b><span>{label}</span>{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>;
     })}</div></section>;
-  })}{remaining.length > 0 && <section className="seven-extra-actions">{remaining.map(item => <button key={item.id} disabled={disabled} onClick={() => onChoose(item)}>{humanActionText(item.action, lang)}</button>)}</section>}</div>;
+  })}{remaining.length > 0 && <section className="seven-extra-actions">{remaining.map(item => <button key={item.id} className={selectedId === item.id ? "selected" : ""} aria-pressed={selectedId === item.id} disabled={disabled} onClick={() => onChoose(item)}>{humanActionText(item.action, lang)}</button>)}</section>}</div>;
 }
 
 function SevenCityCardGroups({cards}: {cards: SevenCard[]}) {
@@ -841,7 +870,17 @@ function describeAction(item: Timeline, names: Record<number, string>, lang: Lan
   if (event.type === "break_triggered") return zh ? "休息阶段已触发：所有玩家依次处理休息结算" : "Break triggered: all players resolve the Break sequence";
   if (event.type === "break_finished") return zh ? "休息阶段结束，下一位玩家继续行动" : "Break finished; play continues with the next player";
   if (event.type === "break_hand_limit_checked") return zh ? `座位 ${Number(event.seat) + 1} 检查休息阶段手牌上限` : `Seat ${Number(event.seat) + 1} checks the Break hand limit`;
-  if (!["decision", "turn"].includes(event.type)) return event.type;
+  if (event.type === "match_created") return zh ? "对局开始" : "Match started";
+  if (event.type === "noble_acquired") {
+    const who = event.player || names[event.seat ?? 0] || `${zh ? "座位" : "Seat"} ${(event.seat ?? 0) + 1}`;
+    return zh ? `${who} 获得贵族 ${event.noble_id}` : `${who} gains noble ${event.noble_id}`;
+  }
+  if (event.type === "card_reserved") {
+    const who = event.player || names[event.seat ?? 0] || `${zh ? "座位" : "Seat"} ${(event.seat ?? 0) + 1}`;
+    const card = event.card_id ? String(event.card_id) : (zh ? "一张牌" : "a card");
+    return zh ? `${who} 预留 ${card}` : `${who} reserves ${card}`;
+  }
+  if (!["decision", "turn", "action_accepted"].includes(event.type)) return event.type;
   const seat = event.seat ?? 0;
   const who = event.player || names[seat] || `${zh ? "座位" : "Seat"} ${seat + 1}`;
   const action = event.action ?? {};
@@ -1039,8 +1078,8 @@ function findActionCard(action: Record<string, unknown>, view?: View) {
   );
 }
 
-function HumanActionChoice({item, view, brassView, disabled, submitting, onChoose}: {
-  item: LegalAction; view?: View; brassView?: BrassView; disabled: boolean; submitting: boolean; onChoose: () => void;
+function HumanActionChoice({item, view, brassView, disabled, submitting, selected, onChoose}: {
+  item: LegalAction; view?: View; brassView?: BrassView; disabled: boolean; submitting: boolean; selected: boolean; onChoose: () => void;
 }) {
   const lang = useLang(); const zh = lang === "zh";
   const kind = String(item.action.type);
@@ -1048,19 +1087,19 @@ function HumanActionChoice({item, view, brassView, disabled, submitting, onChoos
     const take = (item.action.take ?? {}) as Record<string, number>;
     const returned = (item.action.return ?? {}) as Record<string, number>;
     const returnColors = GEM_ORDER.filter(color => (returned[color] ?? 0) > 0);
-    return <button className="token-action-choice" disabled={disabled} onClick={onChoose} aria-label={humanActionText(item.action, lang)} title={`${humanActionText(item.action, lang)} · ${item.id}`}>
+    return <button className={`token-action-choice ${selected ? "selected" : ""}`} disabled={disabled} onClick={onChoose} aria-pressed={selected} aria-label={humanActionText(item.action, lang)} title={`${humanActionText(item.action, lang)} · ${item.id}`}>
       <span className="token-choice-gems">{GEM_ORDER.filter(color => (take[color] ?? 0) > 0).map(color => <Gem key={color} color={color} value={take[color]}/>)}</span>
       {returnColors.length > 0 && <span className="token-choice-return"><b>{zh ? "归还" : "Return"}</b>{returnColors.map(color => <Gem key={color} color={color} value={returned[color]} compact/>)}</span>}
       {submitting && <i>{zh ? "提交中…" : "Submitting…"}</i>}
     </button>;
   }
-  if (CENTURY_ACTION_TYPES.has(kind)) return <button className={`century-action-choice century-action-${kind}`} disabled={disabled} onClick={onChoose} title={item.id}>
+  if (CENTURY_ACTION_TYPES.has(kind)) return <button className={`century-action-choice century-action-${kind} ${selected ? "selected" : ""}`} disabled={disabled} aria-pressed={selected} onClick={onChoose} title={item.id}>
     <span>{ACTION_GROUPS[lang][kind]}</span><strong>{humanActionText(item.action, lang)}</strong>{submitting && <i>{zh ? "提交中…" : "Submitting…"}</i>}
   </button>;
   const card = CARD_ACTION_TYPES.has(kind) ? findActionCard(item.action, view) : undefined;
-  if (!card) return <button disabled={disabled} onClick={onChoose}><strong>{humanActionText(item.action, lang, brassView)}</strong><small>{item.id}{submitting ? (zh ? " · 提交中…" : " · submitting…") : ""}</small></button>;
+  if (!card) return <button className={selected ? "selected" : ""} aria-pressed={selected} disabled={disabled} onClick={onChoose}><strong>{humanActionText(item.action, lang, brassView)}</strong><small>{item.id}{submitting ? (zh ? " · 提交中…" : " · submitting…") : ""}</small></button>;
   const payment = tokenText((item.action.payment ?? item.action.return ?? {}) as Record<string, number>, lang);
-  return <button className={`card-action-choice card-${card.bonus}`} disabled={disabled} onClick={onChoose} aria-label={humanActionText(item.action, lang)}>
+  return <button className={`card-action-choice card-${card.bonus} ${selected ? "selected" : ""}`} disabled={disabled} onClick={onChoose} aria-pressed={selected} aria-label={humanActionText(item.action, lang)}>
     <span className="card-action-label">{kind === "reserve_visible" ? (zh ? "预留" : "Reserve") : (zh ? "购买" : "Buy")}</span>
     <span className="card-action-top"><strong>{card.points || "·"}</strong><b>{GEM_META[card.bonus]?.mark}</b></span>
     <Cost cost={card.cost}/>
@@ -1069,20 +1108,29 @@ function HumanActionChoice({item, view, brassView, disabled, submitting, onChoos
   </button>;
 }
 
-function AzulActionPicker({actions, disabled, submitting, onChoose}: {actions: LegalAction[]; disabled: boolean; submitting: string; onChoose: (item: LegalAction) => void}) {
+function AzulActionPicker({actions, disabled, submitting, selectedId, onSelect}: {actions: LegalAction[]; disabled: boolean; submitting: string; selectedId: string; onSelect: (item: LegalAction | null, requirement?: string) => void}) {
   const lang = useLang(); const zh = lang === "zh";
+  const t = makeT(lang);
   const sources = useMemo(() => [...new Set(actions.map(item => String(item.action.source)))], [actions]);
   const [selectedSource, setSelectedSource] = useState("");
-  const source = sources.includes(selectedSource) ? selectedSource : sources[0] || "";
-  const colors = AZUL_COLORS.filter(color => actions.some(item => item.action.source === source && item.action.color === color));
+  const source = sources.includes(selectedSource) ? selectedSource : "";
+  const colors = source ? AZUL_COLORS.filter(color => actions.some(item => item.action.source === source && item.action.color === color)) : [];
   const [selectedColor, setSelectedColor] = useState<AzulColor | "">("");
-  const color = colors.includes(selectedColor as AzulColor) ? selectedColor : colors[0] || "";
-  const choices = actions.filter(item => item.action.source === source && item.action.color === color);
+  const color = colors.includes(selectedColor as AzulColor) ? selectedColor : "";
+  const choices = color ? actions.filter(item => item.action.source === source && item.action.color === color) : [];
   return <div className="azul-action-picker">
-    <div><span>1 · {zh ? "来源" : "Source"}</span>{sources.map(value => <button key={value} className={source === value ? "selected" : ""} onClick={() => {setSelectedSource(value); setSelectedColor("");}} disabled={disabled}>{value === "center" ? (zh ? "中央区" : "Center") : `${zh ? "工厂" : "Factory"} ${value.replace("factory-", "")}`}</button>)}</div>
-    <div><span>2 · {zh ? "颜色" : "Color"}</span>{colors.map(value => <button key={value} className={color === value ? "selected" : ""} onClick={() => setSelectedColor(value)} disabled={disabled}><AzulTile color={value}/>{AZUL_META[value][lang]}</button>)}</div>
-    <div><span>3 · {zh ? "放置位置" : "Destination"}</span>{choices.map(item => <button key={item.id} onClick={() => onChoose(item)} disabled={disabled}>{item.action.destination === "floor" ? (zh ? "地板线" : "Floor") : `${zh ? "图案线" : "Pattern line"} ${String(item.action.destination).replace("pattern-line-", "")}`}{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>)}</div>
+    <div><span>1 · {zh ? "来源" : "Source"}</span>{sources.map(value => <button key={value} className={source === value ? "selected" : ""} aria-pressed={source === value} onClick={() => {setSelectedSource(value); setSelectedColor(""); onSelect(null, t("azul_color_required"));}} disabled={disabled}>{value === "center" ? (zh ? "中央区" : "Center") : `${zh ? "工厂" : "Factory"} ${value.replace("factory-", "")}`}</button>)}</div>
+    <div><span>2 · {zh ? "颜色" : "Color"}</span>{colors.length ? colors.map(value => <button key={value} className={color === value ? "selected" : ""} aria-pressed={color === value} onClick={() => {setSelectedColor(value); onSelect(null, t("azul_destination_required"));}} disabled={disabled}><AzulTile color={value}/>{AZUL_META[value][lang]}</button>) : <em>{t("azul_source_required")}</em>}</div>
+    <div><span>3 · {zh ? "放置位置" : "Destination"}</span>{choices.length ? choices.map(item => <button key={item.id} className={selectedId === item.id ? "selected" : ""} aria-pressed={selectedId === item.id} onClick={() => onSelect(item)} disabled={disabled}>{item.action.destination === "floor" ? (zh ? "地板线" : "Floor") : `${zh ? "图案线" : "Pattern line"} ${String(item.action.destination).replace("pattern-line-", "")}`}{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>) : <em>{source ? t("azul_color_required") : t("azul_source_required")}</em>}</div>
   </div>;
+}
+
+function HumanActionConfirmation({selected, brassView, issue, submitting, onConfirm}: {selected: LegalAction | null; brassView?: BrassView; issue: string; submitting: boolean; onConfirm: () => void}) {
+  const lang = useLang(); const t = makeT(lang);
+  return <footer className={`human-action-confirmation ${selected ? "is-ready" : ""} ${issue ? "has-error" : ""}`}>
+    <div><span>{selected ? t("selection_ready") : t("confirm_action")}</span><strong>{selected ? humanActionText(selected.action, lang, brassView) : t("confirm_idle")}</strong><small className={issue ? "validation-message" : ""} role={issue ? "alert" : undefined}>{issue || t("confirm_help")}</small></div>
+    <button type="button" disabled={submitting} onClick={onConfirm}><b>{submitting ? t("submitting") : t("confirm_submit")}</b><i>{selected ? "✓" : "!"}</i></button>
+  </footer>;
 }
 
 function ArkPlayerPanel({player, identity, active}: {player: ArkPlayerView; identity?: Snapshot["players"][number]; active: boolean}) {
@@ -1107,6 +1155,36 @@ const BRASS_LOCATION_ZH: Record<string, string> = {
   warrington: "沃灵顿", nottingham: "诺丁汉", shrewsbury: "什鲁斯伯里", gloucester: "格洛斯特", oxford: "牛津",
   farm_brewery_cannock: "坎诺克农场啤酒厂", farm_brewery_kidderminster_worcester: "基德明斯特／伍斯特农场啤酒厂",
 };
+const BRASS_MAP_POINTS: Record<string, BrassMapPoint> = {
+  warrington: {x: 135, y: 45, kind: "merchant"},
+  stoke_on_trent: {x: 245, y: 140, kind: "industry"},
+  stone: {x: 205, y: 245, kind: "industry"},
+  leek: {x: 455, y: 60, kind: "industry"},
+  belper: {x: 650, y: 72, kind: "industry"},
+  nottingham: {x: 870, y: 112, kind: "merchant"},
+  uttoxeter: {x: 465, y: 210, kind: "industry"},
+  derby: {x: 690, y: 225, kind: "industry"},
+  stafford: {x: 315, y: 335, kind: "industry"},
+  burton_on_trent: {x: 555, y: 330, kind: "industry"},
+  farm_brewery_cannock: {x: 190, y: 410, kind: "farm"},
+  cannock: {x: 390, y: 420, kind: "industry"},
+  tamworth: {x: 670, y: 420, kind: "industry"},
+  shrewsbury: {x: 75, y: 505, kind: "merchant"},
+  coalbrookdale: {x: 245, y: 520, kind: "industry"},
+  wolverhampton: {x: 390, y: 520, kind: "industry"},
+  walsall: {x: 525, y: 520, kind: "industry"},
+  nuneaton: {x: 745, y: 540, kind: "industry"},
+  dudley: {x: 430, y: 625, kind: "industry"},
+  birmingham: {x: 590, y: 645, kind: "industry"},
+  coventry: {x: 775, y: 665, kind: "industry"},
+  farm_brewery_kidderminster_worcester: {x: 170, y: 720, kind: "farm"},
+  kidderminster: {x: 300, y: 725, kind: "industry"},
+  redditch: {x: 595, y: 770, kind: "industry"},
+  oxford: {x: 825, y: 795, kind: "merchant"},
+  worcester: {x: 335, y: 845, kind: "industry"},
+  gloucester: {x: 570, y: 875, kind: "merchant"},
+};
+const BRASS_SEAT_COLORS = ["#c9483d", "#d9a52f", "#7650a0", "#5a6d78"];
 
 function brassLocationLabel(location: string, lang: Lang) {
   if (lang === "en") return location.replaceAll("_", " ").replace(/\b\w/g, c => c.toUpperCase());
@@ -1148,19 +1226,85 @@ function BrassMarket({label, market, resource}: {label: string; market: {prices:
   return <div className={`brass-market brass-market-${resource}`}><header><span>{label}</span><b>{market.occupied.filter(Boolean).length}</b></header><div>{market.prices.map((price, index) => <i key={index} className={market.occupied[index] ? "filled" : "empty"} title={`£${price}`}><small>£{price}</small></i>)}</div></div>;
 }
 
-function BrassBoard({view, players}: {view?: BrassView; players: Snapshot["players"]}) {
-  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
-  if (!view) return null;
+function BrassLiveMap({view, players, humanActions = [], disabled, submitting, selectedActionId, onChoose}: {
+  view: BrassView; players: Snapshot["players"]; humanActions?: LegalAction[];
+  disabled: boolean; submitting: string; selectedActionId: string; onChoose?: (item: LegalAction) => void;
+}) {
+  const lang = useLang(); const zh = lang === "zh";
+  const [zoom, setZoom] = useState(1);
+  const [expanded, setExpanded] = useState(false);
+  const [choiceTarget, setChoiceTarget] = useState<{label: string; actions: LegalAction[]} | null>(null);
+  useEffect(() => {
+    if (!expanded) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setExpanded(false); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [expanded]);
+  const choiceIsCurrent = choiceTarget?.actions.every(action => humanActions.some(item => item.id === action.id));
+  const currentChoice = choiceIsCurrent ? choiceTarget : null;
   const industryById = new Map(view.board.industries.map(industry => [industry.id, industry]));
   const linksByConnection = new Map(view.board.links.map(link => [link.connection_id, link]));
+  const merchantById = new Map(view.board.merchant_locations.map(merchant => [merchant.id, merchant]));
+  const targetActions = (values: unknown[]) => {
+    const keys = values.filter((value): value is string => typeof value === "string");
+    return humanActions.filter(item => keys.includes(String(item.action.slot_id || "")) || keys.includes(String(item.action.industry_id || "")) || keys.includes(String(item.action.source_id || "")));
+  };
+  const choose = (label: string, actions: LegalAction[]) => {
+    if (!actions.length || disabled || !onChoose) return;
+    if (actions.length === 1) onChoose(actions[0]);
+    else setChoiceTarget({label, actions});
+  };
+  return <section className={`brass-live-map ${expanded ? "is-expanded" : ""}`} aria-label={zh ? "伯明翰实时互动地图" : "Brass Birmingham live interactive map"}>
+    <header><div><span>LIVE NETWORK MAP</span><h3>{zh ? "实时产业与交通地图" : "Live industry & network map"}</h3></div><div className="brass-map-tools"><i>{humanActions.length ? (zh ? "可点击高亮目标" : "Highlighted targets are clickable") : (zh ? "实时观战" : "Live spectator")}</i><button className="map-focus" onClick={() => setExpanded(value => !value)} aria-label={expanded ? (zh ? "退出专注地图" : "Exit map focus") : (zh ? "专注地图" : "Focus map")}>{expanded ? "×" : "⛶"}</button><button onClick={() => setZoom(value => Math.max(.82, value - .14))} aria-label={zh ? "缩小地图" : "Zoom out"}>−</button><b>{Math.round(zoom * 100)}%</b><button onClick={() => setZoom(value => Math.min(1.55, value + .14))} aria-label={zh ? "放大地图" : "Zoom in"}>＋</button></div></header>
+    <div className="brass-map-legend"><span><i className="legend-open"/>{zh ? "可用线路" : "Available"}</span>{players.map(player => <span key={player.seat}><i style={{background: BRASS_SEAT_COLORS[player.seat]}}/>{player.name}</span>)}<span><i className="legend-action"/>{zh ? "本步合法目标" : "Legal target"}</span></div>
+    <div className="brass-map-viewport">
+      <div className="brass-map-stage" style={{width: `${zoom * 100}%`}}>
+        <svg className="brass-route-layer" viewBox="0 0 1000 920" role="img" aria-label={zh ? "运河与铁路连接" : "Canal and rail connections"}>
+          <defs><filter id="routeGlow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+          {view.board.connection_spaces.map(connection => {
+            const points = connection.endpoints.map(endpoint => BRASS_MAP_POINTS[endpoint]).filter(Boolean);
+            if (points.length < 2) return null;
+            const built = linksByConnection.get(connection.id);
+            const actions = humanActions.filter(item => item.action.connection_id === connection.id);
+            const eraActive = connection.available_eras.includes(view.era);
+            const hub = points.length === 2 ? null : {x: points.reduce((sum, point) => sum + point.x, 0) / points.length, y: points.reduce((sum, point) => sum + point.y, 0) / points.length};
+            const segments = hub ? points.map(point => [point, hub]) : [[points[0], points[1]]];
+            const label = connection.endpoints.map(endpoint => brassLocationLabel(endpoint, lang)).join(" ↔ ");
+            return <g key={connection.id} className={`brass-route ${built ? `built seat-${built.owner}` : eraActive ? "era-active" : "era-inactive"} ${actions.length ? "actionable" : ""} ${actions.some(item => item.id === selectedActionId) ? "selected" : ""}`} style={built ? {"--route-color": BRASS_SEAT_COLORS[built.owner]} as CSSProperties : undefined}>
+              {segments.map(([start, end], index) => <g key={index}><line className="route-visible" x1={start.x} y1={start.y} x2={end.x} y2={end.y}/><line className="route-hit" x1={start.x} y1={start.y} x2={end.x} y2={end.y} tabIndex={actions.length ? 0 : -1} role={actions.length ? "button" : undefined} aria-label={actions.length ? `${label} · ${zh ? "选择线路" : "choose route"}` : label} onClick={() => choose(label, actions)} onKeyDown={event => {if ((event.key === "Enter" || event.key === " ") && actions.length) choose(label, actions);}}/></g>)}
+            </g>;
+          })}
+        </svg>
+        {view.board.locations.map(location => {
+          const point = BRASS_MAP_POINTS[location.id]; if (!point) return null;
+          return <article key={location.id} className={`brass-map-city kind-${point.kind}`} style={{left: `${point.x / 10}%`, top: `${point.y / 9.2}%`}}>
+            <h4>{brassLocationLabel(location.id, lang)}</h4><div className="brass-map-slots">{location.industry_slots.map(slot => {
+              const tile = slot.industry_id ? industryById.get(slot.industry_id) : undefined;
+              const actions = targetActions([slot.id, tile?.id]);
+              const label = tile ? `${BRASS_INDUSTRY_LABELS[lang][tile.industry]} L${tile.level}` : slot.accepts.map(kind => BRASS_INDUSTRY_LABELS[lang][kind]).join("/");
+              return <button key={slot.id} className={`${tile ? `occupied seat-${tile.owner}` : "vacant"} ${actions.length ? "actionable" : ""} ${actions.some(item => item.id === selectedActionId) ? "selected" : ""}`} disabled={!actions.length || disabled} onClick={() => choose(`${brassLocationLabel(location.id, lang)} · ${label}`, actions)} title={`${label}${actions.length ? ` · ${zh ? "点击选择" : "click to choose"}` : ""}`}>
+                {tile ? <><i className={`industry-mark industry-${tile.industry}`}/><b>L{tile.level}</b><small>{tile.flipped ? "✓" : tile.resources ? `×${tile.resources}` : "○"}</small></> : <>{slot.accepts.map(kind => <i key={kind} className={`industry-mark industry-${kind}`}/>)}</>}
+              </button>;
+            })}</div>
+          </article>;
+        })}
+        {Object.entries(BRASS_MAP_POINTS).filter(([, point]) => point.kind === "merchant").map(([locationId, point]) => {
+          const merchant = merchantById.get(locationId);
+          return <article key={locationId} className={`brass-map-merchant ${merchant ? "active" : "inactive"}`} style={{left: `${point.x / 10}%`, top: `${point.y / 9.2}%`}}><h4>{brassLocationLabel(locationId, lang)}</h4><div>{merchant ? merchant.slots.map(slot => {const actions = targetActions([slot.id]); return <button key={slot.id} className={`${actions.length ? "actionable" : ""} ${actions.some(item => item.id === selectedActionId) ? "selected" : ""}`} disabled={!actions.length || disabled} onClick={() => choose(`${brassLocationLabel(locationId, lang)} · ${slot.buys}`, actions)}><span>{slot.buys === "any" ? "◆" : slot.buys === "blank" ? "—" : <i className={`industry-mark industry-${slot.buys}`}/>}</span><b>{slot.beer ? "🍺" : "·"}</b></button>;}) : <small>{zh ? "本人数无商人牌" : "No merchant tile"}</small>}</div></article>;
+        })}
+      </div>
+    </div>
+    {currentChoice && <div className="brass-map-choice"><header><div><span>{zh ? "地图目标" : "Map target"}</span><b>{currentChoice.label}</b></div><button onClick={() => setChoiceTarget(null)}>×</button></header><div>{currentChoice.actions.map(item => <button key={item.id} className={selectedActionId === item.id ? "selected" : ""} aria-pressed={selectedActionId === item.id} disabled={disabled} onClick={() => onChoose?.(item)}><strong>{humanActionText(item.action, lang, view)}</strong><small>{submitting === item.id ? (zh ? "提交中…" : "Submitting…") : item.id}</small></button>)}</div></div>}
+  </section>;
+}
+
+function BrassBoard({view, players, humanActions, disabled, submitting, selectedActionId, onChoose}: {view?: BrassView; players: Snapshot["players"]; humanActions?: LegalAction[]; disabled?: boolean; submitting?: string; selectedActionId?: string; onChoose?: (item: LegalAction) => void}) {
+  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
+  if (!view) return null;
   return <div className="brass-board">
     <section className="brass-status"><div><span>BRASS · BIRMINGHAM</span><h2>{view.era === "canal" ? t("brass_canal") : t("brass_rail")} · {zh ? `第 ${view.round} 轮` : `Round ${view.round}`}</h2></div><div><small>CURRENT DECISION</small><strong>{view.turn.decision.replaceAll("_", " ")}</strong><b>{view.turn.actions_remaining}/{view.turn.actions_total} {t("brass_actions")}</b></div><code>{view.rules_version}</code></section>
     <section className="brass-economy-board"><BrassMarket label={t("coal_market")} market={view.markets.coal} resource="coal"/><BrassMarket label={t("iron_market")} market={view.markets.iron} resource="iron"/><div className="brass-deck"><span>{t("deck_label")}</span><strong>{view.deck_count}</strong><small>{t("turn_order")} · {view.turn_order.map(seat => players[seat]?.name || seat + 1).join(" → ")}</small></div></section>
-    <section className="brass-map"><header><div><span>BLACK COUNTRY / BIRMINGHAM</span><h3>{t("brass_map_h")}</h3></div><b>{view.board.industries.length} {t("industries_unit")} · {view.board.links.length} {t("links_unit")}</b></header>
-      <div className="brass-city-grid">{view.board.locations.filter(location => location.kind === "industry").map(location => <article key={location.id}><h4>{brassLocationLabel(location.id, lang)}</h4><div>{location.industry_slots.map(slot => {const tile = slot.industry_id ? industryById.get(slot.industry_id) : undefined; return <span key={slot.id} className={tile ? `occupied seat-${tile.owner}` : "vacant"} title={slot.accepts.map(kind => BRASS_INDUSTRY_LABELS[lang][kind]).join(" / ")}>{tile ? <><i className={`industry-mark industry-${tile.industry}`}/><b>L{tile.level}</b><small>{tile.flipped ? t("flipped") : tile.resources ? `×${tile.resources}` : t("not_flipped")}</small></> : <small>{slot.accepts.map(kind => BRASS_INDUSTRY_LABELS[lang][kind]).join("/")}</small>}</span>;})}</div></article>)}</div>
-    </section>
-    <section className="brass-network"><header><span>{t("brass_conn")}</span><b>{view.era === "canal" ? t("canal") : t("rail")}</b></header><div>{view.board.connection_spaces.filter(space => space.available_eras.includes(view.era)).map(space => {const link = linksByConnection.get(space.id); return <span key={space.id} className={link ? `built seat-${link.owner}` : "open"}><b>{space.endpoints.map(l => brassLocationLabel(l, lang)).join(" ↔ ")}</b><small>{link ? players[link.owner]?.name || `${t("seat_label")} ${link.owner + 1}` : t("not_built")}</small></span>;})}</div></section>
-    <section className="brass-merchants"><header><span>MERCHANTS</span><h3>{t("brass_merchants")}</h3></header><div>{view.board.merchant_locations.map(merchant => <article key={merchant.id}><b>{brassLocationLabel(merchant.id, lang)}</b>{merchant.slots.map(slot => <span key={slot.id}>{slot.buys === "any" ? t("any_goods") : slot.buys === "blank" ? t("blank") : BRASS_INDUSTRY_LABELS[lang][slot.buys]}<i>{slot.beer ? "🍺" : "—"}</i></span>)}</article>)}</div></section>
+    <BrassLiveMap view={view} players={players} humanActions={humanActions} disabled={Boolean(disabled)} submitting={submitting || ""} selectedActionId={selectedActionId || ""} onChoose={onChoose}/>
   </div>;
 }
 
@@ -1185,6 +1329,11 @@ function ArkNovaBoard({view, players, legalActions, submitting, onChoose}: {
 }
 
 export default function Home() {
+  if (process.env.NEXT_PUBLIC_PAGES_RESULTS === "true") return <ArenaPage/>;
+  return <LocalHome/>;
+}
+
+function LocalHome() {
   const [lang, setLang] = useState<Lang>("zh");
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("abga-lang") : null;
@@ -1220,13 +1369,18 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const [chat, setChat] = useState<ChatTurn[]>([]);
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
-  const [reconnecting, setReconnecting] = useState(false);
-  const [reconnectId, setReconnectId] = useState("");
   const [controlling, setControlling] = useState(false);
   const [submittingAction, setSubmittingAction] = useState("");
+  const [humanActionState, setHumanActionState] = useState<{turnKey: string; selected: LegalAction | null; requirement: string; issue: string} | null>(null);
+  const [tables, setTables] = useState<TableSummary[]>([]);
+  const [watchId, setWatchId] = useState("");
   const sourceRef = useRef<EventSource | null>(null);
-  const autoReconnectRef = useRef(false);
   const finalBoardRef = useRef<HTMLElement | null>(null);
+  const watchingRef = useRef(false);
+  const humanTurnKey = snapshot?.human_turn ? `${snapshot.match_id}:${snapshot.human_turn.seat}:${snapshot.human_turn.version}` : "";
+  const currentHumanActionState = humanActionState?.turnKey === humanTurnKey ? humanActionState : null;
+  const selectedHumanAction = currentHumanActionState?.selected ?? null;
+  const humanActionIssue = currentHumanActionState?.issue ?? "";
   const humanSeat = snapshot?.human_turn?.seat ?? snapshot?.players.find(player => player.backend === "human")?.seat ?? 0;
   const viewer = snapshot?.views[humanSeat];
   const splendorView = snapshot?.game === "splendor" ? viewer as View : undefined;
@@ -1243,14 +1397,41 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const maxPlayers = game === "seven_wonders" ? 7 : game === "century_spice_road" ? 5 : 4;
   const minPlayers = game === "ark_nova" ? 1 : game === "seven_wonders" ? 3 : 2;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
+  const spectator = snapshot?.mode === "spectator";
+
+  async function watchMatch(matchId: string) {
+    const id = matchId.trim().toLowerCase();
+    if (!id || watchingRef.current && snapshot?.match_id === id) return;
+    watchingRef.current = true;
+    setStarting(true); setError(""); setTimeline([]); setChat([]); sourceRef.current?.close();
+    try {
+      const response = await fetch(api(`/api/matches/${id}`));
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || data.error || t("err_watch"));
+      attachMatch(data as Snapshot, true);
+    } catch (e) {
+      watchingRef.current = false;
+      setError(e instanceof Error ? e.message : String(e));
+    } finally { setStarting(false); }
+  }
 
   useEffect(() => {
-    if (autoReconnectRef.current || typeof window === "undefined") return;
-    autoReconnectRef.current = true;
-    const matchId = new URLSearchParams(window.location.search).get("match")?.trim() || "";
-    if (!matchId) return;
-    void reconnectMatch(matchId);
-    // The query string is intentionally consumed once on initial mount.
+    if (snapshot) return;
+    const controller = new AbortController();
+    function loadTables() {
+      fetch(api("/api/matches"), {signal: controller.signal})
+        .then(response => response.ok ? response.json() as Promise<{matches: TableSummary[]}> : Promise.reject())
+        .then(data => setTables(data.matches || []))
+        .catch(() => {});
+    }
+    loadTables();
+    const timer = window.setInterval(loadTables, 4000);
+    return () => { controller.abort(); window.clearInterval(timer); };
+  }, [snapshot]);
+
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("match");
+    if (requested && !watchingRef.current) void watchMatch(requested);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1316,7 +1497,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       ...p, provider, backend: provider === "custom" ? p.backend : preset.backend,
       base_url: provider === "custom" ? p.base_url : preset.url,
       model: provider === "custom" ? p.model : preset.models[0],
-      reasoning_effort: preset.backend === "codex" && p.reasoning_effort === "none" ? "max" : p.reasoning_effort,
+      reasoning_effort: ["codex", "qwen"].includes(preset.backend) && p.reasoning_effort === "none" ? "max" : p.reasoning_effort,
     } : p));
   }
 
@@ -1331,7 +1512,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   function attachMatch(data: Snapshot, resetHistory = true) {
     sourceRef.current?.close();
     if (resetHistory) { setTimeline([]); setChat([]); }
-    setSnapshot(data); setGame(data.game); setReconnectId(data.match_id);
+    setSnapshot(data); setGame(data.game);
     updateMatchUrl(data.match_id);
     requestAnimationFrame(() => window.scrollTo({top: 0, behavior: "smooth"}));
     const source = new EventSource(api(`/api/matches/${data.match_id}/events`));
@@ -1377,24 +1558,9 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     sourceRef.current = source;
   }
 
-  async function reconnectMatch(rawId = reconnectId) {
-    const matchId = rawId.trim();
-    if (!/^[a-f0-9]+$/.test(matchId)) {
-      setError(lang === "zh" ? "请输入有效的十六进制对局 ID。" : "Enter a valid hexadecimal match ID.");
-      return;
-    }
-    setReconnecting(true); setError("");
-    try {
-      const response = await fetch(api(`/api/matches/${matchId}`));
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || (lang === "zh" ? "找不到该对局；Web 服务可能已经重启。" : "Match not found; the Web service may have restarted."));
-      attachMatch(data as Snapshot, true);
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
-    finally { setReconnecting(false); }
-  }
-
   function leaveMatch() {
     sourceRef.current?.close(); sourceRef.current = null;
+    watchingRef.current = false;
     setSnapshot(null); setTimeline([]); setChat([]); setError("");
     updateMatchUrl();
   }
@@ -1456,13 +1622,39 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || "无法提交行动");
-      setSnapshot(data);
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+      setSnapshot(data); setHumanActionState(null);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message);
+      setHumanActionState(current => current?.turnKey === humanTurnKey ? {...current, issue: message} : current);
+    }
     finally { setSubmittingAction(""); }
+  }
+
+  function stageHumanAction(item: LegalAction | null, requirement = "") {
+    if (!humanTurnKey) return;
+    setError("");
+    setHumanActionState({turnKey: humanTurnKey, selected: item, requirement, issue: ""});
+  }
+
+  function confirmHumanAction() {
+    if (!snapshot?.human_turn || submittingAction) return;
+    if (!selectedHumanAction) {
+      const message = currentHumanActionState?.requirement || (snapshot.game === "azul" ? t("azul_source_required") : t("select_action_required"));
+      setHumanActionState({turnKey: humanTurnKey, selected: null, requirement: currentHumanActionState?.requirement || "", issue: message});
+      return;
+    }
+    const legalAction = snapshot.human_turn.legal_actions.find(item => item.id === selectedHumanAction.id);
+    if (!legalAction) {
+      setHumanActionState({turnKey: humanTurnKey, selected: null, requirement: "", issue: t("selection_expired")});
+      return;
+    }
+    void submitHumanAction(legalAction);
   }
 
   if (!snapshot) return <main className="setup-shell">
     <section className="hero">
+      <Link className="arena-link" href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/arena`}>Frontier 12 results →</Link>
       <button className="lang-toggle" onClick={toggleLang} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
       <div className="eyebrow">{t("hero_eyebrow")} / {GAME_COPY[game].eyebrow}</div>
       <h1>{t("hero_title_a")}<br/><i>{t("hero_title_b")}</i>{t("hero_title_c")}</h1>
@@ -1470,7 +1662,28 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       <div className="hero-marks"><span>{t("hero_mark_1")}</span><span>{t("hero_mark_2")}</span><span>{game === "ark_nova" ? t("hero_mark_ark") : t("hero_mark_3")}</span></div>
     </section>
     <section className="setup-card">
-      <form className="reconnect-match" onSubmit={event => {event.preventDefault(); void reconnectMatch();}}><div><span>RECONNECT</span><b>{t("reconnect")}</b><small>{t("reconnect_hint")}</small></div><label><span>{t("reconnect_id")}</span><input value={reconnectId} onChange={event => setReconnectId(event.target.value.trim())} placeholder="77b7da9272034fee" spellCheck={false}/></label><button disabled={reconnecting || !reconnectId}>{reconnecting ? t("reconnecting") : t("reconnect")}</button></form>
+      <section className="live-tables">
+        <header>
+          <div><span>{t("live_tables")}</span><h2>{t("watch_live")}</h2></div>
+          <form className="watch-form" onSubmit={event => { event.preventDefault(); void watchMatch(watchId); }}>
+            <label htmlFor="watch-id">{t("watch_id")}</label>
+            <input id="watch-id" value={watchId} spellCheck={false} placeholder="b8323d2a27f34578" onChange={event => setWatchId(event.target.value)}/>
+            <button type="submit" disabled={starting || watchId.trim().length < 8}>{starting ? t("watching") : t("watch")}</button>
+          </form>
+        </header>
+        <div className="live-table-list">
+          {tables.length === 0 && <p className="live-table-empty">{t("no_tables")}</p>}
+          {tables.map(table => {
+            const names = table.players.map(player => player.name).filter(Boolean);
+            const title = names.length ? names.join(" vs ") : table.match_id;
+            return <button type="button" key={table.match_id} onClick={() => void watchMatch(table.match_id)}>
+              <strong>{title}</strong>
+              <span>{GAME_COPY[table.game]?.name[lang] || table.game} · {t("turn")} {table.turn_count} · {table.status === "finished" ? t("s_finished") : t("s_active")}</span>
+              <code>{table.match_id}</code>
+            </button>;
+          })}
+        </div>
+      </section>
       <div className="game-picker" role="group" aria-label={t("pick_game")}>{(Object.keys(GAME_COPY) as GameId[]).map(id => <button key={id} className={game === id ? "selected" : ""} onClick={() => selectGame(id)}><span>{GAME_COPY[id].badge}</span><b>{GAME_COPY[id].name[lang]}</b><small>{GAME_COPY[id].note[lang]}</small></button>)}</div>
       <header><div><span>{t("new_table")}</span><h2>{t("create_table")}{GAME_COPY[game].name[lang]}</h2></div><div className="matchup-presets">{game === "ark_nova" && <button className={players.length === 1 ? "selected-preset" : ""} onClick={setSoloMatch}>{zh ? "单人模式" : "Solo"}</button>}<button onClick={() => setMatchup("human")}>{t("g_human")}</button><button onClick={() => setMatchup("harness")}>{t("g_harness")}</button><b>{players.length} {t("players_count")}</b></div></header>
       {game === "ark_nova" && <ArkNovaWorkbench lang={lang}/>}
@@ -1478,13 +1691,13 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`${p.name} ${t("move_up")}`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`${p.name} ${t("move_down")}`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>{t("f_name")}</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
         {!(["random", "human"] as Backend[]).includes(p.backend) && <>
-          <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>{t("f_provider")}</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label={t("og_harness")}>{(["claude_code", "pi", "codex", "opencode", "dsh", "hermes", "minimal"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup><optgroup label={t("og_direct")}>{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup></select></div>
+          <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>{t("f_provider")}</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label={t("og_harness")}>{(["claude_code", "pi", "qwen", "codex", "cursor", "grok", "opencode", "dsh", "hermes", "minimal"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup><optgroup label={t("og_direct")}>{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup></select></div>
           <div className="field backend-field"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).filter(([id]) => id !== "random").map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select></div>
           {p.backend === "codex" && <div className="field auth-field"><label htmlFor={`${p.id}-auth`}>{t("f_auth")}</label><select id={`${p.id}-auth`} value={p.auth_mode} onChange={e => updatePlayer(p.id, {auth_mode: e.target.value as AuthMode})}><option value="subscription">{t("auth_subscription")}</option><option value="api_key">{t("auth_api_key")}</option></select></div>}
           {!(p.backend === "codex" && p.auth_mode === "subscription") && <div className="field grow endpoint-field"><label htmlFor={`${p.id}-endpoint`}>{t("f_endpoint")}</label><input id={`${p.id}-endpoint`} value={p.base_url} placeholder={t("ph_endpoint")} onChange={e => updatePlayer(p.id, {provider: "custom", base_url: e.target.value})}/></div>}
           <div className="field model-field"><label htmlFor={`${p.id}-model`}>{t("f_model")}</label><input id={`${p.id}-model`} list={`${p.id}-models`} placeholder={t("ph_model")} value={p.model} onChange={e => updatePlayer(p.id, {model: e.target.value})}/><datalist id={`${p.id}-models`}>{PROVIDERS[p.provider].models.map(model => <option key={model} value={model}/>)}</datalist></div>
           {!(p.backend === "codex" && p.auth_mode === "subscription") && <div className="field key-field"><label htmlFor={`${p.id}-key`}>{t("f_key")}</label><input id={`${p.id}-key`} type="password" autoComplete="off" placeholder={t("ph_key")} value={p.api_key} onChange={e => updatePlayer(p.id, {api_key: e.target.value})}/></div>}
-          {HARNESS_BACKENDS.has(p.backend) && <div className="field reasoning-field"><label htmlFor={`${p.id}-reasoning`}>Reasoning Effort</label><select id={`${p.id}-reasoning`} value={p.reasoning_effort} onChange={e => updatePlayer(p.id, {reasoning_effort: e.target.value as ReasoningEffort})}>{REASONING_OPTIONS.filter(option => p.backend !== "codex" || option.value !== "none").map(option => <option key={option.value} value={option.value}>{option.label[lang]}</option>)}</select></div>}
+          {HARNESS_BACKENDS.has(p.backend) && <div className="field reasoning-field"><label htmlFor={`${p.id}-reasoning`}>Reasoning Effort</label><select id={`${p.id}-reasoning`} value={p.reasoning_effort} onChange={e => updatePlayer(p.id, {reasoning_effort: e.target.value as ReasoningEffort})}>{REASONING_OPTIONS.filter(option => !["codex", "qwen"].includes(p.backend) || option.value !== "none").map(option => <option key={option.value} value={option.value}>{option.label[lang]}</option>)}</select></div>}
           <div className="provider-note">{PROVIDERS[p.provider].note[lang]}</div>
         </>}
         {(["random", "human"] as Backend[]).includes(p.backend) && <div className="field manual-backend"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select><small>{p.backend === "human" ? t("human_note") : t("random_note")}</small></div>}
@@ -1512,10 +1725,10 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
  return <main className="table-shell">
     <header className="table-header">
       <div><span className="brand-mark">ABGA</span><strong>{snapshot.game_description.name} {snapshot.game === "splendor" ? t("live_table") : snapshot.game === "century_spice_road" ? t("trade_arena") : t("controlled_arena")}</strong></div>
-      <div className="match-meta"><span>{t("match")} <a className="match-reconnect-link" href={`?match=${snapshot.match_id}`} title={lang === "zh" ? "此对局的恢复链接" : "Reconnect link for this match"}><code>{snapshot.match_id}</code></a></span><span>{t("turn")} <b>{snapshot.turn_count}</b>{snapshot.game === "ark_nova" && <> · {t("decision")} <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span><span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? t("s_finished") : snapshot.paused ? (snapshot.pause_pending ? t("s_wait_pause") : t("s_paused")) : t("s_active")}</span></div>
+      <div className="match-meta"><span>{t("match")} <a className="match-reconnect-link" href={`?match=${snapshot.match_id}`} title={lang === "zh" ? "此对局的恢复链接" : "Reconnect link for this match"}><code>{snapshot.match_id}</code></a></span><span>{t("turn")} <b>{snapshot.turn_count}</b>{snapshot.game === "ark_nova" && <> · {t("decision")} <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span>{spectator && <span className="status status-setup">{t("spectator")}</span>}<span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? t("s_finished") : snapshot.paused ? (snapshot.pause_pending ? t("s_wait_pause") : t("s_paused")) : t("s_active")}</span></div>
       <div className="table-actions">
         <button className="lang-toggle" onClick={toggleLang} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
-        <button className={`pause-button ${snapshot.paused ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? t("processing") : snapshot.paused ? t("resume") : t("pause")}</button>
+        {!spectator && <button className={`pause-button ${snapshot.paused ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? t("processing") : snapshot.paused ? t("resume") : t("pause")}</button>}
         <button onClick={leaveMatch}>{t("new_match")}</button>
       </div>
     </header>
@@ -1542,16 +1755,22 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
                 ? <CenturyPlayerPanel key={identity.seat} player={visiblePlayer as CenturyPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
                 : <SevenPlayerPanel key={identity.seat} player={visiblePlayer as SevenPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
       })}</aside>
-      <section className="board" ref={finalBoardRef}>
+      <section className={`board ${snapshot.human_turn ? "has-human-action" : ""}`} ref={finalBoardRef}>
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? t("pause_pending") : t("paused")}</strong><span>{snapshot.pause_pending ? t("pause_pending_desc") : t("paused_desc")}</span></div>}
         {snapshot.human_turn && <section className="human-turn" aria-live="polite">
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}{t("pick_action")}</h2></div><b>{snapshot.human_turn.legal_actions.length} {t("legal_opts")}</b></header>
-          {snapshot.game === "azul" ? <AzulActionPicker actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} onChoose={submitHumanAction}/> : arkMapInteraction ? <div className="ark-map-action-notice"><div><b>{lang === "zh" ? "请在对应板块直接操作" : "Act directly on the matching board"}</b><span>{lang === "zh" ? "行动牌、手牌和地图位于玩家板；展示牌与抽牌位于整体游戏板；协会事务位于协会板。" : "Action cards, hand, and map are on the player board; display and draw actions are on the main board; association tasks are on the association board."}</span></div>{snapshot.human_turn.legal_actions.filter(item => !isArkTableAction(item)).map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
+          {snapshot.game === "azul" ? <AzulActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : arkMapInteraction ? <div className="ark-map-action-notice"><div><b>{lang === "zh" ? "请在对应板块直接操作" : "Act directly on the matching board"}</b><span>{lang === "zh" ? "行动牌、手牌和地图位于玩家板；展示牌与抽牌位于整体游戏板；协会事务位于协会板。" : "Action cards, hand, and map are on the player board; display and draw actions are on the main board; association tasks are on the association board."}</span></div>{snapshot.human_turn.legal_actions.filter(item => !isArkTableAction(item)).map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
             <h3>{ACTION_GROUPS[lang][kind] || kind}<span>{actions.length}</span></h3>
-            <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} onChoose={() => submitHumanAction(item)}/>)}</div>
+            <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div>
           </section>)}</div>}
+          <HumanActionConfirmation selected={selectedHumanAction} brassView={brassView} issue={humanActionIssue} submitting={Boolean(submittingAction)} onConfirm={confirmHumanAction}/>
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players} legalActions={snapshot.human_turn?.legal_actions || []} submitting={submittingAction} onChoose={submitHumanAction}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/>
+          : snapshot.game === "azul" ? <AzulBoard view={azulView}/>
+          : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players} legalActions={snapshot.human_turn?.legal_actions || []} submitting={submittingAction} onChoose={item => stageHumanAction(item)}/>
+          : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/>
+          : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/>
+          : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
         {snapshot.status === "finished" && snapshot.game === "ark_nova" && snapshot.match_report && <ArkNovaMatchReport report={snapshot.match_report} lang={lang}/>}
       </section>
       <aside className="timeline">
