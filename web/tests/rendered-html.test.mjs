@@ -183,6 +183,10 @@ test("Ark Nova table exposes the public board, association, summary, and interac
   assert.match(source, /association-task-button/);
   assert.match(source, /association-claim-button/);
   assert.match(source, /conservation_project/);
+  assert.match(source, /selectedProjectTier/);
+  assert.match(source, /ark-project-reward-timing/);
+  assert.match(source, /档位奖励前领取/);
+  assert.match(source, /档位奖励后领取/);
   assert.match(source, /release_animal/);
   assert.match(source, /donation_slots/);
   assert.match(source, /ark-donate-button/);
@@ -217,6 +221,7 @@ test("Ark Nova table exposes the public board, association, summary, and interac
   assert.match(styles, /\.ark-pending-map-reward/);
   assert.match(styles, /\.association-lane\.is-actionable/);
   assert.match(styles, /\.ark-public-summary/);
+  assert.match(styles, /\.ark-project-reward-instruction/);
   assert.match(styles, /\.ark-action-token/);
   assert.match(styles, /\.ark-summary-score/);
   assert.match(source, /arkControllerLabels/);

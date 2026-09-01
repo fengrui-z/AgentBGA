@@ -1414,10 +1414,17 @@ class SemanticEngine:
         seat = frame.get("target_seat")
         if seat is None:
             seat = frame["actor_seat"]
+        ignore_reputation = bool(
+            frame.get("operation", {}).get("args", {}).get("ignore_reputation")
+        )
         options = []
         if state["zoo_deck"] or state["zoo_discard"]:
             options.append({"id": "deck", "label": "Draw from the deck", "value": {"source": "deck"}})
-        limit = reputation_display_limit(state["players"][seat]["tracks"]["reputation"])
+        limit = (
+            len(state["card_display"])
+            if ignore_reputation else
+            reputation_display_limit(state["players"][seat]["tracks"]["reputation"])
+        )
         session = state["turn"].get("action_session") or {}
         positions = None
         for key in ("animals_resolution", "sponsors_resolution", "cards_resolution"):
@@ -1443,8 +1450,12 @@ class SemanticEngine:
         if not options:
             return
         self._open_choice(
-            state, frame, seat=seat, prompt="Take a Map reward card",
-            options=options, continuation={"type": "take_map_reward_card", "seat": seat},
+            state, frame, seat=seat,
+            prompt=("Snap a card from the deck or any display folder" if ignore_reputation else "Take a Map reward card"),
+            options=options, continuation={
+                "type": "take_map_reward_card", "seat": seat,
+                "ignore_reputation": ignore_reputation,
+            },
         )
 
     def _take_any_map_placement_bonus(

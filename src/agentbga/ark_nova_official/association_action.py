@@ -568,7 +568,7 @@ def _project_token_reward_presentation(
     slot_id: str, *, recurring: bool,
 ) -> dict[str, Any]:
     names = {
-        "card": ("精选一张牌", "Take one card from the deck or reputation range"),
+        "card": ("精选：从牌库抽一张或从展示区任选一张", "Snap one card from the deck or any display folder"),
         "enclosure-2": ("免费建造一个2格普通围栏", "Build one size-2 standard enclosure for free"),
         "money-5": ("获得5金币", "Gain 5 money"),
         "conservation-1": ("获得1保护点数", "Gain 1 conservation"),

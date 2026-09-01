@@ -379,6 +379,31 @@ class ArkNovaOfficialP5ProjectTests(unittest.TestCase):
         self.assertEqual(35, state["players"][0]["money"])
         self.assertTrue(any(event["type"] == "money_changed" for event in events))
 
+    def test_player_board_snap_reward_offers_every_display_card(self):
+        state, species = self.state_with_project("ark-nova:base-project-101", base=True)
+        state["players"][0]["icons"].update({
+            icon: 1 for icon in ("bear", "bird", "herbivore", "predator", "primate")
+        })
+        state["players"][0]["tracks"]["reputation"] = 0
+        state["zoo_deck"] = [{"id": "deck-card", "kind": "animal"}]
+        state["card_display"] = [
+            {"id": f"display-{index}", "kind": "animal"}
+            for index in range(1, 7)
+        ]
+        state, _ = support_project(
+            self.engine, state, 0, species, "high",
+            token_slot_id="card", token_bonus_timing="before",
+        )
+        choice = state["resolution"]["pending_choice"]
+        self.assertEqual(
+            "Snap a card from the deck or any display folder",
+            choice["prompt"],
+        )
+        self.assertEqual(
+            {"deck", *(f"display-display-{index}" for index in range(1, 7))},
+            {option["id"] for option in choice["options"]},
+        )
+
     def test_map_a_replaces_worker_project_reward_with_two_reputation(self):
         state = new_semantic_state(2, seed=53, map_id="map-a")
         state["phase"] = "active"

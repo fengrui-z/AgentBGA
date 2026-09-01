@@ -324,7 +324,9 @@ def support_project(
 
 def _project_token_effects(slot_id: str, timing: str) -> list[dict[str, Any]]:
     definitions: dict[str, tuple[str, dict[str, Any]]] = {
-        "card": ("take_map_reward_card", {}),
+        # The player-board Snap reward may take any display card; unlike the
+        # generic map-card reward it is not limited by Reputation range.
+        "card": ("take_map_reward_card", {"ignore_reputation": True}),
         "enclosure-2": ("place_free_building", {
             "building_types": ["standard_enclosure_2"], "maximum": 1,
         }),
