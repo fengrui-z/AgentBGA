@@ -15,15 +15,17 @@ Agent = Model × Harness × Memory × Prompt × Tool Interface × Compute Budget
 ## 当前实现
 
 项目目前已经实现可完整运行的《璀璨宝石》基础版规则环境，以及《方舟动物园》的
-官方基础版候选引擎。后者已接通 235 种基础卡面（四人局共 255 张实体牌）、五类
+官方基础版 Map 0 发布引擎。后者已接通 235 种基础卡面（四人局共 255 张实体牌）、五类
 行动牌、Map 0、固定多格建筑、Break、保护项目、互动效果、终局牌和轨道相交计分；
 并已进入统一的隐藏信息、持久化、回放与 Web 协议。默认新对局使用
-`base-1.2-faq-v2-semantic.1`，旧的 `base-1.2-controlled-core.6` 仍可用于既有对局的
-精确回放。
+`base-1.2-faq-v2-map0.1`。旧的 `base-1.2-controlled-core.6` 仍可用于它自己生成的
+既有对局；开发期 `semantic.1` 没有作为不可变发布版本保留。
 
-当前仍标记为 `official_base_candidate` 而不是伪造 `released`：出版商美术和逐字牌文
-不进入仓库，用户限定范围之外的 9 张高级地图尚未实现，内容清单也没有冒充已经完成
-两名独立人工复核。程序化卡牌、Map 0 和整局生命周期的发布门禁见
+当前内容包的发布范围明确限定为基础版 Map 0；Map A 可以在 CLI/Web 中显式选择，
+但其状态标记为 `preview`，不属于 `map0.1` 的发布审校声明，Map 1–8 仍未实现。
+出版商美术和逐字牌文不进入仓库。235 张卡牌通过
+JSON、Excel、中英文文档交叉核验，235 张牌、9 个奖励板块和 Map 0 又分别通过独立的
+运行时场景复核；这两项是可重现的审校流程，并不冒充两名人工审校者。发布门禁见
 [`ark-nova/p8-release-gate.md`](ark-nova/p8-release-gate.md)。
 
 两款游戏现在建立在同一个 `GamePlugin` 协议与可复用机制内核上。内核包含稳定
@@ -68,13 +70,22 @@ Codex + DeepSeek
 
 也可以固定 Harness、替换模型，或者构造完整的 Model × Harness 交叉评测。
 
-每个 Harness 座位拥有独立的工作目录和跨回合 session。模型通过三个统一工具参与游戏：
+每个 Harness 座位拥有独立的工作目录和跨回合 session。模型通过座位隔离的统一工具参与游戏：
 
 ```text
-observe()              查看本座位当前可见状态
-legal_actions()        获取当前全部合法动作
-submit_action(id)      提交且仅提交一个合法动作
+observe()                    查看紧凑的本座位可见状态与本回合增量
+legal_actions(group,cursor)  分组、分页获取当前合法动作
+inspect_card(ref)            按需查看当前可见卡牌详情
+inspect_rules(topic)         按主题查看与引擎一致的规则说明，避免从动作 ID 猜规则
+inspect_map(seat,sections)   按需查看公开地图及指定分区
+inspect_played_cards(seat)   按需查看公开的已打出卡牌
+inspect_history(since)       查看本座位此前观察到的状态变化
+submit_action(id)            提交且仅提交一个合法动作
+read_notes()/write_notes()   读取或更新跨回合策略笔记
 ```
+
+方舟动物园默认不会在每个决策重复发送完整地图和所有卡牌程序；按需资源索引只由已经过
+座位隐私投影的 observation 建立，因此不能借助详情工具读取对手手牌或终局牌。
 
 Harness 默认允许最多 600 秒完成一次决策，并统一请求最高思考强度。最终实际支持程度仍取决于模型服务是否兼容对应的 reasoning 参数和 API 协议。
 

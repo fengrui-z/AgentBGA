@@ -14,3 +14,9 @@ web/.next/
 web/.vinext/
 web/.wrangler/
 web/dist/
+
+# Local Ark Nova match-analysis and verbose baseline traces. Keep the reusable
+# methodology and compact release evidence in Git; keep per-match/raw runs local.
+docs/ark-nova/match-audit-*.md
+docs/ark-nova/match-*-score-trend.png
+docs/ark-nova/random-baseline-audit-*/

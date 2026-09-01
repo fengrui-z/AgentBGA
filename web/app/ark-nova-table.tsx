@@ -5,7 +5,11 @@ import {createPortal} from "react-dom";
 
 export type ArkLang = "zh" | "en";
 export type ArkIdentity = {seat: number; name: string; backend?: string; model?: string};
-export type ArkLegalAction = {id: string; label?: string; action: Record<string, unknown>};
+export type ArkLegalAction = {
+  id: string; label?: string; benefit_summary?: string; benefit_summary_cn?: string;
+  recurring?: boolean; reward_timing?: string; reward_timing_cn?: string; reward_timing_en?: string;
+  action: Record<string, unknown>;
+};
 export type ArkCard = {
   id?: string; kind?: string; card_type?: string; tags?: string[]; continent?: string; implementation?: string;
   display_title?: string; display_summary?: string;
@@ -28,7 +32,8 @@ export type ArkCell = {
   placement_bonus?: ArkEffect; requires_build_upgrade?: boolean;
 };
 export type ArkBuilding = {
-  id: string; type: string; size: number; shape_id?: string; rotation?: number; occupied: boolean; cells: {q: number; r: number}[];
+  id: string; type: string; size: number; shape_id?: string; rotation?: number; occupied: boolean;
+  used_capacity?: number; animal_ids?: string[]; cells: {q: number; r: number}[];
 };
 export type ArkMap = {
   id: string; name: string; geometry_status: string; reference_status?: string; cells: ArkCell[]; buildings: ArkBuilding[];
@@ -50,7 +55,7 @@ export type ArkMapDisplay = {
   player_board?: {
     partner_zoo_ladder: ArkAssetLadderSlot[]; university_ladder: ArkAssetLadderSlot[];
     workers: {available: number; committed: number; locked: {slot: number; status: string; unlock_reward?: ArkEffect | null}[]};
-    conservation_programs: {kind: string; slots: {id: string; reward: ArkEffect; status: string}[]}[];
+    conservation_programs: {kind: string; slots: {id: string; reward: ArkEffect; recurring?: boolean; status: "claimed" | "available" | "unavailable"}[]}[];
   };
   coverage?: {covered: number; total: number; complete: boolean; reward?: {type?: string; amount?: number}; status: "available" | "claimed"};
 };
@@ -67,19 +72,42 @@ export type ArkPlayerView = {
   upgrade_rewards_claimed: number[]; conservation_rewards_claimed?: number[];
   conservation_tokens_on_map?: number; final_card_choice_resolved: boolean;
   public_summary?: ArkPlayerSummaryView; map_display?: ArkMapDisplay;
+  next_break_projection?: {
+    money_income: {appeal: number; kiosks: number; other: number; base_total: number; guaranteed_recurring: number; estimated_total: number; note_cn: string; note_en: string};
+    workers_to_recall: number; hand_discard_required: number; action_tokens_to_clear: number;
+    recurring_rewards: {source_id: string; kind: string; title_cn: string; title_en: string; timing_cn: string; timing_en: string; conditional: boolean; guaranteed_money: number; resolved_mechanics: ArkCard["resolved_mechanics"]}[];
+    association_replenishes: boolean; display_refreshes: boolean;
+  };
 };
 export type ArkProject = {
   id: string; instance_id?: string; tag: string; levels: number[]; claims?: {seat: number; level: number; level_id?: string}[]; implementation?: string;
   blocked_levels?: string[];
   display_title?: string; display_summary?: string; criterion_cn?: string; criterion_en?: string;
-  tiers?: {id?: string; requirement?: number | string | null; conservation?: number; reputation?: number}[];
+  tiers?: {id?: string; requirement?: number | string | null; conservation?: number; reputation?: number; blocked?: boolean}[];
+};
+export type ArkDonationSlot = {
+  position: number; cost: number; status: "available" | "claimed" | "blocked" | "repeatable";
+  seat?: number | null; source?: string | null; donation_count?: number; seats?: (number | null)[];
+};
+export type ArkSoloBoard = {
+  round: number; rounds: number; round_size: number; tokens_left: number; tokens_moved: number;
+  completed_breaks: number; schedule: number[]; next_boundary: "break" | "final_scoring";
+  starting_appeal: number; donation_blocks: {cost?: number | null; source?: string; position?: number | string}[];
+  donation_spaces: ArkDonationSlot[]; tokens_next_to_12: number;
 };
 export type ArkView = {
   game: "ark_nova"; rules_version: string; implementation_status: string; status: string; phase: string;
   viewer_seat?: number;
   turn_count: number; decision_count: number; active_seat: number;
+  endgame?: {
+    triggered: boolean; triggered_by: number | null; remaining_final_turn_seats: number[];
+    is_my_final_action: boolean; scoring_after_this_action: boolean;
+    instruction_cn: string; instruction_en: string;
+  };
   turn: {active_seat: number; decision: string; action_card: string | null; remaining_plays: number};
   break_track: {position: number; limit?: number; start_marker: string; triggered: boolean};
+  break_rules_summary?: {mode: string; title_cn: string; title_en: string; recurring_rule_cn: string; recurring_rule_en: string; steps: {order: number; key: string; description_cn: string; description_en: string}[]};
+  solo_board?: ArkSoloBoard | null;
   card_display: ArkCard[]; game_board_bonus_tiles: {
     id: string; milestone?: number; available?: boolean; label?: string; label_cn?: string; label_en?: string;
     implementation?: string; effects?: ({type?: string; amount?: number; op?: string; args?: Record<string, unknown>})[];
@@ -87,14 +115,14 @@ export type ArkView = {
   deck_count: number; discard_count: number; base_conservation_projects: ArkProject[]; zoo_conservation_projects?: ArkProject[];
   association_board: {
     partner_zoos: Record<string, number>; universities: Record<string, number>; blocked_two_player: string[];
-    donations: {seat: number; cost: number}[];
+    donations: {seat: number | null; cost: number}[];
   };
   association_display?: {
     partner_zoos: {id: string; remaining: number; owners: number[]}[];
     universities: {id: string; remaining: number; owners: number[]}[];
     workers: {seat: number; task?: string; workers?: number}[];
-    donations: {seat: number; cost: number}[];
-    donation_slots?: {position: number; cost: number; status: "available" | "claimed"; seat?: number | null}[];
+    donations: {seat: number | null; cost: number}[];
+    donation_slots?: ArkDonationSlot[];
     blocked_spaces: string[];
   };
   public_tracks?: Record<"break" | "appeal" | "conservation" | "reputation", {
@@ -131,11 +159,11 @@ const CONTINENT_META: Record<string, {mark: string; zh: string; en: string}> = {
   australia: {mark: "AU", zh: "澳洲", en: "Australia"},
 };
 const TAG_META: Record<string, {mark: string; zh: string; en: string}> = {
-  bird: {mark: "B", zh: "鸟类", en: "Bird"}, predator: {mark: "P", zh: "肉食", en: "Predator"},
-  herbivore: {mark: "H", zh: "草食", en: "Herbivore"}, reptile: {mark: "R", zh: "爬行", en: "Reptile"},
-  primate: {mark: "M", zh: "猴类", en: "Primate"}, bear: {mark: "BE", zh: "熊", en: "Bear"},
-  petting_zoo: {mark: "PE", zh: "萌宠", en: "Petting"}, research: {mark: "RS", zh: "研究", en: "Research"},
-  rock: {mark: "MT", zh: "山", en: "Rock"}, water: {mark: "WT", zh: "水", en: "Water"},
+  bird: {mark: "🐦", zh: "鸟类", en: "Bird"}, predator: {mark: "🦁", zh: "肉食", en: "Predator"},
+  herbivore: {mark: "🐼", zh: "草食", en: "Herbivore"}, reptile: {mark: "🐊", zh: "爬行", en: "Reptile"},
+  primate: {mark: "🐵", zh: "猴类", en: "Primate"}, bear: {mark: "🐻", zh: "熊", en: "Bear"},
+  petting_zoo: {mark: "🐰", zh: "萌宠", en: "Petting"}, research: {mark: "🔬", zh: "研究", en: "Research"},
+  rock: {mark: "🛘", zh: "山", en: "Rock"}, water: {mark: "💧", zh: "水", en: "Water"},
 };
 const BUILDING_META: Record<string, {mark: string; zh: string; en: string}> = {
   standard_enclosure: {mark: "E", zh: "普通围栏", en: "Enclosure"}, pavilion: {mark: "P", zh: "凉亭", en: "Pavilion"},
@@ -423,11 +451,24 @@ function currentTrackScore(player: ArkPlayerView) {
   return player.appeal + conservationScore;
 }
 
+function arkControllerLabels(identity: ArkIdentity | undefined, lang: ArkLang) {
+  const backend = identity?.backend?.trim().toLowerCase() || "unknown";
+  const model = identity?.model?.trim() || (
+    backend === "human"
+      ? copy(lang, "人类玩家", "Human player")
+      : backend === "random"
+        ? copy(lang, "随机基线", "Random baseline")
+        : copy(lang, "未记录模型", "Model not recorded")
+  );
+  return {model, harness: backend.replaceAll("_", " ").toUpperCase()};
+}
+
 export function ArkNovaPlayerSummary({player, identity, active = false, lang}: {
   player: ArkPlayerView; identity?: ArkIdentity; active?: boolean; lang: ArkLang;
 }) {
   const handLimit = player.public_summary?.resources.hand_limit ?? (player.universities.includes("hand-limit-5") ? 5 : 3);
   const actions = [...(player.public_summary?.action_cards || player.action_cards)].sort((a, b) => a.strength - b.strength);
+  const controller = arkControllerLabels(identity, lang);
   return <section className={`player-panel ark-public-summary ${active ? "active-player" : ""}`}
     style={{"--player-color": PLAYER_COLORS[player.seat] || PLAYER_COLORS[0]} as React.CSSProperties}>
     <header>
@@ -437,6 +478,11 @@ export function ArkNovaPlayerSummary({player, identity, active = false, lang}: {
         <span className="ark-summary-score" title={copy(lang, "当前分数 = 魅力 + 保护点数分值", "Current score = Appeal + Conservation score")}><strong>{currentTrackScore(player)}</strong><small>{copy(lang, "分", "VP")}</small></span>
       </div>
     </header>
+    <div className="ark-summary-controller" title={`${copy(lang, "模型", "Model")}: ${controller.model} · Harness: ${controller.harness}`}
+      aria-label={copy(lang, "模型与 Harness", "Model and harness")}>
+      <span><small>MODEL</small><b>{controller.model}</b></span>
+      <span><small>HARNESS</small><b>{controller.harness}</b></span>
+    </div>
     <div className="ark-summary-primary" aria-label={copy(lang, "主要公开资源", "Public resources")}>
       <span><i>×</i><b>{player.x_tokens}</b><small>X</small></span>
       <span><i>R</i><b>{player.reputation}</b><small>{copy(lang, "声望", "REP")}</small></span>
@@ -580,6 +626,33 @@ function AppealConservationTrack({view, identities, lang}: {
   </section>;
 }
 
+function SoloBoard({board, lang}: {board: ArkSoloBoard; lang: ArkLang}) {
+  const difficulty = board.starting_appeal === 20
+    ? copy(lang, "标准 · 魅力 20", "Standard · Appeal 20")
+    : board.starting_appeal === 10
+      ? copy(lang, "进阶 · 魅力 10", "Advanced · Appeal 10")
+      : copy(lang, "专家 · 魅力 0", "Expert · Appeal 0");
+  const boundary = board.next_boundary === "break"
+    ? copy(lang, "触发休息阶段", "trigger a Break")
+    : copy(lang, "直接进入终局计分", "proceed directly to final scoring");
+  const statusLabel = (slot: ArkDonationSlot) => {
+    if (slot.status === "blocked") return copy(lang, "单人标记封锁", "blocked by solo token");
+    if (slot.status === "claimed") return copy(lang, `玩家 ${Number(slot.seat) + 1} 已捐款`, `Player ${Number(slot.seat) + 1} donated`);
+    if (slot.status === "repeatable") return slot.donation_count
+      ? copy(lang, `可重复 · 已捐 ${slot.donation_count} 次`, `repeatable · ${slot.donation_count} donation(s)`)
+      : copy(lang, "可重复捐款", "repeatable donation");
+    return copy(lang, "当前可用", "available");
+  };
+  return <section className="ark-surface ark-solo-board" aria-label={copy(lang, "单人游戏板", "Solo board")}>
+    <header className="ark-surface-header"><div><span>SOLO BOARD · MAP 0</span><h2>{copy(lang, "单人游戏板", "Solo board")}</h2></div><div className="ark-solo-round-summary"><b>{copy(lang, "轮次", "ROUND")} {board.round}/{board.rounds}</b><span>{difficulty}</span><small>{copy(lang, "本轮剩余行动", "Turns remaining this round")} {board.tokens_left}</small></div></header>
+    <div className="ark-solo-schedule" aria-label={copy(lang, "六轮行动数", "Six-round turn schedule")}>{board.schedule.map((size, index) => <span key={size} className={index + 1 < board.round ? "completed" : index + 1 === board.round ? "current" : "future"}><small>R{index + 1}</small><b>{size}</b><i>{index + 1 < board.round ? "✓" : index + 1 === board.round ? copy(lang, "当前", "NOW") : "·"}</i></span>)}</div>
+    <div className="ark-solo-board-grid">
+      <section className="ark-solo-token-tile"><header><b>{copy(lang, "未使用标记", "UNUSED")}</b><span>{copy(lang, "每次行动后移动一个标记", "Move one token after every turn")}</span><b>{copy(lang, "已使用标记", "USED")}</b></header><div>{Array.from({length: board.round_size}, (_, index) => { const moved = index < board.tokens_moved; return <span key={index} className={moved ? "moved" : "remaining"} aria-label={copy(lang, `本轮标记 ${index + 1}${moved ? "已移动" : "未移动"}`, `Round token ${index + 1} ${moved ? "moved" : "unused"}`)}><i>{moved ? "" : "●"}</i><small>{index + 1}</small><i>{moved ? "●" : ""}</i></span>;})}</div><footer><b>{board.tokens_left}</b><span>{copy(lang, "次行动后", "turn(s), then")} {boundary}</span></footer></section>
+      <section className="ark-solo-donations"><header><b>{copy(lang, "动态捐款占位", "DYNAMIC DONATION BLOCKS")}</b><span>{copy(lang, "休息时封锁当前最小空位；12 金币格可重复", "At each Break, block the cheapest open space; 12 remains repeatable")}</span></header><div>{board.donation_spaces.map(slot => <span key={slot.position} className={`status-${slot.status}`} title={statusLabel(slot)}><b>{slot.cost} ₡</b><i>{slot.status === "blocked" ? "◆" : slot.status === "claimed" ? String(Number(slot.seat) + 1) : slot.status === "repeatable" ? "∞" : "○"}</i><small>{statusLabel(slot)}</small>{slot.cost === 12 && board.tokens_next_to_12 > 0 && <em>◆ × {board.tokens_next_to_12}</em>}</span>)}</div></section>
+    </div>
+  </section>;
+}
+
 function GameBoard({view, identities, lang, legalActions, submitting, onChoose, selectedAnimal, onSelectAnimal}: {
   view: ArkView; identities: ArkIdentity[]; lang: ArkLang; legalActions: ArkLegalAction[]; submitting: string;
   onChoose?: (action: ArkLegalAction) => void; selectedAnimal: string; onSelectAnimal: (cardId: string) => void;
@@ -606,10 +679,11 @@ function GameBoard({view, identities, lang, legalActions, submitting, onChoose, 
     <header className="ark-surface-header"><div><span>GAME BOARD</span><h2>{copy(lang, "整体游戏板", "Main game board")}</h2></div><div className="ark-turn-stamp"><span>{copy(lang, "当前决策", "CURRENT DECISION")}</span><b>{view.turn.decision.replaceAll("_", " ")}</b></div></header>
     <div className="ark-game-board-scroll"><div className="ark-game-board-canvas">
       <div className="ark-public-tracks">
-        <TrackLane label={copy(lang, "休息", "BREAK")} tone="break" max={view.public_tracks?.break.maximum ?? view.break_track.limit ?? Math.max(9, view.break_track.position + 3)} values={breakValues} rewards={view.public_tracks?.break.rewards} lang={lang}/>
+        {!view.solo_board && <TrackLane label={copy(lang, "休息", "BREAK")} tone="break" max={view.public_tracks?.break.maximum ?? view.break_track.limit ?? Math.max(9, view.break_track.position + 3)} values={breakValues} rewards={view.public_tracks?.break.rewards} lang={lang}/>}
         <AppealConservationTrack view={view} identities={identities} lang={lang}/>
         <TrackLane label={copy(lang, "声望", "REPUTATION")} tone="reputation" min={view.public_tracks?.reputation.minimum ?? 1} max={view.public_tracks?.reputation.maximum ?? maximum("reputation", 15)} values={values("reputation")} rewards={view.public_tracks?.reputation.rewards} lang={lang}/>
         <div className="ark-track-reward-legend"><b>{copy(lang, "进度奖励图例", "TRACK REWARD LEGEND")}</b>{rewardLegend.map(reward => <span key={reward.kind} title={trackRewardLabel(reward.kind, lang)}><i>{reward.symbol}</i>{trackRewardLabel(reward.kind, lang)}</span>)}</div>
+        {view.break_rules_summary && <details className="ark-break-rules"><summary>{lang === "zh" ? view.break_rules_summary.title_cn : view.break_rules_summary.title_en}</summary><ol>{view.break_rules_summary.steps.map(step => <li key={step.key}><b>{step.order}</b><span>{lang === "zh" ? step.description_cn : step.description_en}</span></li>)}</ol><p>{lang === "zh" ? view.break_rules_summary.recurring_rule_cn : view.break_rules_summary.recurring_rule_en}</p></details>}
       </div>
       <div className="ark-board-lower">
       <section className="ark-card-display">
@@ -676,11 +750,6 @@ function AssociationBoard({view, identities, lang, legalActions, submitting, onC
     "research-2": {mark: "RS×2", label: copy(lang, "研究大学", "Research university"), reward: copy(lang, "获得 2 个研究图标", "2 research icons")},
     "research-reputation": {mark: "RS+R", label: copy(lang, "声望大学", "Reputation university"), reward: copy(lang, "研究图标 ×1、声望 +2", "1 research icon, +2 reputation")},
     "hand-limit-5": {mark: "RS+H5", label: copy(lang, "手牌大学", "Hand university"), reward: copy(lang, "研究图标 ×1、手牌上限 5", "1 research icon, hand limit 5")},
-    "animal-bird": {mark: "B+RS", label: copy(lang, "鸟类合作大学", "Bird partner university"), reward: copy(lang, "鸟类图标、研究图标，并抽取一张鸟类动物", "Bird + research icons; draw a Bird Animal")},
-    "animal-reptile": {mark: "R+RS", label: copy(lang, "爬行类合作大学", "Reptile partner university"), reward: copy(lang, "爬行图标、研究图标，并抽取一张爬行动物", "Reptile + research icons; draw a Reptile Animal")},
-    "animal-primate": {mark: "M+RS", label: copy(lang, "猴类合作大学", "Primate partner university"), reward: copy(lang, "猴类图标、研究图标，并抽取一张猴类动物", "Primate + research icons; draw a Primate Animal")},
-    "animal-herbivore": {mark: "H+RS", label: copy(lang, "食草类合作大学", "Herbivore partner university"), reward: copy(lang, "食草图标、研究图标，并抽取一张食草动物", "Herbivore + research icons; draw a Herbivore Animal")},
-    "animal-predator": {mark: "P+RS", label: copy(lang, "食肉类合作大学", "Predator partner university"), reward: copy(lang, "食肉图标、研究图标，并抽取一张食肉动物", "Predator + research icons; draw a Predator Animal")},
   };
   return <section className="ark-surface ark-association-board">
     <header className="ark-surface-header"><div><span>ASSOCIATION BOARD</span><h2>{copy(lang, "协会板", "Association board")}</h2></div><p>{copy(lang, "空槽会保留，并标出领取者；事务员按实际任务位置显示。", "Empty slots remain visible and show their owner; workers sit on their committed task.")}</p></header>
@@ -708,14 +777,16 @@ function AssociationBoard({view, identities, lang, legalActions, submitting, onC
       const source = item.action.source ? String(item.action.source) : "";
       const tokenSlot = item.action.token_slot_id ? String(item.action.token_slot_id) : "";
       const timing = item.action.token_bonus_timing ? String(item.action.token_bonus_timing) : "";
+      const benefit = lang === "zh" ? item.benefit_summary_cn : item.benefit_summary;
+      const timingLabel = lang === "zh" ? item.reward_timing_cn : item.reward_timing_en;
       return <button key={item.id} disabled={Boolean(submitting)} onClick={() => onChoose?.(item)} title={item.label || projectId}>
         <span>{item.label?.split(" · ")[0] || visibleCardTitle(projectId)}</span>
         <b>{copy(lang, "档位", "Tier")} {levelId}{source ? ` · ${source === "hand" ? copy(lang, "来自手牌", "from hand") : copy(lang, "来自展示区", "from display")}` : ""}</b>
         {releaseAnimal ? <small>{copy(lang, "放归动物", "Release animal")} {visibleCardTitle(releaseAnimal)}<br/>{copy(lang, "释放围栏", "Free enclosure")} {releaseEnclosure}</small> : <small>{copy(lang, "满足项目条件并获得该档奖励", "Meet the project condition and gain this tier's reward")}</small>}
-        {tokenSlot && <em>{copy(lang, "解锁玩家板", "Unlock player board")} {tokenSlot} · {timing === "after" ? copy(lang, "项目奖励后", "after project reward") : copy(lang, "项目奖励前", "before project reward")}</em>}
+        {tokenSlot && <em>{benefit || `${copy(lang, "解锁玩家板", "Unlock player board")} ${tokenSlot}`}<br/>{timingLabel || (timing === "after" ? copy(lang, "项目奖励后", "after project reward") : copy(lang, "项目奖励前", "before project reward"))}</em>}
       </button>;
     })}</div></section>}
-    <footer className="ark-donation-row"><b>{copy(lang, "捐款", "Donations")}</b>{(view.association_display?.donation_slots || view.association_board.donations.map((donation, index) => ({position: index + 1, cost: donation.cost, status: "claimed" as const, seat: donation.seat}))).map(slot => <span key={slot.position} className={slot.status}>{slot.seat !== null && slot.seat !== undefined ? <PlayerToken seat={slot.seat} label={playerName(identities, slot.seat, lang)}/> : <small>{slot.position}</small>}<i>{slot.cost} ₡</i></span>)}{donationAction && <button className="ark-donate-button" disabled={Boolean(submitting)} onClick={() => onChoose?.(donationAction)}>{copy(lang, "捐款", "Donate")} {String(donationAction.action.cost)} ₡</button>}{view.association_board.blocked_two_player.length > 0 && <em>{copy(lang, "双人封锁", "2P blocked")} × {view.association_board.blocked_two_player.length}</em>}</footer>
+    <footer className="ark-donation-row"><b>{copy(lang, "捐款", "Donations")}</b>{(view.association_display?.donation_slots || view.association_board.donations.map((donation, index) => ({position: index + 1, cost: donation.cost, status: "claimed" as const, seat: donation.seat}))).map(slot => <span key={slot.position} className={slot.status} title={slot.status === "blocked" ? copy(lang, "单人标记封锁", "Blocked by solo token") : slot.status === "repeatable" ? copy(lang, "12 金币捐款可重复", "The 12-money donation is repeatable") : undefined}>{slot.status === "blocked" ? <small className="solo-block">◆</small> : slot.seat !== null && slot.seat !== undefined ? <PlayerToken seat={slot.seat} label={playerName(identities, slot.seat, lang)}/> : <small>{slot.status === "repeatable" ? "∞" : slot.position}</small>}<i>{slot.cost} ₡</i>{slot.status === "repeatable" && Boolean(slot.donation_count) && <sup>×{slot.donation_count}</sup>}</span>)}{donationAction && <button className="ark-donate-button" disabled={Boolean(submitting)} onClick={() => onChoose?.(donationAction)}>{copy(lang, "捐款", "Donate")} {String(donationAction.action.cost)} ₡</button>}{view.association_board.blocked_two_player.length > 0 && <em>{copy(lang, "双人封锁", "2P blocked")} × {view.association_board.blocked_two_player.length}</em>}</footer>
   </section>;
 }
 
@@ -725,6 +796,29 @@ function PlayerToken({seat, label}: {seat: number; label: string}) {
 
 function hexKey(cell: {q: number; r: number}) { return `${cell.q}:${cell.r}`; }
 function buildingName(type: string, lang: ArkLang) { return BUILDING_META[type]?.[lang] || type.replaceAll("_", " "); }
+const CAPACITY_ENCLOSURES = new Set(["petting_zoo", "reptile_house", "large_bird_aviary"]);
+function buildingCapacity(building: ArkBuilding) {
+  if (!CAPACITY_ENCLOSURES.has(building.type)) return "";
+  return `${Number(building.used_capacity || 0)}/${building.size}`;
+}
+function buildingResidence(building: ArkBuilding, lang: ArkLang) {
+  if (CAPACITY_ENCLOSURES.has(building.type)) {
+    const used = Number(building.used_capacity || 0);
+    return `${used > 0 ? copy(lang, "已入住", "occupied") : copy(lang, "空置", "empty")} · ${copy(lang, "容量", "capacity")} ${used}/${building.size}`;
+  }
+  return building.occupied ? copy(lang, "已入住", "occupied") : copy(lang, "空置", "empty");
+}
+function mapBuildingClasses(building: ArkBuilding) {
+  const classes = [`building-${building.type}`];
+  if (building.type === "standard_enclosure") {
+    classes.push(building.occupied ? "enclosure-occupied" : "enclosure-empty");
+  } else if (building.type.startsWith("unique_sponsor_")) {
+    classes.push("building-sponsor");
+  } else if (["petting_zoo", "reptile_house", "large_bird_aviary"].includes(building.type)) {
+    classes.push("building-special-enclosure");
+  }
+  return classes.join(" ");
+}
 
 function ZooMap({player, lang, legalActions, submitting, onChoose, selectedAnimal}: {
   player: ArkPlayerView; lang: ArkLang; legalActions: ArkLegalAction[]; submitting: string;
@@ -806,18 +900,18 @@ function ZooMap({player, lang, legalActions, submitting, onChoose, selectedAnima
         const key = hexKey(cell); const building = buildingByCell.get(key); const played = building ? cardByEnclosure.get(building.id) : undefined;
         const legal = legalCells.has(key); const animalLegal = building ? animalEnclosures.has(building.id) && !effectiveBuild : false;
         const position = point(cell); const reward = rewardByCell.get(key); const bonusEffect = cell.placement_bonus || reward?.effect; const bonus = benefitLabel(bonusEffect, lang);
-        return <button key={key} data-hex={key} type="button" className={`ark-map-hex terrain-${cell.terrain} ${cell.requires_build_upgrade ? "requires-build-upgrade" : ""} ${building ? `is-built building-${building.type}` : ""} ${legal ? "is-legal" : ""} ${previewCells.has(key) ? "is-preview" : ""} ${animalLegal ? "is-animal-target" : ""} ${selectedCellKey === key ? "is-selected" : ""} ${reward?.status === "claimed" ? "bonus-claimed" : ""}`}
+        return <button key={key} data-hex={key} type="button" className={`ark-map-hex terrain-${cell.terrain} ${cell.requires_build_upgrade ? "requires-build-upgrade" : ""} ${building ? `is-built ${mapBuildingClasses(building)}` : ""} ${legal ? "is-legal" : ""} ${previewCells.has(key) ? "is-preview" : ""} ${animalLegal ? "is-animal-target" : ""} ${selectedCellKey === key ? "is-selected" : ""} ${reward?.status === "claimed" ? "bonus-claimed" : ""}`}
           style={{left: position.x, top: position.y}} onClick={() => clickCell(cell, building)}
           onKeyDown={event => moveFocus(event, cell)}
           onMouseEnter={() => {const action = filteredPlacements.find(item => hexKey(item.action.anchor as {q: number; r: number}) === key); setHoveredAction(action?.id || "");}}
           onMouseLeave={() => setHoveredAction("")} disabled={Boolean(submitting)}
-          aria-label={`${cell.q}, ${cell.r} · ${cell.terrain}${cell.requires_build_upgrade ? ` · ${copy(lang, "需要建造 II", "requires Build II")}` : ""}${building ? ` · ${buildingName(building.type, lang)} ${building.size}` : ""}${bonusEffect ? ` · ${bonus}` : ""}${reward?.status === "claimed" ? ` · ${copy(lang, "奖励已领取", "reward claimed")}` : ""}`}>
-          <small>{cell.q},{cell.r}</small>{cell.requires_build_upgrade && !building && <u>II</u>}{building && <b>{BUILDING_META[building.type]?.mark || "B"}<i>{building.size}</i></b>}{played && <em>{played.id?.replace("research-animal-", "A")}</em>}{bonusEffect && !building && <strong>{bonus}</strong>}{reward?.status === "claimed" && <span title={copy(lang, "此格的放置奖励已领取", "Placement reward collected")}>◆</span>}
+          aria-label={`${cell.q}, ${cell.r} · ${cell.terrain}${cell.requires_build_upgrade ? ` · ${copy(lang, "需要建造 II", "requires Build II")}` : ""}${building ? ` · ${buildingName(building.type, lang)} ${building.size}${building.type === "standard_enclosure" || CAPACITY_ENCLOSURES.has(building.type) ? ` · ${buildingResidence(building, lang)}` : ""}` : ""}${bonusEffect ? ` · ${bonus}` : ""}${reward?.status === "claimed" ? ` · ${copy(lang, "奖励已领取", "reward claimed")}` : ""}`}>
+          <small>{cell.q},{cell.r}</small>{cell.terrain === "water" && <span className="ark-terrain-symbol" aria-hidden="true">💧</span>}{cell.terrain === "rock" && <span className="ark-terrain-symbol" aria-hidden="true">🛘</span>}{cell.requires_build_upgrade && !building && <u>II</u>}{building && <b>{BUILDING_META[building.type]?.mark || "B"}<i className={buildingCapacity(building) ? "capacity" : ""}>{buildingCapacity(building) || building.size}</i></b>}{played && <em>{played.id?.replace("research-animal-", "A")}</em>}{bonusEffect && !building && <strong>{bonus}</strong>}{reward?.status === "claimed" && <span title={copy(lang, "此格的放置奖励已领取", "Placement reward collected")}>◆</span>}
         </button>;
       })}
     </div></div>
-    <div className="ark-map-legend"><span><i className="terrain-buildable"/>{copy(lang, "土地", "Land")}</span><span><i className="terrain-water"/>{copy(lang, "水源", "Water")}</span><span><i className="terrain-rock"/>{copy(lang, "山脉", "Rock")}</span><span><i className="requires-build-upgrade"/>Build II</span><span><i className="is-built"/>{copy(lang, "建筑", "Building")}</span><span><i className="is-legal"/>{copy(lang, "合法落点", "Legal")}</span></div>
-    <section className="ark-cell-inspector" aria-live="polite"><span>{copy(lang, "格子检查器", "Cell inspector")}</span>{selectedCell ? <div><b>q {selectedCell.q} · r {selectedCell.r}</b><i>{selectedCell.terrain === "buildable" ? copy(lang, "可建土地", "Buildable land") : selectedCell.terrain === "water" ? copy(lang, "水源", "Water") : copy(lang, "山脉", "Rock")}</i><strong>{selectedBuilding ? `${buildingName(selectedBuilding.type, lang)} · ${copy(lang, "大小", "size")} ${selectedBuilding.size} · ${selectedBuilding.occupied ? copy(lang, "已入住", "occupied") : copy(lang, "空置", "empty")}` : copy(lang, "无建筑", "No building")}</strong><small>{selectedReward ? `${benefitLabel(selectedReward.effect, lang)} · ${selectedReward.status === "claimed" ? copy(lang, "已领取", "claimed") : copy(lang, "未领取", "available")}` : copy(lang, "无放置奖励", "No placement reward")}</small></div> : <p>{copy(lang, "点击任意六边形查看地形、建筑与奖励。方向键可在相邻格间移动焦点。", "Click any hex for terrain, building, and reward details. Arrow keys move focus between adjacent cells.")}</p>}</section>
+    <div className="ark-map-legend"><span><i className="terrain-buildable"/>{copy(lang, "土地", "Land")}</span><span><i className="terrain-water"/>{copy(lang, "水源", "Water")}</span><span><i className="terrain-rock"/>{copy(lang, "山脉", "Rock")}</span><span><i className="requires-build-upgrade"/>Build II</span><span><i className="enclosure-empty"/>{copy(lang, "未入住围栏", "Empty enclosure")}</span><span><i className="enclosure-occupied"/>{copy(lang, "已入住围栏", "Occupied enclosure")}</span><span><i className="building-kiosk"/>{copy(lang, "商亭", "Kiosk")}</span><span><i className="building-pavilion"/>{copy(lang, "凉亭", "Pavilion")}</span><span><i className="building-sponsor"/>{copy(lang, "赞助商建筑", "Sponsor building")}</span><span><i className="building-special-enclosure"/>{copy(lang, "特殊围栏", "Special enclosure")}</span><span><i className="is-legal"/>{copy(lang, "合法落点", "Legal")}</span></div>
+    <section className="ark-cell-inspector" aria-live="polite"><span>{copy(lang, "格子检查器", "Cell inspector")}</span>{selectedCell ? <div><b>q {selectedCell.q} · r {selectedCell.r}</b><i>{selectedCell.terrain === "buildable" ? copy(lang, "可建土地", "Buildable land") : selectedCell.terrain === "water" ? copy(lang, "水源", "Water") : copy(lang, "山脉", "Rock")}</i><strong>{selectedBuilding ? `${buildingName(selectedBuilding.type, lang)} · ${copy(lang, "大小", "size")} ${selectedBuilding.size} · ${buildingResidence(selectedBuilding, lang)}` : copy(lang, "无建筑", "No building")}</strong><small>{selectedReward ? `${benefitLabel(selectedReward.effect, lang)} · ${selectedReward.status === "claimed" ? copy(lang, "已领取", "claimed") : copy(lang, "未领取", "available")}` : copy(lang, "无放置奖励", "No placement reward")}</small></div> : <p>{copy(lang, "点击任意六边形查看地形、建筑与奖励。方向键可在相邻格间移动焦点。", "Click any hex for terrain, building, and reward details. Arrow keys move focus between adjacent cells.")}</p>}</section>
   </div>;
 }
 
@@ -1008,7 +1102,16 @@ function PlayedCardArea({player, lang}: {player: ArkPlayerView; lang: ArkLang}) 
     const cards = player.played_cards.filter(knownCard)
       .filter(card => (card.card_type || card.kind) === group.type)
       .map(card => card.card_type ? card : {...card, card_type: card.kind});
-    return <section key={group.type}><header><b>{group.title}</b><small>{cards.length} {copy(lang, "张", "cards")}</small></header><div>{cards.length ? cards.map(card => <article key={card.id} aria-label={readableCardLabel(card, lang)} className={`ark-readable-card card-${group.type}`}><ReadableCardFace card={card} lang={lang}/>{card.enclosure_id && <footer><span>{copy(lang, "围栏", "Enclosure")} {card.enclosure_id}</span></footer>}</article>) : <em>{copy(lang, "尚无卡牌", "No cards yet")}</em>}</div></section>;
+    const sizes = group.type === "animal" ? {
+      small: cards.filter(card => Number(card.enclosure_size) >= 1 && Number(card.enclosure_size) <= 2).length,
+      medium: cards.filter(card => Number(card.enclosure_size) === 3).length,
+      large: cards.filter(card => Number(card.enclosure_size) >= 4).length,
+    } : null;
+    return <section key={group.type}><header><b>{group.title}</b>{sizes && <div className="ark-animal-size-summary" aria-label={copy(lang, "按所需围栏大小统计动物", "Animals by required enclosure size")}>
+      <span title={copy(lang, "小型动物：所需围栏不超过 2 格", "Small animals: enclosure requirement up to 2")}><i>≤2</i><strong>{sizes.small}</strong></span>
+      <span title={copy(lang, "中型动物：需要 3 格围栏", "Medium animals: enclosure requirement 3")}><i>3</i><strong>{sizes.medium}</strong></span>
+      <span title={copy(lang, "大型动物：需要至少 4 格围栏", "Large animals: enclosure requirement 4 or more")}><i>≥4</i><strong>{sizes.large}</strong></span>
+    </div>}<small>{cards.length} {copy(lang, "张", "cards")}</small></header><div>{cards.length ? cards.map(card => <article key={card.id} aria-label={readableCardLabel(card, lang)} className={`ark-readable-card card-${group.type}`}><ReadableCardFace card={card} lang={lang}/>{card.enclosure_id && <footer className="ark-played-enclosure-ref" title={`${copy(lang, "入住围栏", "Enclosure")} ${card.enclosure_id}`}><span><b>{copy(lang, "围栏", "Enclosure")}</b> {card.enclosure_id}</span></footer>}</article>) : <em>{copy(lang, "尚无卡牌", "No cards yet")}</em>}</div></section>;
   })}</div></section>;
 }
 
@@ -1021,7 +1124,7 @@ function rewardLabel(effect: ArkEffect | null | undefined, lang: ArkLang) {
   return benefitLabel(effect, lang);
 }
 
-function PlayerBoardLists({player, lang}: {player: ArkPlayerView; lang: ArkLang}) {
+function PlayerBoardLists({player, lang, legalActions}: {player: ArkPlayerView; lang: ArkLang; legalActions: ArkLegalAction[]}) {
   const board = player.map_display?.player_board;
   if (!board) return null;
   const associationUpgraded = player.action_cards.find(card => card.action === "association")?.upgraded;
@@ -1037,9 +1140,18 @@ function PlayerBoardLists({player, lang}: {player: ArkPlayerView; lang: ArkLang}
       <span>{copy(lang, "大学", "Universities")}</span>
       <ol>{board.university_ladder.map(slot => <li key={slot.level} className={slot.status}><b>{slot.level}</b><strong>{assetName(slot.asset)}</strong><small>{rewardLabel(slot.reward, lang)}</small></li>)}</ol>
     </section>
-    {board.conservation_programs.map(program => <section key={program.kind} className="ark-program-rewards"><span>{program.kind === "immediate_and_income" ? copy(lang, "保护项目：立即 + 休息收入", "Conservation: immediate + income") : copy(lang, "保护项目：立即奖励", "Conservation: immediate reward")}</span>
-      <ul>{program.slots.map(slot => <li key={slot.id} className={slot.status}><b>{slot.status === "claimed" ? "✓" : "○"}</b><strong>{rewardLabel(slot.reward, lang)}</strong><small>{slot.status === "claimed" ? copy(lang, "已开放", "Unlocked") : copy(lang, "未解锁", "Locked")}</small></li>)}</ul>
+    {board.conservation_programs.map(program => <section key={program.kind} className="ark-program-rewards"><span>{program.kind === "immediate_and_income" ? copy(lang, "保护项目：立即 + 每次休息", "Conservation: immediate + every Break") : copy(lang, "保护项目：立即奖励", "Conservation: immediate reward")}</span>
+      <ul>{program.slots.map(slot => {
+        const selectableNow = legalActions.some(item => String(item.action.token_slot_id || "") === slot.id);
+        const status = slot.status === "claimed" ? copy(lang, "已领取并生效", "Claimed and active")
+          : selectableNow ? copy(lang, "未领取 · 当前可选", "Unclaimed · selectable now")
+            : slot.status === "available" ? copy(lang, "未领取 · 完成保护项目时可选", "Unclaimed · choose when supporting a project")
+              : copy(lang, "当前不可选", "Currently unavailable");
+        const timing = slot.recurring ? copy(lang, "立即一次 + 每次休息一次（持续）", "once immediately + once every Break (recurring)") : copy(lang, "立即一次", "once immediately");
+        return <li key={slot.id} className={`${slot.status} ${selectableNow ? "selectable-now" : ""}`}><b>{slot.status === "claimed" ? "✓" : selectableNow ? "!" : "○"}</b><strong>{rewardLabel(slot.reward, lang)}<em>{timing}</em></strong><small>{status}</small></li>;
+      })}</ul>
     </section>)}
+    {player.next_break_projection && <section className="ark-next-break"><span>{copy(lang, "下一次休息预计", "Next Break projection")}</span><p><b>₡{player.next_break_projection.money_income.estimated_total}</b><small>{copy(lang, "预计金币", "estimated money")} = {copy(lang, "魅力", "Appeal")} {player.next_break_projection.money_income.appeal} + {copy(lang, "商亭", "kiosks")} {player.next_break_projection.money_income.kiosks} + {copy(lang, "其他", "other")} {player.next_break_projection.money_income.other} + {copy(lang, "确定持续收入", "guaranteed recurring")} {player.next_break_projection.money_income.guaranteed_recurring}</small></p><p><b>W ×{player.next_break_projection.workers_to_recall}</b><small>{copy(lang, "将收回事务员", "workers will be recalled")}</small></p>{player.next_break_projection.recurring_rewards.length > 0 && <ul>{player.next_break_projection.recurring_rewards.map(reward => <li key={reward.source_id}><b>{lang === "zh" ? reward.title_cn : reward.title_en}</b><small>{lang === "zh" ? reward.timing_cn : reward.timing_en}{reward.conditional ? ` · ${copy(lang, "条件式", "conditional")}` : ""}</small></li>)}</ul>}</section>}
   </>;
 }
 
@@ -1056,7 +1168,7 @@ function ZooWorkspace({view, identities, lang, legalActions, submitting, onChoos
   const player = view.players.find(item => item.seat === seat) || view.players[0];
   const interactive = legalActions.length > 0 && seat === decisionSeat;
   return <section className="ark-surface ark-zoo-workspace">
-    <header className="ark-surface-header"><div><span>MAP 0 · FLAT-TOP AXIAL</span><h2>{copy(lang, "玩家动物园地图", "Player zoo map")}</h2></div><div className="ark-map-status"><b>{player.map.geometry_status.includes("reference_transcribed") ? copy(lang, "参考图转录几何", "Reference-transcribed geometry") : copy(lang, "受控地图几何", "Controlled map geometry")}</b><span>{player.map.buildings.length} {copy(lang, "座建筑", "buildings")}</span></div></header>
+    <header className="ark-surface-header"><div><span>{player.map.name.toUpperCase()} · FLAT-TOP AXIAL</span><h2>{copy(lang, "玩家动物园地图", "Player zoo map")}</h2></div><div className="ark-map-status"><b>{player.map.geometry_status.includes("reference_transcribed") ? copy(lang, "参考图转录几何", "Reference-transcribed geometry") : copy(lang, "受控地图几何", "Controlled map geometry")}</b><span>{player.map.buildings.length} {copy(lang, "座建筑", "buildings")}</span></div></header>
     <nav className="ark-player-tabs" aria-label={copy(lang, "选择玩家地图", "Choose player map")}>{view.players.map(item => <button key={item.seat} className={`${item.seat === seat ? "selected" : ""} ${item.seat === view.active_seat ? "active" : ""}`} onClick={() => setSelection({seat: item.seat, decision: view.decision_count})} style={{"--player-color": PLAYER_COLORS[item.seat]} as React.CSSProperties}><i>{item.seat + 1}</i><span>{playerName(identities, item.seat, lang)}</span><small>{item.seat === view.active_seat ? copy(lang, "行动中", "ACTIVE") : copy(lang, "公开地图", "PUBLIC")}</small></button>)}</nav>
     <ActionCardRack view={view} player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
     <PlayerActionControls view={view} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
@@ -1070,7 +1182,7 @@ function ZooWorkspace({view, identities, lang, legalActions, submitting, onChoos
           submitting={submitting} onChoose={onChoose}
         />}
         {interactive && <SemanticChoiceControls view={view} legalActions={legalActions} submitting={submitting} onChoose={onChoose}/>} 
-        <PlayerBoardLists player={player} lang={lang}/>
+        <PlayerBoardLists player={player} lang={lang} legalActions={interactive ? legalActions : []}/>
         <section className="ark-map-coverage"><span>{copy(lang, "地图覆盖终局奖励", "Map-completion end-game reward")}</span><p><b>{player.map_display?.coverage ? `${player.map_display.coverage.covered}/${player.map_display.coverage.total}` : "—"}</b><small>{player.map_display?.coverage?.complete ? copy(lang, "地图已完全覆盖", "Map complete") : copy(lang, "覆盖所有可建土地", "Cover all buildable land")}</small></p><p><b>{benefitLabel(player.map_display?.coverage?.reward, lang)}</b><small>{player.map_display?.coverage?.status === "claimed" ? copy(lang, "已达成，终局计分时加入", "secured; added during final scoring") : copy(lang, "待完成", "pending")}</small></p></section>
       </aside>
     </div>
@@ -1086,7 +1198,9 @@ export function ArkNovaTable({view, identities, lang, legalActions = [], submitt
   if (!view) return <div className="empty-board">Ark Nova</div>;
   return <div className="ark-table-v2">
     <section className="ark-match-banner"><div><span>ARK NOVA · OFFICIAL BASE</span><h1>{view.phase === "initial_hand_selection" ? copy(lang, "正在选择起始手牌", "Selecting starting hand") : copy(lang, "动物园规划桌", "Zoo planning table")}</h1></div><p>{copy(lang, "视觉组件使用结构化状态和原创 CSS 表达，不包含出版商卡图或逐字牌文。", "Components use structured state and original CSS; no publisher card art or verbatim card text.")}</p><code>{view.rules_version}</code></section>
-    {(view.phase.includes("break") || view.break_track.triggered) && <section className="ark-break-alert" role="status" aria-live="assertive"><b>{copy(lang, "休息阶段", "BREAK")}</b><span>{copy(lang, "暂停常规行动：请依次处理弃牌、回收事务员、刷新协会与展示区，并领取收入。", "Regular actions pause while players discard, recall workers, refresh the Association board and display, and collect income.")}</span></section>}
+    {view.endgame?.triggered && view.status !== "finished" && <section className={`ark-endgame-alert ${view.endgame.is_my_final_action ? "is-my-final-action" : ""}`} role="status" aria-live="assertive"><b>{view.endgame.is_my_final_action ? copy(lang, "你的最后行动", "YOUR FINAL ACTION") : copy(lang, "终局已触发", "ENDGAME TRIGGERED")}</b><span>{lang === "zh" ? view.endgame.instruction_cn : view.endgame.instruction_en}</span><small>{copy(lang, "触发者", "Triggered by")}：{view.endgame.triggered_by === null ? "—" : playerName(identities, view.endgame.triggered_by, lang)} · {copy(lang, "尚有最后行动", "Final turns remaining")}：{view.endgame.remaining_final_turn_seats.length ? view.endgame.remaining_final_turn_seats.map(seat => playerName(identities, seat, lang)).join(" · ") : copy(lang, "无", "none")}</small></section>}
+    {(view.phase.includes("break") || view.break_track.triggered) && <section className="ark-break-alert" role="status" aria-live="assertive"><b>{view.solo_board ? copy(lang, "单人休息阶段", "SOLO BREAK") : copy(lang, "休息阶段", "BREAK")}</b><span>{copy(lang, "暂停常规行动：请依次处理弃牌、回收事务员、刷新协会与展示区，并领取收入。", "Regular actions pause while players discard, recall workers, refresh the Association board and display, and collect income.")}</span></section>}
+    {view.solo_board && <SoloBoard board={view.solo_board} lang={lang}/>}
     <GameBoard view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal}/>
     <AssociationBoard view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose}/>
     <ZooWorkspace view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal}/>

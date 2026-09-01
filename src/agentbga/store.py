@@ -98,6 +98,13 @@ class Store:
                 created_at REAL NOT NULL,
                 PRIMARY KEY(match_id, version, seat, seq)
             );
+            CREATE TABLE IF NOT EXISTS match_reports (
+                match_id TEXT PRIMARY KEY,
+                schema_version TEXT NOT NULL,
+                state_version INTEGER NOT NULL,
+                report_json TEXT NOT NULL,
+                generated_at REAL NOT NULL
+            );
             """
         )
         columns = {
@@ -283,6 +290,38 @@ class Store:
             "version": row["version"], "seat": row["seat"], "seq": row["seq"],
             "event": json.loads(row["event_json"]), "created_at": row["created_at"],
         } for row in rows]
+
+    def save_match_report(self, match_id: str, report: dict[str, Any]) -> None:
+        """Persist a deterministic report for the match's current final version."""
+        version, state, _ = self.load(match_id)
+        if state.get("status") != "finished":
+            raise ValueError("match reports can only be saved for finished matches")
+        schema_version = report.get("schema_version")
+        if not isinstance(schema_version, str) or not schema_version:
+            raise ValueError("match report requires a schema_version")
+        if report.get("match_id") != match_id or report.get("state_version") != version:
+            raise ValueError("match report identity or state version is stale")
+        with self.connection:
+            self.connection.execute(
+                "INSERT OR REPLACE INTO match_reports VALUES (?, ?, ?, ?, ?)",
+                (match_id, schema_version, version,
+                 json.dumps(report, ensure_ascii=False, separators=(",", ":")), time.time()),
+            )
+
+    def match_report(self, match_id: str) -> dict[str, Any] | None:
+        """Load a report only when it matches the current authoritative state."""
+        version, _, _ = self.load(match_id)
+        row = self.connection.execute(
+            "SELECT schema_version,state_version,report_json FROM match_reports WHERE match_id=?", (match_id,),
+        ).fetchone()
+        from .ark_nova_match_report import REPORT_SCHEMA_VERSION
+        if (
+            row is None or int(row["state_version"]) != version
+            or row["schema_version"] != REPORT_SCHEMA_VERSION
+        ):
+            return None
+        value = json.loads(row["report_json"])
+        return value if isinstance(value, dict) else None
 
     def set_players(self, match_id: str, players: list[dict[str, Any]]) -> None:
         self.load(match_id)

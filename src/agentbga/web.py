@@ -15,6 +15,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from .agents import PlayerConfig
+from .ark_nova_match_report import generate_match_report
 from .registry import get_game, list_games
 from .runner import run_match
 from .store import Store
@@ -50,6 +51,11 @@ class MatchHub:
                 "players": players,
                 "views": views,
             }
+            if game.game_id == "ark_nova" and state["status"] == "finished":
+                snapshot["match_report"] = (
+                    store.match_report(match_id)
+                    or generate_match_report(store, match_id)
+                )
             # Only the browser receives this agent-only observer projection. Match
             # runners continue to call game.observe(state, seat) directly.
             spectator_observe = getattr(game, "observe_spectator", None)
@@ -296,8 +302,23 @@ class MatchHub:
 
     def get(self, match_id: str) -> dict[str, Any]:
         with self.lock:
+            if match_id in self.matches:
+                return dict(self.matches[match_id]["snapshot"])
+        # Finished matches are immutable and can be reconstructed from SQLite
+        # after a Web-service restart.  Active matches remain in-memory only so
+        # this path never pretends that an interrupted runner is still live.
+        snapshot = self._snapshot(match_id)
+        if snapshot.get("status") != "finished":
+            raise KeyError(match_id)
+        with self.condition:
             if match_id not in self.matches:
-                raise KeyError(match_id)
+                record = {
+                    "events": [], "snapshot": snapshot, "running": False,
+                    "paused": False, "at_pause_gate": False,
+                    "human_pending": {}, "human_submissions": {},
+                }
+                record["snapshot"] = self._with_runtime(snapshot, record)
+                self.matches[match_id] = record
             return dict(self.matches[match_id]["snapshot"])
 
     def events_after(self, match_id: str, after: int, wait: float = 15) -> tuple[list[dict[str, Any]], bool]:

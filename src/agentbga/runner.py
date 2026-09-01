@@ -9,6 +9,7 @@ import time
 from typing import Any, Callable
 
 from .agents import AgentError, HARNESS_BACKENDS, PlayerConfig, build_model_agent, random_choice
+from .ark_nova_match_report import generate_match_report
 from .harness import build_harness_agent
 from .minimal_harness import build_minimal_agent
 from .store import Store
@@ -115,6 +116,7 @@ def run_match(
     ) -> tuple[str, dict[str, Any]]:
         config = configs[seat]
         metadata: dict[str, Any] = {}
+        choice_started = time.monotonic()
         if config.backend == "random":
             return random_choice(legal, rngs[seat]), metadata
         if config.backend == "human":
@@ -182,6 +184,8 @@ def run_match(
         if fallback == "random":
             return random_choice(legal, rngs[seat]), {
                 "fallback": "random", "error": str(last_error),
+                "latency_ms": round((time.monotonic() - choice_started) * 1000, 3),
+                "attempts": retries + 1,
             }
         raise AgentError(f"{config.name} exhausted retries: {last_error}")
 
@@ -282,5 +286,7 @@ def run_match(
         "players": [{"seat": seat, **config.public_dict()} for seat, config in enumerate(configs)],
         "rankings": rankings,
     }
+    if game.game_id == "ark_nova":
+        result["match_report"] = generate_match_report(store, match_id)
     emit({"type": "match_finished", **result})
     return result

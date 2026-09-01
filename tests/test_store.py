@@ -95,6 +95,14 @@ class StoreTests(unittest.TestCase):
             ]
             result = run_match(store, match_id, players, max_turns=20)
             self.assertEqual("ark_nova", result["game"])
+            self.assertEqual(
+                "agentbga.ark-nova.match-report.v6",
+                result["match_report"]["schema_version"],
+            )
+            report_metrics = result["match_report"]["players"][0]["metrics"]
+            self.assertIn("final_track_score", report_metrics)
+            self.assertIn("score", report_metrics)
+            self.assertEqual(result["match_report"], store.match_report(match_id))
             self.assertGreater(result["decisions"], result["turns"])
             self.assertEqual("finished", store.load(match_id)[1]["status"])
             self.assertEqual(result["version"], store.replay(match_id)[-1]["version"])

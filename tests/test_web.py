@@ -9,11 +9,36 @@ import urllib.request
 from unittest import mock
 
 from agentbga.agents import PlayerConfig
+from agentbga.runner import run_match
 from agentbga.store import Store
 from agentbga.web import MatchHub, WebHandler, serve
 
 
 class WebTests(unittest.TestCase):
+    def test_finished_ark_nova_match_reopens_from_sqlite_with_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            match_id, _, _ = store.create(
+                2, 12, "ark_nova", {"turn_limit": 8},
+                rules_version="base-1.2-controlled-core.6",
+            )
+            players = [
+                PlayerConfig.from_dict({"name": "A", "backend": "random"}, 0),
+                PlayerConfig.from_dict({"name": "B", "backend": "random"}, 1),
+            ]
+            run_match(store, match_id, players, max_turns=20)
+            store.close()
+
+            restored = MatchHub(database).get(match_id)
+
+            self.assertEqual("finished", restored["status"])
+            self.assertFalse(restored["paused"])
+            self.assertEqual(
+                "agentbga.ark-nova.match-report.v6",
+                restored["match_report"]["schema_version"],
+            )
+
     def test_games_endpoint_lists_registered_renderers(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -104,9 +129,17 @@ class WebTests(unittest.TestCase):
                 ],
             })
             self.assertEqual("ark_nova", created["game"])
-            self.assertEqual("official_base_candidate", created["game_description"]["implementation_status"])
+            self.assertEqual("released", created["game_description"]["implementation_status"])
             self.assertEqual("active", created["status"])
             self.assertEqual("ark_nova", created["views"][0]["game"])
+            self.assertEqual(
+                "休息阶段固定流程",
+                created["views"][0]["break_rules_summary"]["title_cn"],
+            )
+            self.assertIn(
+                "estimated_total",
+                created["views"][0]["players"][0]["next_break_projection"]["money_income"],
+            )
             self.assertEqual("spectator", created["spectator_view"]["viewer_mode"])
             self.assertTrue(all(
                 "hidden" not in card
@@ -116,6 +149,30 @@ class WebTests(unittest.TestCase):
             self.assertEqual(
                 {"hidden": True}, created["views"][0]["players"][1]["initial_draw"][0],
             )
+            self.assertTrue(stopped.wait(2))
+
+    def test_ark_nova_web_setup_supports_solo_difficulty_and_board_projection(self):
+        stopped = threading.Event()
+
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "ark_nova", "seed": 43,
+                "game_config": {"map": "map-0", "solo_starting_appeal": 10},
+                "players": [{"name": "Solo", "backend": "human"}],
+            })
+            view = created["views"][0]
+            self.assertEqual(1, created["game_description"]["players"]["minimum"])
+            self.assertEqual(10, view["players"][0]["appeal"])
+            self.assertEqual(10, view["solo_board"]["starting_appeal"])
+            self.assertEqual([7, 6, 5, 4, 3, 2], view["solo_board"]["schedule"])
+            self.assertEqual(7, view["solo_board"]["tokens_left"])
             self.assertTrue(stopped.wait(2))
 
     def test_web_create_can_select_an_exact_rules_version(self):

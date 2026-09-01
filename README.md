@@ -8,7 +8,7 @@ A headless, deterministic board-game environment for evaluating LLM agents in lo
 - **Azul** (2–4 players, colored-wall base game, playable beta)
 - **Brass: Birmingham** (2–4 players, playable beta)
 - **Century: Spice Road** (2–5 players, fully playable)
-- **Ark Nova** (2–4 players, controlled core V2 — generated research cards, no publisher data)
+- **Ark Nova** (1–4 players, released base-game Map 0 semantic rules plus an opt-in Map A preview; mechanics-only card data)
 - **7 Wonders** (3–7 players, complete Second Edition base rules, Day/Night Wonders)
 
 ## Quick start
@@ -55,11 +55,16 @@ Each seat can use one of:
 | `hermes` | Harness | Hermes Agent + MCP, isolated home, persistent session |
 | `claude` | Harness | Claude Code + MCP, persistent session |
 | `pi` | Harness | Pi + native TS extension, persistent session |
-| `minimal` | Harness | Pure Python, in-process, direct LLM + 5 tools |
+| `minimal` | Harness | Pure Python, in-process, direct LLM + 10 seat-scoped tools |
 | `human` | — | Browser-based play |
 | `random` | — | Random baseline |
 
-All harness seats share a unified 5-tool interface: `observe`, `legal_actions`, `submit_action`, `read_notes`, `write_notes`. The `minimal` harness runs entirely in Python with zero external dependencies — no CLI, no MCP server, no Node.js.
+All harness seats share a unified seat-scoped interface: `observe`, paged `legal_actions`,
+`inspect_card`, `inspect_rules`, `inspect_map`, `inspect_played_cards`, `inspect_history`, `submit_action`,
+`read_notes`, and `write_notes`. Ark Nova uses a compact default observation plus
+state deltas; complete visible card, map, played-card, and observed-history details are
+loaded only when requested. The `minimal` harness runs entirely in Python with zero
+external dependencies — no CLI, no MCP server, no Node.js.
 
 The `hermes` backend requires the `hermes` executable with MCP support. AgentBGA creates a seat-local `HERMES_HOME`, configures only the seat-scoped `agentbga` MCP server, and routes the configured OpenAI-compatible endpoint through Hermes' custom provider.
 
@@ -104,9 +109,16 @@ Every harness turn is saved as a structured JSON trace:
 ./agentbga match traces MATCH_ID --json          # list all traces
 ./agentbga match traces MATCH_ID --seat 0 --turn 7  # export one turn
 ./agentbga match harness-events MATCH_ID --json      # tool call audit trail
+./agentbga match report MATCH_ID --json          # deterministic Ark Nova postgame report
 ```
 
+Ark Nova defaults to the released Map 0 board. Pass `--map map-a` to
+`match create` or `match run` to exercise the separately labelled Map A preview.
+
 Trace files live under `.agentbga/runs/_traces/MATCH_ID/seat-N/turn-XXXX.json` and record the full decision sequence: prompt, assistant reasoning/content, tool calls with results, and the final submission. Traces also record the participant, stable session scope, resume count, and any DSh compaction events.
+
+The fixed Ark Nova postgame methodology and metric definitions are documented in
+[`docs/ark-nova/completed-match-analysis.md`](docs/ark-nova/completed-match-analysis.md).
 
 ## Experiments and result artifacts
 

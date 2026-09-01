@@ -91,9 +91,13 @@ def build_parser() -> argparse.ArgumentParser:
     create.add_argument("--players", type=int, required=True, choices=range(2, 8))
     create.add_argument("--seed", type=int)
     create.add_argument("--game-config", help="game-specific JSON object, or @path/to/config.json")
+    create.add_argument(
+        "--map", choices=("map-0", "map-a"),
+        help="Ark Nova zoo map for this match (default: map-0)",
+    )
     add_db(create)
 
-    for name in ("observe", "legal-actions", "status", "verify", "replay", "harness-events"):
+    for name in ("observe", "legal-actions", "status", "verify", "replay", "harness-events", "report"):
         item = match_sub.add_parser(name)
         item.add_argument("match_id")
         if name in ("observe", "legal-actions"):
@@ -124,10 +128,16 @@ def build_parser() -> argparse.ArgumentParser:
     run = commands.add_parser("run", help="create and run a complete match")
     run.add_argument("--game", choices=game_ids(), help="game for a new match (default: splendor)")
     run.add_argument("--rules-version", help="rules version for a new match")
-    run.add_argument("--players", type=int, choices=range(2, 8))
+    # Individual game plugins enforce their own player ranges. Allow one here
+    # so official solo modes (including Ark Nova) are reachable from the CLI.
+    run.add_argument("--players", type=int, choices=range(1, 8))
     run.add_argument("--seed", type=int)
     run.add_argument("--match-id", help="resume an existing match instead of creating one")
     run.add_argument("--game-config", help="game-specific JSON object for a new match")
+    run.add_argument(
+        "--map", choices=("map-0", "map-a"),
+        help="Ark Nova zoo map for a new match (default: map-0)",
+    )
     run.add_argument(
         "--controllers",
         help="legacy comma-separated seats: random, openai, or human",
@@ -181,6 +191,21 @@ def _load_action(raw: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError("action must be a JSON object")
     return value
+
+
+def _new_match_game_config(
+    raw: str | None, map_id: str | None, game_id: str,
+) -> dict[str, Any] | None:
+    """Merge convenient CLI flags into the plugin-specific setup object."""
+
+    config = _load_action(raw) if raw else {}
+    if map_id is not None:
+        if game_id != "ark_nova":
+            raise ValueError("--map is only available for Ark Nova matches")
+        if "map" in config and config["map"] != map_id:
+            raise ValueError("--map conflicts with game_config.map")
+        config["map"] = map_id
+    return config or None
 
 
 def execute(args: argparse.Namespace) -> int:
@@ -278,7 +303,9 @@ def execute(args: argparse.Namespace) -> int:
         if args.group == "match":
             if args.command == "create":
                 seed = args.seed if args.seed is not None else secrets.randbits(63)
-                game_config = _load_action(args.game_config) if args.game_config else None
+                game_config = _new_match_game_config(
+                    args.game_config, args.map, args.game,
+                )
                 match_id, version, state = store.create(
                     args.players, seed, args.game, game_config,
                     rules_version=args.rules_version,
@@ -330,6 +357,13 @@ def execute(args: argparse.Namespace) -> int:
             elif args.command == "harness-events":
                 version, _, _ = store.load(args.match_id)
                 emit(envelope(store.harness_events(args.match_id), match_id=args.match_id, version=version))
+            elif args.command == "report":
+                from .ark_nova_match_report import generate_match_report
+                version, _, _ = store.load(args.match_id)
+                report = store.match_report(args.match_id)
+                if report is None:
+                    report = generate_match_report(store, args.match_id)
+                emit(envelope(report, match_id=args.match_id, version=version))
             elif args.command == "traces":
                 version, _, _ = store.load(args.match_id)
                 root = Path.cwd() / ".agentbga" / "runs" / "_traces" / args.match_id
@@ -406,6 +440,8 @@ def execute(args: argparse.Namespace) -> int:
                 controllers = [part.strip() for part in args.controllers.split(",") if part.strip()]
                 players_config = controllers
             if args.match_id:
+                if args.map is not None:
+                    raise ValueError("--map cannot change an existing match")
                 match_id = args.match_id
                 _, state, _ = store.load(match_id)
                 stored_game = store.game_id(match_id)
@@ -421,9 +457,12 @@ def execute(args: argparse.Namespace) -> int:
                 if players != len(players_config):
                     raise ValueError("--players must equal the number of configured players")
                 seed = args.seed if args.seed is not None else secrets.randbits(63)
-                game_config = _load_action(args.game_config) if args.game_config else None
+                selected_game = args.game or "splendor"
+                game_config = _new_match_game_config(
+                    args.game_config, args.map, selected_game,
+                )
                 match_id, _, _ = store.create(
-                    players, seed, args.game or "splendor", game_config,
+                    players, seed, selected_game, game_config,
                     rules_version=args.rules_version,
                 )
             sink = emit if args.jsonl else None
