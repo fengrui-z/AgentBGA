@@ -1,4 +1,4 @@
-"""Concrete Map 0 resolver for the official Build action."""
+"""Concrete zoo-map resolver for the official Build action."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ _UNIQUE_ZOO_BUILDINGS = frozenset({"petting_zoo", "reptile_house", "large_bird_a
 
 
 def legal_build_execution_actions(state: Mapping[str, Any], seat: int) -> list[dict[str, Any]]:
-    """Enumerate legal placements and pending Map 0 reward choices."""
+    """Enumerate legal placements and pending zoo-map reward choices."""
     try:
         execution, resolution = _build_context(state, seat)
     except SemanticRuleError:
@@ -201,6 +201,17 @@ def _placement_actions(
                     "cost": size * 2,
                     "cells": [{"q": q, "r": r} for q, r in cells],
                 }
+                covered_rewards = [
+                    {
+                        "q": cell["q"], "r": cell["r"],
+                        "effect": deepcopy(cell["placement_bonus"]),
+                    }
+                    for cell in zoo_map["cells"]
+                    if (cell["q"], cell["r"]) in footprint
+                    and isinstance(cell.get("placement_bonus"), Mapping)
+                ]
+                if covered_rewards:
+                    action["covered_rewards"] = covered_rewards
                 signature = (building_type, size, cells)
                 choices[signature] = action
     return list(choices.values())
@@ -320,6 +331,17 @@ def legal_unique_building_placements(
                 "cost": 0,
                 "cells": [{"q": q, "r": r} for q, r in cells],
             }
+            covered_rewards = [
+                {
+                    "q": cell["q"], "r": cell["r"],
+                    "effect": deepcopy(cell["placement_bonus"]),
+                }
+                for cell in zoo_map["cells"]
+                if (cell["q"], cell["r"]) in footprint
+                and isinstance(cell.get("placement_bonus"), Mapping)
+            ]
+            if covered_rewards:
+                result[cells]["covered_rewards"] = covered_rewards
     return list(result.values())
 
 
@@ -466,12 +488,15 @@ def _claim_map_rewards(
         operations = {
             "gain_money": ("gain_money", {"amount": reward["amount"]}),
             "gain_x_token": ("gain_x_token", {"amount": reward["amount"]}),
+            "gain_association_worker": (
+                "gain_association_worker", {"amount": reward["amount"]},
+            ),
             "gain_reputation": (
                 "move_track", {"track": "reputation", "amount": reward["amount"]},
             ),
         }
         if reward["type"] not in operations:
-            raise SemanticRuleError(f"unsupported Map 0 reward: {reward['type']}")
+            raise SemanticRuleError(f"unsupported zoo-map reward: {reward['type']}")
         op, args = operations[reward["type"]]
         effects.append(_effect(op, args))
     return effects, pending
@@ -627,7 +652,7 @@ def _reward_actions(
                 },
             })
         return actions
-    raise SemanticRuleError(f"unknown pending Map 0 reward: {reward['type']}")
+    raise SemanticRuleError(f"unknown pending zoo-map reward: {reward['type']}")
 
 
 def _take_reward_card(
@@ -713,7 +738,20 @@ def _placement_id(action: Mapping[str, Any]) -> str:
 
 def _placement_label(action: Mapping[str, Any]) -> str:
     anchor = action["anchor"]
-    return (
+    label = (
         f"{action['building_type']} {action['size']} · {action['rotation'] * 60}° "
         f"at ({anchor['q']},{anchor['r']}) · {action['cost']} money"
     )
+    rewards = action.get("covered_rewards", [])
+    if rewards:
+        shown = ", ".join(
+            str(item.get("effect", {}).get("type", "reward"))
+            + (
+                f" +{item['effect']['amount']}"
+                if isinstance(item.get("effect"), Mapping)
+                and "amount" in item["effect"] else ""
+            )
+            for item in rewards if isinstance(item, Mapping)
+        )
+        label += f" · covers {shown}"
+    return label

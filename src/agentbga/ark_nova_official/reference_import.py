@@ -476,6 +476,11 @@ def import_reference_pack(source: str | Path, target: str | Path) -> dict[str, A
 
     manifest_path = root / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    # Importing fresh transcription deliberately demotes a copied release pack:
+    # review metadata and the digest are invalid until both release passes run.
+    manifest["status"] = "draft"
+    manifest["pack_id"] = "ark-nova-base-map0-authoring"
+    manifest.pop("content_sha256", None)
     manifest["content_version"] = "m4-reference-import.17"
     manifest["sources"] = [source for source in manifest["sources"] if source["id"] != SOURCE_ID]
     manifest["sources"].append({

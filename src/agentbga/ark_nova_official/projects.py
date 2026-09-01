@@ -105,15 +105,21 @@ def legal_project_support_options(
         (project for project in state["conservation_projects"] if project["id"] == entry.id),
         None,
     )
-    if project is None or state["players"][seat]["project_tokens_available"] <= 0:
+    player = state["players"][seat]
+    if project is None or player["project_tokens_available"] <= 0:
         return []
     repeat_release = (
         entry.facts.get("project_type") == "release"
         and any(
             modifier.get("kind") == "repeat_release_projects"
-            for modifier in state["players"][seat].get("modifiers", [])
+            for modifier in player.get("modifiers", [])
         )
     )
+    # A player's support history is authoritative even if a zoo project has
+    # since rotated off the board and later re-entered it.  Board claims alone
+    # are insufficient because rotating a project removes those claims.
+    if not repeat_release and entry.id in player.get("supported_projects", []):
+        return []
     if not repeat_release and any(claim["seat"] == seat for claim in project["claims"]):
         return []
     levels = _project_levels(entry)
@@ -134,7 +140,7 @@ def legal_project_support_options(
             continue
         if isinstance(entry.facts.get("breeding_icon"), str):
             normal = _has_breeding_match(
-                state["players"][seat], str(entry.facts["breeding_icon"]),
+                player, str(entry.facts["breeding_icon"]),
             )
         else:
             normal = all(
@@ -325,6 +331,7 @@ def _project_token_effects(slot_id: str, timing: str) -> list[dict[str, Any]]:
         "money-5": ("gain_money", {"amount": 5}),
         "conservation-1": ("move_track", {"track": "conservation", "amount": 1}),
         "worker-1": ("gain_association_worker", {"amount": 1}),
+        "reputation-2": ("move_track", {"track": "reputation", "amount": 2}),
         "money-12": ("gain_money", {"amount": 12}),
         "x-3": ("gain_x_token", {"amount": 3}),
     }

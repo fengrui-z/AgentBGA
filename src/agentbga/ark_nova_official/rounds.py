@@ -6,6 +6,7 @@ from copy import deepcopy
 from typing import Any
 
 from .semantics import SemanticEngine, SemanticRuleError
+from .state import DONATION_COSTS, next_donation_cost
 
 
 def _system_effect(op: str, args: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -81,18 +82,22 @@ def advance_solo_round_after_turn(
         events.append({"type": "solo_round_limit_reached", "seat": seat, "turns": 27})
         return prepared, events
 
-    # The fifth solo Break places the removed token next to the 12 space and
-    # therefore does not occupy that donation space.
-    completed_breaks = int(solo["count"])
-    if completed_breaks < 4:
-        cost = (2, 5, 7, 10)[completed_breaks]
-        block = {"seat": None, "cost": cost, "source": "solo_tile"}
+    # A solo token occupies the cheapest *currently open* finite donation
+    # space.  Player donations can therefore move this token farther along the
+    # row; once 2/5/7/10 are full, the token sits beside the repeatable 12 space.
+    cost = next_donation_cost(prepared)
+    if cost != DONATION_COSTS[-1]:
+        block = {
+            "seat": None, "cost": cost, "source": "solo_tile",
+            "position": DONATION_COSTS.index(cost) + 1,
+        }
         prepared["donations_made"].append(block)
         solo["solo_donation_blocks"].append(deepcopy(block))
         events.append({"type": "solo_donation_space_blocked", "cost": cost})
     else:
         solo["solo_donation_blocks"].append({
             "seat": None, "cost": None, "source": "solo_tile_next_to_12",
+            "position": "next_to_12",
         })
         events.append({"type": "solo_donation_token_placed_next_to_12"})
     solo["solo_total_tokens"] = total - 1

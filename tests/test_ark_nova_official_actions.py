@@ -297,6 +297,41 @@ class ArkNovaOfficialActionTests(unittest.TestCase):
             ["money-5"],
             [option["id"] for option in three_player["resolution"]["pending_choice"]["options"]],
         )
+
+    def test_unusable_optional_rewards_resolve_without_an_empty_choice(self):
+        engine = SemanticEngine()
+        state = new_semantic_state(2)
+        state["players"][0]["universities"] = [
+            "research-2", "research-reputation", "research-hand-limit",
+        ]
+        state["conservation_bonus_slots"]["5"] = [{
+            "id": "university", "label": "Take a university", "available": True,
+            "effects": [{
+                "op": "choose_bonus_association_asset",
+                "args": {"asset": "university"}, "timing": "system",
+            }],
+        }]
+        state, _ = engine.start_effects(
+            state, 0,
+            [effect("choose_conservation_reward", {"at": 5}, "system")],
+            source_id="test:no-usable-conservation-reward",
+        )
+        self.assertIsNone(state["resolution"]["pending_choice"])
+        self.assertEqual([], state["resolution"]["queue"])
+
+        for card in state["players"][0]["action_cards"]:
+            card["upgraded"] = True
+        state["players"][0]["association_workers"]["reserve"] = 0
+        for operation in (
+            effect("choose_action_upgrade", {}, "system"),
+            effect("choose_action_upgrade_or_worker", {}, "system"),
+            effect("choose_bonus_association_asset", {"asset": "university"}, "system"),
+        ):
+            state, _ = engine.start_effects(
+                state, 0, [operation], source_id=f"test:no-option:{operation['op']}",
+            )
+            self.assertIsNone(state["resolution"]["pending_choice"])
+            self.assertEqual([], state["resolution"]["queue"])
     def test_endgame_fallback_discards_final_scoring_cards_when_ten_was_not_reached(self):
         engine = SemanticEngine()
         state = new_semantic_state(2)
@@ -341,7 +376,12 @@ class ArkNovaOfficialActionTests(unittest.TestCase):
         self.assertEqual("folder_number", animals_ii["display_surcharge"])
         self.assertEqual(1, animals_ii["reputation_before_play"])
         association_ii = action_execution_spec("association", True, 5)
-        self.assertEqual("hand_or_within_reputation", association_ii["new_project_sources"])
+        self.assertEqual(
+            "hand_or_within_reputation",
+            association_ii["new_project_card_sources"],
+        )
+        self.assertFalse(association_ii["displayed_projects_require_card"])
+        self.assertNotIn("new_project_sources", association_ii)
         self.assertEqual("folder_number", association_ii["display_project_surcharge"])
         sponsors_ii = action_execution_spec("sponsors", True, 5)
         self.assertEqual("folder_number", sponsors_ii["display_surcharge"])

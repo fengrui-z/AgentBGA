@@ -22,7 +22,7 @@ from .projects import (
     support_project,
 )
 from .semantics import SemanticEngine, SemanticRuleError
-from .state import clone_state, validate_semantic_state
+from .state import clone_state, next_donation_cost, validate_semantic_state
 
 
 _DISPLAY_REFILL_EFFECT = {
@@ -37,7 +37,6 @@ def legal_association_execution_actions(
     state: Mapping[str, Any],
     seat: int,
     project_entries: Mapping[str, ContentEntry],
-    animal_entries: Mapping[str, ContentEntry] | None = None,
 ) -> list[dict[str, Any]]:
     """Enumerate legal Association tasks, rewards, donation, and finish."""
     try:
@@ -62,9 +61,7 @@ def legal_association_execution_actions(
             execution["spec"]["donation_allowed"]
             and not resolution["donation_made"]
         ):
-            cost = state["donation_costs"][min(
-                len(state["donations_made"]), len(state["donation_costs"]) - 1,
-            )]
+            cost = next_donation_cost(state)
             if state["players"][seat]["money"] >= cost:
                 result.append({
                     "id": f"association:donate:{cost}",
@@ -84,14 +81,13 @@ def apply_association_execution_action(
     seat: int,
     project_entries: Mapping[str, ContentEntry],
     action: Mapping[str, Any],
-    animal_entries: Mapping[str, ContentEntry] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     if not isinstance(action, Mapping) or not isinstance(action.get("type"), str):
         raise SemanticRuleError("Association execution action must contain a type")
     requested = dict(action)
     legal = [
         item["action"] for item in legal_association_execution_actions(
-            engine, state, seat, project_entries, animal_entries,
+            engine, state, seat, project_entries,
         )
     ]
     if requested not in legal:
@@ -99,7 +95,6 @@ def apply_association_execution_action(
     if requested["type"] == "perform_association_task":
         return _perform_task(
             engine, state, seat, project_entries, requested,
-            animal_entries=animal_entries or {},
         )
     if requested["type"] == "upgrade_association_reward_card":
         return _take_upgrade_reward(state, seat, requested["action_card_id"])
@@ -136,7 +131,7 @@ def _task_actions(
     if remaining >= 2 and "gain-reputation" not in excluded:
         _append_if_workers(result, player, "gain-reputation", 2, {
             "task_id": "gain-reputation",
-        })
+        }, label="Gain 2 Reputation")
     can_take_later_zoo = len(player["partner_zoos"]) < 2 or upgraded
     if remaining >= 3 and "partner-zoo" not in excluded and can_take_later_zoo:
         owned = {_asset_id(value, "continent") for value in player["partner_zoos"]}
@@ -144,19 +139,21 @@ def _task_actions(
             if continent not in owned and _supply_available(supply):
                 _append_if_workers(result, player, "partner-zoo", 3, {
                     "task_id": "partner-zoo", "continent": continent,
-                })
+                }, label=(
+                    f"Take {continent} Partner Zoo (your "
+                    f"{_ordinal(len(player['partner_zoos']) + 1)}) · "
+                    f"+1 {continent} icon · matching Animals cost 3 less · "
+                    f"player-board ladder: {_partner_zoo_ladder_reward(len(player['partner_zoos']) + 1)}"
+                ))
     if remaining >= 4 and "university" not in excluded:
         owned = {_asset_id(value, "id") for value in player["universities"]}
-        owns_animal_university = any(
-            isinstance(value, str) and value.startswith("animal-") for value in owned
-        )
         for university_id, supply in state["association_board"]["universities"].items():
-            if university_id.startswith("animal-") and owns_animal_university:
-                continue
             if university_id not in owned and _supply_available(supply):
                 _append_if_workers(result, player, "university", 4, {
                     "task_id": "university", "university_id": university_id,
-                })
+                }, label=_university_choice_label(
+                    university_id, len(player["universities"]) + 1,
+                ))
     project_strength = _project_task_strength(player)
     if remaining >= project_strength and "conservation-project" not in excluded:
         for project in state["conservation_projects"]:
@@ -226,6 +223,7 @@ def _append_if_workers(
     fields: Mapping[str, Any],
     *,
     label: str | None = None,
+    presentation: Mapping[str, Any] | None = None,
 ) -> None:
     workers = _worker_cost(player, task_id)
     if workers not in {1, 2} or player["association_workers"]["active"] < workers:
@@ -234,15 +232,61 @@ def _append_if_workers(
     result.append({
         "id": f"association:task:{task_id}{':' + suffix if suffix else ''}",
         "label": (
-            f"{label} · strength {strength} · {workers} worker(s)"
+            f"{label} · action strength requirement {strength} · "
+            f"money cost {int(fields.get('folder_cost', 0) or 0)} · "
+            f"{workers} worker(s)"
             if label is not None
-            else f"{task_id} · strength {strength} · {workers} worker(s)"
+            else (
+                f"{task_id} · action strength requirement {strength} · "
+                f"money cost {int(fields.get('folder_cost', 0) or 0)} · "
+                f"{workers} worker(s)"
+            )
         ),
         "action": {
             "type": "perform_association_task", "strength": strength,
             "workers": workers, **dict(fields),
         },
+        **({key: deepcopy(value) for key, value in presentation.items()}
+           if presentation is not None else {}),
     })
+
+
+def _university_choice_label(university_id: str, asset_number: int) -> str:
+    labels = {
+        "research-2": "Take University · +2 Research icons",
+        "research-reputation": "Take University · +1 Research icon · +2 Reputation",
+        "research-hand-limit": "Take University · +1 Research icon · hand limit +2",
+    }
+    printed = labels.get(university_id, f"Take University {university_id}")
+    return (
+        f"{printed} (your {_ordinal(asset_number)}) · player-board ladder: "
+        f"{_university_ladder_reward(asset_number)}"
+    )
+
+
+def _ordinal(number: int) -> str:
+    suffix = (
+        "th" if 10 <= number % 100 <= 20
+        else {1: "st", 2: "nd", 3: "rd"}.get(number % 10, "th")
+    )
+    return f"{number}{suffix}"
+
+
+def _partner_zoo_ladder_reward(asset_number: int) -> str:
+    return {
+        1: "no ladder reward",
+        2: "upgrade one Action card",
+        3: "gain one Association worker",
+        4: "gain 2 Conservation",
+    }.get(asset_number, "no additional ladder reward")
+
+
+def _university_ladder_reward(asset_number: int) -> str:
+    return {
+        1: "no ladder reward; taking one university does not upgrade an Action card",
+        2: "upgrade one Action card",
+        3: "gain 2 Conservation",
+    }.get(asset_number, "no additional ladder reward")
 
 
 def _perform_task(
@@ -251,8 +295,6 @@ def _perform_task(
     seat: int,
     project_entries: Mapping[str, ContentEntry],
     action: Mapping[str, Any],
-    *,
-    animal_entries: Mapping[str, ContentEntry],
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     execution, old_resolution = _association_context(state, seat)
     next_state = clone_state(state)
@@ -288,7 +330,7 @@ def _perform_task(
     elif task_id == "university":
         university_events = _take_university(
             next_state, seat, action["university_id"], resolution,
-            semantic_effects, animal_entries,
+            semantic_effects,
         )
         events.extend(university_events)
     else:
@@ -365,7 +407,6 @@ def _take_partner_zoo(
 def _take_university(
     state: dict[str, Any], seat: int, university_id: str,
     resolution: dict[str, Any], effects: list[dict[str, Any]],
-    animal_entries: Mapping[str, ContentEntry],
 ) -> list[dict[str, Any]]:
     supply = state["association_board"]["universities"][university_id]
     supply["available"] = 0
@@ -384,25 +425,6 @@ def _take_university(
         "op": "trigger_icon_entered", "timing": "immediate",
         "args": {"icon": "science", "count": icon_count},
     })
-    if university_id.startswith("animal-"):
-        category = university_id.removeprefix("animal-")
-        player["icons"][category] = player["icons"].get(category, 0) + 1
-        effects.append({
-            "op": "trigger_icon_entered", "timing": "immediate",
-            "args": {"icon": category, "count": 1},
-        })
-        for index, card in enumerate(state["zoo_deck"]):
-            entry_id = card.get("entry_id", card.get("id"))
-            entry = animal_entries.get(entry_id) if isinstance(entry_id, str) else None
-            if entry is not None and category in entry.facts.get("animal_categories", []):
-                drawn = state["zoo_deck"].pop(index)
-                player["hand"].append(drawn)
-                events.append({
-                    "type": "animal_university_card_drawn", "seat": seat,
-                    "university_id": university_id, "category": category,
-                    "card_id": drawn.get("id"), "entry_id": entry.id,
-                })
-                break
     if university_id == "research-reputation":
         effects.append(_track_effect("reputation", 2))
     elif university_id == "research-hand-limit":
@@ -518,6 +540,11 @@ def _append_project_token_variants(
     label: str,
 ) -> None:
     for token in legal_project_token_choices(player):
+        reward = _project_token_reward_presentation(
+            token["slot_id"], recurring=bool(token["recurring"]),
+        )
+        timing_en = "before" if token["timing"] == "before" else "after"
+        timing_cn = "项目档位奖励前" if token["timing"] == "before" else "项目档位奖励后"
         _append_if_workers(
             result, player, "conservation-project", strength,
             {
@@ -526,10 +553,44 @@ def _append_project_token_variants(
                 "token_bonus_timing": token["timing"],
             },
             label=(
-                f"{label} · token {token['slot_id']} "
-                f"{token['timing']} reward"
+                f"{label} · {reward['benefit_summary']} · {timing_en} tier reward"
             ),
+            presentation={
+                **reward,
+                "reward_timing": token["timing"],
+                "reward_timing_cn": timing_cn,
+                "reward_timing_en": f"{timing_en} the project tier reward",
+            },
         )
+
+
+def _project_token_reward_presentation(
+    slot_id: str, *, recurring: bool,
+) -> dict[str, Any]:
+    names = {
+        "card": ("精选一张牌", "Take one card from the deck or reputation range"),
+        "enclosure-2": ("免费建造一个2格普通围栏", "Build one size-2 standard enclosure for free"),
+        "money-5": ("获得5金币", "Gain 5 money"),
+        "conservation-1": ("获得1保护点数", "Gain 1 conservation"),
+        "worker-1": ("增加一名事务员", "Gain one Association worker"),
+        "reputation-2": ("获得2声望", "Gain 2 reputation"),
+        "money-12": ("获得12金币", "Gain 12 money"),
+        "x-3": ("获得3枚X标记", "Gain 3 X tokens"),
+    }
+    if slot_id not in names:
+        raise SemanticRuleError(f"unknown conservation-project token slot: {slot_id}")
+    name_cn, name_en = names[slot_id]
+    if recurring:
+        summary_cn = f"{name_cn}：立即一次 + 每次休息一次（持续）"
+        summary_en = f"{name_en}: once immediately + once at every Break (recurring)"
+    else:
+        summary_cn = f"{name_cn}：立即一次"
+        summary_en = f"{name_en}: once immediately"
+    return {
+        "benefit_summary": summary_en,
+        "benefit_summary_cn": summary_cn,
+        "recurring": recurring,
+    }
 
 
 def _project_choice_label(

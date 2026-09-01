@@ -8,6 +8,7 @@ from typing import Any, Mapping, Sequence
 from .semantics import SemanticEngine, SemanticRuleError
 from .state import validate_semantic_state
 from .final_scoring_effects import score_final_card
+from ..ark_nova_tracks import conservation_score_offset
 
 
 def _target_number(target_by_conservation: Sequence[int] | Mapping[int, int], conservation: int) -> int:
@@ -71,6 +72,13 @@ def score_game(
         raise SemanticRuleError(
             "Final Scoring card discard must finish before end-game scoring",
         )
+    pre_endgame_tracks = [
+        {
+            "appeal": int(player["tracks"]["appeal"]),
+            "conservation": int(player["tracks"]["conservation"]),
+        }
+        for player in next_state["players"]
+    ]
     events: list[dict[str, Any]] = []
     for seat, player in enumerate(next_state["players"]):
         scoring_sources = [*player["played_cards"], *player["final_scoring_cards"]]
@@ -94,6 +102,7 @@ def score_game(
             effects = source.get("effects", [])
             if not isinstance(effects, list):
                 raise SemanticRuleError("scoring source effects must be an array")
+            before_effects = deepcopy(next_state["players"][seat]["tracks"])
             next_state, resolved = engine.start_effects(
                 next_state,
                 seat,
@@ -105,9 +114,28 @@ def score_game(
             if next_state["resolution"]["pending_choice"] is not None:
                 raise SemanticRuleError("end-game card semantics may not open a choice window")
             events.extend(resolved)
+            after_effects = next_state["players"][seat]["tracks"]
+            track_deltas = {
+                track: int(after_effects.get(track, 0)) - int(before_effects.get(track, 0))
+                for track in ("appeal", "conservation", "reputation")
+                if int(after_effects.get(track, 0)) != int(before_effects.get(track, 0))
+            }
+            if track_deltas:
+                score_entry = {
+                    "kind": "endgame_card_effect",
+                    "card_id": str(source.get("entry_id", source.get("id", "unknown"))),
+                    "card_instance_id": str(source.get("id", "unknown")),
+                    "card_kind": str(source.get("kind", "unknown")),
+                    "track_deltas": track_deltas,
+                }
+                next_state["players"][seat]["score_entries"].append(score_entry)
+                events.append({
+                    "type": "endgame_card_effect_scored", "seat": seat,
+                    **deepcopy(score_entry),
+                })
 
     rows = []
-    for player in next_state["players"]:
+    for seat, player in enumerate(next_state["players"]):
         appeal = player["tracks"]["appeal"]
         conservation = player["tracks"]["conservation"]
         target = _target_number(target_by_conservation, conservation)
@@ -127,6 +155,15 @@ def score_game(
                 "victory_points": map_completion_points,
             })
         victory_points = appeal + map_completion_points - target
+        pre_tracks = pre_endgame_tracks[seat]
+        final_track_score = (
+            appeal + map_completion_points + conservation_score_offset(conservation)
+        )
+        pre_endgame_track_score = (
+            pre_tracks["appeal"]
+            + conservation_score_offset(pre_tracks["conservation"])
+        )
+        endgame_scoring_points = final_track_score - pre_endgame_track_score
         supported_projects = len(player["supported_projects"])
         rows.append({
             "seat": player["seat"],
@@ -135,6 +172,11 @@ def score_game(
             "target_appeal": target,
             "victory_points": victory_points,
             "map_completion_points": map_completion_points,
+            "pre_endgame_appeal": pre_tracks["appeal"],
+            "pre_endgame_conservation": pre_tracks["conservation"],
+            "pre_endgame_track_score": pre_endgame_track_score,
+            "final_track_score": final_track_score,
+            "endgame_scoring_points": endgame_scoring_points,
             "supported_projects": supported_projects,
             "score_entries": deepcopy(player["score_entries"]),
             "rank": None,

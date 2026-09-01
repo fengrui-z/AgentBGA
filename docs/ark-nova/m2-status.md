@@ -36,5 +36,6 @@ The following was the historical backlog before P1–P8 (now closed for Map 0):
 - seat-safe observations for semantic choice windows and the dedicated Web UI;
 - golden replays, randomized invariants, and one-to-four-player completion tests.
 
-P8 registered `base-1.2-faq-v2-semantic.1` as the default candidate. The legacy
-`base-1.2-controlled-core.6` remains registered only for exact replay.
+P8 originally registered `base-1.2-faq-v2-semantic.1` as a development
+candidate. It was superseded before release by `base-1.2-faq-v2-map0.1`; the
+legacy `base-1.2-controlled-core.6` remains registered for its own exact replay.

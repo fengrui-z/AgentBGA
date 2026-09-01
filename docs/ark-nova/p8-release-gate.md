@@ -1,89 +1,82 @@
-# P8 · Official-base runnable integration and release gate
+# P8 · Base-game Map 0 release gate
 
-P8 connects the P1–P7 rules modules to the versioned AgentBGA game protocol.
-The default Ark Nova rules version is now `base-1.2-faq-v2-semantic.1`; the
-former controlled core remains selectable as
-`base-1.2-controlled-core.6` for exact replay of existing matches.
+The released rules version is `base-1.2-faq-v2-map0.1`. It implements the Ark
+Nova base game for one to four players using Map 0. Map A and Maps 1–8 are not
+part of this version and require a future rules/content version.
 
-## Runnable setup
+The runtime also exposes an explicitly opt-in `map-a` preview for manual CLI/Web
+testing. Its state is labelled `preview`; it is not covered by this Map 0
+release ledger, conformance claim, or deterministic release baseline.
 
-- The validated content pack creates the physical 212-card Zoo deck: 128
-  Animals, 64 Sponsors, and 20 Zoo Conservation Projects.
-- The setup also shuffles all 12 Base Projects, deals two of the 11 Final
-  Scoring cards to each player, and creates five Action cards per seat. A
-  four-player game therefore contains the documented 255 physical cards:
-  235 base card faces plus four sets of five Action cards.
-- Each seat privately keeps four of eight starting Zoo cards. Map 0 then opens
-  engine-issued starter-placement choices for a free size-3 enclosure followed
-  by a kiosk. Starter buildings obey border/adjacency and fixed-polyhex rules
-  and cannot cover printed placement bonuses.
-- Reputation starts at 1, Appeal and Conservation at 0, money at 25, and the
-  Animals Action card starts in slot 1 while the other four cards are shuffled.
-- Solo setup replaces Final Scoring card 009 because its relative-player rule
-  has no solo target. Solo starts at 20 Appeal by default (10 and 0 are
-  selectable difficulties) and uses the exact 7/6/5/4/3/2-token round clock.
+## Runtime scope
 
-## Complete match lifecycle
+- The 212-card Zoo deck contains 128 Animals, 64 Sponsors, and 20 Zoo
+  Conservation Projects. Setup also uses 12 Base Projects, 11 Final Scoring
+  cards, nine reward tiles, and five Action cards per seat. A four-player game
+  therefore uses the documented 255 physical cards.
+- The Association board contains the three base-game university types only:
+  two research icons; research plus two Reputation; and research plus a
+  five-card hand limit. The five animal universities are not base-game
+  components and are absent.
+- Map 0 has a 58-hex footprint, 39 buildable spaces, 10 water spaces, nine rock
+  spaces, 12 placement bonuses, and two Build-II-only spaces. It starts with no
+  free enclosure and no kiosk. Its seven-Appeal cover reward is scored only at
+  the end of the game.
+- Fixed standard/special enclosure and unique Sponsor-building polyhexes use
+  canonical, rotation-only shapes. Sponsor 243–257 cannot be played unless the
+  mandatory building has a legal placement.
+- Break, Association replenishment, project-token rewards, Reputation and
+  Conservation milestones, solo rounds, interactions, final turns, private
+  Final Scoring discard, and opposing-track scoring are engine transitions.
 
-- The plugin exposes only engine-generated legal actions and translates rule
-  rejection into the common game-rule error without mutating the supplied
-  snapshot.
-- A pending shared Break is entered automatically after the triggering action.
-  The ordered discard, token clearing, worker recall, association replenishment,
-  display refresh, income, and reset sequence can pause in serializable choice
-  windows.
-- Break income reads the official Appeal-income table and adds Sponsor/player-
-  board income. Kiosk income is calculated live from adjacent unique buildings,
-  special enclosures, occupied standard enclosures, and pavilions; one multihex
-  building counts only once per kiosk and an empty standard enclosure scores 0.
-- Track crossing is checked only at the end of a turn or during a Break. Every
-  other player receives one final turn after an end-of-turn trigger; after a
-  Break trigger every player, including the trigger, receives one final turn.
-  If Conservation 10 did not already resolve the global Final Scoring choice,
-  the engine opens a private discard choice for every player before scoring.
-- Solo Breaks perform shared Break steps 1–5 but do not reset a Break token.
-  The first four block donation costs 2/5/7/10; the fifth places the token next
-  to 12 without blocking it. The game ends after exactly 27 turns and records
-  the official nonnegative-score solo win condition.
-- All 11 interactive base Animals use their structured blue-stripe replacement
-  in solo games (Inventive, Sprint, Clever, or Determination) rather than
-  silently dropping multiplayer interaction effects.
-- Final Scoring resolves compiled card effects first and then calculates the
-  opposing Appeal/Conservation track distance, with supported projects as the
-  tie breaker.
+## Privacy and protocol
 
-## Hidden information and Web protocol
+- `observe(state, seat)` exposes every public map and asset but only that seat's
+  hand, setup draw, Final Scoring cards, and private semantic choices.
+- An opponent sees only `{seat, hidden}` for another player's pending private
+  decision. `observe_spectator(state)` is the separate omniscient projection
+  used by the browser for agent-only matches; agents never receive it.
+- Legal actions, payment, shape placement, card conditions, choices, and scoring
+  are generated by the engine. The Web client renders these actions but does
+  not recreate legality.
 
-- `observe(state, seat)` reveals only that seat's hand, initial draw, and Final
-  Scoring cards while retaining every player's public map and assets.
-- `observe_spectator(state)` is a separate omniscient browser projection for
-  agent-only matches. Match agents never receive it.
-- The Web action adapter recognizes both the historical controlled-core action
-  vocabulary and the official semantic-domain vocabulary. Generic semantic
-  choice windows render from engine-provided option labels.
+## Content review gate
 
-## Automated gate
+The content pack `ark-nova-base-map0-released` is mechanics-only and stores no
+publisher artwork or verbatim card prose. Its two independent review processes
+are recorded honestly as process IDs, not as fictional human names:
 
-`tests/test_ark_nova_official_p8_release.py` verifies:
+1. `source-crosswalk-pass-v1` checks all 235 card faces against the supplied
+   structured JSON, the filterable Excel workbook, and both human-readable DOCX
+   projections. Artifact SHA-256 hashes and per-entry crosswalks are recorded.
+2. `runtime-scenario-pass-v1` validates and executes one stable scenario for
+   every card face, every reward tile, and Map 0: 245 unique scenarios total.
 
-1. all 235 base card faces are transcribed and the 51 cross-card modifiers have
-   no unresolved dispatch;
-2. deterministic setup, physical counts, privacy, all solo replacements, the
-   27-turn solo clock, Map 0 starter buildings, and official Break income;
-3. rejection atomicity;
-4. same-card and cross-card simultaneous-effect ordering; and
-5. an end-to-end path from initial hand selection through track crossing, final
-   turns, private Final Scoring discard, card scoring, track-distance scoring,
-   ranking, and terminal legal-action closure.
+The immutable evidence is in
+`content-packs/ark-nova/base-en-draft/release-review-ledger.json`. Loading the
+official pack requires `status=released`, the declared content digest, released
+review metadata, scenario coverage, two distinct review-process IDs, and a
+ledger whose entry set exactly matches the pack.
 
-The Web gate additionally type-checks and lints the client, builds the static
-export, validates its four rendered-HTML contracts, and opens a real local
-two-human match. The smoke test must remain on the initial-hand decision after
-the live-update delay, expose the game board, Association board, player map,
-and legal choices, and produce no browser console errors.
+## Automated acceptance
 
-The pack manifest remains `draft` and the runtime reports
-`official_base_candidate`, not `released`: nine advanced maps are intentionally
-outside the requested Map 0 scope, and independent human double-review metadata
-has not been fabricated. This editorial status does not disable the fully
-programmed 235 base card faces.
+The release gate requires all of the following:
+
+- the 27-domain official rulebook, glossary, and FAQ v2 traceability matrix in
+  `docs/ark-nova/rules-conformance.json`, with an implementation path and named
+  executable test for every in-scope rule domain;
+- the complete Python test suite, including card families, map/building rules,
+  privacy, invalid-action atomicity, break/endgame, and all 245 release
+  scenarios;
+- deterministic random-baseline completion for one, two, three, and four
+  players, with state validation after every accepted action;
+- Web TypeScript checking, ESLint, production build, and rendered-HTML tests;
+- exact 212-card Zoo-zone conservation, unique physical IDs, nonempty legal
+  actions at every decision, and terminal legal-action closure;
+- rules/content version and SHA-256 binding in setup, observations, saved
+  matches, catalog export, and the baseline evidence report.
+
+Development rules version `base-1.2-faq-v2-semantic.1` was never frozen as a
+release and is intentionally not advertised for replay. The separately
+implemented `base-1.2-controlled-core.6` remains available for matches created
+under that immutable controlled-core transition function.

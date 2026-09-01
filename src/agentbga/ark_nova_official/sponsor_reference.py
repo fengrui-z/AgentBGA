@@ -34,6 +34,11 @@ DIRECT_REWARD_OVERRIDES: Mapping[str, Mapping[str, int]] = {
 }
 
 PRINTED_ICON_OVERRIDES: Mapping[str, tuple[str, ...]] = {
+    "236": ("primate",),
+    "237": ("reptile",),
+    "238": ("bird",),
+    "239": ("predator",),
+    "240": ("herbivore",),
     "241": ("water",),
     "242": ("rock",),
     "243": ("herbivore",),

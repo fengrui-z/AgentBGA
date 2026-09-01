@@ -156,14 +156,15 @@ class ArkNovaOfficialContentTests(unittest.TestCase):
             with self.assertRaisesRegex(ContentValidationError, "may be null only"):
                 load_content_pack(root)
 
-    def test_repository_draft_pack_has_exact_roster_and_ui_projection(self):
+    def test_repository_released_map_zero_pack_has_exact_roster_and_ui_projection(self):
         root = Path(__file__).resolve().parents[1]
         pack = load_content_pack(root / "content-packs" / "ark-nova" / "base-en-draft")
         catalog = build_content_catalog(pack)
 
-        self.assertEqual(254, catalog["coverage"]["total"])
-        self.assertEqual(244, catalog["coverage"]["roster_indexed"])
+        self.assertEqual(245, catalog["coverage"]["total"])
+        self.assertEqual(245, catalog["coverage"]["roster_indexed"])
         self.assertEqual(243, catalog["coverage"]["semantic_entries"])
+        self.assertEqual("released", catalog["pack"]["status"])
         self.assertEqual("401", catalog["entries"][0]["official_component_id"])
         self.assertEqual("Cheetah", catalog["entries"][0]["title"])
         self.assertEqual(

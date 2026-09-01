@@ -585,6 +585,8 @@ def action_execution_spec(action: str, upgraded: bool, strength: int) -> dict[st
             "discard_count": discard_count,
             "draw_sources": "deck_or_within_reputation" if upgraded else "deck_only",
             "snap_source": "any_display_card",
+            "snap_cost": 0,
+            "snap_ignores_reputation": True,
             "defer_display_refill": True,
         }
     if action == "build":
@@ -599,6 +601,8 @@ def action_execution_spec(action: str, upgraded: bool, strength: int) -> dict[st
             ],
             "cost_per_space": 2,
             "may_move_animals_into_new_special_enclosure": bool(upgraded),
+            "first_building_rule": "must_cover_at_least_one_map_border_hex",
+            "later_building_rule": "must_be_adjacent_to_an_existing_building",
         }
     if action == "animals":
         limits = ANIMALS_CARD_LIMITS_UPGRADED if upgraded else ANIMALS_CARD_LIMITS
@@ -610,6 +614,10 @@ def action_execution_spec(action: str, upgraded: bool, strength: int) -> dict[st
             "display_surcharge": "folder_number" if upgraded else None,
             "reputation_before_play": 1 if upgraded and strength >= 5 else 0,
             "requires_nonempty_execution": True,
+            "legality_checks": [
+                "printed_prerequisites", "money", "compatible_enclosure_capacity",
+                "distinct_adjacent_rock_spaces", "distinct_adjacent_water_spaces",
+            ],
         }
     if action == "association":
         available_tasks = [
@@ -622,8 +630,13 @@ def action_execution_spec(action: str, upgraded: bool, strength: int) -> dict[st
             "tasks_must_be_different": bool(upgraded),
             "maximum_total_strength": strength,
             "donation_allowed": bool(upgraded),
-            "new_project_sources": (
+            "new_project_card_sources": (
                 "hand_or_within_reputation" if upgraded else "hand_only"
+            ),
+            "displayed_projects_require_card": False,
+            "displayed_project_rule": (
+                "Any already displayed base or Zoo conservation project may be "
+                "supported without holding its card, if an unclaimed tier is met."
             ),
             "display_project_surcharge": "folder_number" if upgraded else None,
         }

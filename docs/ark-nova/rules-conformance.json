@@ -1,0 +1,461 @@
+{
+  "schema_version": "agentbga.ark_nova.rules_conformance.v1",
+  "rules_version": "base-1.2-faq-v2-map0.1",
+  "scope": {
+    "edition": "Ark Nova base game",
+    "maps": [
+      "Map 0"
+    ],
+    "players": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "excluded": [
+      "Map A",
+      "Maps 1-8",
+      "Marine Worlds",
+      "promotional cards and maps"
+    ]
+  },
+  "official_sources": [
+    {
+      "id": "rulebook",
+      "title": "Ark Nova Rulebook",
+      "url": "https://capstone-games.com/cdn/shop/files/Ark-Nova-Rulebook.pdf?v=15269496103518830006",
+      "pages": 20,
+      "sha256": "f6b4eedc68e993f61b4c5cb5d99bb4af399da0be3de4781321bcba1ba44516f6",
+      "verified_on": "2026-08-28"
+    },
+    {
+      "id": "glossary",
+      "title": "Ark Nova Glossary",
+      "url": "https://cdn.shopify.com/s/files/1/0947/3907/1278/files/Ark-Nova-Glossary.pdf?v=1754428544",
+      "pages": 8,
+      "sha256": "3fbaeaa69b489cfb0bfa2410137c910cfb926731dabbdf3b4c2285c1f2fc525e",
+      "verified_on": "2026-08-28"
+    },
+    {
+      "id": "faq-v2",
+      "title": "Ark Nova FAQ v2",
+      "url": "https://cdn.shopify.com/s/files/1/0947/3907/1278/files/Ark-Nova-FAQ-v2.pdf?v=1754428544",
+      "pages": 3,
+      "sha256": "20b66dc9a3db83518127192e219f57d3dd8fbdc1b298662d00c808d4d922a8cd",
+      "verified_on": "2026-08-28"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R01-components-and-card-zones",
+      "source": "rulebook",
+      "source_ref": "Components, pp. 2-3",
+      "implementation": [
+        "src/agentbga/ark_nova_official/setup.py",
+        "src/agentbga/ark_nova_official/cards.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_p8_release.py::test_core_faces_bonus_tiles_and_all_255_four_player_physical_cards_are_executable",
+        "tests/test_ark_nova_official_card_zones.py::test_tucked_cards_remain_part_of_the_212_physical_zoo_cards"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R02-global-and-personal-setup",
+      "source": "rulebook",
+      "source_ref": "Setup, pp. 4-5",
+      "implementation": [
+        "src/agentbga/ark_nova_official/setup.py",
+        "src/agentbga/ark_nova_official/state.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_p8_release.py::test_setup_is_deterministic_private_and_map_zero_starts_empty",
+        "tests/test_ark_nova_official_setup.py::test_multiplayer_setup_uses_printed_break_lengths_and_starting_appeal",
+        "tests/test_ark_nova_official_setup.py::test_setup_draws_four_of_the_nine_exact_bonus_tile_faces"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R03-two-player-blocks",
+      "source": "rulebook",
+      "source_ref": "Setup 5c, p. 5",
+      "implementation": [
+        "src/agentbga/ark_nova_official/setup.py",
+        "src/agentbga/ark_nova_official/projects.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_setup.py::test_two_player_base_projects_block_left_high_middle_and_right_low",
+        "tests/test_ark_nova_official_p5_projects.py::test_two_player_base_row_blocks_one_different_level_on_each_card"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R04-map-zero-footprint-and-bonuses",
+      "source": "rulebook",
+      "source_ref": "Your Zoo Map, p. 6; Map 0 component",
+      "implementation": [
+        "content-packs/ark-nova/base-en-draft/maps.json",
+        "src/agentbga/ark_nova_official/build_action.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_build_action.py::test_map_zero_and_anchor_preserving_rotations_include_reported_border_placements",
+        "tests/test_ark_nova_official_build_action.py::test_money_placement_bonus_is_at_three_minus_three_and_is_consumed",
+        "tests/test_ark_nova_official_p6_final_scoring.py::test_map_zero_completion_adds_seven_only_during_final_scoring"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R05-action-card-cycle-strength-and-x",
+      "source": "rulebook",
+      "source_ref": "A Turn / The 5 Action Cards and X-token action, pp. 8, 18",
+      "implementation": [
+        "src/agentbga/ark_nova_official/actions.py",
+        "src/agentbga/ark_nova_official/action_domains.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_actions.py::test_official_strength_tables_cover_both_sides_at_strengths_one_to_five",
+        "tests/test_ark_nova_official_actions.py::test_alternative_x_action_moves_card_and_applies_remaining_venom_cost"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R06-cards-action-display-and-reputation",
+      "source": "rulebook",
+      "source_ref": "Cards action; Reputation Track and Display, p. 9",
+      "implementation": [
+        "src/agentbga/ark_nova_official/cards_action.py",
+        "src/agentbga/ark_nova_official/milestones.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_cards_action.py::test_reputation_ranges_match_the_six_display_positions",
+        "tests/test_ark_nova_official_cards_action.py::test_cards_two_can_take_only_within_reputation_and_refills_after_finishing",
+        "tests/test_ark_nova_official_reputation_cap.py::test_cards_one_caps_reputation_at_nine"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R07-build-action-and-polyhex-legality",
+      "source": "rulebook",
+      "source_ref": "Build action, p. 10",
+      "implementation": [
+        "src/agentbga/ark_nova_official/build_action.py",
+        "src/agentbga/ark_nova_map.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_build_action.py::test_build_two_can_build_different_sizes_with_one_strength_budget",
+        "tests/test_ark_nova_official_build_action.py::test_build_two_cells_and_special_enclosures_are_gated_by_upgraded_side",
+        "tests/test_ark_nova_official_build_action.py::test_branched_size_four_legacy_shape_is_not_offered"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R08-animals-action-cost-conditions-and-enclosures",
+      "source": "rulebook",
+      "source_ref": "Animals action and card layout, pp. 11-12",
+      "implementation": [
+        "src/agentbga/ark_nova_official/animals_action.py",
+        "src/agentbga/ark_nova_official/abilities.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_animals_action.py::test_animals_one_selects_card_before_enclosure_and_records_physical_instance",
+        "tests/test_ark_nova_official_animals_action.py::test_animal_partner_zoo_requirement_must_match_the_animals_continent",
+        "tests/test_ark_nova_official_animals_action.py::test_rock_requirement_filters_enclosures_by_distinct_adjacent_terrain"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R09-special-enclosures-and-release-errata",
+      "source": "faq-v2",
+      "source_ref": "Errata and special-enclosure clarification, pp. 1-2",
+      "implementation": [
+        "src/agentbga/ark_nova_official/build_action.py",
+        "src/agentbga/ark_nova_official/projects.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_build_action.py::test_build_two_may_move_standard_enclosure_animal_into_new_reptile_house",
+        "tests/test_ark_nova_official_p5_projects.py::test_release_uses_special_enclosure_tokens_before_any_standard_enclosure",
+        "tests/test_ark_nova_official_p5_projects.py::test_release_project_selects_exact_size_animal_and_empties_smallest_enclosure"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R10-association-action-board-assets-and-donations",
+      "source": "rulebook",
+      "source_ref": "Association action and Association board, pp. 14-15",
+      "implementation": [
+        "src/agentbga/ark_nova_official/association_action.py",
+        "src/agentbga/ark_nova_official/state.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_association_action.py::test_base_game_offers_only_the_three_printed_university_types",
+        "tests/test_ark_nova_official_association_action.py::test_association_two_combines_different_tasks_then_may_donate",
+        "tests/test_ark_nova_official_association_action.py::test_third_partner_zoo_requires_association_two_and_activates_worker"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R11-conservation-project-introduction-support-and-rewards",
+      "source": "rulebook",
+      "source_ref": "Conservation Projects, pp. 15-16",
+      "implementation": [
+        "src/agentbga/ark_nova_official/projects.py",
+        "src/agentbga/ark_nova_official/project_effects.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_association_action.py::test_association_one_introduces_project_from_hand_and_supports_it",
+        "tests/test_ark_nova_official_p5_projects.py::test_player_board_project_token_grants_immediate_and_recurring_reward",
+        "tests/test_ark_nova_official_p5_projects.py::test_all_32_faces_compile_all_96_tiers"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R12-release-and-breeding-projects",
+      "source": "glossary",
+      "source_ref": "Conservation Project Clarifications, pp. 1-2",
+      "implementation": [
+        "src/agentbga/ark_nova_official/projects.py",
+        "src/agentbga/ark_nova_official/project_effects.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_p5_projects.py::test_every_release_and_breeding_face_has_executable_support_choices",
+        "tests/test_ark_nova_official_p5_projects.py::test_breeding_program_requires_matching_animal_and_partner_zoo",
+        "tests/test_ark_nova_official_p5_projects.py::test_release_introduction_effect_is_separate_from_later_support"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R13-sponsors-action-break-option-and-timings",
+      "source": "rulebook",
+      "source_ref": "Sponsors action and card layout, p. 17",
+      "implementation": [
+        "src/agentbga/ark_nova_official/sponsors_action.py",
+        "src/agentbga/ark_nova_official/sponsor_effects.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_sponsors_action.py::test_sponsors_two_plays_multiple_cards_with_shared_level_budget",
+        "tests/test_ark_nova_official_sponsors_action.py::test_break_branch_advances_by_strength_and_pays_side_one_rate",
+        "tests/test_ark_nova_official_p3_sponsors.py::test_income_sponsors_resolve_track_token_money_and_tier_tables"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R14-unique-sponsor-buildings",
+      "source": "rulebook",
+      "source_ref": "Sponsor cards and normal building rules, pp. 10, 17",
+      "implementation": [
+        "src/agentbga/ark_nova_map.py",
+        "src/agentbga/ark_nova_official/sponsors_action.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_map_unique_sponsors.py::test_all_fifteen_specs_are_self_contained_and_rotatable",
+        "tests/test_ark_nova_official_sponsors_action.py::test_unique_building_sponsor_cannot_be_played_without_a_legal_footprint",
+        "tests/test_ark_nova_map_unique_sponsors.py::test_side_entrance_is_the_only_connectivity_override"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R15-icons-double-icons-and-terrain-requirements",
+      "source": "glossary",
+      "source_ref": "Golden Rules and Double Icons, p. 1",
+      "implementation": [
+        "src/agentbga/ark_nova_official/cards.py",
+        "src/agentbga/ark_nova_official/semantics.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_setup.py::test_multi_icon_cards_share_complete_engine_and_web_projection",
+        "tests/test_ark_nova_official_p6_final_scoring.py::test_recorded_terrain_requirements_are_terrain_icons",
+        "tests/test_ark_nova_official_p3_sponsors.py::test_doubled_science_icon_fires_each_matching_trigger_twice"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R16-ability-dispatch-and-glossary-clarifications",
+      "source": "glossary",
+      "source_ref": "Animal and Sponsor ability clarifications, pp. 2-8",
+      "implementation": [
+        "src/agentbga/ark_nova_official/abilities.py",
+        "src/agentbga/ark_nova_official/sponsor_effects.py",
+        "src/agentbga/ark_nova_official/semantics.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_p2_abilities.py::test_hypnosis_uses_opponent_slot_side_and_tokens_then_moves_own_card",
+        "tests/test_ark_nova_official_p2_abilities.py::test_pilfering_leader_decides_between_random_card_and_five_money",
+        "tests/test_ark_nova_official_p3_sponsors.py::test_all_sponsors_project_complete_compiled_mechanics"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R17-effect-order-after-finishing-and-simultaneous-choice",
+      "source": "glossary",
+      "source_ref": "Golden Rules: Order, p. 1",
+      "implementation": [
+        "src/agentbga/ark_nova_official/semantics.py",
+        "src/agentbga/ark_nova_official/actions.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_actions.py::test_after_finishing_effect_resolves_only_after_action_card_moves",
+        "tests/test_ark_nova_official_p7_interactions.py::test_simultaneous_cross_card_triggers_offer_real_order_choice",
+        "tests/test_ark_nova_official_p7_interactions.py::test_trigger_order_preserves_each_modifier_owner"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R18-multiplier-constriction-venom-and-interaction-alternates",
+      "source": "glossary",
+      "source_ref": "Animal abilities and Multiplier, pp. 2-4",
+      "implementation": [
+        "src/agentbga/ark_nova_official/actions.py",
+        "src/agentbga/ark_nova_official/abilities.py",
+        "src/agentbga/ark_nova_official/interaction_audit.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_actions.py::test_strength_is_locked_per_multiplier_execution_and_card_moves_after_both",
+        "tests/test_ark_nova_official_p7_interactions.py::test_venom_payment_is_reserved_until_after_extra_action_and_refunded",
+        "tests/test_ark_nova_official_p8_release.py::test_all_eleven_interactive_animals_use_blue_stripe_solo_replacements"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R19-reputation-and-conservation-milestones",
+      "source": "rulebook",
+      "source_ref": "Tracks, action upgrades and Conservation bonuses, pp. 9, 18",
+      "implementation": [
+        "src/agentbga/ark_nova_official/milestones.py",
+        "src/agentbga/ark_nova_official/actions.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_actions.py::test_reputation_five_opens_action_card_upgrade_choice",
+        "tests/test_ark_nova_official_actions.py::test_official_conservation_milestones_pause_in_order_and_share_bonus_tiles",
+        "tests/test_ark_nova_official_actions.py::test_conservation_bonus_choices_follow_player_count_and_shared_supply"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R20-break-procedure-replenishment-and-income",
+      "source": "rulebook",
+      "source_ref": "Break, p. 18",
+      "implementation": [
+        "src/agentbga/ark_nova_official/rounds.py",
+        "src/agentbga/ark_nova_official/semantics.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_semantics.py::test_ordered_break_uses_choice_window_income_trigger_and_reset",
+        "tests/test_ark_nova_official_p8_release.py::test_official_break_income_reads_appeal_and_live_kiosk_adjacency"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R21-end-trigger-final-turns-and-scoring",
+      "source": "rulebook",
+      "source_ref": "End of Game and Final Scoring, p. 19",
+      "implementation": [
+        "src/agentbga/ark_nova_official/scoring.py",
+        "src/agentbga/ark_nova_official/final_scoring_effects.py",
+        "src/agentbga/ark_nova_official/plugin.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_p8_release.py::test_end_to_end_setup_final_turns_private_discard_and_scoring",
+        "tests/test_ark_nova_official_p8_release.py::test_break_trigger_gives_every_player_one_final_turn",
+        "tests/test_ark_nova_official_p6_final_scoring.py::test_score_game_applies_final_conservation_before_vp_distance"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R22-final-scoring-card-semantics",
+      "source": "rulebook",
+      "source_ref": "Final Scoring Card Layout, p. 19",
+      "implementation": [
+        "src/agentbga/ark_nova_official/final_scoring_effects.py",
+        "src/agentbga/ark_nova_official/scoring.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_p6_final_scoring.py::test_all_11_faces_and_40_records_compile_without_backlog",
+        "tests/test_ark_nova_official_p6_final_scoring.py::test_all_nine_threshold_cards_reach_each_printed_tier",
+        "tests/test_ark_nova_official_setup.py::test_private_final_cards_include_live_scoring_projection"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R23-solo-game",
+      "source": "rulebook",
+      "source_ref": "Solo Game, p. 20",
+      "implementation": [
+        "src/agentbga/ark_nova_official/rounds.py",
+        "src/agentbga/ark_nova_official/setup.py",
+        "src/agentbga/ark_nova_official/scoring.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_p8_release.py::test_solo_uses_rounds_of_7_6_5_4_3_2_then_scores",
+        "tests/test_ark_nova_official_p8_release.py::test_solo_setup_never_deals_the_relative_final_scoring_card",
+        "tests/test_ark_nova_official_p6_final_scoring.py::test_solo_draw_discards_diverse_species_and_draws_replacement"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R24-faq-v2-cross-cutting-clarifications",
+      "source": "faq-v2",
+      "source_ref": "Bonus tiles, icons, action timing, track caps and double icons, pp. 1-3",
+      "implementation": [
+        "src/agentbga/ark_nova_official/actions.py",
+        "src/agentbga/ark_nova_official/milestones.py",
+        "src/agentbga/ark_nova_official/association_action.py",
+        "src/agentbga/ark_nova_official/semantics.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_setup.py::test_partner_zoo_bonus_respects_association_two_upgrade_gate",
+        "tests/test_ark_nova_official_actions.py::test_unusable_optional_rewards_resolve_without_an_empty_choice",
+        "tests/test_ark_nova_official_reputation_cap.py::test_cards_two_allows_reputation_through_fifteen"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R25-content-roster-semantics-and-independent-review",
+      "source": "rulebook",
+      "source_ref": "Components, pp. 2-3; all card layouts",
+      "implementation": [
+        "content-packs/ark-nova/base-en-draft/release-review-ledger.json",
+        "src/agentbga/ark_nova_official/release_review.py",
+        "src/agentbga/ark_nova_official/release_scenarios.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_p8_release.py::test_all_235_faces_nine_bonus_tiles_and_map_zero_have_independent_review_scenarios",
+        "tests/test_ark_nova_official_content.py::test_repository_released_map_zero_pack_has_exact_roster_and_ui_projection"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R26-hidden-information-and-private-decisions",
+      "source": "rulebook",
+      "source_ref": "Personal Setup E-F, p. 5",
+      "implementation": [
+        "src/agentbga/ark_nova_official/plugin.py",
+        "src/agentbga/ark_nova_official/presentation.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_p8_release.py::test_pending_private_choice_is_redacted_for_opponents_but_visible_to_spectators",
+        "tests/test_ark_nova_official_p8_release.py::test_web_projection_exposes_human_readable_card_facts_without_leaking_hidden_cards"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "R27-engine-legality-atomicity-and-human-action-domain",
+      "source": "rulebook",
+      "source_ref": "Gameplay and legal action choices, pp. 6-18",
+      "implementation": [
+        "src/agentbga/ark_nova_official/action_domains.py",
+        "src/agentbga/ark_nova_official/plugin.py"
+      ],
+      "tests": [
+        "tests/test_ark_nova_official_action_domains.py::test_unplayable_hand_does_not_trap_turn_and_sponsors_break_remains_available",
+        "tests/test_ark_nova_official_p8_release.py::test_invalid_action_is_rejected_without_mutating_the_snapshot"
+      ],
+      "status": "pass"
+    }
+  ],
+  "result": {
+    "status": "pass",
+    "requirement_count": 27,
+    "open_rule_gaps": 0,
+    "note": "Pass is limited to the declared base-game Map 0 scope; excluded maps and expansions are not implied."
+  }
+}

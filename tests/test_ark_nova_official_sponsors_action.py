@@ -5,6 +5,7 @@ from agentbga.ark_nova_official import (
     SemanticEngine,
     SemanticRuleError,
     apply_sponsors_execution_action,
+    current_action_execution,
     legal_sponsors_execution_actions,
     load_content_pack,
     new_semantic_state,
@@ -49,6 +50,23 @@ class ArkNovaOfficialSponsorsActionTests(unittest.TestCase):
         self.assertEqual(1, state["active_seat"])
         self.assertEqual("turn_finished", events[-1]["type"])
 
+    def test_break_branch_pays_twice_strength_on_side_two(self):
+        state = self.state
+        action_card(state, "sponsors")["upgraded"] = True
+        state, _ = start_action(state, 0, "sponsors")
+        branch = next(
+            choice for choice in self.choices(state)
+            if choice["id"] == "sponsors:advance-break"
+        )
+        self.assertIn("gain 10 money", branch["label"])
+        state, events = self.apply(state, {"type": "advance_sponsors_break"})
+        self.assertEqual(5, state["break"]["position"])
+        self.assertEqual(35, state["players"][0]["money"])
+        completion = next(
+            event for event in events if event["type"] == "action_execution_completed"
+        )
+        self.assertEqual(10, completion["summary"]["money"])
+
     def test_sponsors_one_plays_exactly_one_card_then_finishes(self):
         state = self.state
         state["players"][0]["hand"] = [
@@ -78,6 +96,44 @@ class ArkNovaOfficialSponsorsActionTests(unittest.TestCase):
             })
         self.assertEqual(2, len(state["players"][0]["played_cards"]))
         self.assertEqual(["sponsors:finish"], [choice["id"] for choice in self.choices(state)])
+
+    def test_sponsors_two_strength_four_can_play_level_five(self):
+        state = self.state
+        sponsors = action_card(state, "sponsors")
+        other = next(
+            card for card in state["players"][0]["action_cards"]
+            if card["position"] == 4
+        )
+        sponsors["position"], other["position"] = other["position"], sponsors["position"]
+        sponsors["upgraded"] = True
+        state["players"][0]["hand"] = [{
+            "id": "lab-a", "entry_id": self.sponsors_two.id,
+        }]
+
+        state, _ = start_action(state, 0, "sponsors")
+        self.assertEqual([4], state["turn"]["action_session"]["strengths"])
+        self.assertEqual(5, current_action_execution(
+            state, 0,
+        )["spec"]["maximum_level_total"])
+        self.assertIn("sponsors:play:lab-a", [choice["id"] for choice in self.choices(state)])
+
+    def test_sponsors_two_display_position_four_costs_four_money(self):
+        state = self.state
+        action_card(state, "sponsors")["upgraded"] = True
+        state["players"][0]["tracks"]["reputation"] = 7
+        state["card_display"] = [
+            {"id": f"display-{index}", "entry_id": self.simple.id}
+            for index in range(1, 7)
+        ]
+        state, _ = start_action(state, 0, "sponsors")
+        state, _ = self.apply(state, {
+            "type": "play_sponsor_card", "instance_id": "display-4", "source": "display",
+        })
+        self.assertEqual(21, state["players"][0]["money"])
+        self.assertEqual(
+            4,
+            state["turn"]["action_session"]["sponsors_resolution"]["played"][0]["folder_cost"],
+        )
 
     def test_display_range_keeps_physical_slots_and_refills_after_finish(self):
         state = self.state

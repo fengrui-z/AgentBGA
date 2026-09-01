@@ -37,4 +37,4 @@ card session.  Every action is checked by the server before state mutation.
 - P5 completes conservation-token map bonuses and Release into the Wild.
 
 P8 subsequently passed the require-no-blocking-gaps and full-match gates and
-registered this action-domain layer as the default official-base candidate.
+registered this action-domain layer as the default base-game Map 0 release.

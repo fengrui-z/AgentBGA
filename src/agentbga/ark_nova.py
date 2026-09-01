@@ -317,24 +317,30 @@ def _build_actions(
     return list(choices.values())
 
 
-def _playable_animals(state: dict[str, Any], player: dict[str, Any], upgraded: bool = False) -> list[dict[str, Any]]:
+def _playable_animals(
+    state: dict[str, Any], player: dict[str, Any], upgraded: bool = False,
+    reputation_bonus: int = 0,
+) -> list[dict[str, Any]]:
     empty = [building for building in player["map"]["buildings"]
              if building["type"] == "standard_enclosure" and not building["occupied"]]
     actions = []
     candidates = [(card, "hand", None) for card in player["hand"]]
     if upgraded:
-        maximum_slot = reputation_display_slot(player["reputation"])
+        maximum_slot = reputation_display_slot(player["reputation"] + reputation_bonus)
         candidates.extend((card, "display", slot) for slot, card in enumerate(state["card_display"], 1)
                           if slot <= maximum_slot)
     for card, source, slot in candidates:
-        cost = _animal_cost(player, card) if card["card_type"] == "animal" else 0
+        animal_cost = _animal_cost(player, card) if card["card_type"] == "animal" else 0
+        folder_cost = int(slot or 0)
+        cost = animal_cost + folder_cost
         if card["card_type"] != "animal" or cost > player["money"]:
             continue
         for enclosure in empty:
             if enclosure["size"] >= card["enclosure_size"]:
                 actions.append({"type": "play_animal", "card_id": card["id"],
                                 "enclosure_id": enclosure["id"], "cost": cost,
-                                "discount": card["cost"] - cost, "source": source,
+                                "discount": card["cost"] - animal_cost,
+                                "folder_cost": folder_cost, "source": source,
                                 **({"display_slot": slot} if slot is not None else {})})
     return actions
 
@@ -423,7 +429,11 @@ def _can_start_action(state: dict[str, Any], player: dict[str, Any], name: str, 
     if name == "build":
         return bool(_build_actions(player, strength, _action_card(player, "build")["upgraded"]))
     if name == "animals":
-        return bool(_playable_animals(state, player, _action_card(player, "animals")["upgraded"]))
+        upgraded = _action_card(player, "animals")["upgraded"]
+        reputation_bonus = 1 if upgraded and strength >= 5 else 0
+        return bool(_playable_animals(
+            state, player, upgraded, reputation_bonus=reputation_bonus,
+        ))
     if name == "association":
         return bool(_association_actions(state, player, strength))
     return True  # Sponsors can always advance Break and gain money.
@@ -445,8 +455,6 @@ def legal_actions(state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
         for card in sorted(player["action_cards"], key=lambda item: item["strength"]):
             for x_tokens in range(player["x_tokens"] + 1):
                 strength = card["strength"] + x_tokens
-                if card["action"] == "animals" and card["upgraded"] and strength >= 5:
-                    strength += 1
                 if _can_start_action(state, player, card["action"], strength):
                     actions.append({"type": "select_action", "action_card": card["action"],
                                     "base_strength": card["strength"], "x_tokens": x_tokens,
@@ -515,10 +523,12 @@ def legal_actions(state: dict[str, Any], seat: int) -> list[dict[str, Any]]:
         if pending.get("upgraded", False):
             maximum_slot = reputation_display_slot(player["reputation"])
             actions.extend({"type": "play_sponsor", "card_id": card["id"],
-                            "source": "display", "display_slot": slot}
+                            "source": "display", "display_slot": slot,
+                            "folder_cost": slot}
                            for slot, card in enumerate(state["card_display"], 1)
                            if slot <= maximum_slot and card["card_type"] == "sponsor"
-                           and card["level"] <= remaining_strength)
+                           and card["level"] <= remaining_strength
+                           and slot <= player["money"])
         if not pending.get("sponsors_played"):
             actions.append({"type": "cancel_action", "action_card": "sponsors"})
         return _wrap_actions(state, actions)
@@ -1008,6 +1018,14 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
             new_phase, decision = phase_for[action["action_card"]]
             if action["action_card"] == "cards":
                 next_state["pending_action"]["break_steps"] = _move_break(next_state, 2)
+            elif (
+                action["action_card"] == "animals"
+                and card["upgraded"]
+                and action["strength"] >= 5
+            ):
+                _gain_reputation(
+                    next_state, player, 1, events, "action:animals:reputation",
+                )
             remaining = 2 if action["action_card"] == "animals" and action["strength"] >= 5 else 1
             _set_phase(next_state, new_phase, decision, action_card=action["action_card"],
                        remaining_plays=remaining)
@@ -1190,13 +1208,19 @@ def apply_action(state: dict[str, Any], seat: int, action: dict[str, Any]) -> tu
             events.append({"type": "sponsors_break_advanced", "seat": seat,
                            "steps": action["steps"], "money": action["money"]})
         else:
+            folder_cost = int(action.get("folder_cost", 0))
             if action.get("source") == "display":
                 card = move_item(next_state["card_display"], player["played_cards"], action["card_id"])
             else:
                 card = move_item(player["hand"], player["played_cards"], action["card_id"])
-            adjust_resources(player, {"appeal": card["appeal"]})
+            adjust_resources(player, {
+                "money": -folder_cost, "appeal": card["appeal"],
+            })
             _apply_effects(next_state, player, card.get("effects", []), events, card["id"])
-            events.append({"type": "sponsor_played", "seat": seat, "card_id": card["id"]})
+            events.append({
+                "type": "sponsor_played", "seat": seat, "card_id": card["id"],
+                "source": action.get("source", "hand"), "folder_cost": folder_cost,
+            })
         if kind == "play_sponsor" and next_state["pending_action"].get("upgraded"):
             next_state["pending_action"]["remaining_strength"] -= card["level"]
             next_state["pending_action"]["sponsors_played"] += 1

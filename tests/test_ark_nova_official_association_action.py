@@ -70,6 +70,32 @@ class ArkNovaOfficialAssociationActionTests(unittest.TestCase):
         self.assertEqual(["association:finish"], [choice["id"] for choice in self.choices(state)])
         self.assertTrue(any(event["type"] == "track_moved" for event in events))
 
+    def test_other_players_prior_task_never_increases_my_worker_cost(self):
+        state = self.state
+        project = self.project()
+        projects = {project.id: project}
+        state["conservation_projects"] = [{
+            "id": project.id, "instance_id": project.id,
+            "base": False, "claims": [], "blocked_levels": [],
+        }]
+        state["players"][0]["association_workers"]["committed"] = [
+            {"task": "conservation-project"},
+        ]
+        state["players"][1]["association_workers"]["active"] = 1
+        state["players"][1]["modifiers"].append({
+            "kind": "association_project_strength", "amount": 4,
+        })
+        state["active_seat"] = 1
+        state, _ = start_action(state, 1, "association")
+        choices = legal_association_execution_actions(
+            self.engine, state, 1, projects,
+        )
+        support = next(
+            choice for choice in choices
+            if choice["action"].get("task_id") == "conservation-project"
+        )
+        self.assertEqual(1, support["action"]["workers"])
+
     def test_reputation_university_grants_research_icon_and_two_reputation(self):
         state, _ = start_action(self.state, 0, "association")
         university = next(
@@ -96,41 +122,41 @@ class ArkNovaOfficialAssociationActionTests(unittest.TestCase):
         self.assertEqual(1, state["players"][0]["icons"]["europe"])
         self.assertTrue(any(event["type"] == "zoo_icon_entered" for event in events))
 
-    def test_animal_university_is_globally_unique_and_draws_matching_animal(self):
-        bird = ContentEntry(
-            id="ark-nova:test-bird", kind="animal", official_component_id="999",
-            source_ids=("scenario",), display_title="Test Bird", display_summary="",
-            facts={"animal_categories": ["bird"]}, requirements=(), effects=(),
-            references=(), review_status="scenario_tested", scenario_tests=("association",),
-            reviewer=None, second_reviewer=None,
+    def test_base_game_offers_only_the_three_printed_university_types(self):
+        self.assertEqual(
+            {"research-2", "research-reputation", "research-hand-limit"},
+            set(self.state["association_board"]["universities"]),
         )
-        animals = {bird.id: bird}
-        state = self.state
-        state["zoo_deck"] = [{"id": "bird-copy", "entry_id": bird.id}]
-        state, _ = start_action(state, 0, "association")
-        choices = legal_association_execution_actions(
-            self.engine, state, 0, self.projects, animals,
+        state, _ = start_action(self.state, 0, "association")
+        university_ids = {
+            choice["action"]["university_id"]
+            for choice in self.choices(state)
+            if choice["action"].get("task_id") == "university"
+        }
+        self.assertEqual(
+            {"research-2", "research-reputation", "research-hand-limit"},
+            university_ids,
         )
-        action = next(
-            choice["action"] for choice in choices
-            if choice["action"].get("university_id") == "animal-bird"
+        first_university = next(
+            choice for choice in self.choices(state)
+            if choice["action"].get("university_id") == "research-2"
         )
-        state, events = apply_association_execution_action(
-            self.engine, state, 0, self.projects, action, animals,
-        )
-        player = state["players"][0]
-        self.assertEqual(1, player["icons"]["bird"])
-        self.assertEqual(1, player["icons"]["research"])
-        self.assertEqual(["bird-copy"], [card["id"] for card in player["hand"]])
-        self.assertTrue(any(event["type"] == "animal_university_card_drawn" for event in events))
-        supply = state["association_board"]["universities"]["animal-bird"]
-        self.assertEqual({"available": 0, "owners": [0], "exclusive": True}, supply)
+        self.assertIn("your 1st", first_university["label"])
+        self.assertIn("does not upgrade an Action card", first_university["label"])
+        self.assertIn("action strength requirement 4", first_university["label"])
+        self.assertIn("money cost 0", first_university["label"])
 
-        replenished, _ = self.engine.start_effects(
-            state, 0, [{"op": "replenish_association", "args": {}, "timing": "system"}],
-            source_id="test:break",
+    def test_second_university_label_announces_action_upgrade_without_money_cost(self):
+        state = self.state
+        state["players"][0]["universities"] = ["research-reputation"]
+        state, _ = start_action(state, 0, "association")
+        university = next(
+            choice for choice in self.choices(state)
+            if choice["action"].get("university_id") == "research-2"
         )
-        self.assertEqual(0, replenished["association_board"]["universities"]["animal-bird"]["available"])
+        self.assertIn("your 2nd", university["label"])
+        self.assertIn("upgrade one Action card", university["label"])
+        self.assertIn("money cost 0", university["label"])
 
     def test_second_asset_requires_action_upgrade_choice(self):
         state = self.state
@@ -260,12 +286,22 @@ class ArkNovaOfficialAssociationActionTests(unittest.TestCase):
             "id": "project-hand-a", "entry_id": project.id,
         }]
         state, _ = start_action(state, 0, "association", x_by_execution=(2,))
-        action = next(
-            choice["action"] for choice in self.choices(state)
+        choice = next(
+            choice for choice in self.choices(state)
             if choice["action"].get("source") == "hand"
-            and choice["action"].get("token_slot_id") == "x-3"
+            and choice["action"].get("token_slot_id") == "enclosure-2"
             and choice["action"].get("token_bonus_timing") == "after"
         )
+        self.assertIn(
+            "Build one size-2 standard enclosure for free: once immediately + once at every Break (recurring)",
+            choice["label"],
+        )
+        self.assertEqual(
+            "免费建造一个2格普通围栏：立即一次 + 每次休息一次（持续）",
+            choice["benefit_summary_cn"],
+        )
+        self.assertTrue(choice["recurring"])
+        action = choice["action"]
         state, events = self.apply(state, action)
         self.assertEqual([], state["players"][0]["hand"])
         self.assertEqual([project.id], state["players"][0]["supported_projects"])

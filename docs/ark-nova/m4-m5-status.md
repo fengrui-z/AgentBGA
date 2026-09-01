@@ -1,6 +1,6 @@
 # Ark Nova M4/M5 implementation status
 
-Updated: 2026-08-24
+Historical M4/M5 snapshot, superseded by the Map 0 release on 2026-08-28.
 
 ## Delivered in this stage
 
@@ -75,26 +75,12 @@ as remaining below. This status did not itself promote the draft roster.
 High-fidelity official-base card semantics remain gated by the review process
 described below.
 
-## Accuracy boundary
+## Superseding release
 
-The current draft has 254 board/content slots, 235 structured card references,
-and 140 entries with compiled requirements and/or effects, but zero rules-released entries.
-The existing controlled-core match remains the runnable
-version while content is transcribed and reviewed. The Web interface states
-this directly so visual completeness cannot be mistaken for rules completeness.
-
-The current animal dispatcher compiles 22 keyword families. Seventy-six animal
-cards now have complete imported ability coverage; remaining cards retain their
-unresolved keyword IDs for subsequent interaction, enclosure, and trigger batches.
-
-## Next content batches
-
-1. Transcribe and schema-validate the 12 base conservation projects, because
-   they exercise reusable level requirements and association rewards.
-2. Transcribe final-scoring cards and bonus tiles to close the endgame pipeline.
-3. Process sponsors in interaction families, then animals by ability keyword,
-   adding scenario IDs before rules review.
-4. Independently verify physical identifiers and factual printed values for the
-   31 slot-only records.
-5. Release only after every entry has two independent reviewers and scenario
-   coverage; then register the semantic rules version as runnable.
+The former draft boundary is closed for the intentionally limited Map 0 mode.
+`base-1.2-faq-v2-map0.1` loads the released 245-entry content package: 235 card
+faces, nine reward tiles, and Map 0. Every entry records a source-crosswalk
+review process and a separate executable scenario review process. See
+`p8-release-gate.md` and `release-baseline-results.json` for the current gate and
+one-to-four-player completion evidence. Map A and Maps 1–8 remain outside this
+version instead of appearing as unentered release slots.

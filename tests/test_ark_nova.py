@@ -175,6 +175,44 @@ class ArkNovaControlledCoreTests(unittest.TestCase):
                 "cells": action["cells"],
             }))
 
+    def test_special_enclosure_shapes_match_the_physical_tiles(self):
+        reptile = set(building_shape_variants("reptile_house", 5)[0]["cells"])
+        aviary = set(building_shape_variants("large_bird_aviary", 5)[0]["cells"])
+
+        self.assertEqual({
+            (0, 0), (-1, 0), (-1, 1), (1, -1), (1, 0),
+        }, reptile)
+        self.assertEqual({
+            (0, 0), (-1, 0), (-1, 1), (1, -1), (0, 1),
+        }, aviary)
+        self.assertNotEqual(reptile, aviary)
+
+        # Each physical tile has one central cell touching four other cells.
+        # The reptile house is symmetric; the aviary extends one branch and
+        # therefore has six distinct rotations rather than three.
+        centre = (0, 0)
+        self.assertEqual(4, len(ark_nova._neighbors(centre) & reptile))
+        self.assertEqual(4, len(ark_nova._neighbors(centre) & aviary))
+        self.assertEqual(3, len(building_shape_variants("reptile_house", 5)))
+        self.assertEqual(6, len(building_shape_variants("large_bird_aviary", 5)))
+
+    def test_old_special_enclosure_shapes_are_loadable_but_not_generated(self):
+        legacy_shapes = {
+            "reptile_house": {(0, 0), (1, 0), (2, 0), (0, 1), (1, 1)},
+            "large_bird_aviary": {(0, 0), (1, 0), (1, 1), (2, 1), (2, 2)},
+        }
+        for building_type, cells in legacy_shapes.items():
+            self.assertTrue(valid_building_shape({
+                "type": building_type,
+                "size": 5,
+                "cells": [{"q": q, "r": r} for q, r in cells],
+            }))
+            generated = {
+                frozenset(variant["cells"])
+                for variant in building_shape_variants(building_type, 5)
+            }
+            self.assertNotIn(frozenset(cells), generated)
+
     def test_anchor_preserving_rotations_include_reference_border_placements(self):
         state = ark_nova.new_game(2, 105)
         player = state["players"][0]
@@ -665,6 +703,7 @@ class ArkNovaControlledCoreTests(unittest.TestCase):
     def test_upgraded_animals_can_play_from_reputation_range(self):
         state = finish_initial_hands(ark_nova.new_game(2, 32, {"turn_limit": 20}))
         player = state["players"][0]
+        player["money"] = 100
         add_enclosure(player, 3)
         next(card for card in player["action_cards"] if card["action"] == "animals")["upgraded"] = True
         player["reputation"] = 4
@@ -677,8 +716,60 @@ class ArkNovaControlledCoreTests(unittest.TestCase):
         state = apply_kind(state, "select_action", action_card="animals", x_tokens=0)
         action = next(item["action"] for item in ark_nova.legal_actions(state, 0)
                       if item["action"].get("source") == "display" and item["action"]["card_id"] == animal["id"])
+        self.assertEqual(1, action["folder_cost"])
+        self.assertEqual(ark_nova._animal_cost(player, animal) + 1, action["cost"])
         state, _ = ark_nova.apply_action(state, 0, action)
+        self.assertEqual(100 - action["cost"], state["players"][0]["money"])
         self.assertTrue(any(card["id"] == animal["id"] for card in state["players"][0]["played_cards"]))
+
+    def test_upgraded_animals_strength_five_plays_at_most_two_and_gains_one_reputation(self):
+        state = finish_initial_hands(ark_nova.new_game(2, 33, {"turn_limit": 20}))
+        player = state["players"][0]
+        player["money"] = 100
+        animals = next(
+            card for card in player["action_cards"] if card["action"] == "animals"
+        )
+        animals["upgraded"] = True
+        player["x_tokens"] = 5 - animals["strength"]
+        cards = [
+            card for card in state["zoo_deck"]
+            if card["card_type"] == "animal" and card["enclosure_size"] <= 3
+        ][:3]
+        self.assertEqual(3, len(cards))
+        for card in cards:
+            state["zoo_deck"].remove(card)
+            player["hand"].append(card)
+            add_enclosure(player, card["enclosure_size"])
+
+        start = next(
+            item["action"] for item in ark_nova.legal_actions(state, 0)
+            if item["action"]["type"] == "select_action"
+            and item["action"]["action_card"] == "animals"
+            and item["action"]["strength"] == 5
+        )
+        state, events = ark_nova.apply_action(state, 0, start)
+        self.assertEqual(2, state["players"][0]["reputation"])
+        self.assertEqual(1, sum(
+            event["type"] == "reputation_advanced"
+            and event.get("source_id") == "action:animals:reputation"
+            for event in events
+        ))
+
+        for card in cards[:2]:
+            play = next(
+                item["action"] for item in ark_nova.legal_actions(state, 0)
+                if item["action"].get("type") == "play_animal"
+                and item["action"].get("card_id") == card["id"]
+            )
+            state, _ = ark_nova.apply_action(state, 0, play)
+
+        played_ids = {card["id"] for card in state["players"][0]["played_cards"]}
+        self.assertTrue({card["id"] for card in cards[:2]} <= played_ids)
+        self.assertIn(cards[2]["id"], {
+            card["id"] for card in state["players"][0]["hand"]
+        })
+        self.assertEqual(2, state["players"][0]["reputation"])
+        self.assertEqual("choose_action", state["phase"])
 
     def test_upgraded_build_offers_special_enclosures(self):
         state = finish_initial_hands(ark_nova.new_game(2, 34, {"turn_limit": 20}))
@@ -695,6 +786,7 @@ class ArkNovaControlledCoreTests(unittest.TestCase):
         player = state["players"][0]
         next(card for card in player["action_cards"] if card["action"] == "sponsors")["upgraded"] = True
         player["reputation"] = 4
+        player["money"] = 25
         sponsor = next(card for card in state["zoo_deck"] if card["card_type"] == "sponsor"
                        and card["level"] <= 5)
         state["zoo_deck"].remove(sponsor)
@@ -705,7 +797,18 @@ class ArkNovaControlledCoreTests(unittest.TestCase):
         player["x_tokens"] = max(0, sponsor["level"] - sponsors["strength"])
         state = apply_kind(state, "select_action", action_card="sponsors",
                            strength=max(sponsor["level"], sponsors["strength"]))
-        state = apply_kind(state, "play_sponsor", source="display", card_id=sponsor["id"])
+        action = next(
+            item["action"] for item in ark_nova.legal_actions(state, 0)
+            if item["action"].get("source") == "display"
+            and item["action"].get("card_id") == sponsor["id"]
+        )
+        self.assertEqual(1, action["folder_cost"])
+        state, events = ark_nova.apply_action(state, 0, action)
+        self.assertEqual(24, state["players"][0]["money"])
+        self.assertTrue(any(
+            event.get("type") == "sponsor_played" and event.get("folder_cost") == 1
+            for event in events
+        ))
         self.assertTrue(any(card["id"] == sponsor["id"] for card in state["players"][0]["played_cards"]))
 
     def test_conservation_five_offers_money_or_bonus_tile(self):

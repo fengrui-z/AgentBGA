@@ -20,6 +20,12 @@ _SPECIAL_BUILDING_NAMES = {
     "Reptile House": "reptile_house",
     "Large Bird Aviary": "large_bird_aviary",
 }
+_BUILDING_DISPLAY_NAMES = {
+    "standard_enclosure": "standard enclosure",
+    "petting_zoo": "Petting Zoo",
+    "reptile_house": "Reptile House",
+    "large_bird_aviary": "Large Bird Aviary",
+}
 _DISPLAY_REFILL_EFFECT = {
     "op": "refill_card_display", "timing": "after_finishing", "args": {"target_size": 6},
 }
@@ -67,20 +73,28 @@ def legal_animals_execution_actions(
     if resolution["selected"] is not None:
         selected = resolution["selected"]
         entry = _entry_for_id(entries, selected["entry_id"])
+        options = _enclosure_options(state["players"][seat], entry)
         return [{
             "id": f"animals:enclosure:{option['building_id']}",
-            "label": f"Use {option['building_type']} {option['building_id']}",
+            "label": _enclosure_option_label(entry, option),
+            "presentation": {
+                "animal": entry.display_title,
+                "housing_mode": option["housing_mode"],
+                "building_type": option["building_type"],
+                "building_id": option["building_id"],
+                "space_used": option["space"],
+                "capacity_before": option["capacity_before"],
+                "capacity_after": option["capacity_after"],
+                "capacity_total": option["capacity_total"],
+            },
             "action": {
                 "type": "play_selected_animal",
                 "building_id": option["building_id"],
             },
-        } for option in _enclosure_options(state["players"][seat], entry)]
+        } for option in options]
     result = [{
         "id": f"animals:select:{candidate['instance_id']}",
-        "label": (
-            f"Select {candidate['entry'].display_title} from {candidate['source']} "
-            f"({candidate['cost']} money)"
-        ),
+        "label": _animal_candidate_label(candidate),
         "action": {
             "type": "select_animal_card",
             "instance_id": candidate["instance_id"],
@@ -96,6 +110,50 @@ def legal_animals_execution_actions(
             "action": {"type": "finish_animals_action"},
         })
     return result
+
+
+def _animal_candidate_label(candidate: Mapping[str, Any]) -> str:
+    entry = candidate["entry"]
+    facts = entry.facts
+    enclosure = f"standard enclosure {facts.get('enclosure_size', '?')}"
+    if facts.get("special_enclosure"):
+        enclosure += f" or {facts['special_enclosure']}"
+    terrain = []
+    if int(facts.get("rock_requirement", 0) or 0):
+        terrain.append(f"rock-adjacent {facts['rock_requirement']}")
+    if int(facts.get("water_requirement", 0) or 0):
+        terrain.append(f"water-adjacent {facts['water_requirement']}")
+    details = f" · {enclosure}"
+    if terrain:
+        details += " · " + ", ".join(terrain)
+    if entry.requirements:
+        details += " · printed prerequisites satisfied"
+    return (
+        f"Select {entry.display_title} from {candidate['source']} "
+        f"({candidate['cost']} money){details}"
+    )
+
+
+def _enclosure_option_label(
+    entry: ContentEntry, option: Mapping[str, Any],
+) -> str:
+    building_name = _BUILDING_DISPLAY_NAMES.get(
+        str(option["building_type"]), str(option["building_type"]),
+    )
+    if option["housing_mode"] == "standard":
+        capacity = (
+            f"uses the full size-{option['capacity_total']} enclosure; "
+            f"printed requirement {option['space']}"
+        )
+    else:
+        capacity = (
+            f"uses {option['space']} capacity; "
+            f"{option['capacity_after']}/{option['capacity_total']} remains"
+        )
+    return (
+        f"House {entry.display_title} in {building_name} "
+        f"{option['building_id']} ({capacity})"
+    )
 
 
 def apply_animals_execution_action(
@@ -434,9 +492,21 @@ def _enclosure_options(player: Mapping[str, Any], entry: ContentEntry) -> list[d
             continue
         if not _terrain_requirement_met(player, building, "water", entry.facts.get("water_requirement", 0)):
             continue
+        space = _animal_space_in_building(entry, building)
+        used_before = int(building.get("used_capacity", 0))
+        capacity_total = int(building["size"])
         result.append({
             "building_id": building["id"], "building_type": building_type,
-            "space": _animal_space_in_building(entry, building),
+            "housing_mode": (
+                "standard" if building_type == "standard_enclosure" else "special"
+            ),
+            "space": space,
+            "capacity_before": used_before,
+            "capacity_after": (
+                0 if building_type == "standard_enclosure"
+                else capacity_total - used_before - space
+            ),
+            "capacity_total": capacity_total,
         })
     return result
 

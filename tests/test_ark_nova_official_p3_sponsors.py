@@ -109,6 +109,32 @@ class ArkNovaOfficialP3SponsorTests(unittest.TestCase):
         # Spokesperson is self-only, so the opponent's icon grants no reputation.
         self.assertEqual(2, state["players"][0]["tracks"]["reputation"])
 
+    def test_animal_specialists_supply_and_trigger_their_printed_icon(self):
+        specialist_icons = {
+            236: "primate",
+            237: "reptile",
+            238: "bird",
+            239: "predator",
+            240: "herbivore",
+        }
+        for component_id, icon in specialist_icons.items():
+            with self.subTest(component_id=component_id, icon=icon):
+                state = new_semantic_state(2, seed=component_id)
+                money = state["players"][0]["money"]
+                state, events = play_entry_semantics(
+                    self.engine, state, 0, self.sponsor(component_id),
+                    instance_id=f"specialist-{component_id}",
+                )
+                state = self.settle_effect_order(state)
+                self.assertEqual(1, state["players"][0]["icons"]["person"])
+                self.assertEqual(1, state["players"][0]["icons"][icon])
+                self.assertEqual(money + 3, state["players"][0]["money"])
+                self.assertTrue(any(
+                    event.get("type") == "zoo_icon_entered"
+                    and event.get("icon") == icon
+                    for event in events
+                ))
+
     def test_doubled_science_icon_fires_each_matching_trigger_twice(self):
         self.state["players"][0]["icons"]["science"] = 1
         state, _ = play_entry_semantics(

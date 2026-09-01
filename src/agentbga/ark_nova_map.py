@@ -1,4 +1,4 @@
-"""Structured Map 0 geometry and polyhex building templates.
+"""Structured Map 0 / Map A geometry and polyhex building templates.
 
 The coordinate data is a mechanics-first transcription of the Map 0
 reference supplied for this project. It deliberately uses original colours,
@@ -51,6 +51,51 @@ _PLACEMENT_BONUSES: dict[tuple[int, int], dict[str, Any]] = {
 _BUILD_II_CELLS = {(3, -2), (2, -1)}
 
 
+# Map A uses the same 58-space player-board rules and building templates, but
+# has its own footprint, terrain, placement rewards, Build-II spaces, and two
+# printed setup buildings.  Coordinates are transcribed in the same flat-top
+# axial system as Map 0, with the central X-token reward at (0, 0).
+_MAP_A_ROWS = {
+    -5: (3, 4),
+    -4: (1, 4),
+    -3: (-1, 4),
+    -2: (-3, 4),
+    -1: (-4, 4),
+    0: (-4, 4),
+    1: (-4, 3),
+    2: (-4, 1),
+    3: (-4, -1),
+    4: (-4, -3),
+}
+_MAP_A_WATER = {
+    (-2, -2), (0, -3), (3, -5), (4, -5), (4, -4),
+    (2, -1), (1, 0), (-2, 3), (-1, 3),
+}
+_MAP_A_ROCK = {
+    (-3, -2), (-3, -1), (-2, -1), (-1, -3),
+    (1, -2), (2, 0), (-3, 4),
+}
+_MAP_A_PLACEMENT_BONUSES: dict[tuple[int, int], dict[str, Any]] = {
+    (-4, -1): {"type": "gain_reputation", "amount": 2},
+    (3, 0): {"type": "gain_reputation", "amount": 2},
+    (-4, 0): {"type": "gain_x_token", "amount": 1},
+    (0, 0): {"type": "gain_x_token", "amount": 1},
+    (1, -4): {"type": "gain_x_token", "amount": 1},
+    (-2, 0): {"type": "take_card", "amount": 1},
+    (1, -1): {"type": "take_card", "amount": 1},
+    (1, 1): {"type": "take_card", "amount": 1},
+    (-1, -2): {"type": "gain_money", "amount": 5},
+    (-2, 2): {"type": "gain_money", "amount": 5},
+    (4, -3): {"type": "gain_money", "amount": 10},
+    (3, -4): {"type": "gain_association_worker", "amount": 1},
+}
+_MAP_A_BUILD_II_CELLS = {(3, 1), (4, 0)}
+_MAP_A_STARTING_ENCLOSURE = ((-4, 3), (-4, 4), (-3, 3))
+_MAP_A_STARTING_KIOSK = (-4, 2)
+
+SUPPORTED_MAP_IDS = ("map-0", "map-a")
+
+
 # Canonical polyhexes. Rotation zero is presentation-friendly; rules never rely
 # on a particular orientation because all unique sixty-degree rotations are used.
 _BUILDING_SHAPES: dict[tuple[str, int], tuple[tuple[int, int], ...]] = {
@@ -64,8 +109,18 @@ _BUILDING_SHAPES: dict[tuple[str, int], tuple[tuple[int, int], ...]] = {
     # the player board, not the branched Large Bird Aviary footprint.
     ("standard_enclosure", 5): ((0, 0), (0, 1), (1, -1), (1, 0), (1, 1)),
     ("petting_zoo", 3): ((0, 0), (0, 1), (1, 1)),
-    ("reptile_house", 5): ((0, 0), (1, 0), (2, 0), (0, 1), (1, 1)),
-    ("large_bird_aviary", 5): ((0, 0), (1, 0), (1, 1), (2, 1), (2, 2)),
+    # The two five-space special enclosures have different silhouettes on the
+    # player board.  Reptile House is the symmetric bow-tie: a centre hex with
+    # two cells on either side.  Large Bird Aviary has three cells around its
+    # centre plus a fourth cell extending the lower branch.  Keeping these as
+    # separate canonical polyhexes is important: both used to be approximated
+    # by compact/zig-zag shapes that did not match the physical tiles.
+    ("reptile_house", 5): (
+        (0, 0), (-1, 0), (-1, 1), (1, -1), (1, 0),
+    ),
+    ("large_bird_aviary", 5): (
+        (0, 0), (-1, 0), (-1, 1), (1, -1), (0, 1),
+    ),
     # Sponsor 243-257 unique buildings. These are mechanics-only axial
     # transcriptions of the printed silhouettes. They may be rotated but never
     # flipped, matching the physical tiles.
@@ -73,13 +128,16 @@ _BUILDING_SHAPES: dict[tuple[str, int], tuple[tuple[int, int], ...]] = {
     ("unique_sponsor_244", 4): ((0, 0), (-1, 0), (0, -1), (0, 1)),
     ("unique_sponsor_245", 4): ((0, 0), (-1, 0), (1, 0), (1, 1)),
     ("unique_sponsor_246", 4): ((0, 0), (1, 0), (2, 0), (3, 0)),
-    ("unique_sponsor_247", 4): ((0, 0), (-1, 0), (1, -1), (0, 1)),
-    ("unique_sponsor_248", 4): ((0, 0), (-1, 0), (0, -1), (1, -1)),
+    ("unique_sponsor_247", 4): ((0, 0), (-1, 0), (-1, 1), (1, 0)),
+    # Rhesus Monkey Park is the four-hex bent chain printed on card 248:
+    # one step north-east followed by two south-east steps.  It is not the
+    # compact two-by-two zig-zag used by earlier development builds.
+    ("unique_sponsor_248", 4): ((0, 0), (1, -1), (2, -1), (3, -1)),
     ("unique_sponsor_249", 3): ((0, 0), (1, 0), (2, 0)),
-    ("unique_sponsor_250", 4): ((0, 0), (-1, 0), (0, -1), (0, 1)),
-    ("unique_sponsor_251", 4): ((0, 0), (-1, 1), (1, -1), (2, -1)),
+    ("unique_sponsor_250", 4): ((0, 0), (-1, 0), (1, -1), (0, 1)),
+    ("unique_sponsor_251", 4): ((0, 0), (1, -1), (2, -1), (3, -2)),
     ("unique_sponsor_252", 4): ((0, 0), (-1, 0), (1, -1), (2, -2)),
-    ("unique_sponsor_253", 4): ((0, 0), (-1, 0), (0, 1), (1, 1)),
+    ("unique_sponsor_253", 4): ((0, 0), (1, 0), (2, -1), (3, -1)),
     ("unique_sponsor_254", 3): ((0, 0), (-1, 0), (1, -1)),
     ("unique_sponsor_255", 2): ((0, 0), (1, 0)),
     ("unique_sponsor_256", 2): ((0, 0), (1, 0)),
@@ -156,6 +214,31 @@ _LEGACY_ACCEPTED_BUILDING_SHAPES: dict[
 ] = {
     ("standard_enclosure", 4): (
         ((0, 0), (0, 1), (1, -1), (1, 1)),
+    ),
+    # Compatibility for matches created before the special-enclosure
+    # silhouettes were corrected.  These footprints validate when an old
+    # match is loaded, but ``building_shape_variants`` never offers them for a
+    # new placement.
+    ("reptile_house", 5): (
+        ((0, 0), (1, 0), (2, 0), (0, 1), (1, 1)),
+    ),
+    ("large_bird_aviary", 5): (
+        ((0, 0), (1, 0), (1, 1), (2, 1), (2, 2)),
+    ),
+    ("unique_sponsor_248", 4): (
+        ((0, 0), (-1, 0), (0, -1), (1, -1)),
+    ),
+    ("unique_sponsor_247", 4): (
+        ((0, 0), (-1, 0), (1, -1), (0, 1)),
+    ),
+    ("unique_sponsor_250", 4): (
+        ((0, 0), (-1, 0), (0, -1), (0, 1)),
+    ),
+    ("unique_sponsor_251", 4): (
+        ((0, 0), (-1, 1), (1, -1), (2, -1)),
+    ),
+    ("unique_sponsor_253", 4): (
+        ((0, 0), (-1, 0), (0, 1), (1, 1)),
     ),
 }
 
@@ -274,3 +357,111 @@ def map_zero() -> dict[str, Any]:
         "buildings": [],
         "next_building_id": 1,
     }
+
+
+def map_a() -> dict[str, Any]:
+    """Return a fresh, serialisable Map A instance for one player.
+
+    Map A's printed setup advantage is represented directly in ``buildings``:
+    an empty size-three standard enclosure and a kiosk, both free and already
+    placed.  They therefore participate in normal occupancy, connectivity,
+    and Break-income calculations without a setup-only rules branch.
+    """
+
+    coordinates = {
+        (q, r)
+        for r, (minimum_q, maximum_q) in _MAP_A_ROWS.items()
+        for q in range(minimum_q, maximum_q + 1)
+    }
+    cells: list[dict[str, Any]] = []
+    for q, r in sorted(coordinates, key=lambda value: (value[1], value[0])):
+        terrain = (
+            "water" if (q, r) in _MAP_A_WATER
+            else "rock" if (q, r) in _MAP_A_ROCK
+            else "buildable"
+        )
+        cell: dict[str, Any] = {"q": q, "r": r, "terrain": terrain}
+        if (q, r) in _MAP_A_PLACEMENT_BONUSES:
+            cell["placement_bonus"] = deepcopy(_MAP_A_PLACEMENT_BONUSES[(q, r)])
+        if (q, r) in _MAP_A_BUILD_II_CELLS:
+            cell["requires_build_upgrade"] = True
+        cells.append(cell)
+
+    buildings = [
+        {
+            "id": "building-1",
+            "type": "standard_enclosure",
+            "size": 3,
+            "shape_id": "standard_enclosure-3",
+            "rotation": 0,
+            "occupied": False,
+            "used_capacity": 0,
+            "animal_ids": [],
+            "cells": [{"q": q, "r": r} for q, r in _MAP_A_STARTING_ENCLOSURE],
+            "placed_during_setup": True,
+            "cost_paid": 0,
+            "source": "map_a_setup",
+        },
+        {
+            "id": "building-2",
+            "type": "kiosk",
+            "size": 1,
+            "shape_id": "kiosk-1",
+            "rotation": 0,
+            "occupied": False,
+            "cells": [{"q": _MAP_A_STARTING_KIOSK[0], "r": _MAP_A_STARTING_KIOSK[1]}],
+            "placed_during_setup": True,
+            "cost_paid": 0,
+            "source": "map_a_setup",
+        },
+    ]
+    return {
+        "schema_version": "agentbga.ark_nova.map.v3",
+        "id": "map-a",
+        "name": "Map A",
+        "coordinate_system": "flat_top_axial",
+        "origin_landmark": "central_x_token_bonus",
+        "geometry_status": "reference_transcribed_map_a_geometry",
+        "reference_status": "mechanics_transcription_from_supplied_map_a_reference",
+        "terrain_legend": ["buildable", "water", "rock"],
+        "cells": cells,
+        "placement_bonus_slots": [
+            {"q": q, "r": r, "effect": deepcopy(effect)}
+            for (q, r), effect in sorted(_MAP_A_PLACEMENT_BONUSES.items())
+        ],
+        "build_upgrade_restricted_cells": [
+            {"q": q, "r": r} for q, r in sorted(_MAP_A_BUILD_II_CELLS)
+        ],
+        "setup_rule": {
+            "type": "preplaced_buildings",
+            "cost": 0,
+            "buildings": deepcopy(buildings),
+        },
+        "conservation_reward_slots": [
+            {"milestone": 2, "kind": "action_upgrade"},
+            {"milestone": 5, "kind": "conservation_bonus"},
+            {"milestone": 8, "kind": "conservation_bonus"},
+            {"milestone": 10, "kind": "final_card_choice"},
+        ],
+        "completion_reward": {"type": "gain_appeal", "amount": 7},
+        "completion_reward_claimed": False,
+        "buildings": buildings,
+        "next_building_id": 3,
+    }
+
+
+def normalize_map_id(value: object = "map-0") -> str:
+    """Return the canonical supported map ID for setup/user input."""
+
+    aliases = {"0": "map-0", "map-0": "map-0", "a": "map-a", "map-a": "map-a"}
+    try:
+        return aliases[str(value).strip().lower()]
+    except KeyError as error:
+        raise ValueError("map must be map-0 or map-a") from error
+
+
+def map_for_id(value: object = "map-0") -> dict[str, Any]:
+    """Create a fresh supported zoo map from a setup identifier."""
+
+    map_id = normalize_map_id(value)
+    return map_zero() if map_id == "map-0" else map_a()

@@ -1,6 +1,7 @@
 from pathlib import Path
 import unittest
 
+from agentbga.ark_nova_map import map_a, valid_building_shape
 from agentbga.ark_nova_official import ArkNovaOfficialPlugin, EvaluationContext, SemanticEngine, add_project_to_state, load_content_pack, new_semantic_state, present_entry, setup_official_game
 from agentbga.ark_nova_official.setup import _bonus_tiles, card_instance
 
@@ -28,8 +29,56 @@ class ArkNovaOfficialSetupTests(unittest.TestCase):
                     for player in state["players"]
                 ))
 
+    def test_map_a_transcription_and_printed_setup_buildings(self):
+        zoo_map = map_a()
+        self.assertEqual("map-a", zoo_map["id"])
+        self.assertEqual(58, len(zoo_map["cells"]))
+        self.assertEqual(9, sum(cell["terrain"] == "water" for cell in zoo_map["cells"]))
+        self.assertEqual(7, sum(cell["terrain"] == "rock" for cell in zoo_map["cells"]))
+        self.assertEqual(12, len(zoo_map["placement_bonus_slots"]))
+        self.assertEqual({(3, 1), (4, 0)}, {
+            (cell["q"], cell["r"]) for cell in zoo_map["cells"]
+            if cell.get("requires_build_upgrade")
+        })
+        self.assertEqual(
+            [("standard_enclosure", 3), ("kiosk", 1)],
+            [(building["type"], building["size"]) for building in zoo_map["buildings"]],
+        )
+        self.assertTrue(all(valid_building_shape(building) for building in zoo_map["buildings"]))
+        self.assertFalse(zoo_map["buildings"][0]["occupied"])
+        self.assertEqual(3, zoo_map["next_building_id"])
+
+    def test_official_setup_selects_map_zero_or_map_a_per_match(self):
+        default_state = setup_official_game(2, 41, pack=self.pack)
+        map_a_state = setup_official_game(
+            2, 41, pack=self.pack, config={"map": "map-a"},
+        )
+        self.assertEqual("map-0", default_state["map_id"])
+        self.assertTrue(all(not player["map"]["buildings"] for player in default_state["players"]))
+        self.assertTrue(all(
+            "worker-1" in {slot["id"] for slot in player["project_token_slots"]}
+            and "reputation-2" not in {slot["id"] for slot in player["project_token_slots"]}
+            for player in default_state["players"]
+        ))
+        self.assertEqual("map-a", map_a_state["map_id"])
+        self.assertEqual("preview", map_a_state["implementation_status"])
+        self.assertTrue(all(
+            player["map"]["id"] == "map-a" and len(player["map"]["buildings"]) == 2
+            for player in map_a_state["players"]
+        ))
+        self.assertTrue(all(
+            "reputation-2" in {slot["id"] for slot in player["project_token_slots"]}
+            and "worker-1" not in {slot["id"] for slot in player["project_token_slots"]}
+            for player in map_a_state["players"]
+        ))
+
     def test_match_runner_uses_ark_nova_specific_turn_limit(self):
-        self.assertEqual(1000, ArkNovaOfficialPlugin().describe()["default_max_turns"])
+        description = ArkNovaOfficialPlugin().describe()
+        self.assertEqual(1000, description["default_max_turns"])
+        self.assertEqual(
+            {"map-0": "released", "map-a": "preview"},
+            description["map_status"],
+        )
 
     def test_multi_icon_cards_share_complete_engine_and_web_projection(self):
         expected = {

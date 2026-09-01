@@ -5,20 +5,18 @@
       "base_conservation_projects": 12,
       "bonus_tiles": 9,
       "final_scoring": 11,
-      "maps": 10,
+      "maps": 1,
       "sponsors": 64,
       "zoo_conservation_projects": 20
     },
     "review": {
-      "scenario_tested": 9,
-      "transcribed": 235,
-      "unentered": 10
+      "released": 245
     },
-    "roster_indexed": 244,
-    "scenario_covered_entries": 9,
+    "roster_indexed": 245,
+    "scenario_covered_entries": 245,
     "semantic_entries": 243,
-    "total": 254,
-    "unentered": 10
+    "total": 245,
+    "unentered": 0
   },
   "disclaimer": "Project-authored mechanics data only. Short component names and identifiers are catalog references; publisher artwork and verbatim card prose are excluded. Only released entries are suitable for rules-accurate play.",
   "entries": [
@@ -87,8 +85,10 @@
       "kind": "animal",
       "official_component_id": "401",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:401"
+      ],
       "summary": "Cost 17; enclosure 5; appeal 6; abilities: SPRINT.",
       "title": "Cheetah"
     },
@@ -160,8 +160,10 @@
       "requirements": [
         "至少有 3 个“predator”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:402"
+      ],
       "summary": "Cost 16; enclosure 4; appeal 9; abilities: PACK.",
       "title": "Lion"
     },
@@ -236,10 +238,12 @@
       "kind": "animal",
       "official_component_id": "403",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:403"
+      ],
       "summary": "Cost 20; enclosure 3; appeal 7; abilities: HUNTER.",
       "title": "Leopard"
     },
@@ -307,8 +311,10 @@
       "kind": "animal",
       "official_component_id": "404",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:404"
+      ],
       "summary": "Cost 9; enclosure 2; appeal 4; abilities: HUNTER.",
       "title": "Caracal"
     },
@@ -376,8 +382,10 @@
       "kind": "animal",
       "official_component_id": "405",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:405"
+      ],
       "summary": "Cost 8; enclosure 1; appeal 3; abilities: CLEVER.",
       "title": "Fennec Fox"
     },
@@ -438,8 +446,10 @@
       "requirements": [
         "至少有 3 个“asia”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:406"
+      ],
       "summary": "Cost 30; enclosure 5; appeal 10; abilities: no keyword ability.",
       "title": "Siberian Tiger"
     },
@@ -501,8 +511,10 @@
       "requirements": [
         "至少有 2 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:407"
+      ],
       "summary": "Cost 26; enclosure 4; appeal 8; abilities: no keyword ability.",
       "title": "Sumatran Tiger"
     },
@@ -573,8 +585,10 @@
       "kind": "animal",
       "official_component_id": "408",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:408"
+      ],
       "summary": "Cost 14; enclosure 3; appeal 6; abilities: BOOST_ASSOCIATION.",
       "title": "Sloth Bear"
     },
@@ -647,10 +661,12 @@
       "kind": "animal",
       "official_component_id": "409",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:409"
+      ],
       "summary": "Cost 16; enclosure 2; appeal 5; abilities: ACTION_ASSOCIATION.",
       "title": "Sun Bear"
     },
@@ -718,8 +734,10 @@
       "kind": "animal",
       "official_component_id": "410",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:410"
+      ],
       "summary": "Cost 7; enclosure 1; appeal 3; abilities: HUNTER.",
       "title": "Yellow-Throated Marten"
     },
@@ -812,8 +830,10 @@
         "至少有 2 个“predator”图标",
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:411"
+      ],
       "summary": "Cost 22; enclosure 5; appeal 9; abilities: INVENTIVE_BEAR, FULL_THROATED.",
       "title": "Grizzly Bear"
     },
@@ -885,8 +905,10 @@
       "requirements": [
         "至少有 1 个“americas”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:412"
+      ],
       "summary": "Cost 16; enclosure 4; appeal 8; abilities: HUNTER.",
       "title": "Jaguar"
     },
@@ -959,8 +981,10 @@
       "kind": "animal",
       "official_component_id": "413",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:413"
+      ],
       "summary": "Cost 10; enclosure 3; appeal 5; abilities: JUMPING.",
       "title": "Cougar"
     },
@@ -1032,8 +1056,10 @@
       "kind": "animal",
       "official_component_id": "414",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:414"
+      ],
       "summary": "Cost 11; enclosure 2; appeal 4; abilities: INVENTIVE.",
       "title": "South American Coati"
     },
@@ -1104,8 +1130,10 @@
       "kind": "animal",
       "official_component_id": "415",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:415"
+      ],
       "summary": "Cost 11; enclosure 1; appeal 4; abilities: BOOST_ASSOCIATION.",
       "title": "Raccoon"
     },
@@ -1199,8 +1227,10 @@
         "至少有 1 个“bear”图标",
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:416"
+      ],
       "summary": "Cost 20; enclosure 5; appeal 8; abilities: MULTIPLIER_ASSOCIATION, FULL_THROATED.",
       "title": "Eurasian Brown Bear"
     },
@@ -1268,8 +1298,10 @@
       "kind": "animal",
       "official_component_id": "417",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:417"
+      ],
       "summary": "Cost 12; enclosure 4; appeal 4; abilities: PACK.",
       "title": "Wolf"
     },
@@ -1341,8 +1373,10 @@
       "requirements": [
         "至少有 2 个“europe”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:418"
+      ],
       "summary": "Cost 11; enclosure 3; appeal 2; abilities: ICONIC_ANIMAL.",
       "title": "Eurasian Lynx"
     },
@@ -1410,8 +1444,10 @@
       "kind": "animal",
       "official_component_id": "419",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:419"
+      ],
       "summary": "Cost 5; enclosure 2; appeal 3; abilities: BOOST_ANIMAL.",
       "title": "European Badger"
     },
@@ -1483,8 +1519,10 @@
       "requirements": [
         "至少有 1 个“europe”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:420"
+      ],
       "summary": "Cost 4; enclosure 1; appeal 3; abilities: HUNTER.",
       "title": "Stoat"
     },
@@ -1558,8 +1596,10 @@
       "requirements": [
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:421"
+      ],
       "summary": "Cost 17; enclosure 5; appeal 8; abilities: FULL_THROATED.",
       "title": "New Zealand Fur Seal"
     },
@@ -1634,10 +1674,12 @@
       "kind": "animal",
       "official_component_id": "422",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:422"
+      ],
       "summary": "Cost 18; enclosure 4; appeal 7; abilities: SUN_BATHING.",
       "title": "Australian Sea Lion"
     },
@@ -1706,8 +1748,10 @@
       "kind": "animal",
       "official_component_id": "423",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:423"
+      ],
       "summary": "Cost 17; enclosure 3; appeal 6; abilities: PACK.",
       "title": "New Zealand Sea Lion"
     },
@@ -1775,8 +1819,10 @@
       "kind": "animal",
       "official_component_id": "424",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:424"
+      ],
       "summary": "Cost 13; enclosure 2; appeal 3; abilities: PACK.",
       "title": "Australian Dingo"
     },
@@ -1852,8 +1898,10 @@
       "requirements": [
         "至少有 1 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:425"
+      ],
       "summary": "Cost 11; enclosure 1; appeal 4; abilities: POUCH.",
       "title": "Tasmanian Devil"
     },
@@ -1930,8 +1978,10 @@
       "requirements": [
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:426"
+      ],
       "summary": "Cost 36; enclosure 5; appeal 10; abilities: RESISTANCE.",
       "title": "African Bush Elephant"
     },
@@ -2004,8 +2054,10 @@
       "requirements": [
         "至少有 1 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:427"
+      ],
       "summary": "Cost 24; enclosure 4; appeal 9; abilities: ASSERTION.",
       "title": "White Rhinoceros"
     },
@@ -2073,8 +2125,10 @@
       "kind": "animal",
       "official_component_id": "428",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:428"
+      ],
       "summary": "Cost 16; enclosure 3; appeal 7; abilities: BOOST_SPONSORS.",
       "title": "Giraffe"
     },
@@ -2162,8 +2216,10 @@
       "requirements": [
         "至少有 3 个“africa”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:429"
+      ],
       "summary": "Cost 12; enclosure 2; appeal 6; abilities: BOOST_SPONSORS, FLOCK_ANIMAL.",
       "title": "Grevy's Zebra"
     },
@@ -2234,10 +2290,12 @@
       "kind": "animal",
       "official_component_id": "430",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:430"
+      ],
       "summary": "Cost 15; enclosure 2; appeal 6; abilities: ACTION_SPONSORS.",
       "title": "Pygmy Hippopotamus"
     },
@@ -2315,8 +2373,10 @@
       "requirements": [
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:431"
+      ],
       "summary": "Cost 33; enclosure 5; appeal 8; abilities: RESISTANCE.",
       "title": "Asian Elephant"
     },
@@ -2388,8 +2448,10 @@
       "requirements": [
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:432"
+      ],
       "summary": "Cost 25; enclosure 4; appeal 9; abilities: ASSERTION.",
       "title": "Indian Rhinoceros"
     },
@@ -2455,10 +2517,12 @@
       "requirements": [
         "至少有 1 个“herbivore”图标",
         "至少有 1 个“bear”图标",
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:433"
+      ],
       "summary": "Cost 27; enclosure 3; appeal 10; abilities: no keyword ability.",
       "title": "Giant Panda"
     },
@@ -2533,8 +2597,10 @@
       "requirements": [
         "至少有 2 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:434"
+      ],
       "summary": "Cost 16; enclosure 2; appeal 6; abilities: MULTIPLIER_SPONSORS.",
       "title": "Red Panda"
     },
@@ -2606,8 +2672,10 @@
       "kind": "animal",
       "official_component_id": "435",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:435"
+      ],
       "summary": "Cost 17; enclosure 2; appeal 5; abilities: DIGGING.",
       "title": "Malayan Tapir"
     },
@@ -2680,8 +2748,10 @@
       "requirements": [
         "至少有 3 个“americas”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:436"
+      ],
       "summary": "Cost 18; enclosure 5; appeal 4; abilities: ICONIC_ANIMAL.",
       "title": "American Bison"
     },
@@ -2757,8 +2827,10 @@
       "requirements": [
         "至少有 1 个“americas”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:437"
+      ],
       "summary": "Cost 13; enclosure 4; appeal 5; abilities: SPONSOR_MAGNET.",
       "title": "Muskox"
     },
@@ -2822,8 +2894,10 @@
       "kind": "animal",
       "official_component_id": "438",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:438"
+      ],
       "summary": "Cost 12; enclosure 3; appeal 5; abilities: FLOCK_ANIMAL.",
       "title": "Reindeer"
     },
@@ -2887,8 +2961,10 @@
       "kind": "animal",
       "official_component_id": "439",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:439"
+      ],
       "summary": "Cost 10; enclosure 2; appeal 4; abilities: FLOCK_ANIMAL.",
       "title": "Llama"
     },
@@ -2961,8 +3037,10 @@
       "kind": "animal",
       "official_component_id": "440",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:440"
+      ],
       "summary": "Cost 15; enclosure 2; appeal 4; abilities: DIGGING.",
       "title": "Mountain Tapir"
     },
@@ -3037,10 +3115,12 @@
       "kind": "animal",
       "official_component_id": "441",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:441"
+      ],
       "summary": "Cost 19; enclosure 5; appeal 6; abilities: SPONSOR_MAGNET.",
       "title": "European Bison"
     },
@@ -3124,8 +3204,10 @@
       "requirements": [
         "至少有 2 个“herbivore”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:442"
+      ],
       "summary": "Cost 19; enclosure 4; appeal 7; abilities: MULTIPLIER_SPONSORS, FLOCK_ANIMAL.",
       "title": "Moose"
     },
@@ -3189,8 +3271,10 @@
       "kind": "animal",
       "official_component_id": "443",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:443"
+      ],
       "summary": "Cost 12; enclosure 3; appeal 5; abilities: FLOCK_ANIMAL.",
       "title": "Red Deer"
     },
@@ -3263,8 +3347,10 @@
       "kind": "animal",
       "official_component_id": "444",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:444"
+      ],
       "summary": "Cost 10; enclosure 2; appeal 5; abilities: JUMPING.",
       "title": "Alpine Ibex"
     },
@@ -3332,8 +3418,10 @@
       "kind": "animal",
       "official_component_id": "445",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:445"
+      ],
       "summary": "Cost 8; enclosure 1; appeal 3; abilities: DIGGING.",
       "title": "Crested Porcupine"
     },
@@ -3411,8 +3499,10 @@
       "requirements": [
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:446"
+      ],
       "summary": "Cost 25; enclosure 5; appeal 9; abilities: DIGGING.",
       "title": "Dugong"
     },
@@ -3492,8 +3582,10 @@
       "kind": "animal",
       "official_component_id": "447",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:447"
+      ],
       "summary": "Cost 23; enclosure 4; appeal 7; abilities: POUCH, FLOCK_ANIMAL.",
       "title": "Red Kangaroo"
     },
@@ -3573,8 +3665,10 @@
       "requirements": [
         "至少有 1 个“australia”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:448"
+      ],
       "summary": "Cost 21; enclosure 3; appeal 8; abilities: POUCH.",
       "title": "Koala"
     },
@@ -3656,8 +3750,10 @@
       "kind": "animal",
       "official_component_id": "449",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:449"
+      ],
       "summary": "Cost 10; enclosure 2; appeal 4; abilities: VENOM.",
       "title": "Platypus"
     },
@@ -3725,8 +3821,10 @@
       "kind": "animal",
       "official_component_id": "450",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:450"
+      ],
       "summary": "Cost 9; enclosure 2; appeal 4; abilities: POUCH.",
       "title": "Common Wombat"
     },
@@ -3805,8 +3903,10 @@
         "至少有 2 个“primate”图标",
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:451"
+      ],
       "summary": "Cost 32; enclosure 5; appeal 10; abilities: DOMINANCE.",
       "title": "Proboscis Monkey"
     },
@@ -3878,8 +3978,10 @@
       "requirements": [
         "至少有 2 个“africa”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:452"
+      ],
       "summary": "Cost 10; enclosure 1; appeal 1; abilities: ICONIC_ANIMAL.",
       "title": "Senegal Bushbaby"
     },
@@ -3951,8 +4053,10 @@
       "requirements": [
         "至少有 1 个“africa”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:453"
+      ],
       "summary": "Cost 20; enclosure 4; appeal 8; abilities: ACTION_CARDS.",
       "title": "Collared Mangabey"
     },
@@ -4021,8 +4125,10 @@
       "kind": "animal",
       "official_component_id": "454",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:454"
+      ],
       "summary": "Cost 12; enclosure 3; appeal 6; abilities: SUN_BATHING.",
       "title": "Ring-Tailed Lemur"
     },
@@ -4090,8 +4196,10 @@
       "kind": "animal",
       "official_component_id": "455",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:455"
+      ],
       "summary": "Cost 13; enclosure 3; appeal 6; abilities: CLEVER.",
       "title": "Mantled Guereza"
     },
@@ -4174,10 +4282,12 @@
       "kind": "animal",
       "official_component_id": "456",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:456"
+      ],
       "summary": "Cost 13; enclosure 2; appeal 6; abilities: PILFERING_1.",
       "title": "Barbary Macaque"
     },
@@ -4254,8 +4364,10 @@
       "requirements": [
         "至少有 3 个“primate”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:457"
+      ],
       "summary": "Cost 28; enclosure 5; appeal 9; abilities: MULTIPLIER_CARD.",
       "title": "Mandrill"
     },
@@ -4345,8 +4457,10 @@
       "requirements": [
         "至少有 1 个“asia”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:458"
+      ],
       "summary": "Cost 18; enclosure 3; appeal 7; abilities: PILFERING_2.",
       "title": "Japanese Macaque"
     },
@@ -4422,8 +4536,10 @@
       "requirements": [
         "至少有 1 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:459"
+      ],
       "summary": "Cost 17; enclosure 4; appeal 7; abilities: INVENTIVE_PRIMARY.",
       "title": "Red-Shanked Douc"
     },
@@ -4491,8 +4607,10 @@
       "kind": "animal",
       "official_component_id": "460",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:460"
+      ],
       "summary": "Cost 12; enclosure 2; appeal 5; abilities: CLEVER.",
       "title": "Dusky Leaf Monkey"
     },
@@ -4570,10 +4688,12 @@
       "kind": "animal",
       "official_component_id": "461",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:461"
+      ],
       "summary": "Cost 14; enclosure 1; appeal 3; abilities: JUMPING.",
       "title": "Horsfield's Tarsier"
     },
@@ -4646,8 +4766,10 @@
       "kind": "animal",
       "official_component_id": "462",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:462"
+      ],
       "summary": "Cost 13; enclosure 3; appeal 6; abilities: JUMPING.",
       "title": "Northern Plains Gray Langur"
     },
@@ -4730,10 +4852,12 @@
       "kind": "animal",
       "official_component_id": "463",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:463"
+      ],
       "summary": "Cost 11; enclosure 2; appeal 5; abilities: PILFERING_1.",
       "title": "Panamanian White-Faced Capuchin"
     },
@@ -4809,8 +4933,10 @@
       "requirements": [
         "至少有 1 个“primate”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:464"
+      ],
       "summary": "Cost 17; enclosure 4; appeal 6; abilities: INVENTIVE_PRIMARY.",
       "title": "Brown Spider Monkey"
     },
@@ -4878,8 +5004,10 @@
       "kind": "animal",
       "official_component_id": "465",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:465"
+      ],
       "summary": "Cost 10; enclosure 1; appeal 4; abilities: CLEVER.",
       "title": "Golden Lion Tamarin"
     },
@@ -4947,8 +5075,10 @@
       "kind": "animal",
       "official_component_id": "466",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:466"
+      ],
       "summary": "Cost 12; enclosure 3; appeal 6; abilities: BOOST_CARD.",
       "title": "Bolivian Red Howler"
     },
@@ -5016,8 +5146,10 @@
       "kind": "animal",
       "official_component_id": "467",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:467"
+      ],
       "summary": "Cost 12; enclosure 2; appeal 5; abilities: CLEVER.",
       "title": "Ecuadorian Squirrel Monkey"
     },
@@ -5078,8 +5210,10 @@
       "requirements": [
         "至少有 2 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:468"
+      ],
       "summary": "Cost 15; enclosure 1; appeal 4; abilities: no keyword ability.",
       "title": "Cotton-Top Tamarin"
     },
@@ -5156,8 +5290,10 @@
       "requirements": [
         "至少有 3 个“reptile”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:469"
+      ],
       "summary": "Cost 13; enclosure 5; appeal 9; abilities: SNAPPING_2.",
       "title": "Nile Crocodile"
     },
@@ -5244,8 +5380,10 @@
         "至少有 1 个“africa”图标",
         "至少有 1 个“reptile”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:470"
+      ],
       "summary": "Cost 13; enclosure 2; appeal 6; abilities: VENOM.",
       "title": "Western Green Mamba"
     },
@@ -5317,8 +5455,10 @@
       "kind": "animal",
       "official_component_id": "471",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:471"
+      ],
       "summary": "Cost 22; enclosure 3; appeal 6; abilities: SUN_BATHING.",
       "title": "African Spurred Tortoise"
     },
@@ -5387,8 +5527,10 @@
       "kind": "animal",
       "official_component_id": "472",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:472"
+      ],
       "summary": "Cost 12; enclosure 2; appeal 5; abilities: SUN_BATHING.",
       "title": "Rock Monitor"
     },
@@ -5456,8 +5598,10 @@
       "kind": "animal",
       "official_component_id": "473",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:473"
+      ],
       "summary": "Cost 9; enclosure 1; appeal 3; abilities: SUN_BATHING.",
       "title": "Common Agama"
     },
@@ -5543,8 +5687,10 @@
       "requirements": [
         "至少有 2 个“reptile”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:474"
+      ],
       "summary": "Cost 14; enclosure 2; appeal 7; abilities: CONSTRICTION.",
       "title": "Indian Rock Python"
     },
@@ -5631,8 +5777,10 @@
         "至少有 2 个“science”图标",
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:475"
+      ],
       "summary": "Cost 13; enclosure 2; appeal 6; abilities: HYPNOSIS.",
       "title": "King Cobra"
     },
@@ -5704,8 +5852,10 @@
       "requirements": [
         "至少有 2 个“asia”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:476"
+      ],
       "summary": "Cost 14; enclosure 3; appeal 2; abilities: ICONIC_ANIMAL.",
       "title": "Komodo Dragon"
     },
@@ -5773,8 +5923,10 @@
       "kind": "animal",
       "official_component_id": "477",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:477"
+      ],
       "summary": "Cost 14; enclosure 1; appeal 4; abilities: SNAPPING_1.",
       "title": "Veiled Chameleon"
     },
@@ -5843,8 +5995,10 @@
       "kind": "animal",
       "official_component_id": "478",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:478"
+      ],
       "summary": "Cost 8; enclosure 1; appeal 3; abilities: SUN_BATHING.",
       "title": "Chinese Water Dragon"
     },
@@ -5913,8 +6067,10 @@
       "kind": "animal",
       "official_component_id": "479",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:479"
+      ],
       "summary": "Cost 18; enclosure 4; appeal 7; abilities: SNAPPING_1.",
       "title": "American Alligator"
     },
@@ -5983,8 +6139,10 @@
       "kind": "animal",
       "official_component_id": "480",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:480"
+      ],
       "summary": "Cost 16; enclosure 4; appeal 6; abilities: SNAPPING_1.",
       "title": "Broad-Snouted Caiman"
     },
@@ -6066,8 +6224,10 @@
         "至少有 2 个“americas”图标",
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:481"
+      ],
       "summary": "Cost 30; enclosure 3; appeal 8; abilities: SUN_BATHING.",
       "title": "Galapagos Giant Tortoise"
     },
@@ -6151,10 +6311,12 @@
       "kind": "animal",
       "official_component_id": "482",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:482"
+      ],
       "summary": "Cost 13; enclosure 2; appeal 6; abilities: CONSTRICTION.",
       "title": "Anaconda"
     },
@@ -6240,8 +6402,10 @@
       "requirements": [
         "至少有 2 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:483"
+      ],
       "summary": "Cost 16; enclosure 2; appeal 7; abilities: CONSTRICTION.",
       "title": "Boa Constrictor"
     },
@@ -6291,8 +6455,10 @@
       "kind": "animal",
       "official_component_id": "484",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:484"
+      ],
       "summary": "Cost 9; enclosure 1; appeal 4; abilities: no keyword ability.",
       "title": "European Pond Turtle"
     },
@@ -6375,10 +6541,12 @@
       "kind": "animal",
       "official_component_id": "485",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:485"
+      ],
       "summary": "Cost 10; enclosure 1; appeal 2; abilities: HYPNOSIS.",
       "title": "Common European Adder"
     },
@@ -6428,8 +6596,10 @@
       "kind": "animal",
       "official_component_id": "486",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:486"
+      ],
       "summary": "Cost 4; enclosure 1; appeal 2; abilities: no keyword ability.",
       "title": "Common Wall Lizard"
     },
@@ -6498,8 +6668,10 @@
       "kind": "animal",
       "official_component_id": "487",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:487"
+      ],
       "summary": "Cost 8; enclosure 1; appeal 3; abilities: CLEVER.",
       "title": "European Grass Snake"
     },
@@ -6549,8 +6721,10 @@
       "kind": "animal",
       "official_component_id": "488",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:488"
+      ],
       "summary": "Cost 4; enclosure 1; appeal 2; abilities: no keyword ability.",
       "title": "Slow Worm"
     },
@@ -6626,10 +6800,12 @@
       "kind": "animal",
       "official_component_id": "489",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:489"
+      ],
       "summary": "Cost 23; enclosure 5; appeal 9; abilities: SNAPPING_2.",
       "title": "Saltwater Crocodile"
     },
@@ -6697,8 +6873,10 @@
       "kind": "animal",
       "official_component_id": "490",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:490"
+      ],
       "summary": "Cost 15; enclosure 3; appeal 6; abilities: SCAVENGING.",
       "title": "Gould's Monitor"
     },
@@ -6767,8 +6945,10 @@
       "kind": "animal",
       "official_component_id": "491",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:491"
+      ],
       "summary": "Cost 12; enclosure 2; appeal 5; abilities: SPRINT.",
       "title": "Frilled Lizard"
     },
@@ -6856,8 +7036,10 @@
         "至少有 1 个“australia”图标",
         "至少有 1 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:492"
+      ],
       "summary": "Cost 10; enclosure 2; appeal 5; abilities: VENOM.",
       "title": "Inland Taipan"
     },
@@ -6907,8 +7089,10 @@
       "kind": "animal",
       "official_component_id": "493",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:493"
+      ],
       "summary": "Cost 6; enclosure 1; appeal 3; abilities: no keyword ability.",
       "title": "Thorny Devil"
     },
@@ -6976,8 +7160,10 @@
       "kind": "animal",
       "official_component_id": "494",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:494"
+      ],
       "summary": "Cost 20; enclosure 5; appeal 8; abilities: SPRINT.",
       "title": "African Ostrich"
     },
@@ -7030,8 +7216,10 @@
       "kind": "animal",
       "official_component_id": "495",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:495"
+      ],
       "summary": "Cost 14; enclosure 4; appeal 4; abilities: no keyword ability.",
       "title": "Secretary Bird"
     },
@@ -7099,8 +7287,10 @@
       "kind": "animal",
       "official_component_id": "496",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:496"
+      ],
       "summary": "Cost 10; enclosure 3; appeal 4; abilities: SCAVENGING.",
       "title": "Marabou"
     },
@@ -7169,8 +7359,10 @@
       "kind": "animal",
       "official_component_id": "497",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:497"
+      ],
       "summary": "Cost 15; enclosure 2; appeal 6; abilities: POSTURING.",
       "title": "Lesser Flamingo"
     },
@@ -7227,8 +7419,10 @@
       "requirements": [
         "至少有 2 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:498"
+      ],
       "summary": "Cost 9; enclosure 1; appeal 3; abilities: no keyword ability.",
       "title": "Shoebill"
     },
@@ -7296,8 +7490,10 @@
       "kind": "animal",
       "official_component_id": "499",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:499"
+      ],
       "summary": "Cost 16; enclosure 5; appeal 6; abilities: SCAVENGING.",
       "title": "Cinereous Vulture"
     },
@@ -7378,8 +7574,10 @@
       "requirements": [
         "至少有 1 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:500"
+      ],
       "summary": "Cost 20; enclosure 4; appeal 5; abilities: SCAVENGING.",
       "title": "Long-Billed Vulture"
     },
@@ -7451,8 +7649,10 @@
       "requirements": [
         "至少有 1 个“asia”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:501"
+      ],
       "summary": "Cost 18; enclosure 3; appeal 7; abilities: POSTURING.",
       "title": "Indian Peafowl"
     },
@@ -7520,8 +7720,10 @@
       "kind": "animal",
       "official_component_id": "502",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:502"
+      ],
       "summary": "Cost 13; enclosure 2; appeal 6; abilities: BOOST_BUILDING.",
       "title": "Great Hornbill"
     },
@@ -7597,8 +7799,10 @@
       "requirements": [
         "至少有 2 个“bird”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:503"
+      ],
       "summary": "Cost 11; enclosure 1; appeal 4; abilities: PERCEPTION_4.",
       "title": "Snowy Owl"
     },
@@ -7675,8 +7879,10 @@
       "requirements": [
         "至少有 1 个“bird”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:504"
+      ],
       "summary": "Cost 17; enclosure 5; appeal 7; abilities: SCAVENGING.",
       "title": "Andean Condor"
     },
@@ -7749,8 +7955,10 @@
       "requirements": [
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:505"
+      ],
       "summary": "Cost 23; enclosure 4; appeal 8; abilities: DETERMINATION.",
       "title": "Bald Eagle"
     },
@@ -7822,8 +8030,10 @@
       "requirements": [
         "至少有 3 个“bird”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:506"
+      ],
       "summary": "Cost 12; enclosure 3; appeal 9; abilities: SCAVENGING.",
       "title": "King Vulture"
     },
@@ -7891,8 +8101,10 @@
       "kind": "animal",
       "official_component_id": "507",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:507"
+      ],
       "summary": "Cost 12; enclosure 2; appeal 5; abilities: SPRINT.",
       "title": "Greater Rhea"
     },
@@ -7962,10 +8174,12 @@
       "kind": "animal",
       "official_component_id": "508",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:508"
+      ],
       "summary": "Cost 16; enclosure 1; appeal 4; abilities: POSTURING.",
       "title": "Scarlet Macaw"
     },
@@ -8038,8 +8252,10 @@
       "requirements": [
         "actor.action cards.animals.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:509"
+      ],
       "summary": "Cost 20; enclosure 5; appeal 7; abilities: DETERMINATION.",
       "title": "Golden Eagle"
     },
@@ -8111,8 +8327,10 @@
       "requirements": [
         "至少有 1 个“europe”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:510"
+      ],
       "summary": "Cost 9; enclosure 4; appeal 4; abilities: MULTIPLIER_BUILDING.",
       "title": "White Stork"
     },
@@ -8181,8 +8399,10 @@
       "kind": "animal",
       "official_component_id": "511",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:511"
+      ],
       "summary": "Cost 16; enclosure 3; appeal 7; abilities: POSTURING.",
       "title": "Greater Flamingo"
     },
@@ -8252,10 +8472,12 @@
       "kind": "animal",
       "official_component_id": "512",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:512"
+      ],
       "summary": "Cost 10; enclosure 2; appeal 4; abilities: PERCEPTION_4.",
       "title": "Eurasian Eagle-Owl"
     },
@@ -8323,8 +8545,10 @@
       "kind": "animal",
       "official_component_id": "513",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:513"
+      ],
       "summary": "Cost 12; enclosure 1; appeal 3; abilities: PERCEPTION_4.",
       "title": "Barn Owl"
     },
@@ -8396,8 +8620,10 @@
       "requirements": [
         "至少有 2 个“australia”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:514"
+      ],
       "summary": "Cost 22; enclosure 5; appeal 7; abilities: PEACOCKING.",
       "title": "Emu"
     },
@@ -8466,8 +8692,10 @@
       "kind": "animal",
       "official_component_id": "515",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:515"
+      ],
       "summary": "Cost 13; enclosure 4; appeal 5; abilities: ACTION_BUILDING.",
       "title": "Australian Pelican"
     },
@@ -8537,10 +8765,12 @@
       "kind": "animal",
       "official_component_id": "516",
       "requirements": [
-        "actor.partner zoo count >= 1"
+        "拥有与该动物同洲的合作动物园"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:516"
+      ],
       "summary": "Cost 12; enclosure 3; appeal 6; abilities: MULTIPLIER_BUILDING.",
       "title": "Northern Cassowary"
     },
@@ -8608,8 +8838,10 @@
       "requirements": [
         "至少有 1 个“australia”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:517"
+      ],
       "summary": "Cost 9; enclosure 2; appeal 0; abilities: ICONIC_ANIMAL.",
       "title": "Laughing Kookaburra"
     },
@@ -8677,8 +8909,10 @@
       "kind": "animal",
       "official_component_id": "518",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:518"
+      ],
       "summary": "Cost 15; enclosure 1; appeal 5; abilities: POSTURING.",
       "title": "Lesser Bird-Of-Paradise"
     },
@@ -8738,8 +8972,10 @@
       "kind": "animal",
       "official_component_id": "519",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:519"
+      ],
       "summary": "Cost 7; enclosure 1; appeal 0; abilities: PETTING_ZOO_ANIMAL.",
       "title": "(Domestic) Goat"
     },
@@ -8799,8 +9035,10 @@
       "kind": "animal",
       "official_component_id": "520",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:520"
+      ],
       "summary": "Cost 7; enclosure 1; appeal 0; abilities: PETTING_ZOO_ANIMAL.",
       "title": "Sheep"
     },
@@ -8864,8 +9102,10 @@
       "kind": "animal",
       "official_component_id": "521",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:521"
+      ],
       "summary": "Cost 7; enclosure 1; appeal 0; abilities: PETTING_ZOO_ANIMAL.",
       "title": "Horse"
     },
@@ -8941,8 +9181,10 @@
       "kind": "animal",
       "official_component_id": "522",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:522"
+      ],
       "summary": "Cost 7; enclosure 1; appeal 0; abilities: INVENTIVE, PETTING_ZOO_ANIMAL.",
       "title": "Donkey"
     },
@@ -9002,8 +9244,10 @@
       "kind": "animal",
       "official_component_id": "523",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:523"
+      ],
       "summary": "Cost 7; enclosure 1; appeal 0; abilities: PETTING_ZOO_ANIMAL.",
       "title": "Domestic Rabbit"
     },
@@ -9079,8 +9323,10 @@
       "kind": "animal",
       "official_component_id": "524",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:524"
+      ],
       "summary": "Cost 7; enclosure 1; appeal 0; abilities: DIGGING, PETTING_ZOO_ANIMAL.",
       "title": "Mangalica"
     },
@@ -9140,8 +9386,10 @@
       "kind": "animal",
       "official_component_id": "525",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:525"
+      ],
       "summary": "Cost 7; enclosure 1; appeal 0; abilities: PETTING_ZOO_ANIMAL.",
       "title": "Guinea Pig"
     },
@@ -9201,8 +9449,10 @@
       "kind": "animal",
       "official_component_id": "526",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:526"
+      ],
       "summary": "Cost 7; enclosure 1; appeal 0; abilities: PETTING_ZOO_ANIMAL.",
       "title": "Alpaca"
     },
@@ -9262,8 +9512,10 @@
       "kind": "animal",
       "official_component_id": "527",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:527"
+      ],
       "summary": "Cost 7; enclosure 1; appeal 0; abilities: PETTING_ZOO_ANIMAL.",
       "title": "Coconut Lorikeet"
     },
@@ -9339,8 +9591,10 @@
       "kind": "animal",
       "official_component_id": "528",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:528"
+      ],
       "summary": "Cost 7; enclosure 1; appeal 0; abilities: POUCH, PETTING_ZOO_ANIMAL.",
       "title": "Bennett's Wallaby"
     },
@@ -9405,8 +9659,10 @@
       "requirements": [
         "actor.action cards.sponsors.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:201"
+      ],
       "summary": "Level 5 sponsor; timings: income/immediate, endgame.",
       "title": "Science Lab"
     },
@@ -9460,8 +9716,10 @@
       "requirements": [
         "至少有 1 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:202"
+      ],
       "summary": "Level 5 sponsor; timings: passive.",
       "title": "Spokesperson"
     },
@@ -9519,8 +9777,10 @@
       "kind": "sponsor",
       "official_component_id": "203",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:203"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Veterinarian"
     },
@@ -9576,8 +9836,10 @@
       "requirements": [
         "至少有 4 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:204"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Science Museum"
     },
@@ -9633,8 +9895,10 @@
       "requirements": [
         "至少有 3 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:205"
+      ],
       "summary": "Level 3 sponsor; timings: immediate.",
       "title": "Gorilla Field Research"
     },
@@ -9690,8 +9954,10 @@
       "requirements": [
         "至少有 4 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:206"
+      ],
       "summary": "Level 5 sponsor; timings: income.",
       "title": "Medical Breakthrough"
     },
@@ -9749,8 +10015,10 @@
         "actor.action cards.sponsors.upgraded == 是",
         "你的魅力 <= 25"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:207"
+      ],
       "summary": "Level 4 sponsor; timings: immediate.",
       "title": "Basic Research"
     },
@@ -9811,8 +10079,10 @@
       "kind": "sponsor",
       "official_component_id": "208",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:208"
+      ],
       "summary": "Level 4 sponsor; timings: passive, endgame.",
       "title": "Science Library"
     },
@@ -9870,8 +10140,10 @@
       "kind": "sponsor",
       "official_component_id": "209",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:209"
+      ],
       "summary": "Level 5 sponsor; timings: income.",
       "title": "Technology Institute"
     },
@@ -9892,7 +10164,7 @@
         }
       ],
       "facts": {
-        "compiled_effect_records": 1,
+        "compiled_effect_records": 2,
         "direct_rewards": {
           "appeal": 0,
           "conservation": 0,
@@ -9903,6 +10175,11 @@
             "summary_cn": "每当美洲图标进入你的动物园，可免费放置1个小卖部。",
             "summary_en": "Whenever an Americas icon enters your zoo, you may place a kiosk for free.",
             "timing": "passive"
+          },
+          {
+            "summary_cn": "若有至少5个商亭，终局得1保护分。",
+            "summary_en": "Gain 1 conservation if you have at least five kiosks.",
+            "timing": "endgame"
           }
         ],
         "icons": {
@@ -9929,9 +10206,11 @@
       "kind": "sponsor",
       "official_component_id": "210",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
-      "summary": "Level 4 sponsor; timings: passive.",
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:210"
+      ],
+      "summary": "Level 4 sponsor; timings: passive, endgame.",
       "title": "Expert On The Americas"
     },
     {
@@ -9993,8 +10272,10 @@
       "kind": "sponsor",
       "official_component_id": "211",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:211"
+      ],
       "summary": "Level 5 sponsor; timings: passive, endgame.",
       "title": "Expert On Europe"
     },
@@ -10048,8 +10329,10 @@
       "kind": "sponsor",
       "official_component_id": "212",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:212"
+      ],
       "summary": "Level 5 sponsor; timings: passive.",
       "title": "Expert On Australia"
     },
@@ -10103,8 +10386,10 @@
       "kind": "sponsor",
       "official_component_id": "213",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:213"
+      ],
       "summary": "Level 5 sponsor; timings: passive.",
       "title": "Expert On Asia"
     },
@@ -10166,8 +10451,10 @@
       "kind": "sponsor",
       "official_component_id": "214",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:214"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Expert On Africa"
     },
@@ -10235,8 +10522,10 @@
       "requirements": [
         "actor.partner zoo count >= 2"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:215"
+      ],
       "summary": "Level 4 sponsor; timings: immediate, passive, endgame.",
       "title": "Breeding Cooperation"
     },
@@ -10288,8 +10577,10 @@
       "requirements": [
         "actor.action cards.sponsors.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:216"
+      ],
       "summary": "Level 5 sponsor; timings: immediate.",
       "title": "Talented Communicator"
     },
@@ -10341,8 +10632,10 @@
       "kind": "sponsor",
       "official_component_id": "217",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:217"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Engineer"
     },
@@ -10400,8 +10693,10 @@
       "requirements": [
         "至少有 2 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:218"
+      ],
       "summary": "Level 4 sponsor; timings: passive/endgame.",
       "title": "Breeding Program"
     },
@@ -10463,8 +10758,10 @@
       "requirements": [
         "actor.action cards.sponsors.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:219"
+      ],
       "summary": "Level 5 sponsor; timings: passive.",
       "title": "Diversity Researcher"
     },
@@ -10520,8 +10817,10 @@
       "kind": "sponsor",
       "official_component_id": "220",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:220"
+      ],
       "summary": "Level 4 sponsor; timings: income.",
       "title": "Federal Grants"
     },
@@ -10579,8 +10878,10 @@
       "requirements": [
         "至少有 1 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:221"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Archeologist"
     },
@@ -10632,8 +10933,10 @@
       "requirements": [
         "你的魅力 <= 25"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:222"
+      ],
       "summary": "Level 5 sponsor; timings: immediate.",
       "title": "Release Of Patents"
     },
@@ -10676,8 +10979,10 @@
       "kind": "sponsor",
       "official_component_id": "223",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:223"
+      ],
       "summary": "Level 3 sponsor; timings: icons.",
       "title": "Science Institute"
     },
@@ -10737,8 +11042,10 @@
       "requirements": [
         "至少有 1 个“science”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:224"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Migration Recording"
     },
@@ -10795,8 +11102,10 @@
       "kind": "sponsor",
       "official_component_id": "225",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:225"
+      ],
       "summary": "Level 3 sponsor; timings: passive, endgame.",
       "title": "Quarantine Lab"
     },
@@ -10840,8 +11149,10 @@
       "kind": "sponsor",
       "official_component_id": "226",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:226"
+      ],
       "summary": "Level 6 sponsor; timings: endgame.",
       "title": "Foreign Institute"
     },
@@ -10891,8 +11202,10 @@
       "requirements": [
         "你的声望 >= 6"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:227"
+      ],
       "summary": "Level 6 sponsor; timings: immediate/ongoing.",
       "title": "WAZA Special Assignment"
     },
@@ -10944,8 +11257,10 @@
       "requirements": [
         "你的声望 >= 3"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:228"
+      ],
       "summary": "Level 5 sponsor; timings: passive.",
       "title": "WAZA Small Animal Program"
     },
@@ -10997,8 +11312,10 @@
       "kind": "sponsor",
       "official_component_id": "229",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:229"
+      ],
       "summary": "Level 5 sponsor; timings: passive.",
       "title": "Expert In Small Animals"
     },
@@ -11050,8 +11367,10 @@
       "kind": "sponsor",
       "official_component_id": "230",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:230"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Expert In Large Animals"
     },
@@ -11103,8 +11422,10 @@
       "requirements": [
         "至少有 1 个“primate”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:231"
+      ],
       "summary": "Level 3 sponsor; timings: income.",
       "title": "Sponsorship: Primates"
     },
@@ -11156,8 +11477,10 @@
       "requirements": [
         "至少有 1 个“reptile”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:232"
+      ],
       "summary": "Level 3 sponsor; timings: income.",
       "title": "Sponsorship: Reptiles"
     },
@@ -11209,8 +11532,10 @@
       "requirements": [
         "至少有 1 个“bird”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:233"
+      ],
       "summary": "Level 3 sponsor; timings: income.",
       "title": "Sponsorship: Vultures"
     },
@@ -11262,8 +11587,10 @@
       "requirements": [
         "至少有 1 个“predator”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:234"
+      ],
       "summary": "Level 3 sponsor; timings: income.",
       "title": "Sponsorship: Lions"
     },
@@ -11315,8 +11642,10 @@
       "requirements": [
         "至少有 1 个“herbivore”图标"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:235"
+      ],
       "summary": "Level 3 sponsor; timings: income.",
       "title": "Sponsorship: Elephants"
     },
@@ -11343,7 +11672,8 @@
           }
         ],
         "icons": {
-          "person": 1
+          "person": 1,
+          "primate": 1
         },
         "level": 4,
         "notes": "",
@@ -11353,7 +11683,8 @@
         "rock_requirement": 0,
         "semantic_compile_status": "compiled",
         "tags": [
-          "person"
+          "person",
+          "primate"
         ],
         "unique_building": null,
         "unresolved_effect_records": [],
@@ -11364,8 +11695,10 @@
       "kind": "sponsor",
       "official_component_id": "236",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:236"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Primatologist"
     },
@@ -11392,7 +11725,8 @@
           }
         ],
         "icons": {
-          "person": 1
+          "person": 1,
+          "reptile": 1
         },
         "level": 4,
         "notes": "",
@@ -11402,7 +11736,8 @@
         "rock_requirement": 0,
         "semantic_compile_status": "compiled",
         "tags": [
-          "person"
+          "person",
+          "reptile"
         ],
         "unique_building": null,
         "unresolved_effect_records": [],
@@ -11413,8 +11748,10 @@
       "kind": "sponsor",
       "official_component_id": "237",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:237"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Herpetologist"
     },
@@ -11441,6 +11778,7 @@
           }
         ],
         "icons": {
+          "bird": 1,
           "person": 1
         },
         "level": 4,
@@ -11451,7 +11789,8 @@
         "rock_requirement": 0,
         "semantic_compile_status": "compiled",
         "tags": [
-          "person"
+          "person",
+          "bird"
         ],
         "unique_building": null,
         "unresolved_effect_records": [],
@@ -11462,8 +11801,10 @@
       "kind": "sponsor",
       "official_component_id": "238",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:238"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Ornithologist"
     },
@@ -11490,7 +11831,8 @@
           }
         ],
         "icons": {
-          "person": 1
+          "person": 1,
+          "predator": 1
         },
         "level": 4,
         "notes": "",
@@ -11500,7 +11842,8 @@
         "rock_requirement": 0,
         "semantic_compile_status": "compiled",
         "tags": [
-          "person"
+          "person",
+          "predator"
         ],
         "unique_building": null,
         "unresolved_effect_records": [],
@@ -11511,8 +11854,10 @@
       "kind": "sponsor",
       "official_component_id": "239",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:239"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Expert In Predators"
     },
@@ -11539,6 +11884,7 @@
           }
         ],
         "icons": {
+          "herbivore": 1,
           "person": 1
         },
         "level": 4,
@@ -11549,7 +11895,8 @@
         "rock_requirement": 0,
         "semantic_compile_status": "compiled",
         "tags": [
-          "person"
+          "person",
+          "herbivore"
         ],
         "unique_building": null,
         "unresolved_effect_records": [],
@@ -11560,8 +11907,10 @@
       "kind": "sponsor",
       "official_component_id": "240",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:240"
+      ],
       "summary": "Level 4 sponsor; timings: passive.",
       "title": "Expert In Herbivores"
     },
@@ -11624,8 +11973,10 @@
       "kind": "sponsor",
       "official_component_id": "241",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:241"
+      ],
       "summary": "Level 5 sponsor; timings: placement/passive, endgame.",
       "title": "Hydrologist"
     },
@@ -11688,8 +12039,10 @@
       "kind": "sponsor",
       "official_component_id": "242",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:242"
+      ],
       "summary": "Level 5 sponsor; timings: placement/passive, endgame.",
       "title": "Geologist"
     },
@@ -11751,8 +12104,10 @@
       "requirements": [
         "你的声望 >= 3"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:243"
+      ],
       "summary": "Level 5 sponsor; timings: placement/passive.",
       "title": "Meerkat Den"
     },
@@ -11814,8 +12169,10 @@
       "requirements": [
         "你的声望 >= 3"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:244"
+      ],
       "summary": "Level 5 sponsor; timings: placement/passive.",
       "title": "Penguin Pool"
     },
@@ -11876,8 +12233,10 @@
       "requirements": [
         "你的声望 >= 3"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:245"
+      ],
       "summary": "Level 5 sponsor; timings: placement/passive.",
       "title": "Aquarium"
     },
@@ -11934,8 +12293,10 @@
       "kind": "sponsor",
       "official_component_id": "246",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:246"
+      ],
       "summary": "Level 6 sponsor; timings: placement/passive.",
       "title": "Cable Car"
     },
@@ -11993,8 +12354,10 @@
       "kind": "sponsor",
       "official_component_id": "247",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:247"
+      ],
       "summary": "Level 6 sponsor; timings: placement/passive.",
       "title": "Baboon Rock"
     },
@@ -12047,8 +12410,10 @@
       "kind": "sponsor",
       "official_component_id": "248",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:248"
+      ],
       "summary": "Level 5 sponsor; timings: passive.",
       "title": "Rhesus Monkey Park"
     },
@@ -12099,8 +12464,10 @@
       "kind": "sponsor",
       "official_component_id": "249",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:249"
+      ],
       "summary": "Level 6 sponsor; timings: passive.",
       "title": "Barred Owl Hut"
     },
@@ -12154,8 +12521,10 @@
       "kind": "sponsor",
       "official_component_id": "250",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:250"
+      ],
       "summary": "Level 5 sponsor; timings: passive.",
       "title": "Sea Turtle Tank"
     },
@@ -12201,6 +12570,8 @@
           "predator"
         ],
         "unique_building": {
+          "adjacent_count": 1,
+          "adjacent_terrain": "water",
           "building_type": "unique_sponsor_251",
           "size": 4
         },
@@ -12212,8 +12583,10 @@
       "kind": "sponsor",
       "official_component_id": "251",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:251"
+      ],
       "summary": "Level 5 sponsor; timings: passive.",
       "title": "Polar Bear Exhibit"
     },
@@ -12267,8 +12640,10 @@
       "kind": "sponsor",
       "official_component_id": "252",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:252"
+      ],
       "summary": "Level 5 sponsor; timings: passive.",
       "title": "Spotted Hyena Compound"
     },
@@ -12330,8 +12705,10 @@
       "kind": "sponsor",
       "official_component_id": "253",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:253"
+      ],
       "summary": "Level 6 sponsor; timings: immediate, passive.",
       "title": "Okapi Stable"
     },
@@ -12387,8 +12764,10 @@
       "kind": "sponsor",
       "official_component_id": "254",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:254"
+      ],
       "summary": "Level 5 sponsor; timings: placement/immediate.",
       "title": "Zoo School"
     },
@@ -12439,8 +12818,10 @@
       "kind": "sponsor",
       "official_component_id": "255",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:255"
+      ],
       "summary": "Level 3 sponsor; timings: placement.",
       "title": "Adventure Playground"
     },
@@ -12491,8 +12872,10 @@
       "kind": "sponsor",
       "official_component_id": "256",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:256"
+      ],
       "summary": "Level 3 sponsor; timings: placement.",
       "title": "Water Playground"
     },
@@ -12555,8 +12938,10 @@
       "kind": "sponsor",
       "official_component_id": "257",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:257"
+      ],
       "summary": "Level 3 sponsor; timings: placement, income, endgame.",
       "title": "Side Entrance"
     },
@@ -12612,8 +12997,10 @@
       "requirements": [
         "你的魅力 <= 25"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:258"
+      ],
       "summary": "Level 5 sponsor; timings: immediate/scoring.",
       "title": "Native Seabirds"
     },
@@ -12669,8 +13056,10 @@
       "requirements": [
         "你的魅力 <= 25"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:259"
+      ],
       "summary": "Level 5 sponsor; timings: immediate/scoring.",
       "title": "Native Lizards"
     },
@@ -12726,8 +13115,10 @@
       "requirements": [
         "你的魅力 <= 25"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:260"
+      ],
       "summary": "Level 5 sponsor; timings: immediate/scoring.",
       "title": "Native Farm Animals"
     },
@@ -12756,9 +13147,9 @@
         },
         "effects": [
           {
-            "summary_cn": "若动物园拥有5种动物类别图标，获得1保护分。",
+            "summary_cn": "若动物园拥有5种动物类别图标，终局获得1保护分。",
             "summary_en": "Gain 1 conservation if your zoo has all five animal-category icons.",
-            "timing": "immediate"
+            "timing": "endgame"
           }
         ],
         "icons": {},
@@ -12779,9 +13170,11 @@
       "kind": "sponsor",
       "official_component_id": "261",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
-      "summary": "Level 3 sponsor; timings: immediate.",
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:261"
+      ],
+      "summary": "Level 3 sponsor; timings: immediate, endgame.",
       "title": "Guided School Tours"
     },
     {
@@ -12841,8 +13234,10 @@
       "requirements": [
         "actor.action cards.sponsors.upgraded == 是"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:262"
+      ],
       "summary": "Level 5 sponsor; timings: passive, additional.",
       "title": "Explorer"
     },
@@ -12901,8 +13296,10 @@
         "actor.action cards.sponsors.upgraded == 是",
         "你的声望 >= 6"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:263"
+      ],
       "summary": "Level 5 sponsor; timings: passive, immediate.",
       "title": "WAZA Large Animal Program"
     },
@@ -12958,8 +13355,10 @@
       "requirements": [
         "你的魅力 <= 25"
       ],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:264"
+      ],
       "summary": "Level 5 sponsor; timings: immediate/scoring.",
       "title": "Free-Range New World Monkeys"
     },
@@ -13045,8 +13444,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "113",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:113"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Bavarian Forest National Park"
     },
@@ -13132,8 +13533,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "114",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:114"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Yosemite National Park"
     },
@@ -13219,8 +13622,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "115",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:115"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Angthong National Park"
     },
@@ -13306,8 +13711,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "116",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:116"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Serengeti National Park"
     },
@@ -13393,8 +13800,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "117",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:117"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Blue Mountains National Park"
     },
@@ -13480,8 +13889,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "118",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:118"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Savanna"
     },
@@ -13567,8 +13978,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "119",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:119"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Low Mountain Range"
     },
@@ -13654,8 +14067,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "120",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:120"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Bamboo Forest"
     },
@@ -13741,8 +14156,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "121",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:121"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Sea Cave"
     },
@@ -13828,8 +14245,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "122",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:122"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Jungle"
     },
@@ -13891,8 +14310,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "123",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:123"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Bird Breeding Program"
     },
@@ -13954,8 +14375,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "124",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:124"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Predator Breeding Program"
     },
@@ -14017,8 +14440,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "125",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:125"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Reptile Breeding Program"
     },
@@ -14080,8 +14505,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "126",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:126"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Herbivore Breeding Program"
     },
@@ -14143,8 +14570,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "127",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:127"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Primate Breeding Program"
     },
@@ -14235,8 +14664,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "128",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:128"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Aquatic"
     },
@@ -14327,8 +14758,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "129",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:129"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Geological"
     },
@@ -14419,8 +14852,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "130",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:130"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Small Animals"
     },
@@ -14511,8 +14946,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "131",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:131"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Large Animals"
     },
@@ -14594,8 +15031,10 @@
       "kind": "zoo_conservation_project",
       "official_component_id": "132",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:132"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Research"
     },
@@ -14681,8 +15120,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "101",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:101"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Species Diversity"
     },
@@ -14768,8 +15209,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "102",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:102"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Habitat Diversity"
     },
@@ -14846,8 +15289,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "103",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:103"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Africa"
     },
@@ -14924,8 +15369,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "104",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:104"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Americas"
     },
@@ -15002,8 +15449,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "105",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:105"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Australia"
     },
@@ -15080,8 +15529,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "106",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:106"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Asia"
     },
@@ -15158,8 +15609,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "107",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:107"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Europe"
     },
@@ -15236,8 +15689,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "108",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:108"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Primates"
     },
@@ -15314,8 +15769,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "109",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:109"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Reptiles"
     },
@@ -15392,8 +15849,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "110",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:110"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Predators"
     },
@@ -15470,8 +15929,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "111",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:111"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Herbivores"
     },
@@ -15548,8 +16009,10 @@
       "kind": "base_conservation_project",
       "official_component_id": "112",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:base_conservation_project:112"
+      ],
       "summary": "Conservation project with 3 structured reward tiers.",
       "title": "Birds"
     },
@@ -15608,8 +16071,10 @@
       "kind": "final_scoring",
       "official_component_id": "001",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:final_scoring:001"
+      ],
       "summary": "Endgame scoring card with 4 structured thresholds.",
       "title": "Large Animal Zoo"
     },
@@ -15668,8 +16133,10 @@
       "kind": "final_scoring",
       "official_component_id": "002",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:final_scoring:002"
+      ],
       "summary": "Endgame scoring card with 4 structured thresholds.",
       "title": "Small Animal Zoo"
     },
@@ -15728,8 +16195,10 @@
       "kind": "final_scoring",
       "official_component_id": "003",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:final_scoring:003"
+      ],
       "summary": "Endgame scoring card with 4 structured thresholds.",
       "title": "Research Zoo"
     },
@@ -15768,8 +16237,10 @@
       "kind": "final_scoring",
       "official_component_id": "004",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:final_scoring:004"
+      ],
       "summary": "Endgame scoring card with 2 structured thresholds.",
       "title": "Architectural Zoo"
     },
@@ -15828,8 +16299,10 @@
       "kind": "final_scoring",
       "official_component_id": "005",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:final_scoring:005"
+      ],
       "summary": "Endgame scoring card with 4 structured thresholds.",
       "title": "Conservation Zoo"
     },
@@ -15888,8 +16361,10 @@
       "kind": "final_scoring",
       "official_component_id": "006",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:final_scoring:006"
+      ],
       "summary": "Endgame scoring card with 4 structured thresholds.",
       "title": "Naturalists Zoo"
     },
@@ -15948,8 +16423,10 @@
       "kind": "final_scoring",
       "official_component_id": "007",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:final_scoring:007"
+      ],
       "summary": "Endgame scoring card with 4 structured thresholds.",
       "title": "Favorite Zoo"
     },
@@ -16008,8 +16485,10 @@
       "kind": "final_scoring",
       "official_component_id": "008",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:final_scoring:008"
+      ],
       "summary": "Endgame scoring card with 4 structured thresholds.",
       "title": "Sponsored Zoo"
     },
@@ -16053,8 +16532,10 @@
       "kind": "final_scoring",
       "official_component_id": "009",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:final_scoring:009"
+      ],
       "summary": "Endgame scoring card with 2 structured thresholds.",
       "title": "Diverse Species Zoo"
     },
@@ -16113,8 +16594,10 @@
       "kind": "final_scoring",
       "official_component_id": "010",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:final_scoring:010"
+      ],
       "summary": "Endgame scoring card with 4 structured thresholds.",
       "title": "Climbing Park"
     },
@@ -16173,8 +16656,10 @@
       "kind": "final_scoring",
       "official_component_id": "011",
       "requirements": [],
-      "review_status": "transcribed",
-      "scenario_tests": [],
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:final_scoring:011"
+      ],
       "summary": "Endgame scoring card with 4 structured thresholds.",
       "title": "Aquatic Park"
     },
@@ -16194,9 +16679,9 @@
       "kind": "bonus_tile",
       "official_component_id": "reputation-2",
       "requirements": [],
-      "review_status": "scenario_tested",
+      "review_status": "released",
       "scenario_tests": [
-        "official-bonus-tile-effects"
+        "ark-nova-map0-release:bonus_tile:reputation-2"
       ],
       "summary": "Advance two spaces on the Reputation track.",
       "title": "Reputation +2"
@@ -16217,9 +16702,9 @@
       "kind": "bonus_tile",
       "official_component_id": "x-3",
       "requirements": [],
-      "review_status": "scenario_tested",
+      "review_status": "released",
       "scenario_tests": [
-        "official-bonus-tile-effects"
+        "ark-nova-map0-release:bonus_tile:x-3"
       ],
       "summary": "Gain three X-tokens, respecting the normal resource limit.",
       "title": "Three X-tokens"
@@ -16240,9 +16725,9 @@
       "kind": "bonus_tile",
       "official_component_id": "enclosure-3",
       "requirements": [],
-      "review_status": "scenario_tested",
+      "review_status": "released",
       "scenario_tests": [
-        "official-bonus-tile-effects"
+        "ark-nova-map0-release:bonus_tile:enclosure-3"
       ],
       "summary": "Immediately place one standard size-3 enclosure without paying its construction cost.",
       "title": "Free size-3 enclosure"
@@ -16271,9 +16756,9 @@
       "kind": "bonus_tile",
       "official_component_id": "cards-3",
       "requirements": [],
-      "review_status": "scenario_tested",
+      "review_status": "released",
       "scenario_tests": [
-        "official-bonus-tile-effects"
+        "ark-nova-map0-release:bonus_tile:cards-3"
       ],
       "summary": "Resolve three times: take a card within Reputation range or draw one from the deck.",
       "title": "Take three cards"
@@ -16294,9 +16779,9 @@
       "kind": "bonus_tile",
       "official_component_id": "money-5",
       "requirements": [],
-      "review_status": "scenario_tested",
+      "review_status": "released",
       "scenario_tests": [
-        "official-bonus-tile-effects"
+        "ark-nova-map0-release:bonus_tile:money-5"
       ],
       "summary": "Gain five money.",
       "title": "Five money"
@@ -16317,9 +16802,9 @@
       "kind": "bonus_tile",
       "official_component_id": "money-10",
       "requirements": [],
-      "review_status": "scenario_tested",
+      "review_status": "released",
       "scenario_tests": [
-        "official-bonus-tile-effects"
+        "ark-nova-map0-release:bonus_tile:money-10"
       ],
       "summary": "Gain ten money.",
       "title": "Ten money"
@@ -16340,9 +16825,9 @@
       "kind": "bonus_tile",
       "official_component_id": "multiplier",
       "requirements": [],
-      "review_status": "scenario_tested",
+      "review_status": "released",
       "scenario_tests": [
-        "official-bonus-tile-effects"
+        "ark-nova-map0-release:bonus_tile:multiplier"
       ],
       "summary": "Choose one Action card and place a multiplier token on it.",
       "title": "Multiplier token"
@@ -16363,9 +16848,9 @@
       "kind": "bonus_tile",
       "official_component_id": "university",
       "requirements": [],
-      "review_status": "scenario_tested",
+      "review_status": "released",
       "scenario_tests": [
-        "official-bonus-tile-effects"
+        "ark-nova-map0-release:bonus_tile:university"
       ],
       "summary": "Choose and take one currently available university from the Association board.",
       "title": "Available university"
@@ -16386,10 +16871,9 @@
       "kind": "bonus_tile",
       "official_component_id": "partner-zoo",
       "requirements": [],
-      "review_status": "scenario_tested",
+      "review_status": "released",
       "scenario_tests": [
-        "official-bonus-tile-effects",
-        "partner-zoo-association-ii-gate"
+        "ark-nova-map0-release:bonus_tile:partner-zoo"
       ],
       "summary": "Choose and take one currently available partner zoo; taking a third still requires Association II.",
       "title": "Available partner zoo"
@@ -16398,170 +16882,51 @@
       "collection": "maps",
       "effects": [],
       "facts": {
-        "catalog_status": "slot_only",
-        "slot": 1
+        "build_ii_cells": [
+          [
+            3,
+            -2
+          ],
+          [
+            2,
+            -1
+          ]
+        ],
+        "cell_count": 58,
+        "completion_reward": {
+          "amount": 7,
+          "type": "gain_appeal"
+        },
+        "coordinate_system": "flat_top_axial",
+        "geometry_version": "agentbga.ark_nova.map.v3",
+        "map_id": "0",
+        "placement_bonus_count": 12,
+        "setup_buildings": [],
+        "terrain_counts": {
+          "buildable": 39,
+          "rock": 9,
+          "water": 10
+        }
       },
-      "id": "ark-nova:map-slot-001",
+      "id": "ark-nova:map-0",
       "kind": "map",
-      "official_component_id": null,
+      "official_component_id": "0",
       "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Zoo map · slot 01"
-    },
-    {
-      "collection": "maps",
-      "effects": [],
-      "facts": {
-        "catalog_status": "slot_only",
-        "slot": 2
-      },
-      "id": "ark-nova:map-slot-002",
-      "kind": "map",
-      "official_component_id": null,
-      "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Zoo map · slot 02"
-    },
-    {
-      "collection": "maps",
-      "effects": [],
-      "facts": {
-        "catalog_status": "slot_only",
-        "slot": 3
-      },
-      "id": "ark-nova:map-slot-003",
-      "kind": "map",
-      "official_component_id": null,
-      "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Zoo map · slot 03"
-    },
-    {
-      "collection": "maps",
-      "effects": [],
-      "facts": {
-        "catalog_status": "slot_only",
-        "slot": 4
-      },
-      "id": "ark-nova:map-slot-004",
-      "kind": "map",
-      "official_component_id": null,
-      "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Zoo map · slot 04"
-    },
-    {
-      "collection": "maps",
-      "effects": [],
-      "facts": {
-        "catalog_status": "slot_only",
-        "slot": 5
-      },
-      "id": "ark-nova:map-slot-005",
-      "kind": "map",
-      "official_component_id": null,
-      "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Zoo map · slot 05"
-    },
-    {
-      "collection": "maps",
-      "effects": [],
-      "facts": {
-        "catalog_status": "slot_only",
-        "slot": 6
-      },
-      "id": "ark-nova:map-slot-006",
-      "kind": "map",
-      "official_component_id": null,
-      "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Zoo map · slot 06"
-    },
-    {
-      "collection": "maps",
-      "effects": [],
-      "facts": {
-        "catalog_status": "slot_only",
-        "slot": 7
-      },
-      "id": "ark-nova:map-slot-007",
-      "kind": "map",
-      "official_component_id": null,
-      "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Zoo map · slot 07"
-    },
-    {
-      "collection": "maps",
-      "effects": [],
-      "facts": {
-        "catalog_status": "slot_only",
-        "slot": 8
-      },
-      "id": "ark-nova:map-slot-008",
-      "kind": "map",
-      "official_component_id": null,
-      "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Zoo map · slot 08"
-    },
-    {
-      "collection": "maps",
-      "effects": [],
-      "facts": {
-        "catalog_status": "slot_only",
-        "slot": 9
-      },
-      "id": "ark-nova:map-slot-009",
-      "kind": "map",
-      "official_component_id": null,
-      "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Zoo map · slot 09"
-    },
-    {
-      "collection": "maps",
-      "effects": [],
-      "facts": {
-        "catalog_status": "slot_only",
-        "slot": 10
-      },
-      "id": "ark-nova:map-slot-010",
-      "kind": "map",
-      "official_component_id": null,
-      "requirements": [],
-      "review_status": "unentered",
-      "scenario_tests": [],
-      "summary": "Roster reference only; conditions, timing, effects, interaction, and scoring remain pending physical-component transcription and independent review.",
-      "title": "Zoo map · slot 10"
+      "review_status": "released",
+      "scenario_tests": [
+        "ark-nova-map0-release:map:0"
+      ],
+      "summary": "Beginner Map 0 axial footprint; no free setup buildings.",
+      "title": "Zoo Map 0"
     }
   ],
   "pack": {
-    "content_sha256": "9b079512b92753d536f6f49a2cbd83c8791cedd1ed6af9098e5113069a8b445d",
-    "content_version": "m4-reference-import.16",
+    "content_sha256": "2457fcf3c37726a82f877d4ea8dee7be4fa40133bbb7c5265116bdc9a3bba2fa",
+    "content_version": "map0-release.1",
     "distribution_mode": "repository_safe",
-    "id": "ark-nova-base-en-draft-roster",
-    "rules_version": "base-1.2-faq-v2-semantic.1",
-    "status": "draft"
+    "id": "ark-nova-base-map0-released",
+    "rules_version": "base-1.2-faq-v2-map0.1",
+    "status": "released"
   },
   "schema_version": "agentbga.ark_nova.catalog.v1",
   "vocabulary": {
@@ -16607,7 +16972,8 @@
     "predicates": [
       "all",
       "compare",
-      "has_icon"
+      "has_icon",
+      "matching_partner_zoo"
     ]
   }
 }

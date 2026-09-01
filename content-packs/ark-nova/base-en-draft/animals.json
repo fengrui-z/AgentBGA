@@ -81,8 +81,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:401"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -180,8 +184,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:402"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -282,8 +290,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:403"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -369,8 +381,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:404"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -456,8 +472,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:405"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -546,8 +566,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:406"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -636,8 +660,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:407"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -730,8 +758,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:408"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -826,8 +858,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:409"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -913,8 +949,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:410"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -1046,8 +1086,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:411"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -1143,8 +1187,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:412"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -1236,8 +1284,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:413"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -1325,8 +1377,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:414"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -1419,8 +1475,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:415"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -1549,8 +1609,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:416"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -1638,8 +1702,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:417"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -1738,8 +1806,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:418"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -1829,8 +1901,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:419"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -1926,8 +2002,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:420"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -2025,8 +2105,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:421"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -2126,8 +2210,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:422"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -2215,8 +2303,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:423"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -2304,8 +2396,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:424"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -2408,8 +2504,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:425"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -2517,8 +2617,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:426"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -2611,8 +2715,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:427"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -2702,8 +2810,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:428"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -2823,8 +2935,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:429"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -2916,8 +3032,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:430"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -3025,8 +3145,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:431"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -3122,8 +3246,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:432"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -3228,8 +3356,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:433"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -3328,8 +3460,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:434"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -3422,8 +3558,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:435"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -3523,8 +3663,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:436"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -3624,8 +3768,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:437"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -3703,8 +3851,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:438"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -3782,8 +3934,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:439"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -3876,8 +4032,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:440"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -3975,8 +4135,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:441"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -4084,8 +4248,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:442"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -4163,8 +4331,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:443"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -4256,8 +4428,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:444"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -4342,8 +4518,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:445"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -4450,8 +4630,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:446"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -4548,8 +4732,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:447"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -4655,8 +4843,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:448"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -4756,8 +4948,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:449"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -4842,8 +5038,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:450"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -4957,8 +5157,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:451"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -5057,8 +5261,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:452"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -5153,8 +5361,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:453"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -5239,8 +5451,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:454"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -5326,8 +5542,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:455"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -5432,8 +5652,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:456"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -5538,8 +5762,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:457"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -5654,8 +5882,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:458"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -5770,8 +6002,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:459"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -5857,8 +6093,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:460"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -5965,8 +6205,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:461"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -6058,8 +6302,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:462"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -6164,8 +6412,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:463"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -6280,8 +6532,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:464"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -6367,8 +6623,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:465"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -6458,8 +6718,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:466"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -6545,8 +6809,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:467"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -6635,8 +6903,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:468"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -6734,8 +7006,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:469"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -6853,8 +7129,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:470"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -6947,8 +7227,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:471"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -7033,8 +7317,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:472"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -7119,8 +7407,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:473"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -7230,8 +7522,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:474"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -7350,8 +7646,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:475"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -7450,8 +7750,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:476"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -7534,8 +7838,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:477"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -7620,8 +7928,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:478"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -7704,8 +8016,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:479"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -7788,8 +8104,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:480"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -7911,8 +8231,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:481"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8019,8 +8343,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:482"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8130,8 +8458,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:483"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8194,8 +8526,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:484"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8300,8 +8636,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:485"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8364,8 +8704,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:486"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8451,8 +8795,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:487"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8515,8 +8863,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:488"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8612,8 +8964,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:489"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8699,8 +9055,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:490"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8785,8 +9145,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:491"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8904,8 +9268,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:492"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -8968,8 +9336,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:493"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -9054,8 +9426,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:494"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -9126,8 +9502,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:495"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -9213,8 +9593,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:496"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -9303,8 +9687,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:497"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -9385,8 +9773,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:498"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -9472,8 +9864,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:499"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -9585,8 +9981,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:500"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -9685,8 +10085,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:501"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -9776,8 +10180,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:502"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -9881,8 +10289,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:503"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -9986,8 +10398,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:504"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -10085,8 +10501,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:505"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -10182,8 +10602,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:506"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -10268,8 +10692,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:507"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -10365,8 +10793,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:508"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -10464,8 +10896,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:509"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -10561,8 +10997,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:510"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -10651,8 +11091,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:511"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -10745,8 +11189,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:512"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -10832,8 +11280,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:513"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -10931,8 +11383,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:514"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -11017,8 +11473,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:515"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -11111,8 +11571,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:516"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -11203,8 +11667,12 @@
       }
     ],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:517"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -11293,8 +11761,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:518"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -11376,8 +11848,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:519"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -11459,8 +11935,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:520"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -11550,8 +12030,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:521"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -11652,8 +12136,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:522"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -11735,8 +12223,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:523"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -11837,8 +12329,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:524"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -11920,8 +12416,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:525"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -12003,8 +12503,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:526"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -12086,8 +12590,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:527"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   },
@@ -12188,8 +12696,12 @@
     "references": [],
     "requirements": [],
     "review": {
-      "scenario_tests": [],
-      "status": "transcribed"
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:animal:528"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
     },
     "schema_version": "agentbga.ark_nova.card.v1"
   }

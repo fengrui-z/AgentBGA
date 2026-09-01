@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import unittest
 
+from agentbga.ark_nova_tracks import conservation_score_offset
 from agentbga.ark_nova_official.final_scoring_effects import (
     compile_final_scoring_facts,
     compiled_final_scoring_tier_count,
@@ -156,7 +157,36 @@ class ArkNovaOfficialP6FinalScoringTests(unittest.TestCase):
         self.assertEqual(7, row["map_completion_points"])
         self.assertEqual(9, row["victory_points"])
         self.assertEqual(12, row["appeal"])
+        self.assertEqual(7, row["endgame_scoring_points"])
         self.assertTrue(any(event["type"] == "map_completion_scored" for event in events))
+
+    def test_endgame_score_includes_sponsor_appeal_conservation_and_map_points(self):
+        state = new_semantic_state(2)
+        state["endgame"]["final_scoring_discard_completed"] = True
+        player = state["players"][0]
+        player["tracks"].update({"appeal": 64, "conservation": 20})
+        player["map"]["completion_reward_claimed"] = True
+        player["played_cards"] = [{
+            "id": "side-entrance", "entry_id": "ark-nova:sponsor-257",
+            "kind": "sponsor", "effects": [{
+                "op": "move_track", "timing": "end_of_game",
+                "args": {"track": "appeal", "amount": 5},
+            }, {
+                "op": "move_track", "timing": "end_of_game",
+                "args": {"track": "conservation", "amount": 2},
+            }],
+        }]
+        scored, events = score_game(SemanticEngine(), state, [10] * 42)
+        row = next(item for item in scored["endgame"]["results"] if item["seat"] == 0)
+        # C20 -> C22 is six printed score points, plus five Appeal and seven
+        # deferred Map 0 completion points.
+        self.assertEqual(18, row["endgame_scoring_points"])
+        self.assertEqual(
+            69 + conservation_score_offset(22) + 7,
+            row["final_track_score"],
+        )
+        effect = next(event for event in events if event["type"] == "endgame_card_effect_scored")
+        self.assertEqual({"appeal": 5, "conservation": 2}, effect["track_deltas"])
 
     @staticmethod
     def _leave_empty_building_spaces(player, empty_count):

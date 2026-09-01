@@ -1,4 +1,7 @@
 from copy import deepcopy
+import hashlib
+import json
+from pathlib import Path
 import unittest
 
 from agentbga.ark_nova_official import (
@@ -12,6 +15,9 @@ from agentbga.ark_nova_official.cards import play_entry_semantics
 from agentbga.ark_nova_official.cards import _entry_effects_for_player_count
 from agentbga.ark_nova_official.state import new_semantic_state
 from agentbga.ark_nova_official.semantics import _official_kiosk_income
+from agentbga.ark_nova_official.release_review import verify_release_review_ledger
+from agentbga.ark_nova_official.release_scenarios import run_pack_release_scenarios
+from agentbga.ark_nova_official.rounds import advance_solo_round_after_turn
 
 
 class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
@@ -28,11 +34,11 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
     def test_core_faces_bonus_tiles_and_all_255_four_player_physical_cards_are_executable(self):
         report = audit_content_pack(self.plugin.pack, SemanticEngine())
         interactions = audit_interactions(self.plugin.pack)
-        self.assertEqual(244, report.roster_entry_count)
+        self.assertEqual(245, report.roster_entry_count)
         self.assertEqual(243, report.semantic_entry_count)
         self.assertEqual((), interactions.unresolved)
         self.assertEqual(
-            {"transcribed"},
+            {"released"},
             {
                 entry.review_status
                 for collection in (
@@ -42,10 +48,75 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
                 for entry in self.plugin.pack.collections[collection]
             },
         )
+        self.assertEqual("released", self.plugin.pack.manifest.status)
         state = self.plugin.setup(4, 9001)
         physical_card_faces = 128 + 64 + 32 + 11
         action_cards = sum(len(player["action_cards"]) for player in state["players"])
         self.assertEqual(255, physical_card_faces + action_cards)
+
+    def test_all_235_faces_nine_bonus_tiles_and_map_zero_have_independent_review_scenarios(self):
+        ledger = verify_release_review_ledger(self.plugin.pack)
+        results = run_pack_release_scenarios(self.plugin.pack)
+        self.assertEqual(245, len(results))
+        self.assertEqual(245, len({result["scenario_id"] for result in results}))
+        self.assertEqual(
+            {record["scenario_id"] for record in ledger["entries"]},
+            {result["scenario_id"] for result in results},
+        )
+        self.assertEqual(235, ledger["source_review"]["card_faces"])
+        self.assertEqual(9, ledger["semantic_review"]["bonus_tile_count"])
+
+    def test_one_to_four_player_random_baseline_evidence_matches_this_release(self):
+        path = Path(__file__).resolve().parents[1] / "docs/ark-nova/release-baseline-results.json"
+        report = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(self.plugin.rules_version, report["rules_version"])
+        self.assertEqual(self.plugin.pack.content_sha256, report["content_sha256"])
+        self.assertEqual({1, 2, 3, 4}, {row["players"] for row in report["results"]})
+        for row in report["results"]:
+            self.assertLessEqual(row["turns"], 1000)
+            self.assertGreater(row["decisions"], 0)
+            self.assertTrue(row["winner_seats"])
+            self.assertRegex(row["state_hash"], r"^[a-f0-9]{64}$")
+            payload = {key: value for key, value in row.items() if key != "result_sha256"}
+            self.assertEqual(row["result_sha256"], hashlib.sha256(json.dumps(
+                payload, sort_keys=True, separators=(",", ":"),
+            ).encode("utf-8")).hexdigest())
+
+    def test_official_rulebook_glossary_and_faq_matrix_is_closed_and_traceable(self):
+        root = Path(__file__).resolve().parents[1]
+        path = root / "docs/ark-nova/rules-conformance.json"
+        report = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(self.plugin.rules_version, report["rules_version"])
+        self.assertEqual("pass", report["result"]["status"])
+        self.assertEqual(0, report["result"]["open_rule_gaps"])
+        self.assertEqual(
+            {"rulebook", "glossary", "faq-v2"},
+            {source["id"] for source in report["official_sources"]},
+        )
+        for source in report["official_sources"]:
+            self.assertRegex(source["sha256"], r"^[a-f0-9]{64}$")
+            self.assertGreater(source["pages"], 0)
+            self.assertTrue(source["url"].startswith("https://"))
+
+        requirements = report["requirements"]
+        self.assertEqual(report["result"]["requirement_count"], len(requirements))
+        self.assertEqual(len(requirements), len({row["id"] for row in requirements}))
+        test_sources: dict[Path, str] = {}
+        for row in requirements:
+            self.assertEqual("pass", row["status"], row["id"])
+            self.assertTrue(row["source_ref"])
+            self.assertTrue(row["implementation"])
+            self.assertTrue(row["tests"])
+            for relative in row["implementation"]:
+                self.assertTrue((root / relative).is_file(), f"{row['id']}: {relative}")
+            for reference in row["tests"]:
+                relative, method = reference.split("::", 1)
+                test_path = root / relative
+                self.assertTrue(test_path.is_file(), f"{row['id']}: {relative}")
+                source_text = test_sources.setdefault(
+                    test_path, test_path.read_text(encoding="utf-8"),
+                )
+                self.assertIn(f"def {method}(", source_text, reference)
 
     def test_setup_is_deterministic_private_and_map_zero_starts_empty(self):
         first = self.plugin.setup(2, 81)
@@ -97,6 +168,25 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
         self.assertEqual([{"hidden": True}] * 8, opponent["initial_draw"])
         self.assertNotIn(state["players"][1]["initial_draw"][0]["display_title"], str(opponent))
 
+    def test_pending_private_choice_is_redacted_for_opponents_but_visible_to_spectators(self):
+        state = self.plugin.setup(2, 81)
+        state, _ = self.plugin.engine.start_effects(
+            state, 1,
+            [{"op": "discard_final_scoring_card", "args": {}, "timing": "system"}],
+            source_id="test:private-final-discard",
+        )
+        private_ids = {
+            option["id"] for option in state["resolution"]["pending_choice"]["options"]
+        }
+
+        opponent = self.plugin.observe(state, 0)["pending_choice"]
+        owner = self.plugin.observe(state, 1)["pending_choice"]
+        spectator = self.plugin.observe_spectator(state)["pending_choice"]
+        self.assertEqual({"seat": 1, "hidden": True}, opponent)
+        self.assertEqual(private_ids, {option["id"] for option in owner["options"]})
+        self.assertEqual(private_ids, {option["id"] for option in spectator["options"]})
+        self.assertTrue(private_ids.isdisjoint(set(str(opponent).split())))
+
     def test_solo_setup_never_deals_the_relative_final_scoring_card(self):
         for seed in range(30):
             state = self.plugin.setup(1, seed)
@@ -123,6 +213,17 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
         state, events = self.plugin.apply_action(state, 0, action)
         self.assertTrue(any(event["type"] == "endgame_triggered" for event in events))
         self.assertEqual([1], state["endgame"]["final_turn_seats"])
+        triggering_view = self.plugin.observe(state, 0)["endgame"]
+        final_player_view = self.plugin.observe(state, 1)["endgame"]
+        spectator_view = self.plugin.observe_spectator(state)["endgame"]
+        self.assertTrue(triggering_view["triggered"])
+        self.assertEqual(0, triggering_view["triggered_by"])
+        self.assertEqual([1], triggering_view["remaining_final_turn_seats"])
+        self.assertFalse(triggering_view["is_my_final_action"])
+        self.assertTrue(final_player_view["is_my_final_action"])
+        self.assertTrue(final_player_view["scoring_after_this_action"])
+        self.assertIn("final scoring begins immediately", final_player_view["instruction_en"])
+        self.assertFalse(spectator_view["is_my_final_action"])
 
         action = next(
             item["action"] for item in self.plugin.legal_actions(state, 1)
@@ -208,6 +309,43 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
                 self.plugin.legal_actions(state, choice_seat)[0]["action"],
             )
         self.assertIn("solo_won", state["endgame"]["results"][0])
+
+    def test_solo_break_dynamically_blocks_the_cheapest_open_donation_space(self):
+        state = self._finish_setup(self.plugin.setup(1, 124))
+        state["donations_made"] = [{"seat": 0, "cost": 2}]
+        state["break"]["solo_tokens_left"] = 1
+
+        state, events = advance_solo_round_after_turn(state, 0)
+
+        self.assertIn(
+            {"type": "solo_donation_space_blocked", "cost": 5}, events,
+        )
+        self.assertEqual([2, 5], [item["cost"] for item in state["donations_made"]])
+        view = self.plugin.observe(state, 0)
+        self.assertEqual(2, view["solo_board"]["round"])
+        self.assertEqual(6, view["solo_board"]["tokens_left"])
+        self.assertEqual(
+            ["claimed", "blocked", "available", "available", "repeatable"],
+            [slot["status"] for slot in view["solo_board"]["donation_spaces"]],
+        )
+
+    def test_solo_break_places_overflow_token_next_to_repeatable_twelve_space(self):
+        state = self._finish_setup(self.plugin.setup(
+            1, 125, config={"solo_starting_appeal": 10},
+        ))
+        state["donations_made"] = [
+            {"seat": 0, "cost": cost} for cost in (2, 5, 7, 10)
+        ]
+        state["break"]["solo_tokens_left"] = 1
+
+        state, events = advance_solo_round_after_turn(state, 0)
+
+        self.assertIn({"type": "solo_donation_token_placed_next_to_12"}, events)
+        self.assertEqual(4, len(state["donations_made"]))
+        view = self.plugin.observe(state, 0)
+        self.assertEqual(10, view["solo_board"]["starting_appeal"])
+        self.assertEqual(1, view["solo_board"]["tokens_next_to_12"])
+        self.assertEqual("repeatable", view["solo_board"]["donation_spaces"][-1]["status"])
 
     def test_break_trigger_gives_every_player_one_final_turn(self):
         state = self._finish_setup(self.plugin.setup(3, 321))

@@ -37,7 +37,10 @@ OFFICIAL_BASE_COUNTS: dict[str, int] = {
     "base_conservation_projects": 12,
     "final_scoring": 11,
     "bonus_tiles": 9,
-    "maps": 10,
+    # This released rules package deliberately supports the base game's
+    # beginner Map 0 mode only. Other base maps require separate geometry and
+    # player-board ability implementations and are not claimed by this pack.
+    "maps": 1,
 }
 
 _FORBIDDEN_EXECUTABLE_KEYS = {"code", "eval", "exec", "import", "module", "python", "script"}

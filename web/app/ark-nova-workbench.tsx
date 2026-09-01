@@ -83,7 +83,7 @@ function RulesInspector({entry, lang}: {entry: CatalogEntry; lang: Lang}) {
       <b className={`ark-review review-${entry.review_status}`}>{entry.review_status.replaceAll("_", " ")}</b>
     </header>
     <p>{isExecutableCard
-      ? (zh ? "结构化事实与效果已接入官方基础版候选引擎；下方按执行阶段展示人类可读摘要。" : "Structured facts and effects are wired into the official-base candidate engine; the stages below are human-readable execution summaries.")
+      ? (zh ? "结构化事实与效果已接入基础版 Map 0 发布引擎；下方按执行阶段展示人类可读摘要。" : "Structured facts and effects are wired into the released base-game Map 0 engine; the stages below are human-readable execution summaries.")
       : (zh ? "这是一条非卡牌组件目录记录，保留为后续地图或奖励板块扩展范围。" : "This non-card component remains a roster record for later map or bonus-tile expansion.")}</p>
     {traits.length > 0 && <div className="ark-traits">{traits.map(trait => <span key={trait}>{trait}</span>)}</div>}
     <div className="ark-rule-stages">{stages.map((stage, index) => <section key={stage.id}>

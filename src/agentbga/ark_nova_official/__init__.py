@@ -1,7 +1,7 @@
-"""High-fidelity Ark Nova rules package under staged development.
+"""Released high-fidelity Ark Nova base-game Map 0 rules package.
 
-The legacy ``agentbga.ark_nova`` module remains the registered controlled-core
-implementation until this package has complete reviewed content and rules.
+The legacy ``agentbga.ark_nova`` module remains registered under its immutable
+controlled-core rules version for replaying matches created with that engine.
 """
 
 from .content import (

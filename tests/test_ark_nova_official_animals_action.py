@@ -12,6 +12,7 @@ from agentbga.ark_nova_official import (
     new_semantic_state,
     start_action,
 )
+from agentbga.ark_nova_official.build_action import legal_free_building_placements
 
 
 def action_card(state: dict, action: str) -> dict:
@@ -20,12 +21,12 @@ def action_card(state: dict, action: str) -> dict:
 
 def add_building(
     state: dict, building_id: str, building_type: str, size: int,
-    cells: set[tuple[int, int]], shape_id: str | None = None,
+    cells: set[tuple[int, int]], shape_id: str | None = None, rotation: int = 0,
 ) -> None:
     zoo_map = state["players"][0]["map"]
     zoo_map["buildings"].append({
         "id": building_id, "type": building_type, "size": size,
-        "shape_id": shape_id or f"{building_type}-{size}", "rotation": 0,
+        "shape_id": shape_id or f"{building_type}-{size}", "rotation": rotation,
         "occupied": False,
         "cells": [{"q": q, "r": r} for q, r in sorted(cells)],
     })
@@ -46,6 +47,8 @@ class ArkNovaOfficialAnimalsActionTests(unittest.TestCase):
         cls.small_b = cls.entries["ark-nova:animal-405"]
         cls.small_display = cls.entries["ark-nova:animal-410"]
         cls.barbary_macaque = cls.entries["ark-nova:animal-456"]
+        cls.australian_sea_lion = cls.entries["ark-nova:animal-422"]
+        cls.frilled_lizard = cls.entries["ark-nova:animal-491"]
 
     def setUp(self):
         self.engine = SemanticEngine()
@@ -179,6 +182,47 @@ class ArkNovaOfficialAnimalsActionTests(unittest.TestCase):
         self.assertEqual(1, building["used_capacity"])
         self.assertFalse(building["occupied"])
 
+    def test_frilled_lizard_offers_standard_or_reptile_house_with_explicit_capacity(self):
+        state = self.state
+        player = state["players"][0]
+        player["money"] = 100
+        player["x_tokens"] = 1
+        player["hand"] = [{"id": "frilled-a", "entry_id": self.frilled_lizard.id}]
+        player["modifiers"].append({"kind": "diversity_researcher"})
+        action_card(state, "build")["upgraded"] = True
+        standard_placement = legal_free_building_placements(
+            player, ["standard_enclosure_2"],
+        )[0]
+        add_building(
+            state, "standard-2", "standard_enclosure", 2,
+            {(cell["q"], cell["r"]) for cell in standard_placement["cells"]},
+            shape_id=standard_placement["shape_id"],
+            rotation=standard_placement["rotation"],
+        )
+        reptile_placement = legal_free_building_placements(
+            player, ["reptile_house"],
+        )[0]
+        add_building(
+            state, "reptile-house", "reptile_house", 5,
+            {(cell["q"], cell["r"]) for cell in reptile_placement["cells"]},
+            shape_id=reptile_placement["shape_id"],
+            rotation=reptile_placement["rotation"],
+        )
+        state, _ = start_action(state, 0, "animals", x_by_execution=(1,))
+        state, _ = self.apply(state, {"type": "begin_animals_action"})
+        state, _ = self.apply(state, {
+            "type": "select_animal_card", "instance_id": "frilled-a", "source": "hand",
+        })
+        choices = self.choices(state)
+        self.assertEqual({
+            "animals:enclosure:standard-2", "animals:enclosure:reptile-house",
+        }, {choice["id"] for choice in choices})
+        standard = next(choice for choice in choices if choice["id"].endswith("standard-2"))
+        special = next(choice for choice in choices if choice["id"].endswith("reptile-house"))
+        self.assertIn("printed requirement 2", standard["label"])
+        self.assertIn("uses 1 capacity", special["label"])
+        self.assertEqual(4, special["presentation"]["capacity_after"])
+
     def test_waza_small_program_adds_one_paid_play_then_optional_display_take(self):
         state = self.state
         player = state["players"][0]
@@ -276,6 +320,39 @@ class ArkNovaOfficialAnimalsActionTests(unittest.TestCase):
         self.assertEqual(6, len(state["card_display"]))
         self.assertTrue(any(event["type"] == "card_display_refilled" for event in events))
 
+    def test_animals_two_display_position_four_costs_four_money(self):
+        state = self.state
+        animals = action_card(state, "animals")
+        sponsors = action_card(state, "sponsors")
+        animals["position"], sponsors["position"] = sponsors["position"], animals["position"]
+        animals["upgraded"] = True
+        state["players"][0]["tracks"]["reputation"] = 6
+        state["players"][0]["money"] = 100
+        state["card_display"] = [
+            {"id": f"secretary-display-{index}", "entry_id": self.secretary.id}
+            for index in range(1, 7)
+        ]
+        add_building(
+            state, "enclosure-a", "standard_enclosure", 4,
+            {(-4, 2), (-3, 1), (-4, 3), (-3, 2)},
+        )
+
+        state, _ = start_action(state, 0, "animals")
+        state, _ = self.apply(state, {"type": "begin_animals_action"})
+        self.assertEqual(7, state["players"][0]["tracks"]["reputation"])
+        state, _ = self.apply(state, {
+            "type": "select_animal_card", "instance_id": "secretary-display-4",
+            "source": "display",
+        })
+        state, _ = self.apply(state, {
+            "type": "play_selected_animal", "building_id": "enclosure-a",
+        })
+        self.assertEqual(82, state["players"][0]["money"])
+        self.assertEqual(
+            4,
+            state["turn"]["action_session"]["animals_resolution"]["played"][0]["folder_cost"],
+        )
+
     def test_illegal_standard_enclosure_for_pettting_zoo_animal_is_never_offered(self):
         state = self.state
         state["players"][0]["x_tokens"] = 1
@@ -321,6 +398,49 @@ class ArkNovaOfficialAnimalsActionTests(unittest.TestCase):
             "type": "select_animal_card", "instance_id": "cougar-a", "source": "hand",
         })
         self.assertEqual(["animals:enclosure:rock-good"], [
+            choice["id"] for choice in self.choices(state)
+        ])
+
+    def test_australian_sea_lion_requires_a_water_adjacent_enclosure(self):
+        state = self.state
+        player = state["players"][0]
+        player["money"] = 100
+        player["x_tokens"] = 3
+        player["partner_zoos"] = ["australia"]
+        player["hand"] = [{
+            "id": "sea-lion-a", "entry_id": self.australian_sea_lion.id,
+        }]
+        buildable = {
+            (cell["q"], cell["r"]) for cell in player["map"]["cells"]
+            if cell["terrain"] == "buildable"
+        }
+        water = {
+            (cell["q"], cell["r"]) for cell in player["map"]["cells"]
+            if cell["terrain"] == "water"
+        }
+        candidates = []
+        for anchor in buildable:
+            for variant in building_shape_variants("standard_enclosure", 4):
+                cells = {
+                    (anchor[0] + q, anchor[1] + r) for q, r in variant["cells"]
+                }
+                if cells <= buildable:
+                    adjacent = set().union(*(axial_hex_neighbors(cell) for cell in cells))
+                    candidates.append((cells, bool(adjacent & water)))
+        good = next(cells for cells, touches in candidates if touches)
+        bad = next(
+            cells for cells, touches in candidates
+            if not touches and not cells & good
+        )
+        add_building(state, "water-good", "standard_enclosure", 4, good)
+        add_building(state, "water-bad", "standard_enclosure", 4, bad)
+        state, _ = start_action(state, 0, "animals", x_by_execution=(3,))
+        state, _ = self.apply(state, {"type": "begin_animals_action"})
+        state, _ = self.apply(state, {
+            "type": "select_animal_card", "instance_id": "sea-lion-a",
+            "source": "hand",
+        })
+        self.assertEqual(["animals:enclosure:water-good"], [
             choice["id"] for choice in self.choices(state)
         ])
 

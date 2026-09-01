@@ -1,6 +1,6 @@
 import unittest
 
-from agentbga.ark_nova_official import ContentEntry, SemanticEngine, new_semantic_state
+from agentbga.ark_nova_official import ArkNovaOfficialPlugin, ContentEntry, SemanticEngine, new_semantic_state
 from agentbga.ark_nova_official.abilities import compile_animal_ability
 from agentbga.ark_nova_official.actions import (
     complete_action_execution,
@@ -40,6 +40,29 @@ class ArkNovaOfficialP2AbilityTests(unittest.TestCase):
             card["id"] for card in state["base_project_supply"]
         ])
         self.assertTrue(any(event["type"] == "base_project_taken" for event in events))
+
+    def test_official_setup_base_project_supply_is_transferable_card_data(self):
+        plugin = ArkNovaOfficialPlugin()
+        state = plugin.setup(2, seed=42)
+        self.assertTrue(state["base_project_supply"])
+        self.assertTrue(all(
+            project_id.startswith("ark-nova:base-project-")
+            for project_id in state["base_project_supply"]
+        ))
+
+        state, _ = plugin.engine.start_effects(
+            state, 0, compile_animal_ability({"key": "assertion", "value": ""}),
+            source_id="test:official-setup-assertion",
+        )
+        action = plugin.engine.legal_choice_actions(state, 0)[0]["action"]
+        state, _ = plugin.engine.submit_choice(
+            state, 0, action["choice_id"], action["option_ids"],
+        )
+        plugin.validate_state(state)
+        self.assertTrue(any(
+            card["id"].startswith("base-project-")
+            for card in state["players"][0]["hand"]
+        ))
 
     @staticmethod
     def _animal_entry(card_id, *, icons, ability, printed_appeal=0):

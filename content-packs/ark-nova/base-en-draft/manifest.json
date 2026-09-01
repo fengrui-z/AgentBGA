@@ -1,5 +1,6 @@
 {
-  "content_version": "m4-reference-import.17",
+  "content_sha256": "2457fcf3c37726a82f877d4ea8dee7be4fa40133bbb7c5265116bdc9a3bba2fa",
+  "content_version": "map0-release.1",
   "distribution": {
     "contains_publisher_art": false,
     "contains_verbatim_card_text": false,
@@ -11,7 +12,7 @@
     "base_conservation_projects": 12,
     "bonus_tiles": 9,
     "final_scoring": 11,
-    "maps": 10,
+    "maps": 1,
     "sponsors": 64,
     "zoo_conservation_projects": 20
   },
@@ -25,17 +26,17 @@
     "zoo_conservation_projects": "zoo_conservation_projects.json"
   },
   "game_id": "ark_nova",
-  "pack_id": "ark-nova-base-en-draft-roster",
-  "rules_version": "base-1.2-faq-v2-semantic.1",
+  "pack_id": "ark-nova-base-map0-released",
+  "rules_version": "base-1.2-faq-v2-map0.1",
   "schema_version": "agentbga.ark_nova.content_manifest.v1",
   "sources": [
     {
       "id": "capstone-rulebook-base-en",
       "kind": "rulebook",
-      "revision": "publisher download checked 2026-08-24",
+      "revision": "publisher download checked 2026-08-28",
       "title": "Ark Nova base-game English rulebook",
       "url": "https://capstone-games.com/cdn/shop/files/Ark-Nova-Rulebook.pdf",
-      "verified_on": "2026-08-24"
+      "verified_on": "2026-08-28"
     },
     {
       "id": "community-card-index-base-en",
@@ -51,7 +52,23 @@
       "revision": "1.0",
       "title": "User-supplied structured base-game card reference",
       "verified_on": "2026-08-25"
+    },
+    {
+      "id": "capstone-glossary-base-en",
+      "kind": "rulebook",
+      "revision": "publisher download checked 2026-08-28",
+      "title": "Ark Nova base-game English glossary",
+      "url": "https://cdn.shopify.com/s/files/1/0947/3907/1278/files/Ark-Nova-Glossary.pdf",
+      "verified_on": "2026-08-28"
+    },
+    {
+      "id": "capstone-faq-v2-base-en",
+      "kind": "faq_errata",
+      "revision": "publisher download checked 2026-08-28",
+      "title": "Ark Nova FAQ v2",
+      "url": "https://cdn.shopify.com/s/files/1/0947/3907/1278/files/Ark-Nova-FAQ-v2.pdf",
+      "verified_on": "2026-08-28"
     }
   ],
-  "status": "draft"
+  "status": "released"
 }

@@ -1,19 +1,21 @@
 # Ark Nova official-base implementation baseline
 
-Status: frozen for the first high-fidelity implementation milestone.
+Status: released for the high-fidelity base-game Map 0 mode.
 
 ## Scope
 
 The target ruleset is the Ark Nova base game, English rulebook version 1.2,
 combined with the official English FAQ/Errata version 2.  The implementation
-must cover the base-game components and rules for one to four players.
+must cover the base-game components and rules for one to four players when all
+players use Map 0.
 
 Included:
 
 - the five base Action cards and their upgraded sides;
 - the 212 base Zoo cards (128 Animal, 64 Sponsor, 20 Conservation Project);
 - 12 Base Conservation Projects, 11 Final Scoring cards, and 9 Bonus tiles;
-- beginner Maps A and 0 and advanced Maps 1 through 8;
+- beginner Map 0, including its exact footprint, terrain, placement bonuses,
+  Build-II spaces, empty setup, and end-game map-cover bonus;
 - the solo rules in the base rulebook;
 - all generally applicable rulings and card clarifications in FAQ/Errata v2.
 
@@ -23,24 +25,27 @@ Excluded from the first rules version:
 - Map Packs and alternative BGA maps;
 - promotional cards and promotional buildings;
 - later expansions or unofficial variants.
+- beginner Map A and Maps 1 through 8 (these require separately versioned map
+  geometry and player-board abilities and are not claimed by this release).
 
 ## Authoritative sources
 
-- Feuerland/Capstone English Rulebook v1.2:
-  <https://www.feuerland-spiele.de/fileadmin/game/Arche_Nova/Arche_Nova_Rules_EN_Low_2022_01.pdf>
-- Feuerland English FAQ/Errata v2:
-  <https://www.feuerland-spiele.de/fileadmin/game/Arche_Nova/Arche_Nova_FAQ_V2_EN_A4_low.pdf>
+- Capstone English Rulebook v1.2:
+  <https://capstone-games.com/cdn/shop/files/Ark-Nova-Rulebook.pdf>
+- Capstone English Glossary:
+  <https://cdn.shopify.com/s/files/1/0947/3907/1278/files/Ark-Nova-Glossary.pdf>
+- Capstone English FAQ/Errata v2:
+  <https://cdn.shopify.com/s/files/1/0947/3907/1278/files/Ark-Nova-FAQ-v2.pdf>
 
-Before the first content release, re-check the publisher's current download page
-and record whether a newer English rules or FAQ revision exists.  A newer source
-must create a new named rules version; it must not silently change this baseline.
+These downloads were re-checked on 2026-08-28. A newer source must create a new
+named rules version; it must not silently change this baseline.
 
 ## Version identifiers
 
 - Legacy controlled core: `base-1.2-controlled-core.6`
-- Official semantic candidate: `base-1.2-faq-v2-semantic.1`
+- Released Map 0 rules: `base-1.2-faq-v2-map0.1`
 - Planned state schema: `agentbga.ark_nova.state.v3`
-- Planned content schema: `agentbga.ark_nova.content.v1`
+- Content entry schema: `agentbga.ark_nova.card.v1`
 
 Rules, state schema, and content-pack versions are independent.  A semantic
 change that alters legal actions, state transitions, or scoring requires a new

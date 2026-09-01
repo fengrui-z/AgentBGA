@@ -86,7 +86,7 @@ def simultaneous_effects(
     }]
 
 
-def _official_kiosk_income(player: Mapping[str, Any]) -> int:
+def official_kiosk_income(player: Mapping[str, Any]) -> int:
     """Return printed Break income from the current zoo-map topology.
 
     Each kiosk scores every adjacent qualifying building once, regardless of
@@ -120,6 +120,11 @@ def _official_kiosk_income(player: Mapping[str, Any]) -> int:
             }
             income += bool(adjacent & building_cells)
     return income
+
+
+# Backwards-compatible private alias for rules scenarios and downstream users
+# written before the helper became part of the presentation projection.
+_official_kiosk_income = official_kiosk_income
 
 
 def settle_turn_venom(state: dict[str, Any], seat: int) -> dict[str, Any]:
@@ -163,9 +168,23 @@ def _operation(value: Any, label: str) -> Mapping[str, Any]:
 class SemanticEngine:
     """Execute only registered semantic operations; content is never evaluated as code."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self, *, base_project_cards: Mapping[str, Mapping[str, Any]] | None = None,
+    ) -> None:
         self._predicate_handlers: dict[str, PredicateHandler] = {}
         self._effect_handlers: dict[str, EffectHandler] = {}
+        self._base_project_cards = {
+            key: deepcopy(dict(value)) for key, value in (base_project_cards or {}).items()
+        }
+
+    def _base_project_card(self, value: Any) -> dict[str, Any]:
+        """Materialize legacy/setup supply IDs without changing stored setup state."""
+
+        if isinstance(value, Mapping):
+            return deepcopy(dict(value))
+        if isinstance(value, str) and value in self._base_project_cards:
+            return deepcopy(self._base_project_cards[value])
+        raise SemanticRuleError("base-project supply entry cannot be resolved")
 
     def register_predicate(self, custom_id: str, handler: PredicateHandler) -> None:
         self._register(self._predicate_handlers, custom_id, handler)
@@ -979,6 +998,8 @@ class SemanticEngine:
                 "label": "Activate an association worker",
                 "value": {"kind": "worker"},
             })
+        if not options:
+            return
         self._open_choice(
             state,
             frame,
@@ -1001,6 +1022,8 @@ class SemanticEngine:
         } for card in sorted(
             state["players"][seat]["action_cards"], key=lambda item: item["position"],
         ) if not card["upgraded"]]
+        if not options:
+            return
         self._open_choice(
             state, frame, seat=seat, prompt="Upgrade one Action card",
             options=options,
@@ -1044,6 +1067,8 @@ class SemanticEngine:
                 }],
                 "target_seat": seat,
             })
+        if not options:
+            return
         self._open_choice(
             state,
             frame,
@@ -1100,6 +1125,8 @@ class SemanticEngine:
             seat = frame["actor_seat"]
         asset = frame["operation"]["args"].get("asset")
         options = self._bonus_association_asset_options(state, seat, asset)
+        if not options:
+            return
         self._open_choice(
             state, frame, seat=seat,
             prompt=("Choose an available university" if asset == "university"
@@ -1309,7 +1336,8 @@ class SemanticEngine:
             seat = frame["actor_seat"]
         options = []
         seen = set()
-        for card in supply:
+        for raw_card in supply:
+            card = self._base_project_card(raw_card)
             card_id = card.get("id")
             if not isinstance(card_id, str) or not card_id or card_id in seen:
                 raise SemanticRuleError("base-project supply requires unique physical IDs")
@@ -2254,18 +2282,20 @@ class SemanticEngine:
             if len(selected) != 1:
                 raise SemanticRuleError("exactly one unused base project must be selected")
             selected_id = selected[0]["id"]
-            taken = [
-                card for card in state["base_project_supply"]
-                if card.get("id") == selected_id
-            ]
+            taken = []
+            for raw_card in state["base_project_supply"]:
+                card = self._base_project_card(raw_card)
+                if card.get("id") == selected_id:
+                    taken.append((raw_card, card))
             if len(taken) != 1:
                 raise SemanticRuleError("selected base project is no longer available")
-            state["base_project_supply"].remove(taken[0])
-            player["hand"].append(taken[0])
+            raw_card, card = taken[0]
+            state["base_project_supply"].remove(raw_card)
+            player["hand"].append(card)
             events.append({
                 "type": "base_project_taken", "seat": seat,
                 "physical_id": selected_id,
-                "project_id": taken[0].get("entry_id", taken[0].get("id")),
+                "project_id": card.get("entry_id", card.get("id")),
             })
             return
         if continuation_type == "place_free_building":
@@ -2921,17 +2951,18 @@ class SemanticEngine:
                     "type": "base_project_already_in_play", **base_event,
                     "project_id": project_id,
                 }]
-            matches = [
-                card for card in state["base_project_supply"]
-                if card.get("entry_id", card.get("id")) == project_id
-            ]
+            matches = []
+            for raw_card in state["base_project_supply"]:
+                card = self._base_project_card(raw_card)
+                if card.get("entry_id", card.get("id")) == project_id:
+                    matches.append((raw_card, card))
             if not matches:
                 return [{
                     "type": "base_project_unavailable", **base_event,
                     "project_id": project_id,
                 }]
-            card = matches[0]
-            state["base_project_supply"].remove(card)
+            raw_card, card = matches[0]
+            state["base_project_supply"].remove(raw_card)
             state["conservation_projects"].append({
                 "id": project_id, "base": True, "claims": [],
             })
@@ -3177,7 +3208,7 @@ class SemanticEngine:
             return [{"type": "break_display_refreshed", **base_event, "discarded": discard_count}]
         if op == "take_income":
             kiosk_income = (
-                _official_kiosk_income(player)
+                official_kiosk_income(player)
                 if state.get("official_track_income")
                 else int(player["income"].get("kiosks", 0))
             )

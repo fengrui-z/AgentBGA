@@ -14,6 +14,7 @@ from agentbga.ark_nova_official import (
     support_project,
 )
 from agentbga.ark_nova_official.build_action import legal_free_building_placements
+from agentbga.ark_nova_official.plugin import _next_break_projection
 
 
 class ArkNovaOfficialP5ProjectTests(unittest.TestCase):
@@ -241,6 +242,38 @@ class ArkNovaOfficialP5ProjectTests(unittest.TestCase):
             (level["conservation"], level["reputation"]) for level in levels
         ])
 
+    def test_player_cannot_support_same_project_again_after_board_claim_is_gone(self):
+        state, breeding = self.state_with_project("ark-nova:project-123", base=False)
+        bird = self.pack.entry("ark-nova:animal-495")
+        player = state["players"][0]
+        player["played_cards"] = [{
+            "id": "secretary-a", "entry_id": bird.id, "kind": "animal",
+            "facts": dict(bird.facts),
+        }]
+        player["partner_zoos"] = ["africa"]
+        player["supported_projects"] = [breeding.id]
+        state["players"][1]["played_cards"] = [{
+            "id": "secretary-b", "entry_id": bird.id, "kind": "animal",
+            "facts": dict(bird.facts),
+        }]
+        state["players"][1]["partner_zoos"] = ["africa"]
+        # Simulate a zoo project that rotated off the board and later returned:
+        # its current board card has no old claims, but the player's permanent
+        # support history must still make every tier illegal.
+        state["conservation_projects"][0]["claims"] = []
+        self.assertEqual(
+            [], legal_project_support_options(self.engine, state, 0, breeding),
+        )
+        self.assertEqual(
+            ["slot-1", "slot-2", "slot-3"],
+            [
+                option["id"]
+                for option in legal_project_support_options(
+                    self.engine, state, 1, breeding,
+                )
+            ],
+        )
+
     def test_release_project_selects_exact_size_animal_and_empties_smallest_enclosure(self):
         state, release = self.state_with_project("ark-nova:project-121", base=False)
         animal = self.pack.entry("ark-nova:animal-470")
@@ -337,11 +370,75 @@ class ArkNovaOfficialP5ProjectTests(unittest.TestCase):
             if slot["id"] == "money-5"
         )
         self.assertEqual("claimed", money_slot["status"])
+        projection = _next_break_projection(player)
+        self.assertEqual(5, projection["money_income"]["guaranteed_recurring"])
+        self.assertEqual("获得5金币", projection["recurring_rewards"][0]["title_cn"])
         state, events = self.engine.start_effects(state, 0, [{
             "op": "take_income", "timing": "system", "args": {},
         }], source_id="test:income")
         self.assertEqual(35, state["players"][0]["money"])
         self.assertTrue(any(event["type"] == "money_changed" for event in events))
+
+    def test_map_a_replaces_worker_project_reward_with_two_reputation(self):
+        state = new_semantic_state(2, seed=53, map_id="map-a")
+        state["phase"] = "active"
+        species = self.pack.entry("ark-nova:base-project-101")
+        state = add_project_to_state(state, species, base=True)
+        state["players"][0]["icons"].update({
+            icon: 1 for icon in ("bear", "bird", "herbivore", "predator", "primate")
+        })
+        state, _ = support_project(
+            self.engine, state, 0, species, "high",
+            token_slot_id="reputation-2", token_bonus_timing="before",
+        )
+        player = state["players"][0]
+        self.assertEqual(2, player["tracks"]["reputation"])
+        self.assertTrue(next(
+            slot for slot in player["project_token_slots"]
+            if slot["id"] == "reputation-2"
+        )["claimed"])
+        programs = map_display({
+            **player,
+            "appeal": player["tracks"]["appeal"],
+            "conservation": player["tracks"]["conservation"],
+            "reputation": player["tracks"]["reputation"],
+            "upgrade_rewards_claimed": [],
+            "conservation_rewards_claimed": [],
+            "final_card_choice_resolved": False,
+            "conservation_tokens_on_map": player["project_tokens_available"],
+        })["player_board"]["conservation_programs"]
+        immediate = next(program for program in programs if program["kind"] == "immediate")
+        self.assertEqual("reputation-2", immediate["slots"][0]["id"])
+        self.assertEqual(
+            {"type": "gain_reputation", "amount": 2},
+            immediate["slots"][0]["reward"],
+        )
+
+    def test_unclaimed_project_rewards_distinguish_available_from_unavailable(self):
+        player = new_semantic_state(2, seed=54)["players"][0]
+        projection = map_display({
+            **player,
+            "appeal": 0, "conservation": 0, "reputation": 1,
+            "upgrade_rewards_claimed": [], "conservation_rewards_claimed": [],
+            "final_card_choice_resolved": False,
+            "conservation_tokens_on_map": player["project_tokens_available"],
+        })["player_board"]["conservation_programs"]
+        self.assertEqual(
+            {"available"},
+            {slot["status"] for program in projection for slot in program["slots"]},
+        )
+        player["project_tokens_available"] = 0
+        unavailable = map_display({
+            **player,
+            "appeal": 0, "conservation": 0, "reputation": 1,
+            "upgrade_rewards_claimed": [], "conservation_rewards_claimed": [],
+            "final_card_choice_resolved": False,
+            "conservation_tokens_on_map": 0,
+        })["player_board"]["conservation_programs"]
+        self.assertEqual(
+            {"unavailable"},
+            {slot["status"] for program in unavailable for slot in program["slots"]},
+        )
 
     def test_immediate_project_token_reward_does_not_install_income(self):
         state, species = self.state_with_project("ark-nova:base-project-101", base=True)

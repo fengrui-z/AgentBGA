@@ -363,6 +363,19 @@ def _candidate_action(candidate: Mapping[str, Any]) -> dict[str, Any]:
 
 def _unique_placement_action(action: Mapping[str, Any]) -> dict[str, Any]:
     anchor = action["anchor"]
+    rewards = action.get("covered_rewards", [])
+    reward_text = ""
+    if rewards:
+        shown = ", ".join(
+            str(item.get("effect", {}).get("type", "reward"))
+            + (
+                f" +{item['effect']['amount']}"
+                if isinstance(item.get("effect"), Mapping)
+                and "amount" in item["effect"] else ""
+            )
+            for item in rewards if isinstance(item, Mapping)
+        )
+        reward_text = f" · covers {shown}"
     return {
         "id": (
             f"sponsors:unique:{action['building_type']}:r{action['rotation']}:"
@@ -370,7 +383,7 @@ def _unique_placement_action(action: Mapping[str, Any]) -> dict[str, Any]:
         ),
         "label": (
             f"Place unique building at ({anchor['q']},{anchor['r']}) "
-            f"rotation {action['rotation'] * 60}°"
+            f"rotation {action['rotation'] * 60}°{reward_text}"
         ),
         "action": deepcopy(dict(action)),
     }

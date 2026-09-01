@@ -52,7 +52,10 @@ def legal_cards_execution_actions(state: Mapping[str, Any], seat: int) -> list[d
         if _available_draw_count(state, seat, bool(execution["upgraded"])) >= spec["draw_count"]:
             actions.append({
                 "id": "cards:draw",
-                "label": f"Draw {spec['draw_count']} card(s)",
+                "label": (
+                    f"Draw {spec['draw_count']} card(s), then discard "
+                    f"{spec['discard_count']} · advance Break 2"
+                ),
                 "action": {"type": "begin_cards_draw"},
             })
         if "snap" in spec["modes"]:
@@ -60,10 +63,18 @@ def legal_cards_execution_actions(state: Mapping[str, Any], seat: int) -> list[d
             actions.extend(
                 {
                     "id": f"cards:snap:{card_id}",
-                    "label": f"Snap display card {positions.get(card_id, index) + 1}",
+                    "label": (
+                        f"Snap {card.get('display_title', card_id)} from display "
+                        f"position {positions.get(card_id, index) + 1} · free · "
+                        "ignore Reputation · advance Break 2"
+                    ),
                     "action": {"type": "snap_cards_action_card", "card_id": card_id},
                 }
-                for index, card_id in enumerate(_unique_card_ids(state["card_display"], "display"))
+                for index, (card, card_id) in enumerate(zip(
+                    state["card_display"],
+                    _unique_card_ids(state["card_display"], "display"),
+                    strict=True,
+                ))
             )
         return actions
     if resolution["mode"] != "draw":
@@ -87,7 +98,10 @@ def legal_cards_execution_actions(state: Mapping[str, Any], seat: int) -> list[d
             actions.extend(
                 {
                     "id": f"cards:draw:display:{card_id}",
-                    "label": f"Take display card {position + 1}",
+                    "label": (
+                        f"Draw {card.get('display_title', card_id)} from Reputation-range "
+                        f"display position {position + 1} · no folder surcharge"
+                    ),
                     "action": {
                         "type": "draw_cards_action_card", "source": "display", "card_id": card_id,
                     },

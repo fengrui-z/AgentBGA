@@ -76,6 +76,19 @@ class ArkNovaReferenceImportTests(unittest.TestCase):
         self.assertEqual(["pilfer"], solo["facts"]["solo_replaces_ops"])
         self.assertEqual(2, solo["facts"]["solo_effects"][0]["args"]["amount"])
 
+        specialist_icons = {
+            "ark-nova:sponsor-236": "primate",
+            "ark-nova:sponsor-237": "reptile",
+            "ark-nova:sponsor-238": "bird",
+            "ark-nova:sponsor-239": "predator",
+            "ark-nova:sponsor-240": "herbivore",
+        }
+        sponsors = {item["id"]: item for item in collections["sponsors"]}
+        for sponsor_id, icon in specialist_icons.items():
+            with self.subTest(sponsor=sponsor_id):
+                self.assertEqual(1, sponsors[sponsor_id]["facts"]["icons"]["person"])
+                self.assertEqual(1, sponsors[sponsor_id]["facts"]["icons"][icon])
+
     def test_rejects_a_missing_physical_copy(self):
         data = json.loads(self.source.read_text(encoding="utf-8"))
         data["physical_255"].pop()

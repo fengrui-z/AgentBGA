@@ -1,8 +1,8 @@
 # Ark Nova semantic operations v1
 
-Status: executable contract used by the registered official-base candidate.
-The historical M3 staging gate was closed by P8; the pack remains editorially
-`draft` pending independent double review.
+Status: executable contract used by the released base-game Map 0 rules version.
+The historical M3 staging gate was closed by P8, and every in-scope component
+has passed the source-crosswalk and runtime-scenario review in the release ledger.
 
 ## Design constraints
 

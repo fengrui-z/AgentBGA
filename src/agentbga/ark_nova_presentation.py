@@ -28,7 +28,20 @@ def _played_cards(player: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _icon_count(player: dict[str, Any], *names: str) -> int:
     icons = player.get("icons", {})
-    return max((int(icons.get(name, 0)) for name in names), default=0)
+    recorded = max((int(icons.get(name, 0)) for name in names), default=0)
+    if "icons" in player:
+        return recorded
+    # The immutable controlled-core rules version predates the authoritative
+    # icon ledger used by the official engine. Preserve its public projection
+    # without double-counting current states.
+    requested = set(names)
+    if requested & {"research", "science"}:
+        return sum(
+            2 if university == "research-2" else 1
+            for university in player.get("universities", [])
+            if university in {"research-2", "research-reputation", "hand-limit-5"}
+        )
+    return recorded
 
 
 def _terrain_icon_count(player: dict[str, Any], terrain: str) -> int:
@@ -278,9 +291,18 @@ def map_display(player: dict[str, Any]) -> dict[str, Any]:
         for index in range(player["association_workers"]["reserve"])
     ]
     project_token_status = {
-        slot["id"]: "claimed" if slot.get("claimed") else "locked"
+        slot["id"]: (
+            "claimed" if slot.get("claimed")
+            else "available" if int(player.get("project_tokens_available", 0)) > 0
+            else "unavailable"
+        )
         for slot in player.get("project_token_slots", [])
     }
+    immediate_primary = (
+        {"id": "reputation-2", "reward": {"type": "gain_reputation", "amount": 2}}
+        if "reputation-2" in project_token_status
+        else {"id": "worker-1", "reward": {"type": "gain_worker", "amount": 1}}
+    )
     return {
         "placement_rewards": rewards,
         "conservation_rewards": conservation_slots,
@@ -296,18 +318,18 @@ def map_display(player: dict[str, Any]) -> dict[str, Any]:
                 {
                     "kind": "immediate_and_income",
                     "slots": [
-                        {"id": "card", "reward": {"type": "gain_determination", "amount": 1}, "status": project_token_status.get("card", "locked")},
-                        {"id": "enclosure-2", "reward": {"type": "gain_enclosure", "amount": 2}, "status": project_token_status.get("enclosure-2", "locked")},
-                        {"id": "money-5", "reward": {"type": "gain_money", "amount": 5}, "status": project_token_status.get("money-5", "locked")},
-                        {"id": "conservation-1", "reward": {"type": "gain_conservation", "amount": 1}, "status": project_token_status.get("conservation-1", "locked")},
+                        {"id": "card", "reward": {"type": "gain_determination", "amount": 1}, "recurring": True, "status": project_token_status.get("card", "unavailable")},
+                        {"id": "enclosure-2", "reward": {"type": "gain_enclosure", "amount": 2}, "recurring": True, "status": project_token_status.get("enclosure-2", "unavailable")},
+                        {"id": "money-5", "reward": {"type": "gain_money", "amount": 5}, "recurring": True, "status": project_token_status.get("money-5", "unavailable")},
+                        {"id": "conservation-1", "reward": {"type": "gain_conservation", "amount": 1}, "recurring": True, "status": project_token_status.get("conservation-1", "unavailable")},
                     ],
                 },
                 {
                     "kind": "immediate",
                     "slots": [
-                        {"id": "worker-1", "reward": {"type": "gain_worker", "amount": 1}, "status": project_token_status.get("worker-1", "locked")},
-                        {"id": "money-12", "reward": {"type": "gain_money", "amount": 12}, "status": project_token_status.get("money-12", "locked")},
-                        {"id": "x-3", "reward": {"type": "gain_x_token", "amount": 3}, "status": project_token_status.get("x-3", "locked")},
+                        {**immediate_primary, "recurring": False, "status": project_token_status.get(immediate_primary["id"], "unavailable")},
+                        {"id": "money-12", "reward": {"type": "gain_money", "amount": 12}, "recurring": False, "status": project_token_status.get("money-12", "unavailable")},
+                        {"id": "x-3", "reward": {"type": "gain_x_token", "amount": 3}, "recurring": False, "status": project_token_status.get("x-3", "unavailable")},
                     ],
                 },
             ],

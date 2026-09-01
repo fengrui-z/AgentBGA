@@ -8,9 +8,11 @@ from pathlib import Path
 import random
 from typing import Any, Mapping, Sequence
 
+from ..ark_nova_map import normalize_map_id
 from .content import ContentEntry, ContentPack, load_content_pack
 from .milestones import install_official_conservation_milestones
 from .projects import install_base_projects
+from .release_review import verify_release_review_ledger
 from .semantics import SemanticRuleError
 from .state import ACTION_TYPES, new_semantic_state, validate_semantic_state
 
@@ -21,17 +23,24 @@ DEFAULT_CONTENT_ROOT = (
 
 
 def load_official_base_pack() -> ContentPack:
-    return load_content_pack(DEFAULT_CONTENT_ROOT)
+    pack = load_content_pack(DEFAULT_CONTENT_ROOT, require_released=True)
+    verify_release_review_ledger(pack)
+    return pack
 
 
 def card_instance(entry: ContentEntry) -> dict[str, Any]:
     """Project one physical base-game card without publisher prose or artwork."""
     component = entry.official_component_id or entry.id.rsplit("-", 1)[-1]
-    prefix = "final" if entry.kind == "final_scoring" else "zoo"
+    prefix = (
+        "final" if entry.kind == "final_scoring"
+        else "base-project" if entry.kind == "base_conservation_project"
+        else "zoo"
+    )
     facts = deepcopy(dict(entry.facts))
     card_type = {
         "animal": "animal",
         "sponsor": "sponsor",
+        "base_conservation_project": "conservation_project",
         "zoo_conservation_project": "conservation_project",
         "final_scoring": "final_scoring",
     }.get(entry.kind, entry.kind)
@@ -137,16 +146,20 @@ def setup_official_game(
     if players not in (1, 2, 3, 4):
         raise SemanticRuleError("Ark Nova supports one to four players")
     config = dict(config or {})
-    if set(config) - {"map", "turn_limit", "solo_starting_appeal"} or config.get("map", "map-0") not in {"0", "map-0"}:
-        raise SemanticRuleError("the official-base plugin currently supports Map 0")
+    if set(config) - {"map", "turn_limit", "solo_starting_appeal"}:
+        raise SemanticRuleError("unknown Ark Nova game configuration option")
+    try:
+        map_id = normalize_map_id(config.get("map", "map-0"))
+    except ValueError as error:
+        raise SemanticRuleError(str(error)) from error
     solo_starting_appeal = config.get("solo_starting_appeal", 20)
     if players == 1 and solo_starting_appeal not in {0, 10, 20}:
         raise SemanticRuleError("solo_starting_appeal must be 0, 10, or 20")
     content = pack or load_official_base_pack()
     rng = random.Random(seed)
-    state = new_semantic_state(players, seed=seed)
+    state = new_semantic_state(players, seed=seed, map_id=map_id)
     state.update({
-        "implementation_status": "official_base_candidate",
+        "implementation_status": "released" if map_id == "map-0" else "preview",
         "content_pack_id": content.manifest.pack_id,
         "content_version": content.manifest.content_version,
         "content_sha256": content.content_sha256,
@@ -157,6 +170,7 @@ def setup_official_game(
         "setup_pending_seats": list(range(players)),
         "decision_count": 0,
         "turn_count": 0,
+        "solo_starting_appeal": int(solo_starting_appeal) if players == 1 else None,
     })
 
     zoo_cards = [
@@ -236,8 +250,8 @@ def choose_initial_hand(
     player["initial_draw"] = []
     next_state["setup_pending_seats"].remove(seat)
     if not next_state["setup_pending_seats"]:
-        # Map 0 has no free starter enclosure or kiosk.  Those printed starter
-        # buildings belong to Map A and must not leak into the Map 0 setup.
+        # Any printed setup buildings were installed by the selected map:
+        # Map 0 starts empty; Map A starts with its free enclosure and kiosk.
         next_state["phase"] = "active"
         next_state["active_seat"] = 0
     validate_semantic_state(next_state)
