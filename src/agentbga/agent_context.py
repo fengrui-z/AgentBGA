@@ -224,6 +224,58 @@ def _played_summary(player: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
+def _action_token_type(token: Any) -> str:
+    if isinstance(token, Mapping):
+        return str(token.get("type") or "unknown")
+    return str(token)
+
+
+def _action_token_details(card: Mapping[str, Any]) -> list[dict[str, Any]]:
+    details: list[dict[str, Any]] = []
+    for token in card.get("tokens", []):
+        token_type = _action_token_type(token)
+        source_id = token.get("source_id") if isinstance(token, Mapping) else None
+        if token_type == "constriction":
+            effect = "This marked Action has -2 strength until X-tokens are added."
+            removal = "Removed when this marked card is used/taken for X, or at the next Break."
+        elif token_type == "venom":
+            effect = "Using another Action while Venom remains costs 2 money at turn end."
+            removal = "Removed when this marked card is used/taken for X, or at the next Break."
+        elif token_type == "multiplier":
+            effect = "May be spent to execute this marked Action twice."
+            removal = "Removed when spent, or at the next Break."
+        else:
+            effect = "Unknown action-card interaction marker; inspect its source card."
+            removal = "Check the originating effect for removal timing."
+        detail = {"type": token_type, "effect": effect, "removal": removal}
+        if source_id:
+            detail["source_id"] = source_id
+        details.append(detail)
+    return details
+
+
+def _action_token_status(player: Mapping[str, Any]) -> dict[str, Any]:
+    affected: list[dict[str, Any]] = []
+    for card in player.get("action_cards", []):
+        if not isinstance(card, Mapping) or not card.get("tokens"):
+            continue
+        strength = int(card.get("strength", card.get("position", 1)) or 1)
+        tokens = _action_token_details(card)
+        constrictions = sum(item["type"] == "constriction" for item in tokens)
+        affected.append({
+            "action": card.get("action"),
+            "printed_strength": strength,
+            "effective_strength_before_x": max(0, strength - 2 * constrictions),
+            "tokens": tokens,
+        })
+    return {
+        "affected_cards": affected,
+        "has_markers": bool(affected),
+        "rules_topic": "interaction_tokens",
+        "break_rule": "All Venom, Constriction, and Multiplier markers are cleared at the next Break.",
+    }
+
+
 def _compact_player(player: Mapping[str, Any], viewer_seat: int) -> dict[str, Any]:
     seat = int(player.get("seat", -1))
     private = seat == viewer_seat
@@ -249,6 +301,7 @@ def _compact_player(player: Mapping[str, Any], viewer_seat: int) -> dict[str, An
             ),
         },
         "score": player.get("public_summary", {}).get("tracks", {}).get("current_score"),
+        "action_token_status": _action_token_status(player),
         "hand_count": player.get("hand_count", len(hand)),
         "hand_limit": player.get("hand_limit"),
         "icons": deepcopy(player.get("icons", {})),
@@ -263,6 +316,17 @@ def _compact_player(player: Mapping[str, Any], viewer_seat: int) -> dict[str, An
                     int(card.get("strength", card.get("position", 1)) or 1),
                 ),
                 "rules_topic": str(card.get("action")),
+                **({
+                    "effective_strength_before_x": max(
+                        0,
+                        int(card.get("strength", card.get("position", 1)) or 1)
+                        - 2 * sum(
+                            _action_token_type(token) == "constriction"
+                            for token in card.get("tokens", [])
+                        ),
+                    ),
+                    "token_effects": _action_token_details(card),
+                } if card.get("tokens") else {}),
                 **({"tokens": deepcopy(card["tokens"])} if card.get("tokens") else {}),
             }
             for card in player.get("action_cards", [])
@@ -569,7 +633,16 @@ def _player_snapshot(player: Mapping[str, Any]) -> dict[str, Any]:
         "partner_zoos": deepcopy(player.get("partner_zoos", [])),
         "universities": deepcopy(player.get("universities", [])),
         "action_cards": [
-            (card.get("action"), card.get("position"), bool(card.get("upgraded")))
+            (
+                card.get("action"), card.get("position"), bool(card.get("upgraded")),
+                tuple(
+                    (
+                        _action_token_type(token),
+                        token.get("source_id") if isinstance(token, Mapping) else None,
+                    )
+                    for token in card.get("tokens", [])
+                ),
+            )
             for card in player.get("action_cards", []) if isinstance(card, Mapping)
         ],
         "played": {

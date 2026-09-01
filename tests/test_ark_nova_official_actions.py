@@ -28,6 +28,25 @@ def card_for(state: dict, seat: int, action: str) -> dict:
 
 
 class ArkNovaOfficialActionTests(unittest.TestCase):
+    def test_break_clears_interaction_markers_from_every_players_action_cards(self):
+        engine = SemanticEngine()
+        state = new_semantic_state(2)
+        card_for(state, 0, "animals")["tokens"] = [
+            {"type": "constriction", "source_id": "boa"}, "multiplier",
+        ]
+        card_for(state, 1, "cards")["tokens"] = [
+            {"type": "venom", "source_id": "snake"},
+        ]
+        state, events = engine.start_effects(state, 0, [effect(
+            "for_each_player", {"effects": [effect("clear_action_tokens", {})]},
+        )], source_id="break:test")
+        self.assertEqual([], card_for(state, 0, "animals")["tokens"])
+        self.assertEqual([], card_for(state, 1, "cards")["tokens"])
+        self.assertEqual(
+            [2, 1],
+            [event["count"] for event in events if event["type"] == "break_action_tokens_cleared"],
+        )
+
     def test_strength_is_locked_per_multiplier_execution_and_card_moves_after_both(self):
         engine = SemanticEngine()
         state = new_semantic_state(2)

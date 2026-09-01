@@ -188,6 +188,10 @@ test("Ark Nova table exposes the public board, association, summary, and interac
   assert.match(source, /ark-donate-button/);
   assert.match(source, /ark-finish-association/);
   assert.match(source, /function ActionCardRack/);
+  assert.match(source, /function ActionTokenBadges/);
+  assert.match(source, /CONSTRICTION −2/);
+  assert.match(source, /VENOM ₡2/);
+  assert.match(source, /MULTIPLIER ×2/);
   assert.match(source, /function PlayerActionControls/);
   assert.match(source, /function PlayerCardArea/);
   assert.match(source, /function FinalScoringCardArea/);
@@ -213,6 +217,7 @@ test("Ark Nova table exposes the public board, association, summary, and interac
   assert.match(styles, /\.ark-pending-map-reward/);
   assert.match(styles, /\.association-lane\.is-actionable/);
   assert.match(styles, /\.ark-public-summary/);
+  assert.match(styles, /\.ark-action-token/);
   assert.match(styles, /\.ark-summary-score/);
   assert.match(source, /arkControllerLabels/);
   assert.match(source, /ark-summary-controller/);

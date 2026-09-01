@@ -26,7 +26,8 @@ export type ArkCard = {
   project_type?: string; release_icon?: string; breeding_icon?: string;
   tiers?: {id?: string; requirement?: number | string | null; animal_size?: string; support_slot?: number; conservation?: number; reputation?: number; blocked?: boolean}[];
 };
-export type ArkActionCard = {action: string; strength: number; upgraded: boolean; tokens: string[]};
+export type ArkActionToken = string | {type: string; source_id?: string};
+export type ArkActionCard = {action: string; strength: number; upgraded: boolean; tokens: ArkActionToken[]};
 export type ArkCell = {
   q: number; r: number; terrain: "water" | "rock" | "buildable";
   placement_bonus?: ArkEffect; requires_build_upgrade?: boolean;
@@ -188,6 +189,46 @@ const BUILDING_META: Record<string, {mark: string; zh: string; en: string}> = {
 };
 
 function copy(lang: ArkLang, zh: string, en: string) { return lang === "zh" ? zh : en; }
+
+function actionTokenType(token: ArkActionToken) {
+  return typeof token === "string" ? token : token.type;
+}
+
+function actionTokenSource(token: ArkActionToken) {
+  return typeof token === "string" ? undefined : token.source_id;
+}
+
+function actionTokenCopy(type: string, lang: ArkLang) {
+  if (type === "constriction") return {
+    mark: "⛓", label: copy(lang, "缠绕 −2", "CONSTRICTION −2"),
+    detail: copy(lang, "此行动牌强度 −2；使用此牌或下次休息时移除。", "This Action has −2 strength; remove it after using this card or at the next Break."),
+  };
+  if (type === "venom") return {
+    mark: "☠", label: copy(lang, "毒液 ₡2", "VENOM ₡2"),
+    detail: copy(lang, "若本回合使用其他行动，回合结束时支付 2 金币；使用此牌或休息时移除。", "If another Action is used this turn, pay 2 money at turn end; remove it by using this card or at Break."),
+  };
+  if (type === "multiplier") return {
+    mark: "×2", label: copy(lang, "倍率 ×2", "MULTIPLIER ×2"),
+    detail: copy(lang, "可消耗此标记将该行动执行两次；消耗后或休息时移除。", "Spend this marker to execute the Action twice; remove it when spent or at Break."),
+  };
+  return {mark: "◆", label: type.toUpperCase(), detail: copy(lang, "行动牌标记", "Action-card marker")};
+}
+
+function ActionTokenBadges({tokens, lang, compact = false}: {tokens: ArkActionToken[]; lang: ArkLang; compact?: boolean}) {
+  if (!tokens.length) return null;
+  return <span className={`ark-action-token-badges ${compact ? "compact" : ""}`}>
+    {tokens.map((token, index) => {
+      const type = actionTokenType(token);
+      const meta = actionTokenCopy(type, lang);
+      const source = actionTokenSource(token);
+      return <span key={`${type}-${source || "legacy"}-${index}`} className={`ark-action-token token-${type}`}
+        aria-label={meta.label}
+        title={`${meta.detail}${source ? ` · ${copy(lang, "来源", "Source")}: ${source}` : ""}`}>
+        <b>{meta.mark}</b><em>{meta.label}</em>
+      </span>;
+    })}
+  </span>;
+}
 function projectLevelLabel(level: string, lang: ArkLang) {
   return ({high: copy(lang, "高档", "high"), middle: copy(lang, "中档", "middle"), low: copy(lang, "低档", "low")})[level] || level;
 }
@@ -491,8 +532,9 @@ export function ArkNovaPlayerSummary({player, identity, active = false, lang}: {
       <span><i>H</i><b>{player.hand_count}/{handLimit}</b><small>{copy(lang, "手牌", "HAND")}</small></span>
     </div>
     <div className="ark-summary-actions" aria-label={copy(lang, "行动牌顺序和强度", "Action card order and strength")}>
-      {actions.map(card => <span key={card.action} className={`action-${card.action} action-level-${card.upgraded ? "ii" : "i"}`} title={`${ACTION_LABELS[card.action]?.[lang] || card.action} · ${card.strength}`}>
-        <b>{card.strength}</b><em>{ACTION_LABELS[card.action]?.[lang] || card.action}</em><i>{card.upgraded ? "II" : "I"}{card.tokens.length ? ` · X${card.tokens.length}` : ""}</i>
+      {actions.map(card => <span key={card.action} className={`action-${card.action} action-level-${card.upgraded ? "ii" : "i"} ${card.tokens.length ? "has-action-token" : ""}`} title={`${ACTION_LABELS[card.action]?.[lang] || card.action} · ${card.strength}`}>
+        <b>{card.strength}</b><em>{ACTION_LABELS[card.action]?.[lang] || card.action}</em><i>{card.upgraded ? "II" : "I"}</i>
+        <ActionTokenBadges tokens={card.tokens} lang={lang} compact/>
       </span>)}
     </div>
     <SummaryCounterRow values={CONTINENTS} player={player} kind="continent" lang={lang}/>
@@ -992,10 +1034,11 @@ function ActionCardRack({view, player, lang, legalActions, submitting, onChoose,
       const take = takes.find(item => actionCardName(item) === card.action);
       const upgrade = !card.upgraded ? upgradeActionFor(card) : undefined;
       const current = view.turn.action_card === card.action;
-      return <article key={card.action} className={`action-${card.action} action-level-${card.upgraded ? "ii" : "i"} ${current ? "current" : ""} ${cardSelects.length || take || upgrade ? "is-actionable" : ""}`}>
-        <i>{card.strength}</i><div><b>{ACTION_LABELS[card.action]?.[lang] || card.action}</b><small>{card.upgraded ? "II" : "I"}{card.tokens.length ? ` · ${copy(lang, "卡上", "on card")} X${card.tokens.length}` : ""}</small></div>
+      const markedStrength = Math.max(0, card.strength - 2 * card.tokens.filter(token => actionTokenType(token) === "constriction").length);
+      return <article key={card.action} className={`action-${card.action} action-level-${card.upgraded ? "ii" : "i"} ${current ? "current" : ""} ${card.tokens.length ? "has-action-token" : ""} ${cardSelects.length || take || upgrade ? "is-actionable" : ""}`}>
+        <i>{card.strength}</i><div><b>{ACTION_LABELS[card.action]?.[lang] || card.action}</b><small>{card.upgraded ? "II" : "I"}</small><ActionTokenBadges tokens={card.tokens} lang={lang}/></div>
         {interactive && (cardSelects.length > 0 || take || upgrade) && <footer>
-          {cardSelects.map(item => { const x = Array.isArray(item.action.x_by_execution) ? Number(item.action.x_by_execution[0] || 0) : Number(item.action.x_tokens || 0); return <button key={item.id} disabled={Boolean(submitting)} onClick={() => onChoose?.(item)} title={item.id}><b>{card.strength + x}</b><small>{x ? `−${x} X` : copy(lang, "执行", "Use")}</small></button>;})}
+          {cardSelects.map(item => { const x = Array.isArray(item.action.x_by_execution) ? Number(item.action.x_by_execution[0] || 0) : Number(item.action.x_tokens || 0); return <button key={item.id} disabled={Boolean(submitting)} onClick={() => onChoose?.(item)} title={item.id}><b>{markedStrength + x}</b><small>{x ? `−${x} X` : copy(lang, "执行", "Use")}</small></button>;})}
           {take && <button className="take-x" disabled={Boolean(submitting)} onClick={() => onChoose?.(take)} title={take.id}><b>+1 X</b><small>{copy(lang, "跳过行动", "Skip action")}</small></button>}
           {upgrade && <button className="upgrade-action-card" disabled={Boolean(submitting)} onClick={() => onChoose?.(upgrade)} title={upgrade.id}><b>II</b><small>{copy(lang, "升级此行动牌", "Upgrade this card")}</small></button>}
         </footer>}

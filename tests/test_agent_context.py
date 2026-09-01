@@ -56,6 +56,7 @@ class AgentContextTests(unittest.TestCase):
             self.assertEqual(details["id"], bare_details["id"])
             rules_index = call_tool(path, "inspect_rules")
             self.assertIn("cards", {item["id"] for item in rules_index["topics"]})
+            self.assertIn("interaction_tokens", {item["id"] for item in rules_index["topics"]})
             cards_rules = call_tool(path, "inspect_rules", {"topic": "cards"})
             self.assertEqual("Cards Action I / II", cards_rules["title"])
             self.assertIn("costs no money", cards_rules["shared"][1])
@@ -78,6 +79,9 @@ class AgentContextTests(unittest.TestCase):
                 for card in compact["self"]["action_cards"]
             ))
 
+            token_rules = call_tool(path, "inspect_rules", {"topic": "interaction_tokens"})
+            self.assertIn("reduces that card's strength by 2", token_rules["rules"][0])
+
             opponent_ids = {
                 card["id"] for card in self.state["players"][1]["initial_draw"]
             }
@@ -87,6 +91,66 @@ class AgentContextTests(unittest.TestCase):
                 call_tool(path, "inspect_card", {
                     "card_ref": f"card:{next(iter(opponent_ids))}",
                 })
+
+    def test_action_interaction_tokens_are_prominent_for_self_and_opponents(self):
+        for seat in range(2):
+            self.state, _ = self.plugin.apply_action(
+                self.state, seat, self.plugin.legal_actions(self.state, seat)[0]["action"],
+            )
+        self.state["players"][0]["action_cards"][0]["tokens"] = [{
+            "type": "constriction", "source_id": "ark-nova:zoo-401",
+        }]
+        self.state["players"][1]["action_cards"][1]["tokens"] = ["venom"]
+        observation = self.plugin.observe(self.state, 0)
+        observation["state_version"] = 1
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "turn-context.json"
+            prepare_seat_context(
+                path, match_id="match", seat=0, version=1,
+                observation=observation, legal=self.plugin.legal_actions(self.state, 0),
+            )
+            compact = call_tool(path, "observe")
+            own = compact["self"]["action_token_status"]
+            opponent = compact["opponents"][0]["action_token_status"]
+            self.assertTrue(own["has_markers"])
+            self.assertEqual("constriction", own["affected_cards"][0]["tokens"][0]["type"])
+            self.assertEqual(
+                max(0, own["affected_cards"][0]["printed_strength"] - 2),
+                own["affected_cards"][0]["effective_strength_before_x"],
+            )
+            self.assertEqual("venom", opponent["affected_cards"][0]["tokens"][0]["type"])
+            marked_card = next(card for card in compact["self"]["action_cards"] if card.get("tokens"))
+            self.assertIn("token_effects", marked_card)
+
+    def test_observation_delta_detects_action_token_placement(self):
+        for seat in range(2):
+            self.state, _ = self.plugin.apply_action(
+                self.state, seat, self.plugin.legal_actions(self.state, seat)[0]["action"],
+            )
+        previous = self.plugin.observe(self.state, 0)
+        previous["state_version"] = 0
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "turn-context.json"
+            prepare_seat_context(
+                path, match_id="match", seat=0, version=0,
+                observation=previous, legal=self.plugin.legal_actions(self.state, 0),
+            )
+            self.state["players"][1]["action_cards"][0]["tokens"] = [{
+                "type": "venom", "source_id": "ark-nova:zoo-402",
+            }]
+            current = self.plugin.observe(self.state, 0)
+            current["state_version"] = 1
+            prepare_seat_context(
+                path, match_id="match", seat=0, version=1,
+                observation=current, legal=self.plugin.legal_actions(self.state, 0),
+            )
+            compact = call_tool(path, "observe")
+            player_change = next(
+                event for event in compact["changes_since_last_observation"]["events"]
+                if event.get("kind") == "player_changes" and event.get("seat") == 1
+            )
+            self.assertIn("action_cards", player_change["changes"])
 
     def test_animal_housing_options_make_standard_and_special_alternatives_explicit(self):
         card = compact_card({

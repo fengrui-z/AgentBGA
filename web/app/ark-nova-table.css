@@ -195,6 +195,8 @@
 /* Action cards use upgrade state, not action type, as their color language. */
 .ark-summary-actions>span.action-level-i,.ark-action-rack article.action-level-i{border-top-color:#477a9b!important;background:#dceaf2!important}
 .ark-summary-actions>span.action-level-ii,.ark-action-rack article.action-level-ii{border-top-color:#a84f4f!important;background:#efdada!important}
+.ark-summary-actions>span.has-action-token,.ark-action-rack article.has-action-token{box-shadow:inset 0 0 0 2px #5b456d}
+.ark-action-token-badges{display:flex!important;flex-wrap:wrap;gap:4px;margin-top:5px}.ark-action-token{display:inline-flex!important;align-items:center;gap:4px;width:auto!important;padding:3px 6px!important;border:1px solid currentColor;border-radius:2px;background:#f2edf5;color:#553a66;font:700 8px ui-monospace,monospace;line-height:1}.ark-action-token b,.ark-action-token em{font:inherit!important;color:inherit!important;overflow:visible!important;white-space:nowrap!important}.ark-action-token.token-venom{background:#e2eee0;color:#315f38}.ark-action-token.token-multiplier{background:#f4ead0;color:#795c14}.ark-action-token-badges.compact{justify-content:center;gap:2px;margin-top:3px}.ark-action-token-badges.compact .ark-action-token{padding:2px!important;font-size:5px}.ark-action-token-badges.compact .ark-action-token em{display:none}
 .ark-action-rack article.action-level-i>i{background:#315f7e}.ark-action-rack article.action-level-ii>i{background:#8d3f3f}
 .ark-map-tools section.animal-ready>div,.ark-map-tools section.animal-waiting>div{min-height:27px;display:flex;align-items:center;padding:5px 7px;background:#edf1e7;border:1px solid #a8b29e}
 .ark-map-tools section.animal-ready>div{border-color:#69875a;background:#dbe9d3}

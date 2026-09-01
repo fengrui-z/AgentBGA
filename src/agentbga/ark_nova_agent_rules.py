@@ -138,6 +138,16 @@ _TOPICS: dict[str, dict[str, Any]] = {
             "Advancing the Break track gives tempo/income but also shortens the shared game clock.",
         ],
     },
+    "interaction_tokens": {
+        "title": "Action-card interaction markers",
+        "visibility": "The exact affected cards are listed for every player in action_cards and action_token_status. Do not infer a marker from card order alone.",
+        "rules": [
+            "Constriction is attached to a specific Action card and reduces that card's strength by 2 before X-tokens are added. It is removed after that marked card is used (including taking an X-token instead) or at the next Break.",
+            "Venom is attached to a specific Action card. If you use another Action while any Venom remains, reserve/pay 2 money at the end of the turn. Using the marked card (including taking an X-token instead) removes it and avoids or refunds that reserved payment. It is also cleared at the next Break.",
+            "A Multiplier marker may be spent to execute its marked Action twice; each execution has its own locked strength and X allocation. The spent marker is removed after the action, and unused Multiplier markers are cleared at the next Break.",
+            "Markers can include source_id, identifying the card or effect that placed them. Use inspect_card on a visible source when its printed interaction target matters.",
+        ],
+    },
     "rewards_keywords": {
         "title": "Common rewards and keywords",
         "rules": {
