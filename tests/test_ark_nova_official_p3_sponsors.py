@@ -150,6 +150,41 @@ class ArkNovaOfficialP3SponsorTests(unittest.TestCase):
         entered = next(event for event in events if event["type"] == "zoo_icon_entered")
         self.assertEqual(2, entered["count"])
 
+    def test_boa_constriction_and_sea_turtle_trigger_are_reported_separately(self):
+        state, _ = play_entry_semantics(
+            self.engine, self.state, 1, self.sponsor(250), instance_id="sea-turtle-tank",
+        )
+        # Sea Turtle Tank sees its own Reptile icon when played. Resolve that
+        # optional trigger before setting up the later Boa play.
+        pending = state["resolution"]["pending_choice"]
+        state, _ = self.engine.submit_choice(
+            state, 1, pending["choice_id"], [],
+        )
+        state["players"][1]["icons"]["science"] = 2
+        state["players"][1]["hand"] = [{"id": "spare-card", "display_title": "Spare Card"}]
+        state["players"][1]["tracks"].update({"appeal": 10, "conservation": 1})
+        state["players"][0]["tracks"].update({"appeal": 20, "conservation": 3})
+
+        boa = self.pack.entry("ark-nova:animal-483")
+        state, events = play_entry_semantics(
+            self.engine, state, 1, boa, instance_id="boa-constrictor",
+        )
+
+        constriction = next(
+            event for event in events
+            if event["type"] == "interaction_tokens_placed"
+        )
+        self.assertEqual(
+            {"seat": 0, "token": "constriction", "requested": 2, "placed": 2},
+            {key: constriction[key] for key in ("seat", "token", "requested", "placed")},
+        )
+        pending = state["resolution"]["pending_choice"]
+        self.assertEqual("sell_hand_cards", pending["continuation"]["type"])
+        self.assertEqual("Sea Turtle Tank", pending["continuation"]["source_title"])
+        self.assertEqual("reptile", pending["continuation"]["trigger_icon"])
+        self.assertIn("Sea Turtle Tank triggered by the reptile icon", pending["prompt"])
+        self.assertNotIn("Boa Constrictor — sell", pending["prompt"])
+
     def test_income_sponsors_resolve_track_token_money_and_tier_tables(self):
         self.state["players"][0]["icons"].update({"science": 4, "primate": 3})
         state = self.state

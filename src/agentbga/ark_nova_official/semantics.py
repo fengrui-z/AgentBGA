@@ -1200,11 +1200,31 @@ class SemanticEngine:
             if not isinstance(card_id, str):
                 raise SemanticRuleError("hand-card choices require stable IDs")
             options.append({"id": card_id, "label": str(card.get("display_title", card_id))})
+        source_card = frame.get("card")
+        source_title = (
+            source_card.get("display_title")
+            if isinstance(source_card, Mapping) else None
+        )
+        if not isinstance(source_title, str) or not source_title:
+            source_title = str(frame["source_id"])
+        bindings = frame.get("bindings")
+        trigger_icon = bindings.get("icon") if isinstance(bindings, Mapping) else None
+        trigger_note = (
+            f" triggered by the {trigger_icon} icon"
+            if isinstance(trigger_icon, str) and trigger_icon else ""
+        )
+        if tuck:
+            prompt = f"{source_title} — tuck up to {maximum} hand cards under this animal"
+        else:
+            prompt = (
+                f"{source_title}{trigger_note} — sell up to {maximum} hand cards "
+                "for 4 money each"
+            )
         self._open_choice(
             state,
             frame,
             seat=seat,
-            prompt=("Tuck cards under this animal" if tuck else "Sell cards for 4 money each"),
+            prompt=prompt,
             options=options,
             minimum=0,
             maximum=min(maximum, len(options)),
@@ -1213,6 +1233,8 @@ class SemanticEngine:
                 "seat": seat,
                 "actor_seat": frame["actor_seat"],
                 "source_id": frame["source_id"],
+                "source_title": source_title,
+                "trigger_icon": trigger_icon,
                 "source_instance_id": (
                     frame.get("card", {}).get("id")
                     if isinstance(frame.get("card"), Mapping) else None
@@ -2217,7 +2239,14 @@ class SemanticEngine:
                 source.setdefault("tucked_cards", []).extend(moved)
                 op, args = "move_track", {"track": "appeal", "amount": 2 * len(moved)}
                 event_type = "pouch_cards_tucked"
-            events.append({"type": event_type, "seat": seat, "count": len(moved)})
+            events.append({
+                "type": event_type,
+                "seat": seat,
+                "count": len(moved),
+                "source_id": source_id,
+                "source_title": continuation.get("source_title"),
+                "trigger_icon": continuation.get("trigger_icon"),
+            })
             if moved:
                 state["resolution"]["queue"].insert(0, {
                     "operation": {"op": op, "args": args, "timing": "on_play"},
