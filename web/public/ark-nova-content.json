@@ -13185,7 +13185,7 @@
           "timing": "on_play"
         },
         {
-          "description": "每当你的动物园首次获得一种洲或动物类别图标时：魅力 +1；金币 +2",
+          "description": "每当你的动物园首次获得一种洲或动物类别图标时：魅力 +1，金币 +2",
           "timing": "on_play"
         }
       ],
@@ -16921,7 +16921,7 @@
     }
   ],
   "pack": {
-    "content_sha256": "2457fcf3c37726a82f877d4ea8dee7be4fa40133bbb7c5265116bdc9a3bba2fa",
+    "content_sha256": "bee6de5feb05b1c0b37e3dfe23489fab368302f5a0daa50a44f29bb74c4688c8",
     "content_version": "map0-release.1",
     "distribution_mode": "repository_safe",
     "id": "ark-nova-base-map0-released",
@@ -16946,6 +16946,7 @@
       "gain_association_worker",
       "gain_icon_reward",
       "gain_money",
+      "gain_resources",
       "gain_tiered_icon_reward",
       "gain_tiered_reward",
       "gain_x_token",

@@ -361,6 +361,14 @@ class ArkNovaOfficialPlugin:
                     else state["turn"]["action_session"].get("action")
                 ),
                 "remaining_plays": 0,
+                "execution": (
+                    0 if state["turn"].get("action_session") is None
+                    else int(state["turn"]["action_session"].get("current_execution", 0)) + 1
+                ),
+                "executions_total": (
+                    0 if state["turn"].get("action_session") is None
+                    else len(state["turn"]["action_session"].get("strengths", []))
+                ),
             },
             "break_track": {
                 "position": state["break"]["position"],
@@ -521,6 +529,33 @@ def _normalize_legacy_state(
                     source_id="migration:reputation-milestones",
                 )
                 events.extend(reward_events)
+    legacy_explorer_seats = [
+        int(player["seat"])
+        for player in normalized["players"]
+        if any(
+            modifier.get("id") == "sponsor-262"
+            and [effect.get("op") for effect in modifier.get("effects", [])]
+            == ["move_track", "gain_money"]
+            for modifier in player.get("modifiers", [])
+        )
+    ]
+    if legacy_explorer_seats:
+        if normalized is state:
+            normalized = deepcopy(state)
+        for seat in legacy_explorer_seats:
+            for modifier in normalized["players"][seat].get("modifiers", []):
+                if modifier.get("id") != "sponsor-262":
+                    continue
+                if [effect.get("op") for effect in modifier.get("effects", [])] != [
+                    "move_track", "gain_money",
+                ]:
+                    continue
+                modifier["effects"] = [{
+                    "op": "gain_resources", "timing": "on_trigger",
+                    "args": {"appeal": 1, "money": 2},
+                }]
+            events.append({"type": "explorer_modifier_migrated", "seat": seat})
+
     additions: list[tuple[int, dict[str, int], list[str]]] = []
     for player in normalized["players"]:
         counts: dict[str, int] = {}

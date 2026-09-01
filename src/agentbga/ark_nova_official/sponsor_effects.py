@@ -643,8 +643,9 @@ def compile_sponsor_effects(
                 "amount": _multiply(_ref("distinct_continent_animal_category_count"), 2),
             }),
             _modifier(component_id, "distinct_icon_entered", [
-                _track("appeal", 1, "on_trigger"),
-                _effect("gain_money", {"amount": 2}, "on_trigger"),
+                _effect("gain_resources", {
+                    "money": 2, "appeal": 1,
+                }, "on_trigger"),
             ]),
         ])
         resolved.update({0, 1})

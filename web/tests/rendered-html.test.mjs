@@ -185,6 +185,10 @@ test("Ark Nova table exposes the public board, association, summary, and interac
   assert.match(source, /conservation_project/);
   assert.match(source, /selectedProjectTier/);
   assert.match(source, /ark-project-reward-timing/);
+  assert.match(source, /take_build_reward_card/);
+  assert.match(source, /从牌库抽1张/);
+  assert.match(source, /连续执行两次/);
+  assert.match(source, /executions_total/);
   assert.match(source, /档位奖励前领取/);
   assert.match(source, /档位奖励后领取/);
   assert.match(source, /release_animal/);
@@ -222,6 +226,7 @@ test("Ark Nova table exposes the public board, association, summary, and interac
   assert.match(styles, /\.association-lane\.is-actionable/);
   assert.match(styles, /\.ark-public-summary/);
   assert.match(styles, /\.ark-project-reward-instruction/);
+  assert.match(styles, /\.use-multiplier/);
   assert.match(styles, /\.ark-action-token/);
   assert.match(styles, /\.ark-summary-score/);
   assert.match(source, /arkControllerLabels/);

@@ -320,6 +320,26 @@ class ArkNovaOfficialAnimalsActionTests(unittest.TestCase):
         self.assertEqual(6, len(state["card_display"]))
         self.assertTrue(any(event["type"] == "card_display_refilled" for event in events))
 
+    def test_animals_reputation_projection_respects_cards_one_cap(self):
+        state = self.state
+        animals = action_card(state, "animals")
+        sponsors = action_card(state, "sponsors")
+        animals["position"], sponsors["position"] = sponsors["position"], animals["position"]
+        animals["upgraded"] = True
+        state["players"][0]["tracks"]["reputation"] = 9
+        state["players"][0]["money"] = 100
+        state["players"][0]["hand"] = []
+        state["card_display"] = [
+            {"id": f"unknown-{index}", "entry_id": f"missing-{index}"}
+            for index in range(1, 5)
+        ] + [{"id": "out-of-range", "entry_id": self.secretary.id}]
+        add_building(
+            state, "enclosure-a", "standard_enclosure", 4,
+            {(-4, 2), (-3, 1), (-4, 3), (-3, 2)},
+        )
+        state, _ = start_action(state, 0, "animals")
+        self.assertEqual([], self.choices(state))
+
     def test_animals_two_display_position_four_costs_four_money(self):
         state = self.state
         animals = action_card(state, "animals")

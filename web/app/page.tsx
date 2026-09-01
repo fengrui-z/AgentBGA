@@ -935,6 +935,14 @@ function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?
   if (action.type === "rest") return zh ? "休息并收回所有已打出的商人牌" : "Rest and recover all played merchant cards";
   if (action.type === "select_action" && action.action) return zh ? `选择 ${BL[String(action.action)] || String(action.action).toUpperCase()}行动` : `Choose ${BL[String(action.action)] || String(action.action)} action`;
   if (action.type === "select_action") return zh ? `使用 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card}，强度 ${action.strength}${action.x_tokens ? `（X +${action.x_tokens}）` : ""}` : `Use ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card}, strength ${action.strength}${action.x_tokens ? ` (X +${action.x_tokens})` : ""}`;
+  if (action.type === "start_action") {
+    const allocations = Array.isArray(action.x_by_execution) ? action.x_by_execution.map(Number) : [0];
+    const multiplier = Number(action.multiplier_tokens || 0);
+    const card = String(action.action_card_id || "");
+    return zh
+      ? `使用${ARK_ACTION_LABELS[lang][card] || card}${multiplier ? `并消耗 X2 标记，连续执行两次（X 分配 ${allocations.join("/")}）` : "，执行一次"}`
+      : `Use ${ARK_ACTION_LABELS[lang][card] || card}${multiplier ? ` with X2, performing it twice (X allocation ${allocations.join("/")})` : " once"}`;
+  }
   if (action.type === "take_x_token") return zh ? `将 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} 移到 1 并获得 X token` : `Move ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} to 1, gain X token`;
   if (action.type === "cancel_action") return zh ? `取消 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card}，重新选择行动牌` : `Cancel ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} and reselect`;
   if (action.type === "draw_cards") return zh ? `抽 ${action.draw_count} 张牌${action.discard_count ? `，再弃 ${action.discard_count} 张` : ""}` : `Draw ${action.draw_count} cards${action.discard_count ? `, discard ${action.discard_count}` : ""}`;
@@ -954,6 +962,7 @@ function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?
   if (action.type === "upgrade_action_card") return zh ? `升级 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} 行动牌` : `Upgrade ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} card`;
   if (action.type === "choose_conservation_bonus") return action.choice === "money" ? (zh ? `选择保育奖励：₡${action.amount}` : `Conservation bonus: ₡${action.amount}`) : (zh ? `选择奖励标记 ${action.tile_id}` : `Choose bonus tile ${action.tile_id}`);
   if (action.type === "take_map_card") return action.source === "deck" ? (zh ? "地图奖励：拿取牌库顶牌" : "Map reward: take top deck card") : (zh ? `地图奖励：拿取展示区 ${action.display_slot} 的 ${action.card_id}` : `Map reward: take ${action.card_id} from display slot ${action.display_slot}`);
+  if (action.type === "take_build_reward_card") return action.source === "deck" ? (zh ? "覆盖奖励：从牌库抽1张" : "Placement reward: draw 1 card from the deck") : (zh ? `覆盖奖励：拿取声望范围内的展示牌 ${action.card_id}` : `Placement reward: take ${action.card_id} from within Reputation range`);
   if (action.type === "clever_action_card") return zh ? `机敏：将 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} 移到强度 1` : `Clever: move ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} to strength 1`;
   if (action.type === "keep_final_card") return zh ? `保留终局牌 ${action.card_id}` : `Keep final card ${action.card_id}`;
   if (action.type === "play_sponsor") return zh ? `打出赞助商 ${action.card_id}` : `Play sponsor ${action.card_id}`;
@@ -1014,7 +1023,7 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
     place_building: "放置建筑", play_animal: "打出动物", association_task: "协会任务",
     play_sponsor: "打出赞助商", advance_break: "推进 Break", finish_action: "结束行动",
     make_donation: "捐款", upgrade_action_card: "升级行动牌", keep_final_card: "选择终局牌",
-    choose_conservation_bonus: "选择保育奖励", take_map_card: "拿取地图奖励牌", clever_action_card: "机敏奖励", finish_association_tasks: "结束协会任务",
+    choose_conservation_bonus: "选择保育奖励", take_map_card: "拿取地图奖励牌", take_build_reward_card: "拿取覆盖奖励牌", clever_action_card: "机敏奖励", finish_association_tasks: "结束协会任务",
     discard_wild: "弃置万能牌", scout_discard_extra: "侦察弃牌", develop_tiles: "选择研发板块",
     build_industry: "选择产业与城市", build_link: "铺设运河", select_network_count: "铁路数量",
     select_network_link: "选择铁路", take_resource: "选择资源来源", sell_industry: "出售产业",
@@ -1032,7 +1041,7 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
     place_building: "Place building", play_animal: "Play animal", association_task: "Association task",
     play_sponsor: "Play sponsor", advance_break: "Advance Break", finish_action: "End action",
     make_donation: "Donate", upgrade_action_card: "Upgrade action card", keep_final_card: "Choose final card",
-    choose_conservation_bonus: "Conservation bonus", take_map_card: "Map card reward", clever_action_card: "Clever reward", finish_association_tasks: "End association tasks",
+    choose_conservation_bonus: "Conservation bonus", take_map_card: "Map card reward", take_build_reward_card: "Placement card reward", clever_action_card: "Clever reward", finish_association_tasks: "End association tasks",
     discard_wild: "Discard wild card", scout_discard_extra: "Scout discard", develop_tiles: "Select develop tiles",
     build_industry: "Choose industry & city", build_link: "Build canal", select_network_count: "Rail count",
     select_network_link: "Choose rail link", take_resource: "Choose resource source", sell_industry: "Sell industry",
@@ -1057,7 +1066,7 @@ function groupActions(actions: LegalAction[]) {
 const CARD_ACTION_TYPES = new Set(["buy_visible", "buy_reserved", "reserve_visible"]);
 const CENTURY_ACTION_TYPES = new Set(["play_merchant", "acquire_merchant", "claim_point", "rest"]);
 const ARK_TABLE_ACTION_TYPES = new Set([
-  "choose_initial_hand", "select_action", "take_x_token", "cancel_action", "draw_cards", "snap_card", "discard_card",
+  "choose_initial_hand", "select_action", "start_action", "take_x_token", "take_x_token_action", "cancel_action", "draw_cards", "snap_card", "discard_card",
   "place_building", "play_animal", "finish_action", "association_task", "make_donation",
   "perform_association_task", "make_association_donation", "finish_association_action",
   "upgrade_association_reward_card",
@@ -1065,6 +1074,7 @@ const ARK_TABLE_ACTION_TYPES = new Set([
   "finish_association_tasks", "advance_break", "play_sponsor", "break_discard",
   "resolve_semantic_choice",
   "choose_conservation_bonus", "upgrade_action_card", "keep_final_card", "take_map_card",
+  "take_build_reward_card",
   "clever_action_card",
 ]);
 

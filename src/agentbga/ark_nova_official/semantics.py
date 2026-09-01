@@ -19,7 +19,7 @@ PREDICATE_OPS = frozenset({
     "matching_partner_zoo", "player_count", "in", "custom",
 })
 EFFECT_OPS = frozenset({
-    "noop", "gain_money", "lose_money", "pay_money", "gain_x_token",
+    "noop", "gain_money", "lose_money", "pay_money", "gain_x_token", "gain_resources",
     "add_source_card_tokens",
     "gain_association_worker", "add_action_token",
     "sell_hand_cards", "tuck_hand_cards", "draw_keep_cards",
@@ -2580,9 +2580,15 @@ class SemanticEngine:
                 workers = player["association_workers"]
                 if workers["reserve"] < 1:
                     raise SemanticRuleError("no association worker is available to activate")
-                workers["reserve"] -= 1
-                workers["active"] += 1
-                events.append({"type": "association_worker_activated", "seat": seat})
+                state["resolution"]["queue"][0:0] = self._frames(
+                    [{
+                        "op": "gain_association_worker", "timing": "immediate",
+                        "args": {"amount": 1},
+                    }],
+                    int(continuation.get("actor_seat", seat)), seat,
+                    str(continuation.get("source_id", "conservation-2-reward")),
+                    None, {},
+                )
                 return
             raise SemanticRuleError("unknown conservation-2 reward")
         if continuation_type == "action_upgrade_reward":
@@ -2722,6 +2728,23 @@ class SemanticEngine:
                 player["money"] -= actual
                 delta = -actual
             return [{"type": "money_changed", **base_event, "delta": delta, "value": player["money"]}]
+        if op == "gain_resources":
+            money = self._integer(args.get("money", 0), context, minimum=0)
+            appeal = self._integer(args.get("appeal", 0), context, minimum=0)
+            old_appeal = player["tracks"]["appeal"]
+            player["money"] += money
+            player["tracks"]["appeal"] = min(
+                state["track_limits"]["appeal"], old_appeal + appeal,
+            )
+            self._queue_crossed_milestones(
+                state, frame, "appeal", old_appeal, player["tracks"]["appeal"],
+            )
+            return [{
+                "type": "resources_gained", **base_event,
+                "money": money, "money_value": player["money"],
+                "appeal": player["tracks"]["appeal"] - old_appeal,
+                "appeal_value": player["tracks"]["appeal"],
+            }]
         if op == "gain_x_token":
             amount = self._integer(args.get("amount"), context, minimum=0)
             old = player["x_tokens"]
@@ -2862,12 +2885,26 @@ class SemanticEngine:
         if op == "gain_association_worker":
             amount = self._integer(args.get("amount", 1), context, minimum=0)
             workers = player["association_workers"]
+            reserve_before = workers["reserve"]
             activated = min(amount, workers["reserve"])
             workers["reserve"] -= activated
             workers["active"] += activated
+            last_worker_bonus = bool(
+                activated and reserve_before > 0 and workers["reserve"] == 0
+            )
+            if last_worker_bonus:
+                state["resolution"]["queue"][0:0] = self._frames(
+                    [{
+                        "op": "move_track", "timing": "immediate",
+                        "args": {"track": "conservation", "amount": 1},
+                    }],
+                    frame["actor_seat"], seat, frame["source_id"],
+                    frame.get("card"), frame.get("bindings", {}),
+                )
             return [{
                 "type": "association_workers_activated", **base_event,
                 "delta": activated, "active": workers["active"], "reserve": workers["reserve"],
+                "last_worker_bonus": last_worker_bonus,
             }]
         if op == "add_action_token":
             action = args.get("action")
@@ -3572,6 +3609,9 @@ class SemanticEngine:
             "draw_cards", "add_source_card_tokens",
         }:
             self._validate_value_vocabulary(args.get("amount"))
+        elif op == "gain_resources":
+            self._validate_value_vocabulary(args.get("money", 0))
+            self._validate_value_vocabulary(args.get("appeal", 0))
         elif op == "move_track":
             if args.get("track") not in {"appeal", "conservation", "reputation"}:
                 raise SemanticRuleError("move_track requires appeal, conservation, or reputation")

@@ -28,6 +28,21 @@ def card_for(state: dict, seat: int, action: str) -> dict:
 
 
 class ArkNovaOfficialActionTests(unittest.TestCase):
+    def test_unlocking_final_association_worker_gains_one_conservation(self):
+        engine = SemanticEngine()
+        state = new_semantic_state(2)
+        state["players"][0]["association_workers"].update({"active": 3, "reserve": 1})
+        state, events = engine.start_effects(state, 0, [effect(
+            "gain_association_worker", {"amount": 1},
+        )], source_id="test:last-worker")
+        self.assertEqual({"active": 4, "reserve": 0, "committed": []}, state["players"][0]["association_workers"])
+        self.assertEqual(1, state["players"][0]["tracks"]["conservation"])
+        self.assertTrue(any(
+            event["type"] == "association_workers_activated"
+            and event["last_worker_bonus"]
+            for event in events
+        ))
+
     def test_break_clears_interaction_markers_from_every_players_action_cards(self):
         engine = SemanticEngine()
         state = new_semantic_state(2)

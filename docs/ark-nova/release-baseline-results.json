@@ -1,13 +1,13 @@
 {
-  "content_sha256": "2457fcf3c37726a82f877d4ea8dee7be4fa40133bbb7c5265116bdc9a3bba2fa",
+  "content_sha256": "bee6de5feb05b1c0b37e3dfe23489fab368302f5a0daa50a44f29bb74c4688c8",
   "executed_on": "2026-08-28",
   "results": [
     {
       "decisions": 71,
       "players": 1,
-      "result_sha256": "21248f8ca7843c790ce05b4715787e45f079b7f6e77e8d9ee6c5711d7c32d412",
+      "result_sha256": "75a51513ac3881745725ae75088dd3b6a346984029e8885051d31d0d7b7ce03f",
       "seed": 202608281,
-      "state_hash": "77b8602538c82dd151bd469b6a97a82eecb92c6e1d45d693a8a0cd34a61a2378",
+      "state_hash": "ee569953f91a4ab145df54fe89d15f2dcd65970942c1554a149f42d75494d076",
       "turns": 27,
       "winner_seats": [
         0
@@ -16,34 +16,34 @@
     {
       "decisions": 784,
       "players": 2,
-      "result_sha256": "670733d85496d42c1e0a58732be964a8dd3f661cb5f8f0fb170800b9f6049ee5",
+      "result_sha256": "8a7845b2d5e04bd363746348dbe129003175abffa679c19ca751e3ac33edb721",
       "seed": 202608282,
-      "state_hash": "d2ff39cc52c846463562e6649163be3d53999dbe88c17fbaed9586fbd49cb3c9",
+      "state_hash": "ed7794ad73a1f5d3b4014bc66e81024ae6292d18b96f91fccd12379ccba743b2",
       "turns": 277,
       "winner_seats": [
         1
       ]
     },
     {
-      "decisions": 1001,
+      "decisions": 1225,
       "players": 3,
-      "result_sha256": "42bc7ba2980a663c532890e769b26b4e5f31c6c7ccb2e2bdf959d0379c386c3f",
+      "result_sha256": "5e0e33fea297f872ec1e52c11346d9761c9a576cae7a1982f8184a658488c992",
       "seed": 202608283,
-      "state_hash": "485cf2ef87ce09924122c485e78ebb225d59de343e700d3b3b014c923a7d1825",
-      "turns": 374,
+      "state_hash": "fef19bc45f0e860dffee70f81e41365a1c2373fe80db9a1e925f8158ae77af71",
+      "turns": 479,
       "winner_seats": [
         2
       ]
     },
     {
-      "decisions": 1256,
+      "decisions": 1283,
       "players": 4,
-      "result_sha256": "47129d021b2b9ab0c617add8d134f214df48a985e4da6348da81d11905283f34",
+      "result_sha256": "97bd63a7fcc9d5814ffc5eae7aaacaa6fb15319d043be850411945b23951c350",
       "seed": 202608284,
-      "state_hash": "f7c1531a21110b043c9ce9d40545a91ce0a762a8707304648b5661b1c534575b",
-      "turns": 454,
+      "state_hash": "e389f3b0acce949155e72f592bbddb6b262cec6e973366c407ea9d7a4d3e2f49",
+      "turns": 450,
       "winner_seats": [
-        2
+        3
       ]
     }
   ],

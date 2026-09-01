@@ -105,7 +105,7 @@ export type ArkView = {
     is_my_final_action: boolean; scoring_after_this_action: boolean;
     instruction_cn: string; instruction_en: string;
   };
-  turn: {active_seat: number; decision: string; action_card: string | null; remaining_plays: number};
+  turn: {active_seat: number; decision: string; action_card: string | null; remaining_plays: number; execution?: number; executions_total?: number};
   break_track: {position: number; limit?: number; start_marker: string; triggered: boolean};
   break_rules_summary?: {mode: string; title_cn: string; title_en: string; recurring_rule_cn: string; recurring_rule_en: string; steps: {order: number; key: string; description_cn: string; description_en: string}[]};
   solo_board?: ArkSoloBoard | null;
@@ -248,6 +248,7 @@ function actionType(item: ArkLegalAction) {
     finish_sponsors_action: "finish_action", finish_animals_action: "finish_action",
     finish_build_action: "finish_action", finish_association_action: "finish_association_tasks",
     perform_association_task: "association_task", make_association_donation: "make_donation",
+    take_build_reward_card: "take_map_card",
   };
   return aliases[raw] || raw;
 }
@@ -968,26 +969,29 @@ function PendingMapReward({view, player, lang, legalActions, submitting, onChoos
 }) {
   const actions = legalActions.filter(item => [
     "choose_conservation_bonus", "upgrade_action_card", "keep_final_card", "take_map_card", "clever_action_card",
-  ].includes(String(item.action.type)));
+  ].includes(actionType(item)));
   if (!actions.length || !onChoose) return null;
-  const kind = String(actions[0].action.type);
+  const kind = actionType(actions[0]);
   const title = kind === "choose_conservation_bonus" ? copy(lang, "选择保护轨道奖励", "Choose conservation reward")
     : kind === "upgrade_action_card" ? copy(lang, "升级一张行动牌", "Upgrade an action card")
       : kind === "take_map_card" ? copy(lang, "从牌库或声望范围拿一张牌", "Take a card from the deck or reputation range")
         : kind === "clever_action_card" ? copy(lang, "将一张行动牌移到强度 1", "Move an action card to strength 1")
           : copy(lang, "保留一张终局计分牌", "Keep one final-scoring card");
   return <section className="ark-pending-map-reward" aria-live="polite"><span>{copy(lang, "待处理地图奖励", "PENDING MAP REWARD")}</span><h3>{title}</h3><div>{actions.map(item => {
-    const actionKind = String(item.action.type);
+    const actionKind = actionType(item);
     const tile = actionKind === "choose_conservation_bonus" && item.action.tile_id
       ? view.game_board_bonus_tiles.find(value => value.id === item.action.tile_id) : undefined;
     const finalCard = actionKind === "keep_final_card"
       ? player.final_scoring_cards.find(card => !card.hidden && card.id === item.action.card_id) as ArkCard | undefined : undefined;
     const displayCard = actionKind === "take_map_card" && item.action.source === "display"
       ? view.card_display.find(card => card.id === item.action.card_id) : undefined;
+    const displaySlot = displayCard
+      ? view.card_display.findIndex(card => card.id === displayCard.id) + 1
+      : Number(item.action.display_slot || 0);
     const label = actionKind === "choose_conservation_bonus"
       ? item.action.choice === "money" ? `${copy(lang, "金币", "Money")} +${item.action.amount}` : benefitLabel(tile?.effects?.[0], lang)
       : actionKind === "upgrade_action_card" ? ACTION_LABELS[String(item.action.action_card)]?.[lang] || String(item.action.action_card)
-        : actionKind === "take_map_card" ? item.action.source === "deck" ? copy(lang, "牌库顶牌", "Top deck card") : `${copy(lang, "展示区", "Display")} ${item.action.display_slot} · ${displayCard ? cardTypeLabel(displayCard, lang) : item.action.card_id}`
+        : actionKind === "take_map_card" ? item.action.source === "deck" ? copy(lang, "从牌库抽1张", "Draw 1 card from the deck") : `${copy(lang, "展示区", "Display")} ${displaySlot || "—"} · ${displayCard ? cardTypeLabel(displayCard, lang) : item.action.card_id}`
           : actionKind === "clever_action_card" ? ACTION_LABELS[String(item.action.action_card)]?.[lang] || String(item.action.action_card)
             : finalCard?.objective ? `${finalCard.objective.replaceAll("_", " ")} · ${copy(lang, "每", "per")} ${finalCard.per ?? "—"}` : String(item.action.card_id);
     const icon = actionKind === "choose_conservation_bonus" ? item.action.choice === "money" ? "₡" : "◇"
@@ -1043,7 +1047,12 @@ function ActionCardRack({view, player, lang, legalActions, submitting, onChoose,
       return <article key={card.action} className={`action-${card.action} action-level-${card.upgraded ? "ii" : "i"} ${current ? "current" : ""} ${card.tokens.length ? "has-action-token" : ""} ${cardSelects.length || take || upgrade ? "is-actionable" : ""}`}>
         <i>{card.strength}</i><div><b>{ACTION_LABELS[card.action]?.[lang] || card.action}</b><small>{card.upgraded ? "II" : "I"}</small><ActionTokenBadges tokens={card.tokens} lang={lang}/></div>
         {interactive && (cardSelects.length > 0 || take || upgrade) && <footer>
-          {cardSelects.map(item => { const x = Array.isArray(item.action.x_by_execution) ? Number(item.action.x_by_execution[0] || 0) : Number(item.action.x_tokens || 0); return <button key={item.id} disabled={Boolean(submitting)} onClick={() => onChoose?.(item)} title={item.id}><b>{markedStrength + x}</b><small>{x ? `−${x} X` : copy(lang, "执行", "Use")}</small></button>;})}
+          {cardSelects.map(item => {
+            const allocations = Array.isArray(item.action.x_by_execution) ? item.action.x_by_execution.map(Number) : [Number(item.action.x_tokens || 0)];
+            const multiplier = Number(item.action.multiplier_tokens || 0);
+            const strengths = allocations.map(x => markedStrength + x);
+            return <button key={item.id} className={multiplier ? "use-multiplier" : ""} disabled={Boolean(submitting)} onClick={() => onChoose?.(item)} title={item.id}><b>{multiplier ? "×2" : strengths[0]}</b><small>{multiplier ? `${copy(lang, "连续执行两次", "Use twice")} · ${strengths.join("/")}${allocations.reduce((sum, value) => sum + value, 0) ? ` · −${allocations.reduce((sum, value) => sum + value, 0)} X` : ""}` : allocations[0] ? `−${allocations[0]} X` : copy(lang, "执行一次", "Use once")}</small></button>;
+          })}
           {take && <button className="take-x" disabled={Boolean(submitting)} onClick={() => onChoose?.(take)} title={take.id}><b>+1 X</b><small>{copy(lang, "跳过行动", "Skip action")}</small></button>}
           {upgrade && <button className="upgrade-action-card" disabled={Boolean(submitting)} onClick={() => onChoose?.(upgrade)} title={upgrade.id}><b>II</b><small>{copy(lang, "升级此行动牌", "Upgrade this card")}</small></button>}
         </footer>}
@@ -1066,7 +1075,7 @@ function PlayerActionControls({view, lang, legalActions, submitting, onChoose, i
   const finish = view.turn.action_card !== "association" ? legalActions.find(item => actionType(item) === "finish_action") : undefined;
   if (!interactive || (!draw && !beginAnimals && !advanceBreak && !finishAssociation && !finish)) return null;
   return <section className={`ark-player-action-controls action-${view.turn.action_card || "pending"}`} aria-live="polite">
-    <header><div><span>CURRENT ACTION</span><b>{ACTION_LABELS[view.turn.action_card || ""]?.[lang] || view.turn.decision.replaceAll("_", " ")}</b></div><small>{copy(lang, "在玩家版图完成当前行动", "Resolve the current action on the player board")}</small></header>
+    <header><div><span>CURRENT ACTION</span><b>{ACTION_LABELS[view.turn.action_card || ""]?.[lang] || view.turn.decision.replaceAll("_", " ")}{Number(view.turn.executions_total || 0) > 1 ? ` · ${copy(lang, "第", "execution")} ${view.turn.execution}/${view.turn.executions_total}` : ""}</b></div><small>{Number(view.turn.executions_total || 0) > 1 ? copy(lang, "X2：本次行动完成后立即继续执行同一张行动牌", "X2: immediately perform the same Action card again after this execution") : copy(lang, "在玩家版图完成当前行动", "Resolve the current action on the player board")}</small></header>
     <div>
       {draw && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(draw)}><b>{copy(lang, "从牌库抽牌", "Draw from deck")}</b><small>{copy(lang, "抽取", "Draw")} {String(draw.action.draw_count)} · {Number(draw.action.discard_count) ? `${copy(lang, "随后弃", "then discard")} ${String(draw.action.discard_count)}` : copy(lang, "无需立即弃牌", "no immediate discard")}</small></button>}
       {beginAnimals && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(beginAnimals)}><b>{copy(lang, "开始选择动物", "Begin selecting Animals")}</b><small>{copy(lang, "随后从手牌或声望范围逐张选择", "Then choose cards one at a time")}</small></button>}

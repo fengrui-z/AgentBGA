@@ -234,6 +234,7 @@ def explain_effect(operation: Mapping[str, Any], *, locale: str = "zh-CN") -> st
     if locale != "zh-CN":
         simple = {
             "gain_money": f"gain {amount} money",
+            "gain_resources": f"gain {explain_value(args.get('appeal', 0), locale=locale)} appeal and {explain_value(args.get('money', 0), locale=locale)} money",
             "lose_money": f"lose up to {amount} money",
             "pay_money": f"pay {amount} money",
             "gain_x_token": f"gain {amount} X tokens",
@@ -246,6 +247,7 @@ def explain_effect(operation: Mapping[str, Any], *, locale: str = "zh-CN") -> st
     else:
         simple = {
             "gain_money": f"金币 +{amount}",
+            "gain_resources": f"魅力 +{explain_value(args.get('appeal', 0), locale=locale)}，金币 +{explain_value(args.get('money', 0), locale=locale)}",
             "lose_money": f"失去至多 {amount} 资金",
             "pay_money": f"支付 {amount} 资金",
             "gain_x_token": f"获得 {amount} 个 X 标记",

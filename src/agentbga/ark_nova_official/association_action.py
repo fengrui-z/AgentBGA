@@ -398,8 +398,10 @@ def _take_partner_zoo(
     if count == 2:
         resolution["pending_reward"] = "action_upgrade"
     elif count == 3 and player["association_workers"]["reserve"]:
-        player["association_workers"]["reserve"] -= 1
-        player["association_workers"]["active"] += 1
+        effects.append({
+            "op": "gain_association_worker", "timing": "immediate",
+            "args": {"amount": 1},
+        })
     elif count == 4:
         effects.append(_track_effect("conservation", 2))
 

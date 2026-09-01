@@ -6048,17 +6048,10 @@
           "effects": [
             {
               "args": {
-                "amount": 1,
-                "track": "appeal"
+                "appeal": 1,
+                "money": 2
               },
-              "op": "move_track",
-              "timing": "on_trigger"
-            },
-            {
-              "args": {
-                "amount": 2
-              },
-              "op": "gain_money",
+              "op": "gain_resources",
               "timing": "on_trigger"
             }
           ],

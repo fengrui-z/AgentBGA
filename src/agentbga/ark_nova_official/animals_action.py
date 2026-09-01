@@ -12,7 +12,7 @@ from .cards import entry_is_eligible, play_entry_semantics
 from .cards_action import reputation_display_limit
 from .content import ContentEntry
 from .semantics import EvaluationContext, SemanticEngine, SemanticRuleError
-from .state import clone_state, validate_semantic_state
+from .state import clone_state, reputation_track_limit, validate_semantic_state
 
 
 _SPECIAL_BUILDING_NAMES = {
@@ -412,7 +412,10 @@ def _candidate_cards(
     if execution["upgraded"]:
         reputation = player["tracks"]["reputation"]
         if projected:
-            reputation += execution["spec"]["reputation_before_play"]
+            reputation = min(
+                reputation_track_limit(player),
+                reputation + execution["spec"]["reputation_before_play"],
+            )
         limit = reputation_display_limit(reputation)
         positions = None if resolution is None else resolution["display_position_by_id"]
         for index, card in enumerate(state["card_display"]):

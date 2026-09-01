@@ -203,6 +203,22 @@ class ArkNovaOfficialAssociationActionTests(unittest.TestCase):
         self.assertEqual(1, workers["active"])
         self.assertEqual(2, workers["reserve"])
 
+    def test_third_partner_zoo_unlocks_last_worker_and_gains_conservation(self):
+        state = self.state
+        player = state["players"][0]
+        player["partner_zoos"] = ["africa", "europe"]
+        player["association_workers"].update({"active": 3, "reserve": 1})
+        action_card(state, "association")["upgraded"] = True
+        state, _ = start_action(state, 0, "association")
+        partner = next(
+            choice["action"] for choice in self.choices(state)
+            if choice["action"].get("task_id") == "partner-zoo"
+            and choice["action"].get("continent") == "asia"
+        )
+        state, _ = self.apply(state, partner)
+        self.assertEqual(0, state["players"][0]["association_workers"]["reserve"])
+        self.assertEqual(1, state["players"][0]["tracks"]["conservation"])
+
     def test_association_two_combines_different_tasks_then_may_donate(self):
         state = self.state
         player = state["players"][0]

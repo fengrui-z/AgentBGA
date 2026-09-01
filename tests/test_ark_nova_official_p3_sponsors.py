@@ -381,7 +381,7 @@ class ArkNovaOfficialP3SponsorTests(unittest.TestCase):
             self.engine, state, 0, icon_card("first-asia", "asia"),
             instance_id="first-asia",
         )
-        state = self.settle_effect_order(state)
+        self.assertIsNone(state["resolution"]["pending_choice"])
         self.assertEqual(31, state["players"][0]["money"])
         self.assertEqual(1, state["players"][0]["tracks"]["appeal"])
 
