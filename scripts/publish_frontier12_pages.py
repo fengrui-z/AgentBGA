@@ -8,9 +8,17 @@ import base64
 import gzip
 import json
 import re
+import sys
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
+
+
+PROJECT_SRC = Path(__file__).resolve().parents[1] / "src"
+if str(PROJECT_SRC) not in sys.path:
+    sys.path.insert(0, str(PROJECT_SRC))
+
+from agentbga.ratings import score_matches
 
 
 USD_CNY = 6.7811
@@ -232,7 +240,50 @@ def _attach_pricing(
     return token_efficiency
 
 
-def _report_token_efficiency(report: Path, participants: dict[str, Any]) -> dict[str, Any]:
+def _source_game_elo(source: Path) -> dict[tuple[str, str], dict[str, Any]]:
+    matches = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted((source / "results").glob("*.json"))
+    ]
+    games = sorted({row.get("game") for row in matches if isinstance(row.get("game"), str)})
+    ratings: dict[tuple[str, str], dict[str, Any]] = {}
+    for game in games:
+        for row in score_matches(item for item in matches if item.get("game") == game):
+            ratings[(row["participant_id"], game)] = {
+                "elo": row["elo"],
+                "game_rank": row["rating_rank"],
+            }
+    return ratings
+
+
+def _refresh_efficiency_frontier(
+    entries: list[dict[str, Any]], overall_elo: dict[str, float]
+) -> None:
+    for row in entries:
+        row_elo = overall_elo.get(row["participant_id"])
+        if row_elo is None:
+            continue
+        row["efficiency_frontier"] = not any(
+            other["participant_id"] != row["participant_id"]
+            and other["mean_total_tokens_m"] <= row["mean_total_tokens_m"]
+            and overall_elo.get(other["participant_id"], float("-inf")) >= row_elo
+            and (
+                other["mean_total_tokens_m"] < row["mean_total_tokens_m"]
+                or overall_elo.get(other["participant_id"], float("-inf")) > row_elo
+            )
+            for other in entries
+        )
+
+
+def _report_token_efficiency(
+    report: Path,
+    participants: dict[str, Any],
+    *,
+    eligible_sessions: int,
+    game_elo_override: dict[tuple[str, str], dict[str, Any]],
+    overall_elo: dict[str, float],
+    result_snapshot: str,
+) -> dict[str, Any]:
     report_html = report.read_text(encoding="utf-8")
     parser = _ReportTableParser()
     parser.feed(report_html)
@@ -259,6 +310,7 @@ def _report_token_efficiency(report: Path, participants: dict[str, Any]) -> dict
         (row["participant_id"], row["game"]): row
         for row in datasets.get("game_elo", [])
     }
+    elo_by_game.update(game_elo_override)
     by_game = []
     for row in datasets.get("game_token_usage", []):
         identifier = row.get("participant_id")
@@ -346,10 +398,16 @@ def _report_token_efficiency(report: Path, participants: dict[str, Any]) -> dict
 
     if not entries:
         raise ValueError(f"Token efficiency table not found in {report}")
+    _refresh_efficiency_frontier(entries, overall_elo)
+    successful_sessions = sum(item["successful_sessions"] for item in entries)
     return _attach_pricing({
         "source_report": report.name,
-        "successful_sessions": sum(item["successful_sessions"] for item in entries),
-        "coverage_rate": 1.0,
+        "result_snapshot": result_snapshot,
+        "telemetry_scope": "validated-subset",
+        "successful_sessions": successful_sessions,
+        "eligible_sessions": eligible_sessions,
+        "coverage_rate": round(successful_sessions / eligible_sessions, 6)
+        if eligible_sessions else 0.0,
         "entries": entries,
         "by_game": by_game,
     }, participants)
@@ -397,7 +455,15 @@ def build_public_data(source: Path, report: Path | None = None) -> dict[str, Any
         "leaderboard": leaderboard,
     }
     if report is not None:
-        public_data["token_efficiency"] = _report_token_efficiency(report, participants)
+        eligible_sessions = sum(row.get("completed", 0) for row in leaderboard)
+        public_data["token_efficiency"] = _report_token_efficiency(
+            report,
+            participants,
+            eligible_sessions=eligible_sessions,
+            game_elo_override=_source_game_elo(source),
+            overall_elo={row["participant_id"]: row["elo"] for row in leaderboard},
+            result_snapshot=source.name,
+        )
     return public_data
 
 
