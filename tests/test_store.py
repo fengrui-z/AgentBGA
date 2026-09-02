@@ -5,6 +5,11 @@ import sqlite3
 
 from agentbga import splendor
 from agentbga.agents import PlayerConfig
+from agentbga.public_projection import (
+    public_action_id,
+    public_controller_event,
+    public_game_event,
+)
 from agentbga.runner import run_match
 from agentbga.store import ConflictError, Store
 
@@ -129,9 +134,50 @@ class StoreTests(unittest.TestCase):
             streamed = []
             run_match(store, match_id, players, max_turns=10, sink=streamed.append)
             first = next(event for event in streamed if event["type"] == "decision")
+            kept_ids = store.replay(match_id)[1]["action"]["card_ids"]
             self.assertEqual({"type": "choose_initial_hand", "kept_count": 4}, first["action"])
             self.assertNotIn("card_ids", str(first))
+            self.assertTrue(all(card_id not in first["action_id"] for card_id in kept_ids))
+            self.assertTrue(first["action_id"].startswith("private-action-"))
             store.close()
+
+    def test_public_projection_redacts_semantic_and_final_scoring_choices(self):
+        final_card_id = "final-007"
+        action = {
+            "type": "resolve_semantic_choice",
+            "choice_id": "semantic-choice-9",
+            "option_ids": [final_card_id],
+        }
+        projected_id = public_action_id(
+            f"semantic-choice-9:{final_card_id}", action,
+            match_id="match-1", version=8, seat=1,
+        )
+        accepted = public_game_event({
+            "type": "action_accepted", "seat": 1, "action": action,
+        })
+        resolved = public_game_event({
+            "type": "semantic_choice_resolved", "seat": 1,
+            "choice_id": "semantic-choice-9", "option_ids": [final_card_id],
+        })
+        discarded = public_game_event({
+            "type": "final_scoring_card_discarded", "seat": 1,
+            "card_id": final_card_id,
+        })
+
+        self.assertTrue(projected_id.startswith("private-action-"))
+        self.assertNotIn(final_card_id, str((projected_id, accepted, resolved, discarded)))
+        self.assertEqual(1, accepted["action"]["selected_count"])
+        self.assertEqual(1, resolved["selected_count"])
+        self.assertEqual(1, discarded["discarded_count"])
+
+    def test_public_controller_events_redact_private_action_references(self):
+        private_id = "semantic-choice-4:final-007"
+        projected = public_controller_event({
+            "type": "harness_tool_result", "tool": "submit_action",
+            "result": {"accepted": True, "action_id": private_id},
+        }, match_id="match-1", version=3, seat=0)
+        self.assertNotIn(private_id, str(projected))
+        self.assertTrue(projected["result"]["action_id"].startswith("private-action-"))
 
     def test_brass_birmingham_random_controllers_finish_and_replay(self):
         with tempfile.TemporaryDirectory() as directory:

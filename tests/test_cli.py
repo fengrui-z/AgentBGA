@@ -85,6 +85,19 @@ class CLITests(unittest.TestCase):
             self.assertEqual("ark_nova", observed["game"])
             self.assertEqual(70, len(observed["legal_actions"]))
 
+    def test_match_create_reaches_advertised_ark_nova_solo_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main([
+                    "match", "create", "--game", "ark_nova", "--players", "1",
+                    "--seed", "42", "--db", str(Path(directory) / "match.sqlite3"),
+                ])
+            self.assertEqual(0, code)
+            created = json.loads(output.getvalue())["data"]
+            self.assertEqual(1, created["players"])
+            self.assertEqual("ark_nova", created["game"])
+
     def test_cli_can_select_an_exact_rules_version(self):
         with tempfile.TemporaryDirectory() as directory:
             describe_output = StringIO()

@@ -207,8 +207,10 @@ def load_players_config(path: str) -> list[PlayerConfig]:
     result = [PlayerConfig.from_dict(player, seat) for seat, player in enumerate(players) if isinstance(player, dict)]
     if len(result) != len(players):
         raise ValueError("every player entry must be an object")
-    if len(result) not in (2, 3, 4):
-        raise ValueError("players config requires 2, 3, or 4 players")
+    # Game plugins validate their own supported range when a match is created.
+    # Accept the platform-wide range here so one-player plugins remain usable.
+    if not 1 <= len(result) <= 7:
+        raise ValueError("players config requires 1 to 7 players")
     if len({player.name for player in result}) != len(result):
         raise ValueError("player names must be unique within a match")
     return result

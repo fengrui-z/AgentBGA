@@ -12,6 +12,12 @@ from .agents import AgentError, HARNESS_BACKENDS, PlayerConfig, build_model_agen
 from .ark_nova_match_report import generate_match_report
 from .harness import build_harness_agent
 from .minimal_harness import build_minimal_agent
+from .public_projection import (
+    public_action,
+    public_action_id,
+    public_controller_event,
+    public_game_event,
+)
 from .store import Store
 from .usage import build_harness_metrics
 
@@ -89,6 +95,9 @@ def run_match(
 
         def harness_sink(event: dict[str, Any], seat: int = harness_seat) -> None:
             enriched = {"version": version, "backend": configs[seat].backend, **event}
+            enriched = public_controller_event(
+                enriched, match_id=match_id, version=version, seat=seat,
+            )
             if enriched.get("type") != "harness_output":
                 # Agent callbacks can run on worker threads, while sqlite
                 # connections remain owned by the runner thread.
@@ -259,19 +268,21 @@ def run_match(
                     store.record_controller_call(
                         match_id, version, seat, config.backend, metadata,
                     )
-                public_action = selected
-                if selected.get("type") == "choose_initial_hand":
-                    public_action = {
-                        "type": "choose_initial_hand",
-                        "kept_count": len(selected["card_ids"]),
-                    }
+                projected_action = public_action(selected)
+                projected_action_id = public_action_id(
+                    action_id, selected, match_id=match_id,
+                    version=snapshot_version, seat=seat,
+                )
                 decision_events.append({
                     "type": "decision", "match_id": match_id, "version": version,
                     "snapshot_version": snapshot_version,
                     "simultaneous_seats": decision_seats,
                     "seat": seat, "player": config.name, "backend": config.backend,
-                    "action_id": action_id, "action": public_action,
-                    "events": [event for event in events if event.get("type") != "action_accepted"],
+                    "action_id": projected_action_id, "action": projected_action,
+                    "events": [
+                        public_game_event(event) for event in events
+                        if event.get("type") != "action_accepted"
+                    ],
                     "agent": metadata,
                     "turn_count": state["turn_count"],
                     "decision_count": state.get("decision_count", state["turn_count"]),

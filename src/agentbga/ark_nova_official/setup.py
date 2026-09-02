@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from importlib import resources
 from itertools import combinations
 from pathlib import Path
 import random
@@ -17,8 +18,17 @@ from .semantics import SemanticRuleError
 from .state import ACTION_TYPES, new_semantic_state, validate_semantic_state
 
 
-DEFAULT_CONTENT_ROOT = (
+_PACKAGED_CONTENT_ROOT = resources.files(__package__).joinpath("data", "base-en-draft")
+_SOURCE_CONTENT_ROOT = (
     Path(__file__).resolve().parents[3] / "content-packs" / "ark-nova" / "base-en-draft"
+)
+# Hatch force-includes the released pack below this package in wheels.  Keep
+# the authoring-tree fallback so source checkouts can still run the release
+# compiler without maintaining a second copy of the JSON files.
+DEFAULT_CONTENT_ROOT = (
+    Path(str(_PACKAGED_CONTENT_ROOT))
+    if _PACKAGED_CONTENT_ROOT.is_dir()
+    else _SOURCE_CONTENT_ROOT
 )
 
 

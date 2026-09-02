@@ -7,6 +7,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import mimetypes
+import os
 from pathlib import Path
 import secrets
 import threading
@@ -16,6 +17,7 @@ from urllib.parse import urlsplit
 
 from .agents import PlayerConfig
 from .ark_nova_match_report import generate_match_report
+from .public_projection import public_action_id
 from .registry import get_game, list_games
 from .runner import run_match
 from .store import MatchNotFound, Store
@@ -140,23 +142,9 @@ class MatchHub:
         player_range = game_description.get("players", {})
         minimum_players = int(player_range.get("minimum", 2))
         maximum_players = int(player_range.get("maximum", 4))
-        if not isinstance(raw_players, list) or not minimum_players <= len(raw_players) <= maximum_players:
-            raise ValueError(
-                f"players must contain {minimum_players} to {maximum_players} entries"
-            )
-        configs: list[PlayerConfig] = []
-        for seat, raw in enumerate(raw_players):
-            if not isinstance(raw, dict):
-                raise ValueError(f"player {seat} must be an object")
-            api_key = raw.get("api_key")
-            public = {key: value for key, value in raw.items() if key != "api_key"}
-            config = PlayerConfig.from_dict(public, seat)
-            subscription_auth = config.backend == "codex" and config.auth_mode == "subscription"
-            if game_description.get("runnable", True) and config.backend not in {"random", "human"} and not subscription_auth and (
-                not isinstance(api_key, str) or not api_key.strip()
-            ):
-                raise ValueError(f"player {seat} requires api_key")
-            configs.append(replace(config, api_key=api_key or None))
+        configs = self._player_configs(
+            raw_players, minimum=minimum_players, maximum=maximum_players,
+        )
         if len({config.name for config in configs}) != len(configs):
             raise ValueError("player names must be unique")
         seed = payload.get("seed")
@@ -198,7 +186,30 @@ class MatchHub:
             thread.start()
         return created_snapshot
 
-    def set_paused(self, match_id: str, paused: bool) -> dict[str, Any]:
+    @staticmethod
+    def _player_configs(
+        raw_players: Any, *, minimum: int, maximum: int,
+    ) -> list[PlayerConfig]:
+        if not isinstance(raw_players, list) or not minimum <= len(raw_players) <= maximum:
+            raise ValueError(f"players must contain {minimum} to {maximum} entries")
+        configs: list[PlayerConfig] = []
+        for seat, raw in enumerate(raw_players):
+            if not isinstance(raw, dict):
+                raise ValueError(f"player {seat} must be an object")
+            api_key = raw.get("api_key")
+            public = {key: value for key, value in raw.items() if key != "api_key"}
+            config = PlayerConfig.from_dict(public, seat)
+            subscription_auth = config.backend == "codex" and config.auth_mode == "subscription"
+            if config.backend not in {"random", "human"} and not subscription_auth and (
+                not isinstance(api_key, str) or not api_key.strip()
+            ):
+                raise ValueError(f"player {seat} requires api_key")
+            configs.append(replace(config, api_key=api_key or None))
+        return configs
+
+    def set_paused(
+        self, match_id: str, paused: bool, resume_players: Any = None,
+    ) -> dict[str, Any]:
         restart: tuple[list[PlayerConfig], int] | None = None
         with self.condition:
             if match_id not in self.matches:
@@ -208,7 +219,9 @@ class MatchHub:
                 snapshot = self._snapshot(match_id)
                 if snapshot["status"] != "active":
                     raise ValueError("only an active persisted match can be resumed")
-                configs = record.get("configs") or self._stored_player_configs(match_id)
+                configs = record.get("configs") or self._resume_player_configs(
+                    match_id, resume_players,
+                )
                 speed_ms = int(record.get("speed_ms", 650))
                 record.update({
                     "running": True, "paused": False, "at_pause_gate": False,
@@ -263,6 +276,49 @@ class MatchHub:
             )
             for row in rows
         ]
+
+    @staticmethod
+    def _has_runtime_credentials(config: PlayerConfig) -> bool:
+        if config.backend in {"random", "human"}:
+            return True
+        if config.backend == "codex" and config.auth_mode == "subscription":
+            return True
+        return bool(config.api_key or os.environ.get(config.api_key_env or ""))
+
+    def _resume_player_configs(
+        self, match_id: str, raw_players: Any,
+    ) -> list[PlayerConfig]:
+        stored = self._stored_player_configs(match_id)
+        if not stored:
+            raise ValueError("persisted match has no player configuration")
+        if raw_players is None:
+            configs = stored
+        else:
+            configs = self._player_configs(
+                raw_players, minimum=len(stored), maximum=len(stored),
+            )
+            identity_fields = (
+                "name", "backend", "model", "base_url", "api_key_env",
+                "auth_mode", "wire_api", "reasoning_effort",
+            )
+            for seat, (config, expected) in enumerate(zip(configs, stored)):
+                if any(
+                    getattr(config, field) != getattr(expected, field)
+                    for field in identity_fields
+                ):
+                    raise ValueError(
+                        f"resume player {seat} does not match the persisted seat configuration"
+                    )
+        missing = [
+            seat for seat, config in enumerate(configs)
+            if not self._has_runtime_credentials(config)
+        ]
+        if missing:
+            raise ValueError(
+                "fresh ephemeral credentials are required to resume model seats: "
+                + ", ".join(str(seat) for seat in missing)
+            )
+        return configs
 
     def _wait_for_turn(self, match_id: str) -> None:
         with self.condition:
@@ -323,15 +379,19 @@ class MatchHub:
                 raise ValueError("human turn is stale or belongs to another seat")
             if pending["version"] != expected_version:
                 raise ValueError("human turn is stale or belongs to another seat")
-            legal_ids = {item["id"] for item in pending["legal_actions"]}
-            if action_id not in legal_ids:
+            legal_by_id = {item["id"]: item["action"] for item in pending["legal_actions"]}
+            if action_id not in legal_by_id:
                 raise ValueError("action_id is not legal for the current human turn")
             record["human_submissions"][seat] = action_id
             del record["human_pending"][seat]
             snapshot = self._with_runtime(record["snapshot"], record)
             self._append_locked(record, {
                 "type": "human_action_submitted", "match_id": match_id,
-                "seat": seat, "version": expected_version, "action_id": action_id,
+                "seat": seat, "version": expected_version,
+                "action_id": public_action_id(
+                    action_id, legal_by_id[action_id], match_id=match_id,
+                    version=expected_version, seat=seat,
+                ),
             }, snapshot)
             self.condition.notify_all()
             return dict(record["snapshot"])
@@ -560,7 +620,14 @@ class WebHandler(BaseHTTPRequestHandler):
                 if action == "watch":
                     self._json(HTTPStatus.OK, self.hub.watch(match_id))
                 else:
-                    self._json(HTTPStatus.OK, self.hub.set_paused(match_id, action == "pause"))
+                    payload = self._read_json() if int(self.headers.get("Content-Length", "0")) else {}
+                    resume_players = payload.get("players") if action == "resume" else None
+                    self._json(
+                        HTTPStatus.OK,
+                        self.hub.set_paused(
+                            match_id, action == "pause", resume_players=resume_players,
+                        ),
+                    )
             except KeyError:
                 self._json(HTTPStatus.NOT_FOUND, {"error": "match_not_found"})
             except ValueError as error:

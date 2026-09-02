@@ -263,6 +263,16 @@ class AgentTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unknown fields: api_key"):
                 load_players_config(str(path))
 
+    def test_load_players_config_accepts_a_solo_seat(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "players.json"
+            path.write_text(json.dumps({
+                "schema_version": "agentbga.players.v1",
+                "players": [{"name": "Solo", "backend": "random"}],
+            }))
+            players = load_players_config(str(path))
+            self.assertEqual(["Solo"], [player.name for player in players])
+
     def test_config_rejects_secrets_embedded_in_endpoint(self):
         with self.assertRaisesRegex(ValueError, "cannot contain credentials"):
             PlayerConfig.from_dict({

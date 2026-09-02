@@ -1617,7 +1617,21 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     setControlling(true); setError("");
     try {
       const action = snapshot.paused || snapshot.mode === "spectator" || snapshot.running === false ? "resume" : "pause";
-      const response = await fetch(api(`/api/matches/${snapshot.match_id}/${action}`), {method: "POST"});
+      const playerPayload = players.length === snapshot.players.length && players.every((player, index) => {
+        const persisted = snapshot.players[index];
+        return player.name === persisted?.name && player.backend === persisted?.backend;
+      }) ? players.map(player => ({
+        name: player.name, backend: player.backend, model: player.model,
+        ...(player.backend === "codex" ? {auth_mode: player.auth_mode} : {}),
+        ...(!(player.backend === "codex" && player.auth_mode === "subscription") ? {
+          base_url: player.base_url, api_key: player.api_key,
+        } : {}),
+        ...(HARNESS_BACKENDS.has(player.backend) ? {reasoning_effort: player.reasoning_effort} : {}),
+      })) : undefined;
+      const response = await fetch(api(`/api/matches/${snapshot.match_id}/${action}`), {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(action === "resume" && playerPayload ? {players: playerPayload} : {}),
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || "无法更新暂停状态");
       if (snapshot.mode === "spectator" || snapshot.running === false) attachMatch(data, false);

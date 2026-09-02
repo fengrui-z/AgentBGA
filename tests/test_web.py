@@ -1,5 +1,6 @@
 import json
 from http.server import ThreadingHTTPServer
+import os
 from pathlib import Path
 import tempfile
 import threading
@@ -491,6 +492,72 @@ class WebTests(unittest.TestCase):
                 finish_second_run.set()
                 self.assertTrue(fake_done.wait(2))
                 time.sleep(0.05)
+
+    def test_persisted_model_match_requires_fresh_credentials_before_resume(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            match_id, _, _ = store.create(2, 9)
+            stored_players = [
+                PlayerConfig.from_dict({
+                    "name": "API", "backend": "openai", "model": "m",
+                }, 0),
+                PlayerConfig.from_dict({"name": "Baseline", "backend": "random"}, 1),
+            ]
+            store.set_players(match_id, [player.public_dict() for player in stored_players])
+            store.close()
+
+            hub = MatchHub(database)
+            hub.watch(match_id)
+            with mock.patch.dict(os.environ, {}, clear=True), mock.patch(
+                "agentbga.web.run_match",
+            ) as run:
+                with self.assertRaisesRegex(ValueError, "fresh ephemeral credentials"):
+                    hub.set_paused(match_id, False)
+            self.assertEqual("spectator", hub.get(match_id)["mode"])
+            run.assert_not_called()
+            with hub.condition:
+                hub.matches[match_id]["running"] = False
+                hub.condition.notify_all()
+            time.sleep(0.4)
+
+    def test_persisted_model_match_resumes_with_fresh_matching_credentials(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            match_id, _, _ = store.create(2, 9)
+            stored_players = [
+                PlayerConfig.from_dict({
+                    "name": "API", "backend": "openai", "model": "m",
+                }, 0),
+                PlayerConfig.from_dict({"name": "Baseline", "backend": "random"}, 1),
+            ]
+            store.set_players(match_id, [player.public_dict() for player in stored_players])
+            store.close()
+
+            hub = MatchHub(database)
+            hub.watch(match_id)
+            started = threading.Event()
+
+            def fake_run(_store, _match_id, players, sink, **_options):
+                self.assertEqual("fresh-key", players[0].api_key)
+                started.set()
+                sink({"type": "match_failed", "error": "test stop"})
+
+            with mock.patch("agentbga.web.run_match", side_effect=fake_run):
+                resumed = hub.set_paused(match_id, False, resume_players=[
+                    {
+                        "name": "API", "backend": "openai", "model": "m",
+                        "api_key": "fresh-key",
+                    },
+                    {"name": "Baseline", "backend": "random"},
+                ])
+                self.assertEqual("live", resumed["mode"])
+                self.assertTrue(started.wait(2))
+                deadline = time.monotonic() + 2
+                while hub.get(match_id)["running"] and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                time.sleep(0.4)
 
     def test_model_player_requires_nonempty_key(self):
         with tempfile.TemporaryDirectory() as directory:

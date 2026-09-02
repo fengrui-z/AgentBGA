@@ -10,6 +10,7 @@ import uuid
 from typing import Any
 
 from .agents import HARNESS_BACKENDS
+from .public_projection import public_game_event
 from .registry import get_game
 
 
@@ -19,16 +20,6 @@ class ConflictError(RuntimeError):
 
 class MatchNotFound(KeyError):
     pass
-
-
-def _public_game_event(event: dict[str, Any]) -> dict[str, Any]:
-    """Project authoritative events into a spectator-safe audit representation."""
-    if event.get("type") == "action_accepted" and event.get("action", {}).get("type") == "choose_initial_hand":
-        return {
-            **event,
-            "action": {"type": "choose_initial_hand", "kept_count": len(event["action"]["card_ids"])},
-        }
-    return event
 
 
 def default_db_path() -> Path:
@@ -249,7 +240,7 @@ class Store:
         return [
             {
                 "seq": row["seq"], "version": row["version"], "seat": row["seat"],
-                "event": _public_game_event(json.loads(row["event_json"])),
+                "event": public_game_event(json.loads(row["event_json"])),
                 "state_hash": row["state_hash"],
             }
             for row in rows

@@ -17,6 +17,7 @@ from . import __version__
 from .agents import AgentError, HARNESS_BACKENDS, harness_executable_name, load_players_config
 from .game import GameRuleError
 from .experiment import load_experiment, run_experiment, schedule_experiment
+from .public_projection import public_game_event
 from .registry import game_ids, get_game, list_games
 from .runner import run_match
 from .store import ConflictError, MatchNotFound, Store
@@ -88,7 +89,9 @@ def build_parser() -> argparse.ArgumentParser:
     create = match_sub.add_parser("create")
     create.add_argument("--game", default="splendor", choices=game_ids())
     create.add_argument("--rules-version", help="select an exact registered rules version")
-    create.add_argument("--players", type=int, required=True, choices=range(2, 8))
+    # The selected plugin performs the authoritative range validation.  The
+    # global parser must allow one seat so advertised solo modes are reachable.
+    create.add_argument("--players", type=int, required=True, choices=range(1, 8))
     create.add_argument("--seed", type=int)
     create.add_argument("--game-config", help="game-specific JSON object, or @path/to/config.json")
     create.add_argument(
@@ -412,12 +415,7 @@ def execute(args: argparse.Namespace) -> int:
                 next_version, next_state, events = store.act(
                     args.match_id, args.seat, args.expected_version, action
                 )
-                if action.get("type") == "choose_initial_hand":
-                    events = [
-                        ({**event, "action": {"type": "choose_initial_hand", "kept_count": 4}}
-                         if event.get("type") == "action_accepted" else event)
-                        for event in events
-                    ]
+                events = [public_game_event(event) for event in events]
                 emit(envelope({
                     "events": events, "status": next_state["status"],
                     "active_seat": next_state["active_seat"], "phase": next_state["phase"],
