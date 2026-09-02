@@ -67,7 +67,12 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
         self.assertEqual(9, ledger["semantic_review"]["bonus_tile_count"])
 
     def test_one_to_four_player_random_baseline_evidence_matches_this_release(self):
-        path = Path(__file__).resolve().parents[1] / "docs/ark-nova/release-baseline-results.json"
+        path = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "ark_nova"
+            / "release-baseline-results.json"
+        )
         report = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(self.plugin.rules_version, report["rules_version"])
         self.assertEqual(self.plugin.pack.content_sha256, report["content_sha256"])
@@ -84,7 +89,12 @@ class ArkNovaOfficialP8ReleaseTests(unittest.TestCase):
 
     def test_official_rulebook_glossary_and_faq_matrix_is_closed_and_traceable(self):
         root = Path(__file__).resolve().parents[1]
-        path = root / "docs/ark-nova/rules-conformance.json"
+        path = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "ark_nova"
+            / "rules-conformance.json"
+        )
         report = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(self.plugin.rules_version, report["rules_version"])
         self.assertEqual("pass", report["result"]["status"])

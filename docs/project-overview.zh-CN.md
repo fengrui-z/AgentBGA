@@ -25,8 +25,7 @@ Agent = Model × Harness × Memory × Prompt × Tool Interface × Compute Budget
 但其状态标记为 `preview`，不属于 `map0.1` 的发布审校声明，Map 1–8 仍未实现。
 出版商美术和逐字牌文不进入仓库。235 张卡牌通过
 JSON、Excel、中英文文档交叉核验，235 张牌、9 个奖励板块和 Map 0 又分别通过独立的
-运行时场景复核；这两项是可重现的审校流程，并不冒充两名人工审校者。发布门禁见
-[`ark-nova/p8-release-gate.md`](ark-nova/p8-release-gate.md)。
+运行时场景复核；这两项是可重现的审校流程，并不冒充两名人工审校者。
 
 两款游戏现在建立在同一个 `GamePlugin` 协议与可复用机制内核上。内核包含稳定
 action ID、决策步骤、资源与费用、卡牌区域和隐藏投影、轨道与里程碑、六角格与

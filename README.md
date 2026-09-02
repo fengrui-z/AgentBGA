@@ -153,9 +153,6 @@ Ark Nova defaults to the released Map 0 board. Pass `--map map-a` to
 
 Trace files live under `.agentbga/runs/_traces/MATCH_ID/seat-N/turn-XXXX.json` and record the full decision sequence: prompt, assistant reasoning/content, tool calls with results, and the final submission. Traces also record the participant, stable session scope, resume count, and any DSh compaction events.
 
-The fixed Ark Nova postgame methodology and metric definitions are documented in
-[`docs/ark-nova/completed-match-analysis.md`](docs/ark-nova/completed-match-analysis.md).
-
 ## Experiments and result artifacts
 
 An experiment manifest schedules one of three reproducible evaluation modes:
