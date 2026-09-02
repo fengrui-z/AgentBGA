@@ -57,9 +57,7 @@ const STR: Record<Lang, Dict> = {
     // human turn
     your_turn: "YOUR TURN · SEAT", pick_action: "，请选择行动", legal_opts: "个合法选项",
     submitting: "提交中…", returning: "归还", buying: "支付", reserving: "预留",
-    confirm_action: "确认操作", confirm_submit: "确认并提交 →", selection_ready: "已选择",
-    confirm_idle: "尚未选择完整操作", confirm_help: "点击选项只会暂存；确认后才会正式提交。",
-    select_action_required: "请先点选一个操作，再按确认。", selection_expired: "当前选择已失效，请根据最新局面重新选择。",
+    selection_expired: "当前选择已失效，请根据最新局面重新选择。",
     azul_source_required: "请先选择砖块来源。", azul_color_required: "请选择要拿取的颜色。", azul_destination_required: "请选择图案线或地板线。",
     // splendor board
     supply: "供应区", gem_bank: "宝石银行", nobles: "贵族", available: "AVAILABLE",
@@ -141,9 +139,7 @@ const STR: Record<Lang, Dict> = {
     paused_desc: "The table stops at a safe turn boundary. Click Resume to continue.",
     your_turn: "YOUR TURN · SEAT", pick_action: ", choose an action", legal_opts: "legal options",
     submitting: "Submitting…", returning: "Return", buying: "Pay", reserving: "Reserve",
-    confirm_action: "CONFIRM ACTION", confirm_submit: "Confirm & submit →", selection_ready: "SELECTED",
-    confirm_idle: "No complete action selected", confirm_help: "Choosing only stages an action; it is submitted after confirmation.",
-    select_action_required: "Choose an action before confirming.", selection_expired: "This choice is no longer legal. Choose again from the latest position.",
+    selection_expired: "This choice is no longer legal. Choose again from the latest position.",
     azul_source_required: "Choose a tile source first.", azul_color_required: "Choose the color to draft.", azul_destination_required: "Choose a pattern line or the floor.",
     supply: "Supply", gem_bank: "Gem Bank", nobles: "Nobles", available: "AVAILABLE",
     tier: "TIER", cards_unit: "cards",
@@ -1135,14 +1131,6 @@ function AzulActionPicker({actions, disabled, submitting, selectedId, onSelect}:
   </div>;
 }
 
-function HumanActionConfirmation({selected, brassView, issue, submitting, onConfirm}: {selected: LegalAction | null; brassView?: BrassView; issue: string; submitting: boolean; onConfirm: () => void}) {
-  const lang = useLang(); const t = makeT(lang);
-  return <footer className={`human-action-confirmation ${selected ? "is-ready" : ""} ${issue ? "has-error" : ""}`}>
-    <div><span>{selected ? t("selection_ready") : t("confirm_action")}</span><strong>{selected ? humanActionText(selected.action, lang, brassView) : t("confirm_idle")}</strong><small className={issue ? "validation-message" : ""} role={issue ? "alert" : undefined}>{issue || t("confirm_help")}</small></div>
-    <button type="button" disabled={submitting} onClick={onConfirm}><b>{submitting ? t("submitting") : t("confirm_submit")}</b><i>{selected ? "✓" : "!"}</i></button>
-  </footer>;
-}
-
 function ArkPlayerPanel({player, identity, active}: {player: ArkPlayerView; identity?: Snapshot["players"][number]; active: boolean}) {
   const lang = useLang();
   return <ArkNovaPlayerSummary player={player} identity={identity} active={active} lang={lang}/>;
@@ -1330,12 +1318,13 @@ function SplendorBoard({view}: {view?: View}) {
   </>;
 }
 
-function ArkNovaBoard({view, players, legalActions, submitting, onChoose}: {
+function ArkNovaBoard({view, players, legalActions, submitting, selectedActionId, onChoose}: {
   view?: ArkView; players: Snapshot["players"]; legalActions: LegalAction[]; submitting: string;
+  selectedActionId: string;
   onChoose: (item: LegalAction) => void;
 }) {
   const lang = useLang();
-  return <ArkNovaTable view={view} identities={players} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose}/>;
+  return <ArkNovaTable view={view} identities={players} lang={lang} legalActions={legalActions} submitting={submitting} selectedActionId={selectedActionId} onChoose={onChoose}/>;
 }
 
 export default function Home() {
@@ -1390,7 +1379,6 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const humanTurnKey = snapshot?.human_turn ? `${snapshot.match_id}:${snapshot.human_turn.seat}:${snapshot.human_turn.version}` : "";
   const currentHumanActionState = humanActionState?.turnKey === humanTurnKey ? humanActionState : null;
   const selectedHumanAction = currentHumanActionState?.selected ?? null;
-  const humanActionIssue = currentHumanActionState?.issue ?? "";
   const humanSeat = snapshot?.human_turn?.seat ?? snapshot?.players.find(player => player.backend === "human")?.seat ?? 0;
   const viewer = snapshot?.views[humanSeat];
   const splendorView = snapshot?.game === "splendor" ? viewer as View : undefined;
@@ -1646,21 +1634,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     if (!humanTurnKey) return;
     setError("");
     setHumanActionState({turnKey: humanTurnKey, selected: item, requirement, issue: ""});
-  }
-
-  function confirmHumanAction() {
-    if (!snapshot?.human_turn || submittingAction) return;
-    if (!selectedHumanAction) {
-      const message = currentHumanActionState?.requirement || (snapshot.game === "azul" ? t("azul_source_required") : t("select_action_required"));
-      setHumanActionState({turnKey: humanTurnKey, selected: null, requirement: currentHumanActionState?.requirement || "", issue: message});
-      return;
-    }
-    const legalAction = snapshot.human_turn.legal_actions.find(item => item.id === selectedHumanAction.id);
-    if (!legalAction) {
-      setHumanActionState({turnKey: humanTurnKey, selected: null, requirement: "", issue: t("selection_expired")});
-      return;
-    }
-    void submitHumanAction(legalAction);
+    if (item) void submitHumanAction(item);
   }
 
   if (!snapshot) return <main className="setup-shell">
@@ -1774,11 +1748,10 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
             <h3>{ACTION_GROUPS[lang][kind] || kind}<span>{actions.length}</span></h3>
             <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div>
           </section>)}</div>}
-          <HumanActionConfirmation selected={selectedHumanAction} brassView={brassView} issue={humanActionIssue} submitting={Boolean(submittingAction)} onConfirm={confirmHumanAction}/>
         </section>}
         {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/>
           : snapshot.game === "azul" ? <AzulBoard view={azulView}/>
-          : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players} legalActions={snapshot.human_turn?.legal_actions || []} submitting={submittingAction} onChoose={item => stageHumanAction(item)}/>
+          : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players} legalActions={snapshot.human_turn?.legal_actions || []} submitting={submittingAction} selectedActionId={selectedHumanAction?.id || submittingAction} onChoose={item => stageHumanAction(item)}/>
           : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/>
           : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/>
           : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}

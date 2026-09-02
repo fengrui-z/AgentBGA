@@ -58,9 +58,9 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.doesNotMatch(source, /className="winner-banner"/);
   assert.match(styles, /\.winner-summary/);
   assert.match(source, /human_turn|submitHumanAction/);
-  assert.match(source, /function HumanActionConfirmation/);
-  assert.match(source, /confirmHumanAction/);
-  assert.match(source, /select_action_required/);
+  assert.doesNotMatch(source, /function HumanActionConfirmation/);
+  assert.doesNotMatch(source, /confirmHumanAction/);
+  assert.match(source, /if \(item\) void submitHumanAction\(item\)/);
   assert.match(source, /azul_source_required/);
   assert.match(source, /selectedActionId/);
   assert.match(source, /随机座次|movePlayer/);
@@ -84,7 +84,7 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(styles, /\.brass-route\.actionable/);
   assert.match(styles, /\.brass-live-map\.is-expanded/);
   assert.match(styles, /\.brass-map-slots button\.actionable/);
-  assert.match(styles, /\.human-action-confirmation/);
+  assert.doesNotMatch(styles, /\.human-action-confirmation/);
   assert.match(styles, /\.human-action-groups button\.selected/);
   assert.match(source, /CenturyBoard/);
   assert.match(source, /SevenBoard/);
@@ -238,6 +238,8 @@ test("Ark Nova table exposes the public board, association, summary, and interac
   assert.match(styles, /\.ark-summary-controller/);
   assert.match(styles, /\.counter-tag i/);
   assert.match(styles, /\.ark-map-hex\.is-legal/);
+  assert.match(styles, /\.ark-map-hex\.is-selected-action/);
+  assert.match(styles, /button\.is-selected-action/);
   assert.match(styles, /\.ark-map-hex\.is-built\.enclosure-empty/);
   assert.match(styles, /\.ark-map-hex\.is-built\.enclosure-occupied/);
   assert.match(styles, /\.ark-map-hex\.is-built\.building-kiosk/);

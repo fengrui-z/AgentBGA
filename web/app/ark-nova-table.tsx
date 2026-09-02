@@ -868,9 +868,9 @@ function mapBuildingClasses(building: ArkBuilding) {
   return classes.join(" ");
 }
 
-function ZooMap({player, lang, legalActions, submitting, onChoose, selectedAnimal}: {
+function ZooMap({player, lang, legalActions, submitting, selectedActionId, onChoose, selectedAnimal}: {
   player: ArkPlayerView; lang: ArkLang; legalActions: ArkLegalAction[]; submitting: string;
-  onChoose?: (action: ArkLegalAction) => void; selectedAnimal: string;
+  selectedActionId: string; onChoose?: (action: ArkLegalAction) => void; selectedAnimal: string;
 }) {
   const placements = useMemo(() => legalActions.filter(item => ["place_building", "place_unique_sponsor_building"].includes(actionType(item))), [legalActions]);
   const animalActions = useMemo(() => legalActions.filter(item => actionType(item) === "play_animal"), [legalActions]);
@@ -888,6 +888,9 @@ function ZooMap({player, lang, legalActions, submitting, onChoose, selectedAnima
   const filteredAnimals = animalActions.filter(item => item.action.card_id === effectiveAnimal);
   const [hoveredAction, setHoveredAction] = useState("");
   const [selectedCellKey, setSelectedCellKey] = useState("");
+  const selectedAction = legalActions.find(item => item.id === selectedActionId);
+  const selectedPlacementCells = new Set((((selectedAction?.action.cells || []) as {q: number; r: number}[])).map(hexKey));
+  const selectedEnclosureId = String(selectedAction?.action.enclosure_id || selectedAction?.action.building_id || "");
   const preview = filteredPlacements.find(item => item.id === hoveredAction);
   const previewCells = new Set((((preview?.action.cells || []) as {q: number; r: number}[])).map(hexKey));
   const legalCells = new Set(filteredPlacements.map(item => hexKey(item.action.anchor as {q: number; r: number})));
@@ -948,11 +951,12 @@ function ZooMap({player, lang, legalActions, submitting, onChoose, selectedAnima
         const key = hexKey(cell); const building = buildingByCell.get(key); const played = building ? cardByEnclosure.get(building.id) : undefined;
         const legal = legalCells.has(key); const animalLegal = building ? animalEnclosures.has(building.id) && !effectiveBuild : false;
         const position = point(cell); const reward = rewardByCell.get(key); const bonusEffect = cell.placement_bonus || reward?.effect; const bonus = benefitLabel(bonusEffect, lang);
-        return <button key={key} data-hex={key} type="button" className={`ark-map-hex terrain-${cell.terrain} ${cell.requires_build_upgrade ? "requires-build-upgrade" : ""} ${building ? `is-built ${mapBuildingClasses(building)}` : ""} ${legal ? "is-legal" : ""} ${previewCells.has(key) ? "is-preview" : ""} ${animalLegal ? "is-animal-target" : ""} ${selectedCellKey === key ? "is-selected" : ""} ${reward?.status === "claimed" ? "bonus-claimed" : ""}`}
+        const selectedByAction = selectedPlacementCells.has(key) || Boolean(building && selectedEnclosureId === building.id);
+        return <button key={key} data-hex={key} type="button" className={`ark-map-hex terrain-${cell.terrain} ${cell.requires_build_upgrade ? "requires-build-upgrade" : ""} ${building ? `is-built ${mapBuildingClasses(building)}` : ""} ${legal ? "is-legal" : ""} ${previewCells.has(key) ? "is-preview" : ""} ${animalLegal ? "is-animal-target" : ""} ${selectedCellKey === key ? "is-selected" : ""} ${selectedByAction ? "is-selected-action" : ""} ${reward?.status === "claimed" ? "bonus-claimed" : ""}`}
           style={{left: position.x, top: position.y}} onClick={() => clickCell(cell, building)}
           onKeyDown={event => moveFocus(event, cell)}
           onMouseEnter={() => {const action = filteredPlacements.find(item => hexKey(item.action.anchor as {q: number; r: number}) === key); setHoveredAction(action?.id || "");}}
-          onMouseLeave={() => setHoveredAction("")} disabled={Boolean(submitting)}
+          onMouseLeave={() => setHoveredAction("")} disabled={Boolean(submitting)} aria-pressed={selectedByAction}
           aria-label={`${cell.q}, ${cell.r} · ${cell.terrain}${cell.requires_build_upgrade ? ` · ${copy(lang, "需要建造 II", "requires Build II")}` : ""}${building ? ` · ${buildingName(building.type, lang)} ${building.size}${building.type === "standard_enclosure" || CAPACITY_ENCLOSURES.has(building.type) ? ` · ${buildingResidence(building, lang)}` : ""}` : ""}${bonusEffect ? ` · ${bonus}` : ""}${reward?.status === "claimed" ? ` · ${copy(lang, "奖励已领取", "reward claimed")}` : ""}`}>
           <small>{cell.q},{cell.r}</small>{cell.terrain === "water" && <span className="ark-terrain-symbol" aria-hidden="true">💧</span>}{cell.terrain === "rock" && <span className="ark-terrain-symbol" aria-hidden="true">🛘</span>}{cell.requires_build_upgrade && !building && <u>II</u>}{building && <b>{BUILDING_META[building.type]?.mark || "B"}<i className={buildingCapacity(building) ? "capacity" : ""}>{buildingCapacity(building) || building.size}</i></b>}{played && <em>{played.id?.replace("research-animal-", "A")}</em>}{bonusEffect && !building && <strong>{bonus}</strong>}{reward?.status === "claimed" && <span title={copy(lang, "此格的放置奖励已领取", "Placement reward collected")}>◆</span>}
         </button>;
@@ -1014,9 +1018,9 @@ function SemanticChoiceControls({view, legalActions, submitting, onChoose}: {
   })}</div></section>;
 }
 
-function ActionCardRack({view, player, lang, legalActions, submitting, onChoose, interactive}: {
+function ActionCardRack({view, player, lang, legalActions, submitting, selectedActionId, onChoose, interactive}: {
   view: ArkView; player: ArkPlayerView; lang: ArkLang; legalActions: ArkLegalAction[]; submitting: string;
-  onChoose?: (action: ArkLegalAction) => void; interactive: boolean;
+  selectedActionId: string; onChoose?: (action: ArkLegalAction) => void; interactive: boolean;
 }) {
   const selects = legalActions.filter(item => actionType(item) === "select_action");
   const takes = legalActions.filter(item => actionType(item) === "take_x_token");
@@ -1051,10 +1055,11 @@ function ActionCardRack({view, player, lang, legalActions, submitting, onChoose,
             const allocations = Array.isArray(item.action.x_by_execution) ? item.action.x_by_execution.map(Number) : [Number(item.action.x_tokens || 0)];
             const multiplier = Number(item.action.multiplier_tokens || 0);
             const strengths = allocations.map(x => markedStrength + x);
-            return <button key={item.id} className={multiplier ? "use-multiplier" : ""} disabled={Boolean(submitting)} onClick={() => onChoose?.(item)} title={item.id}><b>{multiplier ? "×2" : strengths[0]}</b><small>{multiplier ? `${copy(lang, "连续执行两次", "Use twice")} · ${strengths.join("/")}${allocations.reduce((sum, value) => sum + value, 0) ? ` · −${allocations.reduce((sum, value) => sum + value, 0)} X` : ""}` : allocations[0] ? `−${allocations[0]} X` : copy(lang, "执行一次", "Use once")}</small></button>;
+            const selected = selectedActionId === item.id;
+            return <button key={item.id} className={`${multiplier ? "use-multiplier" : ""} ${selected ? "is-selected-action" : ""}`} aria-pressed={selected} disabled={Boolean(submitting)} onClick={() => onChoose?.(item)} title={item.id}><b>{multiplier ? "×2" : strengths[0]}</b><small>{multiplier ? `${copy(lang, "连续执行两次", "Use twice")} · ${strengths.join("/")}${allocations.reduce((sum, value) => sum + value, 0) ? ` · −${allocations.reduce((sum, value) => sum + value, 0)} X` : ""}` : allocations[0] ? `−${allocations[0]} X` : copy(lang, "执行一次", "Use once")}</small></button>;
           })}
-          {take && <button className="take-x" disabled={Boolean(submitting)} onClick={() => onChoose?.(take)} title={take.id}><b>+1 X</b><small>{copy(lang, "跳过行动", "Skip action")}</small></button>}
-          {upgrade && <button className="upgrade-action-card" disabled={Boolean(submitting)} onClick={() => onChoose?.(upgrade)} title={upgrade.id}><b>II</b><small>{copy(lang, "升级此行动牌", "Upgrade this card")}</small></button>}
+          {take && <button className={`take-x ${selectedActionId === take.id ? "is-selected-action" : ""}`} aria-pressed={selectedActionId === take.id} disabled={Boolean(submitting)} onClick={() => onChoose?.(take)} title={take.id}><b>+1 X</b><small>{copy(lang, "跳过行动", "Skip action")}</small></button>}
+          {upgrade && <button className={`upgrade-action-card ${selectedActionId === upgrade.id ? "is-selected-action" : ""}`} aria-pressed={selectedActionId === upgrade.id} disabled={Boolean(submitting)} onClick={() => onChoose?.(upgrade)} title={upgrade.id}><b>II</b><small>{copy(lang, "升级此行动牌", "Upgrade this card")}</small></button>}
         </footer>}
       </article>;
     })}</div>
@@ -1221,9 +1226,9 @@ function PlayerBoardLists({player, lang, legalActions, selectedProjectTier, subm
   </>;
 }
 
-function ZooWorkspace({view, identities, lang, legalActions, submitting, onChoose, selectedAnimal, onSelectAnimal, selectedProjectTier}: {
+function ZooWorkspace({view, identities, lang, legalActions, submitting, selectedActionId, onChoose, selectedAnimal, onSelectAnimal, selectedProjectTier}: {
   view: ArkView; identities: ArkIdentity[]; lang: ArkLang; legalActions: ArkLegalAction[]; submitting: string;
-  onChoose?: (action: ArkLegalAction) => void; selectedAnimal: string; onSelectAnimal: (cardId: string) => void;
+  selectedActionId: string; onChoose?: (action: ArkLegalAction) => void; selectedAnimal: string; onSelectAnimal: (cardId: string) => void;
   selectedProjectTier: string;
 }) {
   const decisionSeat = legalActions.length > 0 ? (view.viewer_seat ?? view.active_seat) : view.active_seat;
@@ -1237,12 +1242,12 @@ function ZooWorkspace({view, identities, lang, legalActions, submitting, onChoos
   return <section className="ark-surface ark-zoo-workspace">
     <header className="ark-surface-header"><div><span>{player.map.name.toUpperCase()} · FLAT-TOP AXIAL</span><h2>{copy(lang, "玩家动物园地图", "Player zoo map")}</h2></div><div className="ark-map-status"><b>{player.map.geometry_status.includes("reference_transcribed") ? copy(lang, "参考图转录几何", "Reference-transcribed geometry") : copy(lang, "受控地图几何", "Controlled map geometry")}</b><span>{player.map.buildings.length} {copy(lang, "座建筑", "buildings")}</span></div></header>
     <nav className="ark-player-tabs" aria-label={copy(lang, "选择玩家地图", "Choose player map")}>{view.players.map(item => <button key={item.seat} className={`${item.seat === seat ? "selected" : ""} ${item.seat === view.active_seat ? "active" : ""}`} onClick={() => setSelection({seat: item.seat, decision: view.decision_count})} style={{"--player-color": PLAYER_COLORS[item.seat]} as React.CSSProperties}><i>{item.seat + 1}</i><span>{playerName(identities, item.seat, lang)}</span><small>{item.seat === view.active_seat ? copy(lang, "行动中", "ACTIVE") : copy(lang, "公开地图", "PUBLIC")}</small></button>)}</nav>
-    <ActionCardRack view={view} player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
+    <ActionCardRack view={view} player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} selectedActionId={selectedActionId} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
     <PlayerActionControls view={view} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
     <PlayerCardArea view={view} player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive} selectedAnimal={selectedAnimal} onSelectAnimal={onSelectAnimal}/>
     <FinalScoringCardArea player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
     <div className="ark-zoo-layout">
-      <ZooMap player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} selectedAnimal={selectedAnimal}/>
+      <ZooMap player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} selectedActionId={selectedActionId} onChoose={interactive ? onChoose : undefined} selectedAnimal={selectedAnimal}/>
       <aside className="ark-zoo-inspector">
         {interactive && <PendingMapReward
           view={view} player={player} lang={lang} legalActions={legalActions}
@@ -1257,9 +1262,9 @@ function ZooWorkspace({view, identities, lang, legalActions, submitting, onChoos
   </section>;
 }
 
-export function ArkNovaTable({view, identities, lang, legalActions = [], submitting = "", onChoose}: {
+export function ArkNovaTable({view, identities, lang, legalActions = [], submitting = "", selectedActionId = "", onChoose}: {
   view?: ArkView; identities: ArkIdentity[]; lang: ArkLang; legalActions?: ArkLegalAction[];
-  submitting?: string; onChoose?: (action: ArkLegalAction) => void;
+  submitting?: string; selectedActionId?: string; onChoose?: (action: ArkLegalAction) => void;
 }) {
   const [selectedAnimal, setSelectedAnimal] = useState("");
   const [selectedProjectTier, setSelectedProjectTier] = useState("");
@@ -1272,7 +1277,7 @@ export function ArkNovaTable({view, identities, lang, legalActions = [], submitt
     {view.solo_board && <SoloBoard board={view.solo_board} lang={lang}/>}
     <GameBoard view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal}/>
     <AssociationBoard view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedProjectTier={selectedProjectTier} onSelectProjectTier={setSelectedProjectTier}/>
-    <ZooWorkspace view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal} selectedProjectTier={selectedProjectTier}/>
+    <ZooWorkspace view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} selectedActionId={selectedActionId} onChoose={onChoose} selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal} selectedProjectTier={selectedProjectTier}/>
     <details className="ark-content-status"><summary>{copy(lang, "规则版本与内容包状态", "Rules version & content status")}</summary><p>{copy(lang, "当前对局使用基础版程式化卡牌与语义引擎；界面只展示原创的规则摘要。", "This match uses the programmed base-card pack and semantic engine; the UI shows original rules summaries only.")}</p><code>{view.implementation_status}</code></details>
   </div>;
 }
