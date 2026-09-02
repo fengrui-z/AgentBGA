@@ -1,6 +1,6 @@
 "use client";
 
-import {type ReactNode, useEffect, useMemo, useState} from "react";
+import {type ReactNode, useMemo, useState} from "react";
 import {createPortal} from "react-dom";
 
 export type ArkLang = "zh" | "en";
@@ -1267,8 +1267,9 @@ export function ArkNovaTable({view, identities, lang, legalActions = [], submitt
   submitting?: string; selectedActionId?: string; onChoose?: (action: ArkLegalAction) => void;
 }) {
   const [selectedAnimal, setSelectedAnimal] = useState("");
-  const [selectedProjectTier, setSelectedProjectTier] = useState("");
-  useEffect(() => setSelectedProjectTier(""), [view?.decision_count]);
+  const [projectTierSelection, setProjectTierSelection] = useState({decision: -1, tier: ""});
+  const selectedProjectTier = projectTierSelection.decision === view?.decision_count ? projectTierSelection.tier : "";
+  const selectProjectTier = (tier: string) => setProjectTierSelection({decision: view?.decision_count ?? -1, tier});
   if (!view) return <div className="empty-board">Ark Nova</div>;
   return <div className="ark-table-v2">
     <section className="ark-match-banner"><div><span>ARK NOVA · OFFICIAL BASE</span><h1>{view.phase === "initial_hand_selection" ? copy(lang, "正在选择起始手牌", "Selecting starting hand") : copy(lang, "动物园规划桌", "Zoo planning table")}</h1></div><p>{copy(lang, "视觉组件使用结构化状态和原创 CSS 表达，不包含出版商卡图或逐字牌文。", "Components use structured state and original CSS; no publisher card art or verbatim card text.")}</p><code>{view.rules_version}</code></section>
@@ -1276,7 +1277,7 @@ export function ArkNovaTable({view, identities, lang, legalActions = [], submitt
     {(view.phase.includes("break") || view.break_track.triggered) && <section className="ark-break-alert" role="status" aria-live="assertive"><b>{view.solo_board ? copy(lang, "单人休息阶段", "SOLO BREAK") : copy(lang, "休息阶段", "BREAK")}</b><span>{copy(lang, "暂停常规行动：请依次处理弃牌、回收事务员、刷新协会与展示区，并领取收入。", "Regular actions pause while players discard, recall workers, refresh the Association board and display, and collect income.")}</span></section>}
     {view.solo_board && <SoloBoard board={view.solo_board} lang={lang}/>}
     <GameBoard view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal}/>
-    <AssociationBoard view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedProjectTier={selectedProjectTier} onSelectProjectTier={setSelectedProjectTier}/>
+    <AssociationBoard view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedProjectTier={selectedProjectTier} onSelectProjectTier={selectProjectTier}/>
     <ZooWorkspace view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} selectedActionId={selectedActionId} onChoose={onChoose} selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal} selectedProjectTier={selectedProjectTier}/>
     <details className="ark-content-status"><summary>{copy(lang, "规则版本与内容包状态", "Rules version & content status")}</summary><p>{copy(lang, "当前对局使用基础版程式化卡牌与语义引擎；界面只展示原创的规则摘要。", "This match uses the programmed base-card pack and semantic engine; the UI shows original rules summaries only.")}</p><code>{view.implementation_status}</code></details>
   </div>;
