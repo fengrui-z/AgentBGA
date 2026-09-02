@@ -17,8 +17,23 @@ class ArkNovaOfficialP6FinalScoringTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         root = Path(__file__).resolve().parents[1]
-        source = root / "reference-input" / "ark-nova-base" / "ark_nova_base_cards.json"
-        cls.rows = json.loads(source.read_text(encoding="utf-8"))["final_scoring_cards"]
+        source = (
+            root
+            / "content-packs"
+            / "ark-nova"
+            / "base-en-draft"
+            / "final_scoring.json"
+        )
+        entries = json.loads(source.read_text(encoding="utf-8"))
+        # Tests must consume the checked-in release pack rather than the optional,
+        # gitignored transcription workspace used to author that pack.
+        cls.rows = [
+            {
+                "id": entry["official_ref"]["component_id"],
+                **entry["facts"],
+            }
+            for entry in entries
+        ]
         cls.by_id = {row["id"]: row for row in cls.rows}
 
     def card(self, component_id):
