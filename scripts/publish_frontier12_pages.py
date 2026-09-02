@@ -90,6 +90,10 @@ MODEL_PRICING: dict[str, dict[str, Any]] = {
     },
 }
 
+MODEL_PRICING_ALIASES = {
+    "deepseek-v4-flash": "deepseek-v4-flash-0731",
+}
+
 PRICING_SOURCES = [
     {
         "id": "qianwen",
@@ -204,6 +208,7 @@ def _attach_pricing(
     participant_prices: dict[str, dict[str, Any]] = {}
     for identifier, player in participants.items():
         model = str(player.get("model", "")).split("/")[-1]
+        model = MODEL_PRICING_ALIASES.get(model, model)
         pricing = MODEL_PRICING.get(model)
         if pricing is None:
             continue
@@ -221,6 +226,16 @@ def _attach_pricing(
                 )
             ):
                 row.update(_cost_breakdown(row, pricing))
+
+    missing_prices = sorted(
+        row["participant_id"]
+        for row in token_efficiency["entries"]
+        if "mean_cost_rmb" not in row
+    )
+    if missing_prices:
+        raise ValueError(
+            "Missing model pricing for token entries: " + ", ".join(missing_prices)
+        )
 
     token_efficiency["pricing"] = {
         "as_of": PRICING_AS_OF,

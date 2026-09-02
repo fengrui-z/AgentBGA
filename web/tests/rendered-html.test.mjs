@@ -146,6 +146,12 @@ test("static export contains the Frontier12 results route and public data", asyn
   assert.equal(data.token_efficiency.entries[0].mean_cost_rmb, 119.2838);
   assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_output_tokens_m, 0.182);
   assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_cost_rmb, 190.8315);
+  assert.ok(data.token_efficiency.entries.every(item => [
+    item.mean_input_cost_rmb,
+    item.mean_cached_input_cost_rmb,
+    item.mean_output_cost_rmb,
+    item.mean_cost_rmb,
+  ].every(Number.isFinite)), "every overall token entry must have a complete cost breakdown");
   assert.equal(
     Number((data.token_efficiency.entries[0].mean_input_cost_rmb + data.token_efficiency.entries[0].mean_cached_input_cost_rmb + data.token_efficiency.entries[0].mean_output_cost_rmb).toFixed(4)),
     data.token_efficiency.entries[0].mean_cost_rmb,
