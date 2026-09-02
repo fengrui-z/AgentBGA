@@ -37,7 +37,8 @@ type Pricing = {
   sources: {id: string; label: string; url: string}[]; assumptions: string[];
 };
 type TokenEfficiency = {
-  source_report: string; successful_sessions: number; coverage_rate: number;
+  source_report: string; result_snapshot: string; telemetry_scope: "validated-subset";
+  successful_sessions: number; eligible_sessions: number; coverage_rate: number;
   entries: TokenEntry[]; by_game: GameTokenEntry[]; pricing: Pricing;
 };
 type FrontierData = {
@@ -160,12 +161,12 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
   return <section className="analysis-section">
     <header className="analysis-heading">
       <div><span>EFFICIENCY ANALYSIS</span><h2>Elo 之外，模型要花多少上下文？</h2></div>
-      <p>成本以成功 session 的 provider token telemetry 估算，不等同于供应商账单；分游戏 Elo 均独立拟合。</p>
+      <p>综合 Elo 与战绩来自 {data.results.completed} 场完整快照；成本与 Token 使用 {token.successful_sessions} / {token.eligible_sessions} 个通过累计快照恢复验证的 session，不等同于供应商账单。分游戏 Elo 均基于完整结果独立拟合。</p>
     </header>
     <div className="analysis-grid">
       <figure className="chart-card scatter-card cost-scatter-card">
         <figcaption className="chart-controls-caption">
-          <div><strong>Elo × 估算 API 成本 / session</strong><span>横轴从 ¥0 开始，纵轴固定为 1200–2100；越靠左上越优，描边点属于当前视图的 Cost–Elo 前沿。</span></div>
+          <div><strong>Elo × 估算 API 成本 / session</strong><span>Elo 使用完整结果；成本使用可验证 telemetry 子集。横轴从 ¥0 开始，纵轴固定为 1200–2100；越靠左上越优。</span></div>
           <div className="game-tabs cost-scope-tabs" role="tablist" aria-label="选择总体或分游戏成本与 Elo">
             {costScopes.map(scope => <button type="button" role="tab" aria-selected={selectedCostScope === scope} className={selectedCostScope === scope ? "active" : ""} key={scope} onClick={() => setSelectedCostScope(scope)}>{scope === "overall" ? "Overall" : GAME_NAMES[scope]}</button>)}
           </div>
@@ -190,7 +191,7 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
         </div>
       </figure>
       <figure className="chart-card cost-bars-card">
-        <figcaption><strong>{scopeLabel} 成本构成对比</strong><span>同一横轴下拆分 Input（非缓存）、Cached input 与 Output；按总成本从低到高排列。</span></figcaption>
+        <figcaption><strong>{scopeLabel} 成本构成对比</strong><span>可验证 telemetry 子集按 Input（非缓存）、Cached input 与 Output 拆分；按总成本从低到高排列。</span></figcaption>
         <div className="cost-bar-list">
           {costBars.map(item => <div className="cost-bar-row" key={item.participant_id}>
             <span>{item.short_name}</span>
@@ -280,7 +281,7 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
             </div>)}
           </div>
         </div>
-        <div className="heat-note">仅展示三款游戏均有成功样本的 {heatRows.length} 个配置 · 数据源 {token.source_report}</div>
+        <div className="heat-note">仅展示三款游戏均有可验证 telemetry 的 {heatRows.length} 个配置 · Token 数据源 {token.source_report} · Elo 快照 {token.result_snapshot}</div>
       </figure>
     </div>
   </section>;
@@ -317,6 +318,7 @@ export default function ArenaPage() {
     return [...totals.entries()];
   }, [data]);
   const completion = data ? data.results.completed / data.results.scheduled : 0;
+  const successfulSessions = data?.leaderboard.reduce((total, item) => total + item.completed, 0);
 
   return <main className="arena-page">
     <nav className="arena-nav">
@@ -332,7 +334,7 @@ export default function ArenaPage() {
       </div>
       <section className="arena-stats">
         <article><span>COMPLETED</span><strong>{data?.results.completed ?? "—"}<small> / {data?.results.scheduled ?? "—"}</small></strong></article>
-        <article><span>SUCCESSFUL SESSIONS</span><strong>{data?.token_efficiency?.successful_sessions ?? "—"}</strong></article>
+        <article><span>SUCCESSFUL AGENT SESSIONS</span><strong>{successfulSessions ?? "—"}</strong></article>
         <article><span>TOKEN COVERAGE</span><strong>{data?.token_efficiency ? percent(data.token_efficiency.coverage_rate) : data ? percent(completion) : "—"}</strong></article>
       </section>
     </header>
@@ -345,7 +347,7 @@ export default function ArenaPage() {
             {SORT_OPTIONS.map(([key, label]) => <button key={key} className={sortKey === key ? "active" : ""} onClick={() => setSortKey(key)}>{label}</button>)}
           </div>
         </header>
-        <div className="rating-method"><b>{data?.rating.method ?? "batch-pairwise-bradley-terry"}</b><span>中心分 {data?.rating.centre ?? 1500} · 失败对局不计分但计为 failed exposure</span></div>
+        <div className="rating-method"><b>{data?.rating.method ?? "batch-pairwise-bradley-terry"}</b><span>中心分 {data?.rating.centre ?? 1500} · {data?.results.failed === 0 ? `${data.results.completed} 场全部完成 · 0 failed exposures` : "失败对局不计分但计为 failed exposure"}</span></div>
         <div className="ladder-head"><span>#</span><span>模型 × Harness</span><span>Elo / PWS</span><span>完成 / 表现</span></div>
         <div className="ladder-list" aria-live="polite">
           {!data && !error && <div className="arena-empty">正在载入实验结果…</div>}
@@ -360,7 +362,7 @@ export default function ArenaPage() {
       </section>
       <aside className="arena-side">
         <section className="coverage-card">
-          <span>TOURNAMENT COVERAGE</span><h2>三款游戏，九个条件</h2>
+          <span>TOURNAMENT COVERAGE</span><h2>三款游戏，八个条件</h2>
           <div>{games.map(([game, matches]) => <article key={game}><div><strong>{GAME_NAMES[game] ?? game}</strong><span>{matches} scheduled</span></div><b style={{"--share": `${matches / (data?.schedule.matches ?? 1) * 100}%`} as CSSProperties}/></article>)}</div>
         </section>
         <section className="method-card">
@@ -374,7 +376,7 @@ export default function ArenaPage() {
         </section>
         <section className="data-card">
           <span>REPRODUCIBLE DATA</span><h2>随仓库更新</h2>
-          <p>该页面读取仓库中的脱敏结果快照。结果文件合入 <code>main</code> 后，GitHub Actions 会自动重新构建并发布。</p>
+          <p>该页面读取仓库中的脱敏完整结果快照；Token 与成本只采用通过累计用量恢复验证的子集。结果文件合入 <code>main</code> 后，GitHub Actions 会自动重新构建并发布。</p>
           <a href={DATA_URL}>下载当前 JSON →</a>
         </section>
       </aside>
