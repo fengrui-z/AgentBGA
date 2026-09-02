@@ -7,6 +7,7 @@ from typing import Any, Mapping
 from .actions import (
     decline_unavailable_hypnosis_action,
     legal_action_starts,
+    skip_repeated_action_execution,
     start_action,
     take_x_token_action,
 )
@@ -52,7 +53,14 @@ def legal_official_actions(
         )
     session = state["turn"].get("action_session")
     if session is not None:
-        return _legal_domain_actions(engine, state, seat, indexes)
+        result = _legal_domain_actions(engine, state, seat, indexes)
+        if _can_skip_repeated_execution(state, seat):
+            result.append({
+                "id": "multiplier:skip-repeated-execution",
+                "label": "Skip this optional repeated action",
+                "action": {"type": "skip_repeated_action_execution"},
+            })
+        return result
     result = []
     for candidate in legal_action_starts(state, seat):
         action = candidate["action"]
@@ -101,6 +109,8 @@ def apply_official_action(
         return take_x_token_action(state, seat, requested["action_card_id"])
     if action_type == "decline_unavailable_hypnosis_action":
         return decline_unavailable_hypnosis_action(state, seat)
+    if action_type == "skip_repeated_action_execution":
+        return skip_repeated_action_execution(engine, state, seat)
     if action_type == "resolve_semantic_choice":
         return engine.submit_choice(
             state, seat, requested["choice_id"], requested["option_ids"],
@@ -164,3 +174,17 @@ def _legal_domain_actions(
             engine, state, seat, indexes.get("sponsors", {}),
         )
     raise SemanticRuleError(f"unknown official action domain: {action}")
+
+
+def _can_skip_repeated_execution(
+    state: Mapping[str, Any], seat: int,
+) -> bool:
+    session = state["turn"].get("action_session")
+    return bool(
+        session is not None
+        and session.get("seat") == seat
+        and int(session.get("multiplier_tokens_used", 0)) > 0
+        and int(session.get("current_execution", 0)) > 0
+        and len(session.get("executions", [])) == int(session.get("current_execution", 0))
+        and not any(key.endswith("_resolution") for key in session)
+    )

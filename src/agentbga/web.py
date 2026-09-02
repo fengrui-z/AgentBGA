@@ -77,6 +77,7 @@ class MatchHub:
         return {
             **snapshot,
             "mode": record.get("mode", "live"),
+            "running": bool(record["running"]),
             "paused": bool(record["paused"]),
             "pause_pending": bool(
                 record["paused"] and record["running"] and not record["at_pause_gate"]
@@ -184,7 +185,7 @@ class MatchHub:
                 "events": [], "snapshot": snapshot, "running": bool(game_description.get("runnable", True)),
                 "paused": False, "at_pause_gate": False,
                 "human_pending": {}, "human_submissions": {},
-                "mode": "live",
+                "mode": "live", "configs": configs, "speed_ms": speed_ms,
             }
             record["snapshot"] = self._with_runtime(snapshot, record)
             self.matches[match_id] = record
@@ -198,24 +199,70 @@ class MatchHub:
         return created_snapshot
 
     def set_paused(self, match_id: str, paused: bool) -> dict[str, Any]:
+        restart: tuple[list[PlayerConfig], int] | None = None
         with self.condition:
             if match_id not in self.matches:
                 raise KeyError(match_id)
             record = self.matches[match_id]
-            if record.get("mode") == "spectator":
+            if not paused and (record.get("mode") == "spectator" or not record["running"]):
+                snapshot = self._snapshot(match_id)
+                if snapshot["status"] != "active":
+                    raise ValueError("only an active persisted match can be resumed")
+                configs = record.get("configs") or self._stored_player_configs(match_id)
+                speed_ms = int(record.get("speed_ms", 650))
+                record.update({
+                    "running": True, "paused": False, "at_pause_gate": False,
+                    "human_pending": {}, "human_submissions": {},
+                    "mode": "live", "configs": configs, "speed_ms": speed_ms,
+                })
+                decorated = self._with_runtime(snapshot, record)
+                self._append_locked(record, {
+                    "type": "match_resumed", "match_id": match_id,
+                    "recovered": True,
+                }, decorated)
+                restart = configs, speed_ms
+                self.condition.notify_all()
+            elif record.get("mode") == "spectator":
                 raise ValueError("spectator tables cannot be paused from this process")
-            if not record["running"]:
+            elif not record["running"]:
                 raise ValueError("match is no longer running")
-            if record["paused"] == paused:
+            else:
+                if record["paused"] == paused:
+                    return dict(record["snapshot"])
+                record["paused"] = paused
+                if not paused:
+                    record["at_pause_gate"] = False
+                snapshot = self._with_runtime(record["snapshot"], record)
+                event_type = "pause_requested" if paused else "match_resumed"
+                self._append_locked(record, {"type": event_type, "match_id": match_id}, snapshot)
+                self.condition.notify_all()
                 return dict(record["snapshot"])
-            record["paused"] = paused
-            if not paused:
-                record["at_pause_gate"] = False
-            snapshot = self._with_runtime(record["snapshot"], record)
-            event_type = "pause_requested" if paused else "match_resumed"
-            self._append_locked(record, {"type": event_type, "match_id": match_id}, snapshot)
-            self.condition.notify_all()
-            return dict(record["snapshot"])
+        if restart is not None:
+            configs, speed_ms = restart
+            threading.Thread(
+                target=self._run, args=(match_id, configs, speed_ms), daemon=True,
+                name=f"agentbga-{match_id}-resumed",
+            ).start()
+        with self.lock:
+            return dict(self.matches[match_id]["snapshot"])
+
+    def _stored_player_configs(self, match_id: str) -> list[PlayerConfig]:
+        store = Store(self.db_path)
+        try:
+            rows = store.players(match_id)
+        finally:
+            store.close()
+        allowed = {
+            "name", "backend", "model", "base_url", "api_key_env", "auth_mode",
+            "wire_api", "reasoning_effort", "series_id", "participant_id",
+        }
+        return [
+            PlayerConfig.from_dict(
+                {key: value for key, value in row.items() if key in allowed and value is not None},
+                int(row["seat"]),
+            )
+            for row in rows
+        ]
 
     def _wait_for_turn(self, match_id: str) -> None:
         with self.condition:

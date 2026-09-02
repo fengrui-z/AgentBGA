@@ -298,7 +298,7 @@ type SevenView = {
 type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
 type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
-  paused: boolean; pause_pending: boolean; mode?: "live" | "spectator" | "store";
+  paused: boolean; pause_pending: boolean; running?: boolean; mode?: "live" | "spectator" | "store";
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
   players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView)[];
   spectator_view?: ArkView;
@@ -1609,11 +1609,12 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     if (!snapshot || snapshot.status !== "active") return;
     setControlling(true); setError("");
     try {
-      const action = snapshot.paused ? "resume" : "pause";
+      const action = snapshot.paused || snapshot.mode === "spectator" || snapshot.running === false ? "resume" : "pause";
       const response = await fetch(api(`/api/matches/${snapshot.match_id}/${action}`), {method: "POST"});
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || "无法更新暂停状态");
-      setSnapshot(data);
+      if (snapshot.mode === "spectator" || snapshot.running === false) attachMatch(data, false);
+      else setSnapshot(data);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setControlling(false); }
   }
@@ -1738,7 +1739,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       <div className="match-meta"><span>{t("match")} <a className="match-reconnect-link" href={`?match=${snapshot.match_id}`} title={lang === "zh" ? "此对局的恢复链接" : "Reconnect link for this match"}><code>{snapshot.match_id}</code></a></span><span>{t("turn")} <b>{snapshot.turn_count}</b>{snapshot.game === "ark_nova" && <> · {t("decision")} <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span>{spectator && <span className="status status-setup">{t("spectator")}</span>}<span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? t("s_finished") : snapshot.paused ? (snapshot.pause_pending ? t("s_wait_pause") : t("s_paused")) : t("s_active")}</span></div>
       <div className="table-actions">
         <button className="lang-toggle" onClick={toggleLang} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
-        {!spectator && <button className={`pause-button ${snapshot.paused ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? t("processing") : snapshot.paused ? t("resume") : t("pause")}</button>}
+        {(!spectator || snapshot.status === "active") && <button className={`pause-button ${(snapshot.paused || spectator || snapshot.running === false) ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? t("processing") : (snapshot.paused || spectator || snapshot.running === false) ? t("resume") : t("pause")}</button>}
         <button onClick={leaveMatch}>{t("new_match")}</button>
       </div>
     </header>

@@ -319,7 +319,9 @@ def complete_action_execution(
     session = state["turn"].get("action_session")
     if session is None or session.get("seat") != seat or session.get("kind") != "regular":
         raise SemanticRuleError("there is no regular action execution for this seat")
-    if not isinstance(summary, Mapping) or summary.get("performed") is not True:
+    if not isinstance(summary, Mapping) or not (
+        summary.get("performed") is True or summary.get("skipped") is True
+    ):
         raise SemanticRuleError("an Ark Nova action execution may not do nothing")
     next_state = clone_state(state)
     next_session = next_state["turn"]["action_session"]
@@ -349,6 +351,27 @@ def complete_action_execution(
         return next_state, events
     finished, finish_events = _finish_regular_action(engine, next_state, seat)
     return finished, [*events, *finish_events]
+
+
+def skip_repeated_action_execution(
+    engine: SemanticEngine, state: dict[str, Any], seat: int,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Decline an optional repeated execution granted by a Multiplier token."""
+    execution = current_action_execution(state, seat)
+    session = state["turn"]["action_session"]
+    if execution["number"] <= 1 or int(session.get("multiplier_tokens_used", 0)) <= 0:
+        raise SemanticRuleError("only a repeated Multiplier execution can be skipped")
+    skipped, events = complete_action_execution(engine, state, seat, {
+        "performed": False,
+        "skipped": True,
+        "reason": "player declined the optional repeated execution",
+    })
+    return skipped, [{
+        "type": "repeated_action_execution_skipped",
+        "seat": seat,
+        "action": execution["action"],
+        "execution": execution["number"],
+    }, *events]
 
 
 def take_x_token_action(

@@ -454,6 +454,44 @@ class WebTests(unittest.TestCase):
                 while hub.events_after(created["match_id"], -1, wait=0)[1] and time.monotonic() < deadline:
                     time.sleep(0.01)
 
+    def test_failed_active_match_can_restart_with_retained_player_configs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            calls = 0
+            second_run = threading.Event()
+            finish_second_run = threading.Event()
+            fake_done = threading.Event()
+
+            def fake_run(_store, _match_id, players, sink, **_options):
+                nonlocal calls
+                calls += 1
+                self.assertEqual(["random", "human"], [player.backend for player in players])
+                if calls == 2:
+                    second_run.set()
+                    finish_second_run.wait(2)
+                sink({"type": "match_failed", "error": "test stop"})
+                if calls == 2:
+                    fake_done.set()
+
+            with mock.patch("agentbga.web.run_match", side_effect=fake_run):
+                created = hub.create({"players": [
+                    {"name": "Baseline", "backend": "random"},
+                    {"name": "Human", "backend": "human"},
+                ]})
+                deadline = time.monotonic() + 2
+                while hub.get(created["match_id"])["running"] and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                stopped = hub.get(created["match_id"])
+                self.assertFalse(stopped["running"])
+
+                resumed = hub.set_paused(created["match_id"], False)
+
+                self.assertTrue(resumed["running"])
+                self.assertTrue(second_run.wait(2))
+                finish_second_run.set()
+                self.assertTrue(fake_done.wait(2))
+                time.sleep(0.05)
+
     def test_model_player_requires_nonempty_key(self):
         with tempfile.TemporaryDirectory() as directory:
             hub = MatchHub(Path(directory) / "matches.sqlite3")

@@ -96,6 +96,22 @@ class ArkNovaOfficialAssociationActionTests(unittest.TestCase):
         )
         self.assertEqual(1, support["action"]["workers"])
 
+    def test_multiplier_does_not_reserve_a_worker_for_the_second_association_execution(self):
+        state = self.state
+        state["players"][0]["association_workers"]["active"] = 2
+        state["players"][0]["association_workers"]["committed"] = [
+            {"task": "gain-reputation"},
+        ]
+        action_card(state, "association")["tokens"] = ["multiplier"]
+        state, _ = start_action(
+            state, 0, "association", x_by_execution=(0, 0), multiplier_tokens=1,
+        )
+        choices = self.choices(state)
+        self.assertTrue(choices)
+        self.assertTrue(any(
+            choice["action"].get("workers") == 2 for choice in choices
+        ))
+
     def test_reputation_university_grants_research_icon_and_two_reputation(self):
         state, _ = start_action(self.state, 0, "association")
         university = next(

@@ -14,6 +14,8 @@ from agentbga.ark_nova_official import (
     start_action,
     take_x_token_action,
 )
+from agentbga.ark_nova_official.actions import skip_repeated_action_execution
+from agentbga.ark_nova_official.action_domains import legal_official_actions
 
 
 def effect(op: str, args: dict, timing: str = "immediate") -> dict:
@@ -28,6 +30,43 @@ def card_for(state: dict, seat: int, action: str) -> dict:
 
 
 class ArkNovaOfficialActionTests(unittest.TestCase):
+    def test_optional_repeated_multiplier_execution_can_be_skipped(self):
+        engine = SemanticEngine()
+        state = new_semantic_state(2)
+        state["phase"] = "active"
+        card_for(state, 0, "association")["tokens"] = ["multiplier"]
+        state, _ = start_action(
+            state, 0, "association", x_by_execution=(0, 0), multiplier_tokens=1,
+        )
+        state, _ = complete_action_execution(
+            engine, state, 0, {"performed": True, "tasks": ["test"]},
+        )
+        legal = legal_official_actions(engine, state, 0, {})
+        self.assertIn(
+            "multiplier:skip-repeated-execution",
+            [choice["id"] for choice in legal],
+        )
+        started_second = {**state, "turn": {**state["turn"]}}
+        started_second["turn"]["action_session"] = {
+            **state["turn"]["action_session"],
+            "association_resolution": {
+                "remaining_strength": 1, "tasks": [], "task_ids": [],
+                "pending_reward": None, "donation_made": False,
+            },
+        }
+        self.assertNotIn(
+            "multiplier:skip-repeated-execution",
+            [choice["id"] for choice in legal_official_actions(
+                engine, started_second, 0, {},
+            )],
+        )
+
+        state, events = skip_repeated_action_execution(engine, state, 0)
+
+        self.assertIsNone(state["turn"]["action_session"])
+        self.assertEqual(1, state["active_seat"])
+        self.assertEqual("repeated_action_execution_skipped", events[0]["type"])
+
     def test_unlocking_final_association_worker_gains_one_conservation(self):
         engine = SemanticEngine()
         state = new_semantic_state(2)
