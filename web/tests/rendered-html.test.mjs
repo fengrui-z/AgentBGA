@@ -300,11 +300,21 @@ test("static export contains the Frontier12 results route and public data", asyn
   assert.match(html, /Euro-style board games/);
   assert.match(html, /综合排名/);
   assert.equal(data.schema_version, "agentbga.frontier12-pages.v1");
-  assert.equal(data.results.completed, 322);
+  assert.equal(data.dataset_id, "frontier12-2026-v2-full");
+  assert.equal(data.generated_at, "2026-09-02T00:12:09.742231Z");
+  assert.deepEqual(data.results, {completed: 396, failed: 0, reported: 396, scheduled: 396});
   assert.equal(data.leaderboard.length, 12);
   assert.equal(data.leaderboard[0].participant_id, "gpt56-sol-codex");
   assert.equal(data.leaderboard[0].display_name, "GPT-5.6 Sol · Codex");
+  assert.equal(data.leaderboard[0].elo, 1688.4);
+  assert.equal(data.leaderboard.at(-1).participant_id, "qwen37-plus-opencode");
+  assert.equal(data.leaderboard.at(-1).elo, 1315.9);
+  assert.ok(data.leaderboard.every(item => item.completed === 96 && item.scheduled === 96 && item.failed_exposures === 0));
   assert.equal(data.token_efficiency.successful_sessions, 937);
+  assert.equal(data.token_efficiency.eligible_sessions, 1152);
+  assert.equal(data.token_efficiency.coverage_rate, 0.813368);
+  assert.equal(data.token_efficiency.telemetry_scope, "validated-subset");
+  assert.equal(data.token_efficiency.result_snapshot, "frontier12-2026-v2-full");
   assert.equal(data.token_efficiency.entries.length, 12);
   assert.equal(data.token_efficiency.by_game.length, 35);
   assert.equal(data.token_efficiency.pricing.currency, "CNY");
@@ -314,15 +324,25 @@ test("static export contains the Frontier12 results route and public data", asyn
   assert.equal(data.token_efficiency.entries[0].mean_cost_rmb, 119.2838);
   assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_output_tokens_m, 0.182);
   assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_cost_rmb, 190.8315);
+  assert.ok(data.token_efficiency.entries.every(item => [
+    item.mean_input_cost_rmb,
+    item.mean_cached_input_cost_rmb,
+    item.mean_output_cost_rmb,
+    item.mean_cost_rmb,
+  ].every(Number.isFinite)), "every overall token entry must have a complete cost breakdown");
   assert.equal(
     Number((data.token_efficiency.entries[0].mean_input_cost_rmb + data.token_efficiency.entries[0].mean_cached_input_cost_rmb + data.token_efficiency.entries[0].mean_output_cost_rmb).toFixed(4)),
     data.token_efficiency.entries[0].mean_cost_rmb,
   );
-  assert.equal(data.token_efficiency.by_game[0].elo, 1550);
-  assert.equal(data.token_efficiency.by_game[0].elo_rank, 5);
-  assert.equal(data.token_efficiency.by_game[0].mean_input_tokens_m, 0.292);
-  assert.equal(data.token_efficiency.by_game[0].mean_cached_input_tokens_m, 7.731);
-  assert.equal(data.token_efficiency.by_game[0].mean_output_tokens_m, 0.025);
+  const solSplendor = data.token_efficiency.by_game.find(item => item.participant_id === "gpt56-sol-codex" && item.game === "splendor");
+  assert.equal(solSplendor.elo, 1553.5);
+  assert.equal(solSplendor.elo_rank, 5);
+  assert.equal(solSplendor.mean_input_tokens_m, 0.292);
+  assert.equal(solSplendor.mean_cached_input_tokens_m, 7.731);
+  assert.equal(solSplendor.mean_output_tokens_m, 0.025);
+  const qwenBrass = data.token_efficiency.by_game.find(item => item.participant_id === "qwen38-max-qwen" && item.game === "brass_birmingham");
+  assert.equal(qwenBrass.elo, 1546.3);
+  assert.equal(qwenBrass.elo_rank, 4);
   assert.match(source, /EfficiencyCharts/);
   assert.match(source, /Elo × 估算 API 成本/);
   assert.match(source, /\[2100, 1800, 1500, 1200\]/);
@@ -334,6 +354,8 @@ test("static export contains the Frontier12 results route and public data", asyn
   assert.match(source, /分游戏 Elo × Token 构成/);
   assert.match(source, /Input（非缓存）/);
   assert.match(source, /分游戏平均总 Token/);
+  assert.match(source, /三款游戏，八个条件/);
+  assert.match(source, /通过累计快照恢复验证/);
   assert.match(styles, /\.scatter-stage/);
   assert.match(styles, /\.cost-bar-row/);
   assert.match(styles, /\.pricing-card/);
