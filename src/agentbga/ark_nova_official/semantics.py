@@ -1151,9 +1151,10 @@ class SemanticEngine:
             if not isinstance(card_id, str) or card_id in seen:
                 raise SemanticRuleError("Final Scoring cards require stable unique IDs")
             seen.add(card_id)
+            title = str(card.get("display_title", card_id))
             options.append({
                 "id": card_id,
-                "label": str(card.get("display_title", card_id)),
+                "label": f"Discard {title}",
             })
         self._open_choice(
             state,

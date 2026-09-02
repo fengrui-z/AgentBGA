@@ -16,7 +16,7 @@ from agentbga.agents import (
     PlayerConfig,
     load_players_config,
 )
-from agentbga.runner import run_match
+from agentbga.runner import _automatic_harness_choice, run_match
 from agentbga.store import Store
 
 
@@ -77,6 +77,33 @@ class _ErrorHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         pass
+
+
+class ForcedHarnessChoiceTests(unittest.TestCase):
+    def test_single_harness_action_bypasses_model(self):
+        config = PlayerConfig.from_dict({
+            "name": "Minimal", "backend": "minimal", "model": "test",
+        }, 0)
+
+        selected = _automatic_harness_choice(config, [{"id": "only", "action": {}}])
+
+        self.assertEqual("only", selected[0])
+        self.assertTrue(selected[1]["automatic"])
+        self.assertEqual("single_legal_action", selected[1]["reason"])
+        self.assertEqual(0, selected[1]["attempts"])
+
+    def test_multiple_actions_and_non_harness_controllers_are_not_automatic(self):
+        minimal = PlayerConfig.from_dict({
+            "name": "Minimal", "backend": "minimal", "model": "test",
+        }, 0)
+        human = PlayerConfig.from_dict({"name": "Human", "backend": "human"}, 1)
+
+        self.assertIsNone(_automatic_harness_choice(minimal, [
+            {"id": "one", "action": {}}, {"id": "two", "action": {}},
+        ]))
+        self.assertIsNone(_automatic_harness_choice(human, [
+            {"id": "only", "action": {}},
+        ]))
 
 
 class _StreamingHandler(BaseHTTPRequestHandler):

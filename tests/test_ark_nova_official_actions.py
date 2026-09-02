@@ -273,7 +273,12 @@ class ArkNovaOfficialActionTests(unittest.TestCase):
         self.assertEqual(30, state["players"][0]["money"])
         self.assertEqual(0, state["resolution"]["pending_choice"]["seat"])
 
-        discard_0 = engine.legal_choice_actions(state, 0)[0]["action"]
+        discard_actions = engine.legal_choice_actions(state, 0)
+        self.assertTrue(all(
+            item["label"].startswith("Discard final-0-")
+            for item in discard_actions
+        ))
+        discard_0 = discard_actions[0]["action"]
         state, _ = engine.submit_choice(
             state, 0, discard_0["choice_id"], discard_0["option_ids"],
         )

@@ -98,6 +98,114 @@ class MinimalHarnessTests(unittest.TestCase):
         self.assertTrue(agent._messages[1]["content"].startswith("You are seat "))
         self.assertLess(len(agent._messages), len(messages))
 
+    def test_ark_nova_journal_summary_uses_ark_nova_progress(self):
+        agent = object.__new__(DirectGameAgent)
+        agent.game_id = "ark_nova"
+        agent.seat = 0
+        before = {
+            "state_version": 20,
+            "turn_count": 4,
+            "phase": "action",
+            "break_track": {"count": 0, "position": 2},
+            "players": [{
+                "seat": 0, "money": 20, "x_tokens": 1,
+                "tracks": {"appeal": 3, "conservation": 0, "reputation": 1},
+                "score": 3, "hand": [{"id": "zoo-1"}],
+                "played_cards": [], "supported_projects": [],
+                "map": {"buildings": []},
+            }, {
+                "seat": 1, "money": 18, "x_tokens": 0,
+                "tracks": {"appeal": 4, "conservation": 0, "reputation": 1},
+                "score": 4, "hand_count": 2,
+                "played_cards": [], "supported_projects": [],
+                "map": {"buildings": []},
+            }],
+        }
+        after = {
+            **before,
+            "state_version": 24,
+            "turn_count": 5,
+            "break_track": {"count": 0, "position": 2},
+            "players": [{
+                **before["players"][0],
+                "money": 14,
+                "tracks": {"appeal": 8, "conservation": 0, "reputation": 1},
+                "hand": [],
+                "played_cards": [{"id": "zoo-1"}],
+                "map": {"buildings": [{"id": "building-1"}]},
+            }, before["players"][1]],
+        }
+        agent.profile = None
+        agent._journal = [
+            agent._journal_entry(20, {
+                "type": "start_action", "action_card_id": "animals",
+                "x_by_execution": [0], "multiplier_tokens": 0,
+            }, before, before),
+            agent._journal_entry(24, {
+                "type": "play_selected_animal", "building_id": "building-1",
+            }, after, after),
+        ]
+
+        summary = agent._journal_summary(last_n=50)
+
+        self.assertIn("Ark Nova decision steps digest", summary)
+        self.assertIn("Appeal 3→8", summary)
+        self.assertIn("played 1", summary)
+        self.assertIn("animals 1", summary)
+        self.assertIn("animals housed 1", summary)
+        self.assertNotIn("0 builds, 0 takes, 0 blocks", summary)
+
+    def test_legacy_splendor_digest_is_replaced_for_ark_nova(self):
+        agent = object.__new__(DirectGameAgent)
+        agent.game_id = "ark_nova"
+        agent.seat = 0
+        agent._journal = []
+        agent._messages = [{
+            "role": "system",
+            "content": (
+                "=== Last 50 turns digest ===\n"
+                "Actions: 0 builds, 0 takes, 0 blocks\n"
+                "Engine: 0 cards, bonuses={}"
+            ),
+        }]
+        observation = {
+            "state_version": 42,
+            "turn_count": 8,
+            "phase": "action",
+            "break_track": {"count": 1, "position": 7},
+            "players": [{
+                "seat": 0, "money": 12, "x_tokens": 2,
+                "tracks": {"appeal": 14, "conservation": 3, "reputation": 5},
+                "hand": [{"id": "zoo-1"}, {"id": "zoo-2"}],
+                "played_cards": [{"id": "zoo-3"}, {"id": "zoo-4"}],
+                "supported_projects": ["project-1"],
+                "map": {"buildings": [{"id": "building-1"}]},
+            }],
+        }
+
+        agent._prepare_ark_nova_session(observation, 42)
+
+        digest = agent._messages[0]["content"]
+        self.assertIn("Legacy non-Ark counters were removed", digest)
+        self.assertIn("hand 2, played 2, projects 1, buildings 1", digest)
+        self.assertNotIn("0 builds", digest)
+        self.assertNotIn("0 cards", digest)
+        self.assertEqual(1, len(agent._journal))
+
+    def test_session_persists_structured_journal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = PlayerConfig.from_dict({
+                "name": "Minimal", "backend": "minimal", "model": "test",
+                "base_url": "https://example.test/v1",
+            }, 0)
+            first = DirectGameAgent(config, "match", 0, runs_root=directory)
+            first._journal = [{"turn": 3, "action_type": "start_action"}]
+            first._save_session()
+
+            resumed = DirectGameAgent(config, "match", 0, runs_root=directory)
+
+            self.assertEqual(first._journal, resumed._journal)
+
 
 if __name__ == "__main__":
     unittest.main()

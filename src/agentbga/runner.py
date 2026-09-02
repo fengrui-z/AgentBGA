@@ -27,6 +27,23 @@ TurnGate = Callable[[], None]
 HumanChoice = Callable[[int, int, dict[str, Any], list[dict[str, Any]]], str]
 
 
+def _automatic_harness_choice(
+    config: PlayerConfig, legal: list[dict[str, Any]],
+) -> tuple[str, dict[str, Any]] | None:
+    """Bypass a model call when a harness-controlled seat has no choice."""
+    if config.backend not in HARNESS_BACKENDS or len(legal) != 1:
+        return None
+    return legal[0]["id"], {
+        "backend": config.backend,
+        "harness": config.backend,
+        "model": config.model,
+        "automatic": True,
+        "reason": "single_legal_action",
+        "attempts": 0,
+        "latency_ms": 0.0,
+    }
+
+
 def legacy_players(
     controllers: list[str], *, model: str | None = None,
     base_url: str = "https://api.openai.com/v1", api_key_env: str = "OPENAI_API_KEY",
@@ -149,6 +166,10 @@ def run_match(
                     if raw.isdigit() and int(raw) < len(legal):
                         return legal[int(raw)]["id"], metadata
                     print("Invalid selection.")
+
+        automatic = _automatic_harness_choice(config, legal)
+        if automatic is not None:
+            return automatic
 
         last_error: Exception | None = None
         for attempt in range(retries + 1):

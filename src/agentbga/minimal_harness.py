@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 import os
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 import time
 from typing import Any, Callable
@@ -196,12 +196,21 @@ class DirectGameAgent:
             try:
                 data = json.loads(self.session_path.read_text(encoding="utf-8"))
                 self._messages = data.get("messages", [])
+                journal = data.get("journal", [])
+                if isinstance(journal, list):
+                    self._journal = [
+                        entry for entry in journal if isinstance(entry, dict)
+                    ][-500:]
             except (json.JSONDecodeError, OSError):
                 self._messages = []
+                self._journal = []
 
     def _save_session(self) -> None:
         self.session_path.write_text(
-            json.dumps({"messages": self._messages}, ensure_ascii=False, separators=(",", ":")),
+            json.dumps({
+                "messages": self._messages,
+                "journal": self._journal[-500:],
+            }, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8",
         )
 
@@ -279,6 +288,37 @@ class DirectGameAgent:
                 lines.append(f"  thought: {snippet}")
         lines.append(f"\n({len(old_messages)} messages compressed)")
         return "\n".join(lines)
+
+    def _prepare_ark_nova_session(
+        self, observation: dict[str, Any], version: Any,
+    ) -> None:
+        """Seed factual Ark Nova memory and replace legacy Splendor digests."""
+        if self.game_id != "ark_nova":
+            return
+        snapshot_entry = {
+            "turn": version,
+            "action_type": "state_snapshot",
+            "meta": "other",
+            "action_detail": "current state snapshot",
+            "snapshot": self._ark_nova_snapshot(observation),
+        }
+        if not any(isinstance(entry.get("snapshot"), dict) for entry in self._journal):
+            self._journal.append(snapshot_entry)
+
+        replacement = (
+            "Legacy non-Ark counters were removed from this resumed session.\n"
+            + self._ark_nova_journal_summary([snapshot_entry])
+        )
+        for message in self._messages:
+            content = message.get("content")
+            if (
+                message.get("role") == "system"
+                and isinstance(content, str)
+                and content.startswith("=== Last ")
+                and "\nActions:" in content
+                and "\nEngine:" in content
+            ):
+                message["content"] = replacement
 
     # ── user message builder (feature-flag aware) ──
 
@@ -548,11 +588,11 @@ class DirectGameAgent:
         phase = "early"
         if self.profile:
             phase = detect_phase(turn, score_after, self.profile)
-        return {
+        entry = {
             "turn": turn,
             "action_type": action.get("type", ""),
             "meta": meta,
-            "action_detail": self._action_summary(action),
+            "action_detail": self._action_summary(action, obs_before),
             "score_before": score_before,
             "score_after": score_after,
             "score_delta": score_after - score_before,
@@ -561,10 +601,59 @@ class DirectGameAgent:
             "tokens_after": dict(my_after.get("tokens", {})),
             "phase": phase,
         }
+        if self.game_id == "ark_nova":
+            entry["snapshot"] = self._ark_nova_snapshot(obs_before)
+        return entry
 
-    def _action_summary(self, action: dict) -> str:
+    def _action_summary(self, action: dict, observation: dict | None = None) -> str:
         """Short human-readable summary of an action."""
         atype = action.get("type", "")
+        if self.game_id == "ark_nova":
+            if atype == "start_action":
+                card = action.get("action_card_id", "?")
+                x_spent = sum(action.get("x_by_execution", []) or [])
+                multiplier = action.get("multiplier_tokens", 0)
+                extras = []
+                if x_spent:
+                    extras.append(f"X+{x_spent}")
+                if multiplier:
+                    extras.append(f"multiplier {multiplier}")
+                suffix = f" ({', '.join(extras)})" if extras else ""
+                return f"start {card}{suffix}"
+            if atype == "select_animal_card":
+                return f"select animal {action.get('instance_id', '?')}"
+            if atype == "play_selected_animal":
+                return f"house selected animal in {action.get('building_id', '?')}"
+            if atype == "place_building":
+                return (
+                    f"place {action.get('building_type', '?')} "
+                    f"size {action.get('size', '?')}"
+                )
+            if atype == "perform_association_task":
+                target = (
+                    action.get("project_id") or action.get("university_id")
+                    or action.get("continent") or ""
+                )
+                return f"association {action.get('task_id', '?')} {target}".strip()
+            if atype in {"play_sponsor_card", "select_sponsor_card"}:
+                return f"play sponsor {action.get('instance_id', '?')}"
+            if atype == "resolve_semantic_choice":
+                prompt = "resolve choice"
+                labels = list(action.get("option_ids", []) or [])
+                pending = (observation or {}).get("pending_choice")
+                if isinstance(pending, dict):
+                    prompt = str(pending.get("prompt") or prompt)
+                    by_id = {
+                        str(option.get("id")): str(option.get("label", option.get("id")))
+                        for option in pending.get("options", [])
+                        if isinstance(option, dict)
+                    }
+                    labels = [by_id.get(str(value), str(value)) for value in labels]
+                selected = ", ".join(labels) if labels else "none"
+                return f"{prompt}: {selected}"
+            if atype.startswith("finish_"):
+                return atype.removeprefix("finish_").replace("_", " ") + " complete"
+            return atype.replace("_", " ")
         if atype == "take_tokens":
             take = action.get("take", {})
             return f"take {'+'.join(sorted(take.keys()))}"
@@ -578,11 +667,56 @@ class DirectGameAgent:
             return f"claim noble {action.get('noble_id', '?')}"
         return atype
 
+    def _ark_nova_snapshot(self, observation: dict[str, Any]) -> dict[str, Any]:
+        """Keep only factual Ark Nova progress needed by session compaction."""
+        players = []
+        for player in observation.get("players", []):
+            if not isinstance(player, dict):
+                continue
+            played = player.get("played_cards", [])
+            if not isinstance(played, list):
+                played = []
+            projects = player.get("supported_projects", [])
+            if not isinstance(projects, list):
+                projects = []
+            zoo_map = player.get("map", {})
+            buildings = zoo_map.get("buildings", []) if isinstance(zoo_map, dict) else []
+            if not isinstance(buildings, list):
+                buildings = []
+            players.append({
+                "seat": player.get("seat"),
+                "money": player.get("money", 0),
+                "x_tokens": player.get("x_tokens", 0),
+                "tracks": dict(player.get("tracks", {})),
+                "score": player.get("score", 0),
+                "hand_count": len(player.get("hand", []))
+                if isinstance(player.get("hand"), list)
+                else player.get("hand_count", 0),
+                "played_cards": len(played),
+                "supported_projects": len(projects),
+                "buildings": len(buildings),
+            })
+        break_track = observation.get("break_track", {})
+        return {
+            "state_version": observation.get("state_version"),
+            "turn_count": observation.get("turn_count"),
+            "phase": observation.get("phase"),
+            "players": players,
+            "break_count": break_track.get("count", 0)
+            if isinstance(break_track, dict) else 0,
+            "break_position": break_track.get("position", 0)
+            if isinstance(break_track, dict) else 0,
+            "endgame": dict(observation.get("endgame", {}))
+            if isinstance(observation.get("endgame"), dict) else {},
+        }
+
     def _journal_summary(self, last_n: int = 20) -> str:
         """Compress recent journal entries into a brief strategic digest."""
         entries = self._journal[-last_n:] if self._journal else []
         if not entries:
             return "(no history yet)"
+        if self.game_id == "ark_nova":
+            return self._ark_nova_journal_summary(entries)
 
         builds = sum(1 for e in entries if e["meta"] == "build")
         takes = sum(1 for e in entries if e["meta"] == "acquire")
@@ -603,6 +737,85 @@ class DirectGameAgent:
         seq = " → ".join(f"T{e['turn']}:{e['action_detail']}" for e in recent)
         lines.append(f"Recent: {seq}")
 
+        return "\n".join(lines)
+
+    def _ark_nova_journal_summary(self, entries: list[dict[str, Any]]) -> str:
+        """Summarize Ark Nova decision steps without Splendor-only counters."""
+        snapshots = [
+            entry["snapshot"] for entry in entries
+            if isinstance(entry.get("snapshot"), dict)
+        ]
+        lines = [f"=== Last {len(entries)} Ark Nova decision steps digest ==="]
+        if snapshots:
+            first = snapshots[0]
+            latest = snapshots[-1]
+            first_players = {
+                row.get("seat"): row for row in first.get("players", [])
+                if isinstance(row, dict)
+            }
+            for player in latest.get("players", []):
+                if not isinstance(player, dict):
+                    continue
+                seat = player.get("seat")
+                before = first_players.get(seat, {})
+                tracks = player.get("tracks", {})
+                old_tracks = before.get("tracks", {})
+                role = "You" if seat == self.seat else f"Seat {seat}"
+                lines.append(
+                    f"{role}: Appeal {old_tracks.get('appeal', 0)}→{tracks.get('appeal', 0)}, "
+                    f"Conservation {old_tracks.get('conservation', 0)}→{tracks.get('conservation', 0)}, "
+                    f"Reputation {old_tracks.get('reputation', 0)}→{tracks.get('reputation', 0)}; "
+                    f"money {player.get('money', 0)}, X {player.get('x_tokens', 0)}, "
+                    f"hand {player.get('hand_count', 0)}, played {player.get('played_cards', 0)}, "
+                    f"projects {player.get('supported_projects', 0)}, buildings {player.get('buildings', 0)}"
+                )
+            lines.append(
+                f"Breaks {first.get('break_count', 0)}→{latest.get('break_count', 0)}; "
+                f"current Break position {latest.get('break_position', 0)}; "
+                f"phase {latest.get('phase', '?')}"
+            )
+
+        starts = Counter(
+            str(entry.get("action_detail", "")).split(" ", 2)[1]
+            for entry in entries
+            if entry.get("action_type") == "start_action"
+            and str(entry.get("action_detail", "")).startswith("start ")
+        )
+        if starts:
+            order = ("animals", "cards", "build", "association", "sponsors")
+            values = [f"{name} {starts[name]}" for name in order if starts[name]]
+            values.extend(
+                f"{name} {count}" for name, count in sorted(starts.items())
+                if name not in order
+            )
+            lines.append("Action cards started: " + ", ".join(values))
+
+        progress = Counter(entry.get("action_type", "") for entry in entries)
+        progress_values = {
+            "animals housed": progress["play_selected_animal"],
+            "buildings placed": (
+                progress["place_building"] + progress["place_unique_sponsor_building"]
+            ),
+            "Association tasks": progress["perform_association_task"],
+            "Sponsors played": progress["play_sponsor_card"],
+        }
+        if any(progress_values.values()):
+            lines.append("Resolved in this digest window: " + ", ".join(
+                f"{label} {count}" for label, count in progress_values.items()
+            ))
+
+        routine = {
+            "state_snapshot",
+            "begin_animals_action", "begin_cards_draw", "finish_animals_action",
+            "finish_build_action", "finish_association_action", "finish_sponsors_action",
+        }
+        meaningful = [entry for entry in entries if entry.get("action_type") not in routine]
+        recent = meaningful[-6:]
+        if recent:
+            lines.append("Recent: " + " → ".join(
+                f"V{entry.get('turn')}:{entry.get('action_detail', entry.get('action_type', '?'))}"
+                for entry in recent
+            ))
         return "\n".join(lines)
 
     def _real_state_diff(self, prev_obs: dict, curr_obs: dict) -> str:
@@ -830,6 +1043,8 @@ class DirectGameAgent:
         started = time.monotonic()
         self._trace_steps = []
         self._turn_usage = TokenUsageAccumulator()
+
+        self._prepare_ark_nova_session(observation, version)
 
         # Write turn-context.json (same as HarnessAgent._prepare_turn does for
         # MCP harnesses — the seat_tool.call_tool reads this file).
