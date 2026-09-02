@@ -18,3 +18,4 @@ web/dist/
 # Local Ark Nova reports, milestone notes, and generated audit artifacts.
 # Machine-checked release evidence belongs under tests/fixtures instead.
 docs/ark-nova/
+content-packs/ark-nova/*.md
