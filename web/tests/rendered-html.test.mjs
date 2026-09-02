@@ -58,6 +58,9 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.doesNotMatch(source, /className="winner-banner"/);
   assert.match(styles, /\.winner-summary/);
   assert.match(source, /human_turn|submitHumanAction/);
+  assert.match(source, /const filteredTables = useMemo/);
+  assert.match(source, /type="search"/);
+  assert.match(styles, /\.live-table-list \{ max-height:248px/);
   assert.doesNotMatch(source, /function HumanActionConfirmation/);
   assert.doesNotMatch(source, /confirmHumanAction/);
   assert.match(source, /if \(item\) void submitHumanAction\(item\)/);

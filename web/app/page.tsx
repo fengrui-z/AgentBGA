@@ -47,7 +47,8 @@ const STR: Record<Lang, Dict> = {
     s_finished: "已结束", s_wait_pause: "等待暂停", s_paused: "已暂停", s_active: "进行中",
     processing: "处理中…", resume: "▶ 继续对局", pause: "Ⅱ 暂停", new_match: "新对局",
     watch_live: "观战已有牌桌", watch: "开始观战 →", watching: "正在接入…",
-    watch_id: "对局 ID", live_tables: "本地牌桌", no_tables: "还没有可观战的对局。CLI 或 Web 开桌后会出现在这里。",
+    watch_id: "搜索对局 ID、玩家或游戏", live_tables: "本地牌桌", no_tables: "还没有可观战的对局。CLI 或 Web 开桌后会出现在这里。",
+    no_matching_tables: "没有匹配的牌桌，请更换搜索内容。",
     spectator: "观战", err_watch: "无法接入对局",
     err_pause: "无法更新暂停状态", err_submit: "无法提交行动",
     err_ws: "实时连接已断开，可刷新页面后重新开始。", call_failed: "调用失败",
@@ -130,7 +131,8 @@ const STR: Record<Lang, Dict> = {
     s_finished: "Finished", s_wait_pause: "Waiting to pause", s_paused: "Paused", s_active: "Running",
     processing: "Working…", resume: "▶ Resume", pause: "Ⅱ Pause", new_match: "New match",
     watch_live: "Watch an existing table", watch: "Watch →", watching: "Opening…",
-    watch_id: "Match ID", live_tables: "Local tables", no_tables: "No watchable tables yet. CLI or web matches will show up here.",
+    watch_id: "Search match ID, player, or game", live_tables: "Local tables", no_tables: "No watchable tables yet. CLI or web matches will show up here.",
+    no_matching_tables: "No matching tables. Try another search.",
     spectator: "Spectator", err_watch: "Failed to watch match",
     err_pause: "Failed to update pause state", err_submit: "Failed to submit action",
     err_ws: "Live connection dropped. Refresh and restart.", call_failed: "Call failed",
@@ -1396,6 +1398,23 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const minPlayers = game === "ark_nova" ? 1 : game === "seven_wonders" ? 3 : 2;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
   const spectator = snapshot?.mode === "spectator";
+  const filteredTables = useMemo(() => {
+    const query = watchId.trim().toLocaleLowerCase(lang === "zh" ? "zh-CN" : "en");
+    if (!query) return tables;
+    return tables.filter(table => {
+      const gameName = GAME_COPY[table.game]?.name[lang] || table.game;
+      const status = table.status === "finished" ? t("s_finished") : t("s_active");
+      return [table.match_id, table.game, gameName, status, ...table.players.map(player => player.name)]
+        .some(value => String(value || "").toLocaleLowerCase(lang === "zh" ? "zh-CN" : "en").includes(query));
+    });
+  }, [lang, tables, t, watchId]);
+  const watchTarget = useMemo(() => {
+    const query = watchId.trim();
+    const exact = tables.find(table => table.match_id.toLowerCase() === query.toLowerCase());
+    if (exact) return exact.match_id;
+    if (filteredTables.length === 1) return filteredTables[0].match_id;
+    return /^[a-f\d]{8,}$/i.test(query) ? query : "";
+  }, [filteredTables, tables, watchId]);
 
   async function watchMatch(matchId: string) {
     const id = matchId.trim().toLowerCase();
@@ -1650,15 +1669,17 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       <section className="live-tables">
         <header>
           <div><span>{t("live_tables")}</span><h2>{t("watch_live")}</h2></div>
-          <form className="watch-form" onSubmit={event => { event.preventDefault(); void watchMatch(watchId); }}>
+          <form className="watch-form" onSubmit={event => { event.preventDefault(); if (watchTarget) void watchMatch(watchTarget); }}>
             <label htmlFor="watch-id">{t("watch_id")}</label>
-            <input id="watch-id" value={watchId} spellCheck={false} placeholder="b8323d2a27f34578" onChange={event => setWatchId(event.target.value)}/>
-            <button type="submit" disabled={starting || watchId.trim().length < 8}>{starting ? t("watching") : t("watch")}</button>
+            <input id="watch-id" type="search" value={watchId} spellCheck={false} autoComplete="off" placeholder={t("watch_id")} aria-controls="live-table-results" onChange={event => setWatchId(event.target.value)}/>
+            <button type="submit" disabled={starting || !watchTarget}>{starting ? t("watching") : t("watch")}</button>
           </form>
         </header>
-        <div className="live-table-list">
+        <div className="live-table-results-meta" aria-live="polite"><span>{filteredTables.length} / {tables.length}</span><small>{watchId.trim() ? t("watch_id") : zh ? "滚轮浏览牌桌" : "Scroll to browse tables"}</small></div>
+        <div className="live-table-list" id="live-table-results">
           {tables.length === 0 && <p className="live-table-empty">{t("no_tables")}</p>}
-          {tables.map(table => {
+          {tables.length > 0 && filteredTables.length === 0 && <p className="live-table-empty">{t("no_matching_tables")}</p>}
+          {filteredTables.map(table => {
             const names = table.players.map(player => player.name).filter(Boolean);
             const title = names.length ? names.join(" vs ") : table.match_id;
             return <button type="button" key={table.match_id} onClick={() => void watchMatch(table.match_id)}>
