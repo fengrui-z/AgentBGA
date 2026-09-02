@@ -761,7 +761,11 @@ function ConservationProjectGrid({projects, identities, lang, projectActions, su
       return <article key={project.instance_id || project.id} aria-label={`${title}；${criterion}`}><header><i>✓</i><div><b>{title}</b><small>{criterion || project.id}</small>{zoo && project.instance_id && <small>{copy(lang, "实体牌", "Physical card")} · {project.instance_id}</small>}</div></header><div>{tiers.map((tier, index) => {
         const conservation = Number(tier.conservation ?? 0);
         const blocked = Boolean(tier.blocked || (tier.id && project.blocked_levels?.includes(tier.id)));
-        const claim = project.claims?.find(item => item.level_id === tier.id || item.level === conservation);
+        // A claim belongs to one physical reward slot.  Do not fall back to the
+        // conservation reward value: structured projects may award the same
+        // amount in multiple slots (for example breeding programs award 2 C in
+        // both slot 1 and slot 3), which would render one token more than once.
+        const claim = tier.id ? project.claims?.find(item => item.level_id === tier.id) : undefined;
         const levelActions = projectActions.filter(item => item.action.project_id === project.id && item.action.level_id === tier.id);
         const selection = `${project.id}::${String(tier.id || "")}`;
         const selected = selection === selectedProjectTier;

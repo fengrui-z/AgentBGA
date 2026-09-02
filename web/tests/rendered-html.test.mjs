@@ -149,6 +149,8 @@ test("Ark Nova table exposes the public board, association, summary, and interac
   assert.match(source, /play_animal/);
   assert.match(source, /onChoose\(action\)/);
   assert.match(source, /claims\?\.find/);
+  assert.match(source, /claims\?\.find\(item => item\.level_id === tier\.id\)/);
+  assert.doesNotMatch(source, /item\.level === conservation/);
   assert.match(source, /partner_zoos\.includes/);
   assert.match(source, /public_summary/);
   assert.match(source, /currentTrackScore/);
