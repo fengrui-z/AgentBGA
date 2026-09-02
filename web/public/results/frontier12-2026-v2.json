@@ -294,7 +294,11 @@
         "mean_cached_input_tokens_m": 5.598,
         "mean_output_tokens_m": 0.045,
         "mean_reasoning_tokens_m": 0.0,
-        "efficiency_frontier": true
+        "efficiency_frontier": true,
+        "mean_input_cost_rmb": 0.918,
+        "mean_cached_input_cost_rmb": 1.6794,
+        "mean_output_cost_rmb": 0.405,
+        "mean_cost_rmb": 3.0024
       },
       {
         "participant_id": "deepseek-v4-pro-0813-dsh",
@@ -555,7 +559,11 @@
         "mean_output_tokens_m": 0.048,
         "mean_reasoning_tokens_m": 0,
         "elo": 1530.7,
-        "elo_rank": 8
+        "elo_rank": 8,
+        "mean_input_cost_rmb": 0.84,
+        "mean_cached_input_cost_rmb": 2.0181,
+        "mean_output_cost_rmb": 0.432,
+        "mean_cost_rmb": 3.2901
       },
       {
         "participant_id": "deepseek-v4-flash-0731-dsh",
@@ -568,7 +576,11 @@
         "mean_output_tokens_m": 0.041,
         "mean_reasoning_tokens_m": 0,
         "elo": 1584.5,
-        "elo_rank": 4
+        "elo_rank": 4,
+        "mean_input_cost_rmb": 1.029,
+        "mean_cached_input_cost_rmb": 1.2051,
+        "mean_output_cost_rmb": 0.369,
+        "mean_cost_rmb": 2.6031
       },
       {
         "participant_id": "deepseek-v4-pro-0813-dsh",

@@ -103,6 +103,12 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
     const metric = tokens.get(item.participant_id);
     return metric ? [{...metric, rating: item}] : [];
   });
+  const priced = ordered.filter(item => [
+    item.mean_input_cost_rmb,
+    item.mean_cached_input_cost_rmb,
+    item.mean_output_cost_rmb,
+    item.mean_cost_rmb,
+  ].every(Number.isFinite));
   const maximumMean = Math.max(...ordered.map(item => item.mean_total_tokens_m), 1);
   const games: GameId[] = ["splendor", "seven_wonders", "brass_birmingham"];
   const byGame = new Map(token.by_game.map(item => [`${item.participant_id}:${item.game}`, item]));
@@ -110,7 +116,7 @@ function EfficiencyCharts({data}: {data: FrontierData}) {
   const costScopes: CostScope[] = ["overall", ...games];
   const scopeLabel = selectedCostScope === "overall" ? "Overall" : GAME_NAMES[selectedCostScope];
   const costComparison = (selectedCostScope === "overall"
-    ? ordered.map(item => ({
+    ? priced.map(item => ({
         participant_id: item.participant_id,
         short_name: item.short_name,
         successful_sessions: item.successful_sessions,
