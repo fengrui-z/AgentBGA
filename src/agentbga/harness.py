@@ -351,8 +351,12 @@ class HarnessAgent:
             return [*command, "-p", prompt]
         if self.config.backend == "opencode":
             selected_model = model if "/" in model else f"agentbga/{model}"
-            command = [self.binary, "run", "--pure", "--format", "json", "--model", selected_model,
-                       "--variant", reasoning_effort, "--dir", "."]
+            command = [
+                self.binary, "run", "--pure", "--print-logs", "--log-level", "ERROR",
+                "--format", "json", "--model", selected_model,
+                "--variant", reasoning_effort, "--dir", ".",
+                f"--title=AgentBGA-seat-{self.session.seat + 1}",
+            ]
             # OpenCode's CLI flag controls whether reasoning blocks are shown;
             # provider-specific request options are configured separately below.
             if reasoning_enabled:
@@ -459,6 +463,13 @@ class HarnessAgent:
                 target = self.session.workspace / dirname
                 target.mkdir(exist_ok=True)
                 env[variable] = str(target)
+            # OpenCode resolves a session against the enclosing Git worktree.
+            # A seat workspace nested below that worktree is therefore not
+            # guaranteed to remain the active config directory after startup.
+            # Pin the generated seat config explicitly and prevent a project
+            # config from replacing its isolated provider/tool permissions.
+            env["OPENCODE_CONFIG"] = str(self.session.workspace / "opencode.json")
+            env["OPENCODE_DISABLE_PROJECT_CONFIG"] = "1"
             if key:
                 env[self.config.api_key_env or "DEEPSEEK_API_KEY"] = key
         elif self.config.backend == "claude":
@@ -549,6 +560,13 @@ class HarnessAgent:
         mcp_command = [
             sys.executable, "-m", "agentbga.seat_mcp", "--context", relative_context,
             "--notes-root", ".",
+        ]
+        # OpenCode associates sessions with the surrounding Git worktree, so
+        # its MCP child may run from the repository root instead of the nested
+        # seat workspace. Give that backend location-independent paths.
+        opencode_mcp_command = [
+            sys.executable, "-m", "agentbga.seat_mcp", "--context", str(context_path),
+            "--notes-root", str(self.session.workspace),
         ]
         escaped_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
         requested_effort = self.config.reasoning_effort or "max"
@@ -796,10 +814,11 @@ class HarnessAgent:
             provider_id, model_id = "agentbga", provider_id
         opencode_config: dict[str, Any] = {
             "$schema": "https://opencode.ai/config.json",
-            "mcp": {"agentbga": {"type": "local", "command": mcp_command, "enabled": True}},
+            "mcp": {"agentbga": {
+                "type": "local", "command": opencode_mcp_command, "enabled": True,
+            }},
             "permission": {
-                "*": "deny", "read": "allow", "edit": "allow",
-                "agentbga_*": "allow",
+                "*": "deny", "agentbga_*": "allow",
             },
         }
         if provider_id and model_id:
@@ -807,16 +826,10 @@ class HarnessAgent:
             endpoint = (self.config.base_url or "").lower()
             deepseek_native = "deepseek" in endpoint
             if reasoning_enabled:
-                # The OpenAI SDK consumes camelCase options and serializes
-                # Responses fields. Generic OpenAI-compatible providers receive
-                # variant fields as raw request-body extensions, so use the
-                # snake_case spelling expected by DashScope and similar APIs.
-                effort_key = (
-                    "reasoningEffort"
-                    if self.config.wire_api == "responses" or deepseek_native
-                    else "reasoning_effort"
-                )
-                variant = {effort_key: requested_effort}
+                # OpenCode model settings use the AI SDK's camelCase option.
+                # Its OpenAI-compatible adapter serializes this as the
+                # ``reasoning_effort`` request field expected by DashScope.
+                variant = {"reasoningEffort": requested_effort}
                 if deepseek_native:
                     variant["thinking"] = {"type": "enabled"}
             elif deepseek_native:
