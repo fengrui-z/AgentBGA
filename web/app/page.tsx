@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import ArenaPage from "./arena/page";
+import { CatanBoard, CatanPlayerPanel, CatanActionPicker, catanActionText, type CatanView, type CatanPlayerView } from "./catan";
 
 // ── i18n ─────────────────────────────────────────────────────────────
 type Lang = "zh" | "en";
@@ -178,7 +179,7 @@ const useLang = () => useContext(LangCtx);
 
 type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "qwen" | "codex" | "cursor" | "grok" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
 type Provider = "custom" | "claude_code" | "pi" | "qwen" | "codex" | "cursor" | "grok" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
-type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road" | "seven_wonders";
+type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road" | "seven_wonders" | "catan";
 type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "max" | "xhigh";
 type AuthMode = "api_key" | "subscription";
 type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string; auth_mode: AuthMode; reasoning_effort: ReasoningEffort };
@@ -305,12 +306,12 @@ type SevenView = {
   turn_count: number; decision_count: number; active_seat: number; pass_direction: "left" | "right";
   discard_count: number; pending_choice_seats: number[]; players: SevenPlayerView[];
 };
-type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
+type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean; players?: {minimum: number; maximum: number}};
 type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
   paused: boolean; pause_pending: boolean; mode?: "live" | "spectator" | "store";
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
-  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView)[];
+  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView | CatanView)[];
 };
 type TableSummary = {
   match_id: string; game: GameId; status: string; turn_count: number; seed: number;
@@ -356,7 +357,13 @@ const GAME_COPY: Record<GameId, {eyebrow: string; name: Record<Lang,string>; des
   ark_nova: {eyebrow: "ARK NOVA", name: {zh:"方舟动物园",en:"Ark Nova"}, description: {zh:"在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。",en:"Test multi-stage decisions in a controlled research-card pool: opening hand, five action cards, hex building, animal placement, association tasks and Break."}, badge: "CONTROLLED CORE V2", note: {zh:"升级 · 捐款 · 释放 · 效果系统",en:"Upgrades · donations · release · effect system"}},
   brass_birmingham: {eyebrow: "BRASS: BIRMINGHAM", name: {zh:"伯明翰",en:"Brass: Birmingham"}, description: {zh:"测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。",en:"Test long-term planning in a two-era economic network: industry building, resource sourcing, merchant selling, dynamic turn order and canal-to-rail transitions."}, badge: "PLAYABLE BETA", note: {zh:"产业 · 网络 · 双时代经济",en:"Industry · network · two-era economy"}},
   century_spice_road: {eyebrow: "CENTURY: SPICE ROAD", name: {zh:"香料之路",en:"Century: Spice Road"}, description: {zh:"经营自己的商队：获取商人牌、升级或交换香料、争夺金币银币，并抢先完成高分订单。支持 2–5 名玩家。",en:"Run your caravan: acquire merchant cards, upgrade or trade spices, race for gold and silver coins to fulfill high-score orders. 2–5 players."}, badge: "CLASSIC BASE", note: {zh:"商人牌 · 香料引擎 · 订单竞速",en:"Merchant cards · spice engine · order race"}},
+  catan: {eyebrow: "CATAN", name: {zh:"卡坦岛",en:"Catan"}, description: {zh:"探索六角岛屿，建立村落和城市，利用资源生产、港口与玩家贸易争夺 10 点胜利。支持 3–4 名玩家。",en:"Settle a hex island, build roads and cities, and trade resources with ports and players in a race to 10 victory points. 3–4 players."}, badge: "PLAYABLE BETA", note: {zh:"资源 · 贸易 · 建造竞速",en:"Resources · trade · building race"}},
   seven_wonders: {eyebrow: "7 WONDERS", name: {zh:"七大奇迹",en:"7 Wonders"}, description: {zh:"在三个时代中密封选牌并传递手牌，通过生产、贸易、军事、科技与奇迹建设塑造古代文明。支持 3–7 名玩家。",en:"Draft sealed choices across three Ages, passing hands while developing production, trade, military, science and a Wonder. 3–7 players."}, badge: "SECOND EDITION BASE", note: {zh:"轮抽 · 邻城贸易 · 七维计分",en:"Draft · neighbor trade · seven-part scoring"}},
+};
+const GAME_PLAYER_LIMITS: Record<GameId, {minimum: number; maximum: number}> = {
+  splendor: {minimum: 2, maximum: 4}, azul: {minimum: 2, maximum: 4}, ark_nova: {minimum: 2, maximum: 4},
+  brass_birmingham: {minimum: 2, maximum: 4}, century_spice_road: {minimum: 2, maximum: 5},
+  seven_wonders: {minimum: 3, maximum: 7}, catan: {minimum: 3, maximum: 4},
 };
 const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: string; model: string}> = {
   openai: { label: {zh: "OpenAI 兼容", en: "OpenAI-compatible"}, url: "https://api.openai.com/v1", key: "", model: "" },
@@ -889,6 +896,8 @@ function describeAction(item: Timeline, names: Record<number, string>, lang: Lan
   const seat = event.seat ?? 0;
   const who = event.player || names[seat] || `${zh ? "座位" : "Seat"} ${seat + 1}`;
   const action = event.action ?? {};
+  const catanText = catanActionText(action, lang);
+  if (catanText) return `${who}${zh ? "：" : ": "}${catanText}`;
   if (action.type === "take_tokens") {
     const take = tokenText((action.take ?? {}) as Record<string, number>, lang);
     const returned = tokenText((action.return ?? {}) as Record<string, number>, lang);
@@ -914,6 +923,8 @@ function describeAction(item: Timeline, names: Record<number, string>, lang: Lan
 function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?: BrassView) {
   const zh = lang === "zh"; const L = BRASS_INDUSTRY_LABELS[lang]; const BL = BRASS_ACTION_LABELS[lang];
   const sep = zh ? "、" : ", ";
+  const catanText = catanActionText(action, lang);
+  if (catanText) return catanText;
   if (action.type === "draft_tiles") {
     const color = AZUL_META[String(action.color) as AzulColor]?.[lang] || String(action.color);
     const source = action.source === "center" ? (zh ? "中央区" : "center") : (zh ? `工厂 ${String(action.source).replace("factory-", "")}` : `factory ${String(action.source).replace("factory-", "")}`);
@@ -1415,7 +1426,8 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const sevenView = snapshot?.game === "seven_wonders" ? viewer as SevenView : undefined;
   const sevenSpectatorViews = snapshot?.game === "seven_wonders" && !snapshot.players.some(player => player.backend === "human")
     ? snapshot.views as SevenView[] : undefined;
-  const maxPlayers = game === "seven_wonders" ? 7 : game === "century_spice_road" ? 5 : 4;
+  const catanView = snapshot?.game === "catan" ? viewer as CatanView : undefined;
+  const {minimum: minPlayers, maximum: maxPlayers} = GAME_PLAYER_LIMITS[game];
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
   const spectator = snapshot?.mode === "spectator";
 
@@ -1539,16 +1551,16 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     const selected = kind === "human" ? [humanPlayer(1), deepseekHarnessPlayer(2, "opencode")] : [
       deepseekHarnessPlayer(1, "opencode"), codexHarnessPlayer(2),
     ];
-    if (game === "seven_wonders") selected.push(player(3, "random"));
+    while (selected.length < minPlayers) selected.push(player(selected.length + 1, "random"));
     setPlayers(selected);
   }
 
   function selectGame(next: GameId) {
     setGame(next);
-    const maximum = next === "seven_wonders" ? 7 : next === "century_spice_road" ? 5 : 4;
+    const {minimum, maximum} = GAME_PLAYER_LIMITS[next];
     setPlayers(current => {
       const selected = current.slice(0, maximum);
-      while (next === "seven_wonders" && selected.length < 3) selected.push(player(selected.length + 1, "random"));
+      while (selected.length < minimum) selected.push(player(selected.length + 1, "random"));
       return selected;
     });
   }
@@ -1694,7 +1706,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
           <div className="provider-note">{PROVIDERS[p.provider].note[lang]}</div>
         </>}
         {(["random", "human"] as Backend[]).includes(p.backend) && <div className="field manual-backend"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select><small>{p.backend === "human" ? t("human_note") : t("random_note")}</small></div>}
-        {players.length > 2 && <button className="remove" aria-label={`${t("remove")} ${p.name}`} onClick={() => setPlayers(x => x.filter(y => y.id !== p.id))}>×</button>}
+        {players.length > minPlayers && <button className="remove" aria-label={`${t("remove")} ${p.name}`} onClick={() => setPlayers(x => x.filter(y => y.id !== p.id))}>×</button>}
       </article>)}</div>
       <div className="setup-actions">
         <button className="add-player human-add" disabled={players.length >= maxPlayers} onClick={() => setPlayers(x => [...x, humanPlayer(x.length + 1)])}>{t("add_human")}</button>
@@ -1708,6 +1720,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       {game === "azul" && <div className="setup-scope-note"><b>{GAME_COPY.azul.badge}</b> {zh ? "支持彩色墙基础版、100 枚具名花砖、工厂与中央区选砖、图案线、地板罚分、相邻计分、终局奖励和确定性回放；不包含灰墙玩法、扩展或出版商美术。" : "Supports the colored-wall base game, 100 identity-safe tiles, factory/center drafting, pattern lines, floor penalties, adjacency scoring, endgame bonuses and deterministic replay; no gray wall, expansions or publisher artwork."}</div>}
       {game === "brass_birmingham" && <div className="setup-scope-note"><b>{GAME_COPY.brass_birmingham.badge}</b> {zh ? "支持官方人数牌组、产业板、市场、商人、Build/Sell/Develop、单双铁路、负收入变卖、双时代计分与完整回放；界面不包含出版商美术。" : "Supports official player counts, industry board, markets, merchants, Build/Sell/Develop, single/double rail, negative-income liquidation, two-era scoring and full replay; no publisher artwork."}</div>}
       {game === "century_spice_road" && <div className="setup-scope-note"><b>{GAME_COPY.century_spice_road.badge}</b> {zh ? "完整基础牌组数值、重复交易、升级、市场压香料、商队容量、金币银币、终局与计分均已接通；不包含出版商卡图。" : "Full base-set values, repeat trades, upgrades, market spice, caravan capacity, gold/silver coins, endgame and scoring wired up; no publisher artwork."}</div>}
+      {game === "catan" && <div className="setup-scope-note"><b>{GAME_COPY.catan.badge}</b> {zh ? "支持基础岛屿、起始放置、掷骰产出、强盗、港口和玩家交易、发展卡、最长道路与最大骑士军。交易按资源与数量逐步确认。" : "Base island, opening placement, dice production, robber, harbor and player trades, development cards, longest road and largest army. Choose trade resources and amounts one step at a time."}</div>}
       {game === "seven_wonders" && <div className="setup-scope-note"><b>{GAME_COPY.seven_wonders.badge}</b> {zh ? "支持 148 张基础牌、日/夜双面奇迹、密封同步选牌、邻城贸易、链式建造、军事、科技、商会与七类计分；不包含扩展或出版商美术。" : "Supports all 148 base cards, Day/Night Wonders, sealed simultaneous drafting, neighbor trade, chains, military, science, guilds and seven-part scoring; no expansions or publisher artwork."}</div>}
       {error && <div className="error">{error}</div>}
     </section>
@@ -1738,19 +1751,21 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
               ? <BrassPlayerPanel key={identity.seat} player={visiblePlayer as BrassPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
               : snapshot.game === "century_spice_road"
                 ? <CenturyPlayerPanel key={identity.seat} player={visiblePlayer as CenturyPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
+                : snapshot.game === "catan"
+                  ? <CatanPlayerPanel key={identity.seat} player={visiblePlayer as CatanPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat} lang={lang}/>
                 : <SevenPlayerPanel key={identity.seat} player={visiblePlayer as SevenPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
       })}</aside>
       <section className={`board ${snapshot.human_turn ? "has-human-action" : ""}`}>
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? t("pause_pending") : t("paused")}</strong><span>{snapshot.pause_pending ? t("pause_pending_desc") : t("paused_desc")}</span></div>}
         {snapshot.human_turn && <section className="human-turn" aria-live="polite">
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}{t("pick_action")}</h2></div><b>{snapshot.human_turn.legal_actions.length} {t("legal_opts")}</b></header>
-          {snapshot.game === "azul" ? <AzulActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
+          {snapshot.game === "catan" ? <CatanActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} lang={lang} disabled={Boolean(submittingAction)} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : snapshot.game === "azul" ? <AzulActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
             <h3>{ACTION_GROUPS[lang][kind] || kind}<span>{actions.length}</span></h3>
             <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div>
           </section>)}</div>}
           <HumanActionConfirmation selected={selectedHumanAction} brassView={brassView} issue={humanActionIssue} submitting={Boolean(submittingAction)} onConfirm={confirmHumanAction}/>
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : snapshot.game === "catan" ? <CatanBoard view={catanView} players={snapshot.players} lang={lang} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
         {snapshot.status === "finished" && <div className="winner-banner"><span>{t("winner")}</span><strong>{timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong><button onClick={() => { setSnapshot(null); setTimeline([]); }}>{t("play_again")}</button></div>}
       </section>
       <aside className="timeline">

@@ -14,6 +14,7 @@ A headless, deterministic board-game environment for evaluating LLM agents in lo
 - **Century: Spice Road** (2–5 players, fully playable)
 - **Ark Nova** (2–4 players, controlled core V2 — generated research cards, no publisher data)
 - **7 Wonders** (3–7 players, complete Second Edition base rules, Day/Night Wonders)
+- **Catan** (3–4 players, base game with combined trading/building, playable beta)
 
 ## Quick start
 
@@ -22,6 +23,14 @@ Python 3.11+, no install required:
 ```console
 ./agentbga run --players 2 --controllers random,random --seed 42
 ```
+
+Catan uses three or four seats:
+
+```console
+./agentbga run --game catan --players 3 --controllers random,random,random --seed 42
+```
+
+See [Catan support](docs/catan.md) for the implemented rules and structured trading flow.
 
 LLM vs random:
 
@@ -205,6 +214,7 @@ agentbga games list --json
 agentbga match create --game splendor --players 4 --seed 42 --json
 agentbga match create --game azul --players 2 --seed 42 --json
 agentbga match create --game seven_wonders --players 3 --seed 42 --json
+agentbga match create --game catan --players 3 --seed 42 --json
 agentbga match observe MATCH_ID --seat 0 --json
 agentbga match legal-actions MATCH_ID --seat 0 --json
 agentbga match act MATCH_ID --seat 0 --expected-version 7 \

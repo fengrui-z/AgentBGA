@@ -1,4 +1,5 @@
 import tempfile
+import random
 import unittest
 from pathlib import Path
 
@@ -9,6 +10,35 @@ from agentbga.store import ConflictError, Store
 
 
 class StoreTests(unittest.TestCase):
+    def test_catan_actions_survive_reopen_and_exact_replay(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "catan.sqlite3"
+            store = Store(database)
+            match_id, version, state = store.create(4, 42, "catan")
+            game = store.game(match_id)
+            rng = random.Random(71)
+            rolls = 0
+            for _ in range(100):
+                seat = state["active_seat"]
+                legal = game.legal_actions(state, seat)
+                choice = rng.choice(legal)["action"]
+                # Keep this persistence test focused on setup and dice-bearing turns.
+                if state["phase"] == "main":
+                    choice = next(item["action"] for item in legal if item["action"]["type"] == "end_turn")
+                rolls += choice["type"] == "roll_dice"
+                version, state, _ = store.act(match_id, seat, version, choice)
+            self.assertGreater(rolls, 10)
+            digest = game.state_hash(state)
+            store.close()
+            reopened = Store(database)
+            try:
+                self.assertEqual(state, reopened.load(match_id)[1])
+                frames = reopened.replay(match_id)
+                self.assertEqual(version, frames[-1]["version"])
+                self.assertEqual(digest, frames[-1]["state_hash"])
+            finally:
+                reopened.close()
+
     def test_create_act_and_conflict(self):
         with tempfile.TemporaryDirectory() as directory:
             store = Store(Path(directory) / "test.sqlite3")

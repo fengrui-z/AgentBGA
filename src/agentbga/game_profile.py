@@ -400,6 +400,80 @@ SEVEN_WONDERS_PROFILE = GameProfile(
 )
 
 
+# ── Catan profile ──
+CATAN_PROFILE = GameProfile(
+    game_id="catan",
+    game_name="Catan",
+    total_expected_turns=160,
+    endgame_score_threshold=8,
+    resource_categories={
+        "brick": "resource", "lumber": "resource", "wool": "resource",
+        "grain": "resource", "ore": "resource",
+    },
+    engine_component_name="settlements and cities producing resources on dice rolls",
+    scoring_dimensions=["settlements", "cities", "longest road", "largest army", "victory point cards"],
+    action_meta_types={
+        "place_settlement": META_BUILD,
+        "place_road": META_BUILD,
+        "roll_dice": META_ACQUIRE,
+        "build_road": META_BUILD,
+        "build_settlement": META_BUILD,
+        "build_city": META_BUILD,
+        "buy_development_card": META_BUILD,
+        "maritime_trade": META_CONVERT,
+        "propose_trade": META_CONVERT,
+        "trade_amount": META_CONVERT,
+        "respond_trade": META_CONVERT,
+        "cancel_trade": META_SETUP,
+        "discard": META_SETUP,
+        "finish_road_building": META_SETUP,
+        "counter_trade": META_CONVERT,
+        "move_robber": META_BLOCK,
+        "steal": META_ACQUIRE,
+        "play_knight": META_BLOCK,
+        "play_monopoly": META_ACQUIRE,
+        "play_road_building": META_BUILD,
+        "play_year_of_plenty": META_ACQUIRE,
+        "free_road": META_BUILD,
+        "take_resource": META_ACQUIRE,
+        "end_turn": META_SETUP,
+    },
+    observation_schema={
+        "board": "spatial",
+        "bank": "shared_resources",
+        "players": "self_state",
+        "trade": "market",
+        "robber_hex": "spatial",
+        "longest_road_seat": "scoring_opportunities",
+        "largest_army_seat": "scoring_opportunities",
+        "development_deck_count": "meta",
+        "rankings": "meta",
+    },
+    turn_structure="multi_step",
+    hidden_info_types=["resource_hands", "development_cards", "victory_point_cards", "development_deck"],
+    has_spatial=True,
+    spatial_summary_method="network",
+    has_card_abilities=True,
+    ability_summary_depth="full",
+    early_strategy=(
+        "Place settlements for productive dice numbers and varied resources. Plan your second "
+        "settlement's starting resources and an expansion route before committing roads."
+    ),
+    mid_strategy=(
+        "Balance city upgrades, new settlements, and development cards. Negotiate useful "
+        "trades, use ports, and account for the robber and losing half a hand above seven cards."
+    ),
+    late_strategy=(
+        "Reach ten points on your own turn. Count your hidden victory points, evaluate "
+        "Longest Road and Largest Army swings, and avoid trades that let a rival win first."
+    ),
+    capability_weights={
+        CAP_ENGINE: 3, CAP_RESOURCE: 3, CAP_OPPONENT: 3, CAP_PHASE: 2,
+        CAP_PLANNING: 3, CAP_PERCEPTION: 2, CAP_ENDGAME: 3, CAP_COMBO: 2,
+    },
+)
+
+
 # ── Registry ──
 
 _PROFILES: dict[str, GameProfile] = {
@@ -408,6 +482,7 @@ _PROFILES: dict[str, GameProfile] = {
     "ark_nova": ARK_NOVA_PROFILE,
     "brass_birmingham": BRASS_PROFILE,
     "seven_wonders": SEVEN_WONDERS_PROFILE,
+    "catan": CATAN_PROFILE,
 }
 
 
