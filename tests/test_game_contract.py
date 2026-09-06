@@ -1,9 +1,18 @@
 import unittest
 
 from agentbga.registry import GameRegistry, game_ids, get_game
+from agentbga.game_profile import get_profile
 
 
 class RegisteredGameContractTests(unittest.TestCase):
+    def test_catan_profile_covers_supported_actions(self):
+        game = get_game("catan")
+        profile = get_profile("catan")
+        self.assertEqual("Catan", profile.game_name)
+        self.assertEqual("multi_step", profile.turn_structure)
+        self.assertTrue(profile.has_spatial)
+        self.assertFalse(set(game.describe()["action_types"]) - set(profile.action_meta_types))
+
     def test_registry_rejects_duplicates_and_metadata_mismatches(self):
         registry = GameRegistry()
         plugin = get_game("splendor")

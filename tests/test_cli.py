@@ -11,6 +11,30 @@ from agentbga.cli import main
 
 
 class CLITests(unittest.TestCase):
+    def test_catan_cli_create_observe_act_and_verify(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "catan.sqlite3"
+
+            def command(*arguments):
+                output = StringIO()
+                with redirect_stdout(output):
+                    self.assertEqual(0, main([*arguments, "--db", str(database)]))
+                return json.loads(output.getvalue())["data"]
+
+            created = command("match", "create", "--game", "catan", "--players", "3", "--seed", "42")
+            self.assertEqual("catan", created["game"])
+            self.assertEqual(3, created["players"])
+            match_id = created["match_id"]
+            observed = command("match", "observe", match_id, "--seat", "0")
+            self.assertEqual("catan", observed["game"])
+            self.assertEqual(19, len(observed["board"]["hexes"]))
+            self.assertNotIn("seed", observed)
+            choice = observed["legal_actions"][0]["action"]
+            command("match", "act", match_id, "--seat", "0", "--expected-version", "0",
+                    "--action", json.dumps(choice))
+            command("match", "verify", match_id)
+            command("match", "replay", match_id)
+
     def test_seven_wonders_cli_accepts_seven_players(self):
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "match.sqlite3"

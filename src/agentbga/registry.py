@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-from . import ark_nova, azul, brass_birmingham, century_spice_road, seven_wonders, splendor
+from . import ark_nova, azul, brass_birmingham, catan, century_spice_road, seven_wonders, splendor
 from .game import GamePlugin
 
 
@@ -98,6 +98,7 @@ _REGISTRY = GameRegistry((
     _ModulePlugin(brass_birmingham, "brass_birmingham"),
     _ModulePlugin(century_spice_road, "century_spice_road"),
     _ModulePlugin(seven_wonders, "seven_wonders"),
+    _ModulePlugin(catan, "catan"),
 ))
 
 

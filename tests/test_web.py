@@ -14,6 +14,36 @@ from agentbga.web import MatchHub, WebHandler, serve
 
 
 class WebTests(unittest.TestCase):
+    def test_catan_setup_snapshot_has_board_and_private_seat_views(self):
+        stopped = threading.Event()
+
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "catan", "seed": 42,
+                "players": [{"name": name, "backend": "random"} for name in ("Red", "Blue", "White")],
+            })
+            self.assertEqual("catan", created["game"])
+            self.assertEqual({"minimum": 3, "maximum": 4}, created["game_description"]["players"])
+            self.assertEqual(3, len(created["views"]))
+            for seat, view in enumerate(created["views"]):
+                self.assertEqual(19, len(view["board"]["hexes"]))
+                self.assertEqual(54, len(view["board"]["vertices"]))
+                self.assertEqual(72, len(view["board"]["edges"]))
+                self.assertIsInstance(view["players"][seat]["resources"], dict)
+                self.assertNotIn("seed", view)
+                for other in range(3):
+                    if other != seat:
+                        self.assertIsNone(view["players"][other].get("resources"))
+                        self.assertIsNone(view["players"][other].get("development_cards"))
+            self.assertTrue(stopped.wait(2))
+
     def test_games_endpoint_lists_registered_renderers(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -32,7 +62,7 @@ class WebTests(unittest.TestCase):
             finally:
                 server.shutdown()
                 server.server_close()
-            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "century_spice_road", "seven_wonders"],
+            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "century_spice_road", "seven_wonders", "catan"],
                              [game["id"] for game in response["games"]])
 
     def test_seven_wonders_setup_snapshot_uses_game_renderer_contract(self):
