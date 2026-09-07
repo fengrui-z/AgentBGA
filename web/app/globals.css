@@ -192,3 +192,26 @@ button { cursor:pointer; }
 .brass-route.selected .route-visible{stroke:#fff3a5;stroke-width:13;stroke-dasharray:none}
 .brass-map-choice button.selected{border-color:#594719!important;outline:2px solid #d3a647;outline-offset:-3px;background:#fff0b6}
 @media(max-width:760px){.board.has-human-action{padding-bottom:152px}.human-action-confirmation{bottom:8px;width:calc(100vw - 16px);grid-template-columns:1fr;gap:8px;padding:10px}.human-action-confirmation button{width:100%;min-width:0;height:42px}}
+
+/* Human Splendor selection uses the same gem shapes as the table. */
+.splendor-gem-picker,.splendor-return-picker{padding:16px;border-bottom:1px solid #ded8c7}
+.splendor-gem-picker>header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.splendor-action-picker h3{margin:0;font-size:16px}
+.splendor-action-picker p{margin:10px 0;font-size:14px;line-height:1.6;color:#5b564a}
+.splendor-gem-picker>header>button{background:transparent;border:1px solid #cbc4b2;padding:7px 10px;font-size:14px}
+.splendor-gem-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}
+.splendor-gem-control{border:1px solid #cbc4b2;background:#fff;min-width:0}
+.splendor-gem-control.is-selected{border-color:#153f36;box-shadow:inset 0 0 0 2px #153f36;background:#e4efe8}
+.splendor-gem-add{width:100%;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;color:inherit}
+.splendor-gem-add .gem{min-width:60px;padding:8px 10px}
+.splendor-gem-add strong{font-size:14px}
+.splendor-gem-add small{font-size:12px;color:#5b564a}
+.splendor-gem-adjust{display:flex;align-items:center;justify-content:center;gap:5px;padding:0 5px 10px;font-size:12px}
+.splendor-gem-adjust button{width:32px;height:32px;border:1px solid #aaa18d;background:#fff;font-size:20px;line-height:1}
+.splendor-action-picker button:disabled{opacity:.45;cursor:default}
+.splendor-action-picker button:focus-visible{outline:3px solid #153f36;outline-offset:2px}
+.splendor-gem-add:hover:not(:disabled){background:#fff3cc}
+.splendor-return-picker{background:#fff0de;border-left:4px solid #b77520}
+.splendor-action-picker .splendor-selection-summary{font-weight:700;color:#153f36;margin-bottom:0}
+.splendor-action-picker>.human-action-groups{max-height:330px}
+@media(max-width:480px){.splendor-gem-controls{grid-template-columns:repeat(3,minmax(0,1fr))}.splendor-gem-picker,.splendor-return-picker{padding:12px}.splendor-gem-add .gem{min-width:0}}
