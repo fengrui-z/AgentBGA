@@ -9,6 +9,7 @@ import {
   ArkNovaPlayerSummary, ArkNovaTable,
   type ArkPlayerView, type ArkView,
 } from "./ark-nova-table";
+import { canAddToken, counts, reservationChoices, resolveSelection, selectionCandidates, tokenTotal } from "./splendor-selection";
 
 // ── i18n ─────────────────────────────────────────────────────────────
 type Lang = "zh" | "en";
@@ -1116,6 +1117,82 @@ function HumanActionChoice({item, view, brassView, disabled, submitting, selecte
   </button>;
 }
 
+function SplendorActionPicker({actions, view, disabled, selectedId, onSelect}: {
+  actions: LegalAction[]; view: View; disabled: boolean; selectedId: string;
+  onSelect: (item: LegalAction | null, requirement?: string) => void;
+}) {
+  const lang = useLang(); const zh = lang === "zh";
+  const [selection, setSelection] = useState<"take" | LegalAction | null>(null);
+  const [take, setTake] = useState<Record<string, number>>({});
+  const [returned, setReturned] = useState<Record<string, number>>({});
+  const takeActions = actions.filter(item => item.action.type === "take_tokens");
+  const candidates = selection ? selectionCandidates(actions, selection, take) : [];
+  const returnRequired = tokenTotal(counts(candidates[0]?.action.return));
+  const remaining = returnRequired - tokenTotal(returned);
+  const playerTokens = view.players[view.active_seat].tokens;
+  const gained = selection === "take" ? take : selection ? {gold: view.bank.gold > 0 ? 1 : 0} : {};
+  const afterTake = Object.fromEntries(GEM_ORDER.map(color => [color, (playerTokens[color] ?? 0) + (gained[color] ?? 0)]));
+  const takeHint = zh ? "请选择 3 种不同颜色，或同色 2 颗（库存至少 4 颗）；不足 3 种时取所有可用颜色。" : "Choose 3 different colors, or 2 of one color with at least 4 in supply. If fewer than 3 colors remain, take one of each.";
+
+  function updateSelection(nextSelection: "take" | LegalAction, nextTake: Record<string, number>, nextReturn: Record<string, number>) {
+    setSelection(nextSelection); setTake(nextTake); setReturned(nextReturn);
+    const choices = selectionCandidates(actions, nextSelection, nextTake);
+    const needed = tokenTotal(counts(choices[0]?.action.return)) - tokenTotal(nextReturn);
+    onSelect(resolveSelection(choices, nextReturn), choices.length === 0 ? takeHint : zh ? `请再选择退回 ${needed} 颗宝石。` : `Choose ${needed} more gems to return.`);
+  }
+
+  function chooseAction(item: LegalAction) {
+    if (item.action.type === "reserve_visible" || item.action.type === "reserve_deck") {
+      updateSelection(item, {}, {});
+    } else {
+      setSelection(null); setTake({}); setReturned({}); onSelect(item);
+    }
+  }
+
+  const otherGroups = groupActions(actions.filter(item => item.action.type !== "take_tokens"));
+  return <div className="splendor-action-picker">
+    {takeActions.length > 0 && <section className="splendor-gem-picker">
+      <header><h3>{zh ? "拿取宝石" : "Take gems"}</h3><button type="button" disabled={disabled || (selection !== "take" && tokenTotal(take) === 0)} onClick={() => updateSelection("take", {}, {})}>{zh ? "清空选择" : "Clear selection"}</button></header>
+      <p>{takeHint}</p>
+      <div className="splendor-gem-controls">{BONUS_ORDER.map(color => {
+        const selected = selection === "take" ? take[color] ?? 0 : 0;
+        const canAdd = canAddToken(takeActions, "take", selection === "take" ? take : {}, color);
+        const label = GEM_META[color].label[lang];
+        return <div key={color} className={`splendor-gem-control ${selected ? "is-selected" : ""}`}>
+          <button type="button" className="splendor-gem-add" disabled={disabled || !canAdd} onClick={() => updateSelection("take", {...(selection === "take" ? take : {}), [color]: selected + 1}, {})} aria-label={zh ? `拿取${label}，已选 ${selected} 颗` : `Take ${label}, ${selected} selected`}>
+            <Gem color={color} value={view.bank[color]}/><strong>{label}</strong><small>{zh ? "库存" : "Supply"} {view.bank[color]}</small>
+          </button>
+          <div className="splendor-gem-adjust"><button type="button" disabled={disabled || selected === 0} aria-label={zh ? `少取一颗${label}` : `Remove one ${label}`} onClick={() => updateSelection("take", {...take, [color]: selected - 1}, {})}>−</button><span>{zh ? "已选" : "Selected"} <b>{selected}</b></span></div>
+        </div>;
+      })}</div>
+      {selection === "take" && <p className="splendor-selection-summary">{zh ? `已选 ${tokenTotal(take)} 颗` : `${tokenTotal(take)} gems selected`}{candidates.length > 0 ? (zh ? ` · 拿取后共 ${tokenTotal(afterTake)} 颗 / 上限 10 颗` : ` · ${tokenTotal(afterTake)} held after taking / limit 10`) : (zh ? " · 请继续选择" : " · Keep selecting")}</p>}
+    </section>}
+    {returnRequired > 0 && <section className="splendor-return-picker">
+      <h3>{zh ? `退回宝石 · 还需 ${remaining} 颗` : `Return gems · ${remaining} remaining`}</h3>
+      <p>{zh ? `持有上限为 10 颗，本次需退回 ${returnRequired} 颗。点击要退回的宝石，也可以退回刚拿到的宝石或黄金。` : `The limit is 10 gems. Return ${returnRequired}; you may return gems just taken or gold.`}</p>
+      {selection && selection !== "take" && <p>{humanActionText({...selection.action, return: {}}, lang)}{view.bank.gold > 0 ? (zh ? " · 获得 1 颗黄金" : " · Gain 1 gold") : ""}</p>}
+      <div className="splendor-gem-controls">{GEM_ORDER.filter(color => afterTake[color] > 0).map(color => {
+        const amount = returned[color] ?? 0;
+        const label = GEM_META[color].label[lang];
+        return <div key={color} className={`splendor-gem-control ${amount ? "is-selected" : ""}`}>
+          <button type="button" className="splendor-gem-add" disabled={disabled || !canAddToken(candidates, "return", returned, color)} onClick={() => updateSelection(selection!, take, {...returned, [color]: amount + 1})} aria-label={zh ? `退回${label}，已选 ${amount} 颗` : `Return ${label}, ${amount} selected`}>
+            <Gem color={color} value={afterTake[color] - amount}/><strong>{label}</strong><small>{zh ? "保留" : "Keep"} {afterTake[color] - amount}</small>
+          </button>
+          <div className="splendor-gem-adjust"><button type="button" disabled={disabled || amount === 0} aria-label={zh ? `少退一颗${label}` : `Return one fewer ${label}`} onClick={() => updateSelection(selection!, take, {...returned, [color]: amount - 1})}>−</button><span>{zh ? "退回" : "Return"} <b>{amount}</b></span></div>
+        </div>;
+      })}</div>
+      <p className="splendor-selection-summary">{zh ? `退回后保留 ${tokenTotal(afterTake) - tokenTotal(returned)} 颗 / 上限 10 颗` : `Keep ${tokenTotal(afterTake) - tokenTotal(returned)} gems / limit 10`}</p>
+    </section>}
+    <div className="human-action-groups">{Object.entries(otherGroups).map(([kind, items]) => {
+      const isReservation = kind === "reserve_visible" || kind === "reserve_deck";
+      const choices = isReservation ? reservationChoices(items) : items;
+      return <section key={kind}><h3>{ACTION_GROUPS[lang][kind] || kind}<span>{choices.length}</span></h3>
+        <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : undefined}>{choices.map(item => <HumanActionChoice key={item.id} item={isReservation ? {...item, action: {...item.action, return: {}}} : item} view={view} disabled={disabled} submitting={false} selected={isReservation ? selection !== "take" && selection?.id === item.id : selectedId === item.id} onChoose={() => chooseAction(item)}/>)}</div>
+      </section>;
+    })}</div>
+  </div>;
+}
+
 function AzulActionPicker({actions, disabled, submitting, selectedId, onSelect}: {actions: LegalAction[]; disabled: boolean; submitting: string; selectedId: string; onSelect: (item: LegalAction | null, requirement?: string) => void}) {
   const lang = useLang(); const zh = lang === "zh";
   const t = makeT(lang);
@@ -1779,7 +1856,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? t("pause_pending") : t("paused")}</strong><span>{snapshot.pause_pending ? t("pause_pending_desc") : t("paused_desc")}</span></div>}
         {snapshot.human_turn && <section className="human-turn" aria-live="polite">
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}{t("pick_action")}</h2></div><b>{snapshot.human_turn.legal_actions.length} {t("legal_opts")}</b></header>
-          {snapshot.game === "azul" ? <AzulActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : arkMapInteraction ? <div className="ark-map-action-notice"><div><b>{lang === "zh" ? "请在对应板块直接操作" : "Act directly on the matching board"}</b><span>{lang === "zh" ? "行动牌、手牌和地图位于玩家板；展示牌与抽牌位于整体游戏板；协会事务位于协会板。" : "Action cards, hand, and map are on the player board; display and draw actions are on the main board; association tasks are on the association board."}</span></div>{snapshot.human_turn.legal_actions.filter(item => !isArkTableAction(item)).map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
+          {snapshot.game === "splendor" && splendorView ? <SplendorActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} view={splendorView} disabled={Boolean(submittingAction)} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "azul" ? <AzulActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : arkMapInteraction ? <div className="ark-map-action-notice"><div><b>{lang === "zh" ? "请在对应板块直接操作" : "Act directly on the matching board"}</b><span>{lang === "zh" ? "行动牌、手牌和地图位于玩家板；展示牌与抽牌位于整体游戏板；协会事务位于协会板。" : "Action cards, hand, and map are on the player board; display and draw actions are on the main board; association tasks are on the association board."}</span></div>{snapshot.human_turn.legal_actions.filter(item => !isArkTableAction(item)).map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
             <h3>{ACTION_GROUPS[lang][kind] || kind}<span>{actions.length}</span></h3>
             <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div>
           </section>)}</div>}
