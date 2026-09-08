@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./ark-nova-table.css";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 

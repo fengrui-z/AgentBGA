@@ -31,6 +31,52 @@ class RegisteredGameContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "description id"):
             registry.register(WrongDescription())
 
+    def test_registry_keeps_multiple_rules_versions_and_selects_exactly(self):
+        original = get_game("splendor")
+
+        class VersionAlias:
+            game_id = original.game_id
+            rules_version = "test-rules-v2"
+
+            def describe(self):
+                return {**original.describe(), "rules_version": self.rules_version}
+
+            def setup(self, players, seed, config=None):
+                return original.setup(players, seed, config)
+
+            def observe(self, state, seat):
+                return original.observe(state, seat)
+
+            def decision_seats(self, state):
+                return original.decision_seats(state)
+
+            def legal_actions(self, state, seat):
+                return original.legal_actions(state, seat)
+
+            def apply_action(self, state, seat, action):
+                return original.apply_action(state, seat, action)
+
+            def rankings(self, state):
+                return original.rankings(state)
+
+            def validate_state(self, state):
+                return original.validate_state(state)
+
+            def state_hash(self, state):
+                return original.state_hash(state)
+
+        alias = VersionAlias()
+        registry = GameRegistry((original, alias))
+        self.assertEqual((original.rules_version, alias.rules_version), registry.rules_versions("splendor"))
+        self.assertIs(alias, registry.get("splendor"))
+        self.assertIs(original, registry.get("splendor", original.rules_version))
+        self.assertEqual(
+            [original.rules_version, alias.rules_version],
+            registry.list_games()[0]["available_rules_versions"],
+        )
+        with self.assertRaisesRegex(ValueError, "unknown rules version"):
+            registry.get("splendor", "missing")
+
     def test_every_registered_game_is_deterministic_and_exposes_one_action_protocol(self):
         for game_id in game_ids():
             with self.subTest(game=game_id):

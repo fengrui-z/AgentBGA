@@ -11,6 +11,12 @@ from typing import Any, Callable
 from .agents import AgentError, HARNESS_BACKENDS, PlayerConfig, build_model_agent, random_choice
 from .harness import build_harness_agent
 from .minimal_harness import build_minimal_agent
+from .public_projection import (
+    public_action,
+    public_action_id,
+    public_controller_event,
+    public_game_event,
+)
 from .store import Store
 from .usage import build_harness_metrics
 
@@ -18,6 +24,23 @@ from .usage import build_harness_metrics
 EventSink = Callable[[dict[str, Any]], None]
 TurnGate = Callable[[], None]
 HumanChoice = Callable[[int, int, dict[str, Any], list[dict[str, Any]]], str]
+
+
+def _automatic_harness_choice(
+    config: PlayerConfig, legal: list[dict[str, Any]],
+) -> tuple[str, dict[str, Any]] | None:
+    """Bypass a model call when a harness-controlled seat has no choice."""
+    if config.backend not in HARNESS_BACKENDS or len(legal) != 1:
+        return None
+    return legal[0]["id"], {
+        "backend": config.backend,
+        "harness": config.backend,
+        "model": config.model,
+        "automatic": True,
+        "reason": "single_legal_action",
+        "attempts": 0,
+        "latency_ms": 0.0,
+    }
 
 
 def legacy_players(
@@ -88,6 +111,9 @@ def run_match(
 
         def harness_sink(event: dict[str, Any], seat: int = harness_seat) -> None:
             enriched = {"version": version, "backend": configs[seat].backend, **event}
+            enriched = public_controller_event(
+                enriched, match_id=match_id, version=version, seat=seat,
+            )
             if enriched.get("type") != "harness_output":
                 # Agent callbacks can run on worker threads, while sqlite
                 # connections remain owned by the runner thread.
@@ -118,6 +144,7 @@ def run_match(
     ) -> tuple[str, dict[str, Any]]:
         config = configs[seat]
         metadata: dict[str, Any] = {}
+        choice_started = time.monotonic()
         if config.backend == "random":
             return random_choice(legal, rngs[seat]), metadata
         if config.backend == "human":
@@ -138,6 +165,10 @@ def run_match(
                     if raw.isdigit() and int(raw) < len(legal):
                         return legal[int(raw)]["id"], metadata
                     print("Invalid selection.")
+
+        automatic = _automatic_harness_choice(config, legal)
+        if automatic is not None:
+            return automatic
 
         last_error: Exception | None = None
         for attempt in range(retries + 1):
@@ -187,6 +218,8 @@ def run_match(
         if fallback == "random":
             return random_choice(legal, rngs[seat]), {
                 "fallback": "random", "error": str(last_error),
+                "latency_ms": round((time.monotonic() - choice_started) * 1000, 3),
+                "attempts": retries + 1,
             }
         raise AgentError(f"{config.name} exhausted retries: {last_error}")
 
@@ -255,19 +288,21 @@ def run_match(
                     store.record_controller_call(
                         match_id, version, seat, config.backend, metadata,
                     )
-                public_action = selected
-                if selected.get("type") == "choose_initial_hand":
-                    public_action = {
-                        "type": "choose_initial_hand",
-                        "kept_count": len(selected["card_ids"]),
-                    }
+                projected_action = public_action(selected)
+                projected_action_id = public_action_id(
+                    action_id, selected, match_id=match_id,
+                    version=snapshot_version, seat=seat,
+                )
                 decision_events.append({
                     "type": "decision", "match_id": match_id, "version": version,
                     "snapshot_version": snapshot_version,
                     "simultaneous_seats": decision_seats,
                     "seat": seat, "player": config.name, "backend": config.backend,
-                    "action_id": action_id, "action": public_action,
-                    "events": [event for event in events if event.get("type") != "action_accepted"],
+                    "action_id": projected_action_id, "action": projected_action,
+                    "events": [
+                        public_game_event(event) for event in events
+                        if event.get("type") != "action_accepted"
+                    ],
                     "agent": metadata,
                     "turn_count": state["turn_count"],
                     "decision_count": state.get("decision_count", state["turn_count"]),
@@ -280,7 +315,9 @@ def run_match(
     rankings = [{**row, "player": by_seat[row["seat"]]["name"], "backend": by_seat[row["seat"]]["backend"]}
                 for row in game.rankings(state)]
     result = {
-        "match_id": match_id, "game": game.game_id, "version": version, "turns": state["turn_count"],
+        "match_id": match_id, "game": game.game_id, "rules_version": game.rules_version,
+        "content_pack_id": state.get("content_pack_id"), "content_hash": state.get("content_hash"),
+        "version": version, "turns": state["turn_count"],
         "decisions": state.get("decision_count", state["turn_count"]),
         "players": [{"seat": seat, **config.public_dict()} for seat, config in enumerate(configs)],
         "rankings": rankings,

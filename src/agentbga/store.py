@@ -10,6 +10,7 @@ import uuid
 from typing import Any
 
 from .agents import HARNESS_BACKENDS
+from .public_projection import public_game_event
 from .registry import get_game
 
 
@@ -19,16 +20,6 @@ class ConflictError(RuntimeError):
 
 class MatchNotFound(KeyError):
     pass
-
-
-def _public_game_event(event: dict[str, Any]) -> dict[str, Any]:
-    """Project authoritative events into a spectator-safe audit representation."""
-    if event.get("type") == "action_accepted" and event.get("action", {}).get("type") == "choose_initial_hand":
-        return {
-            **event,
-            "action": {"type": "choose_initial_hand", "kept_count": len(event["action"]["card_ids"])},
-        }
-    return event
 
 
 def default_db_path() -> Path:
@@ -48,6 +39,8 @@ class Store:
                 id TEXT PRIMARY KEY,
                 game_id TEXT NOT NULL,
                 rules_version TEXT NOT NULL,
+                content_pack_id TEXT,
+                content_hash TEXT,
                 version INTEGER NOT NULL,
                 seed INTEGER NOT NULL,
                 state_json TEXT NOT NULL,
@@ -110,6 +103,13 @@ class Store:
             self.connection.execute("ALTER TABLE match_players ADD COLUMN reasoning_effort TEXT")
         if "auth_mode" not in columns:
             self.connection.execute("ALTER TABLE match_players ADD COLUMN auth_mode TEXT")
+        match_columns = {
+            row["name"] for row in self.connection.execute("PRAGMA table_info(matches)").fetchall()
+        }
+        if "content_pack_id" not in match_columns:
+            self.connection.execute("ALTER TABLE matches ADD COLUMN content_pack_id TEXT")
+        if "content_hash" not in match_columns:
+            self.connection.execute("ALTER TABLE matches ADD COLUMN content_hash TEXT")
         self.connection.commit()
 
     def close(self) -> None:
@@ -117,21 +117,38 @@ class Store:
 
     def create(
         self, players: int, seed: int, game_id: str = "splendor",
-        config: dict[str, Any] | None = None,
+        config: dict[str, Any] | None = None, *, rules_version: str | None = None,
     ) -> tuple[str, int, dict[str, Any]]:
-        game = get_game(game_id)
+        game = get_game(game_id, rules_version)
         state = game.setup(players, seed, config)
+        if state.get("rules_version") != game.rules_version:
+            raise AssertionError("setup state rules_version does not match selected plugin")
         match_id = uuid.uuid4().hex[:16]
         now = time.time()
         digest = game.state_hash(state)
+        content_pack_id = state.get("content_pack_id")
+        content_hash = state.get("content_hash")
+        if (content_pack_id is None) != (content_hash is None):
+            raise AssertionError("content_pack_id and content_hash must be declared together")
+        if content_pack_id is not None and (
+            not isinstance(content_pack_id, str) or not content_pack_id
+            or not isinstance(content_hash, str) or len(content_hash) != 64
+            or any(character not in "0123456789abcdef" for character in content_hash)
+        ):
+            raise AssertionError("content pack identity must contain a non-empty ID and SHA-256 hash")
         with self.connection:
             self.connection.execute(
-                "INSERT INTO matches VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (match_id, game_id, game.rules_version, 0, seed,
-                 json.dumps(state, separators=(",", ":")), digest, now, now),
+                "INSERT INTO matches "
+                "(id,game_id,rules_version,content_pack_id,content_hash,version,seed,state_json,state_hash,created_at,updated_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (match_id, game_id, game.rules_version, content_pack_id, content_hash, 0,
+                 seed, json.dumps(state, separators=(",", ":")), digest, now, now),
             )
             event = {
                 "type": "match_created", "game": game_id, "players": players,
+                "rules_version": game.rules_version,
+                "content_pack_id": content_pack_id,
+                "content_hash": content_hash,
                 "seed": seed, "config": config or {},
             }
             self.connection.execute(
@@ -147,13 +164,30 @@ class Store:
         return row["version"], json.loads(row["state_json"]), row["state_hash"]
 
     def game_id(self, match_id: str) -> str:
-        row = self.connection.execute("SELECT game_id FROM matches WHERE id = ?", (match_id,)).fetchone()
+        return self.match_identity(match_id)[0]
+
+    def rules_version(self, match_id: str) -> str:
+        return self.match_identity(match_id)[1]
+
+    def match_identity(self, match_id: str) -> tuple[str, str]:
+        row = self.connection.execute(
+            "SELECT game_id,rules_version FROM matches WHERE id = ?", (match_id,),
+        ).fetchone()
         if row is None:
             raise MatchNotFound(match_id)
-        return str(row["game_id"])
+        return str(row["game_id"]), str(row["rules_version"])
+
+    def content_identity(self, match_id: str) -> tuple[str | None, str | None]:
+        row = self.connection.execute(
+            "SELECT content_pack_id,content_hash FROM matches WHERE id = ?", (match_id,),
+        ).fetchone()
+        if row is None:
+            raise MatchNotFound(match_id)
+        return row["content_pack_id"], row["content_hash"]
 
     def game(self, match_id: str):
-        return get_game(self.game_id(match_id))
+        game_id, rules_version = self.match_identity(match_id)
+        return get_game(game_id, rules_version)
 
     def act(self, match_id: str, seat: int, expected_version: int, action: dict[str, Any]) -> tuple[int, dict[str, Any], list[dict[str, Any]]]:
         self.connection.execute("BEGIN IMMEDIATE")
@@ -163,6 +197,10 @@ class Store:
                 raise ConflictError(f"expected version {expected_version}, current version is {version}")
             game = self.game(match_id)
             next_state, events = game.apply_action(state, seat, action)
+            if (
+                next_state.get("content_pack_id"), next_state.get("content_hash")
+            ) != self.content_identity(match_id):
+                raise AssertionError("an action cannot change the match content-pack identity")
             next_version = version + 1
             digest = game.state_hash(next_state)
             now = time.time()
@@ -195,7 +233,7 @@ class Store:
         return [
             {
                 "seq": row["seq"], "version": row["version"], "seat": row["seat"],
-                "event": _public_game_event(json.loads(row["event_json"])),
+                "event": public_game_event(json.loads(row["event_json"])),
                 "state_hash": row["state_hash"],
             }
             for row in rows

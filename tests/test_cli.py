@@ -61,7 +61,7 @@ class CLITests(unittest.TestCase):
                 code = main(["games", "describe", "ark_nova"])
             self.assertEqual(0, code)
             description = json.loads(output.getvalue())["data"]
-            self.assertEqual("controlled_core", description["implementation_status"])
+            self.assertEqual("released", description["implementation_status"])
             self.assertTrue(description["runnable"])
 
             output = StringIO()
@@ -85,6 +85,40 @@ class CLITests(unittest.TestCase):
             self.assertEqual("ark_nova", observed["game"])
             self.assertEqual(70, len(observed["legal_actions"]))
 
+    def test_match_create_reaches_advertised_ark_nova_solo_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main([
+                    "match", "create", "--game", "ark_nova", "--players", "1",
+                    "--seed", "42", "--db", str(Path(directory) / "match.sqlite3"),
+                ])
+            self.assertEqual(0, code)
+            created = json.loads(output.getvalue())["data"]
+            self.assertEqual(1, created["players"])
+            self.assertEqual("ark_nova", created["game"])
+
+    def test_cli_can_select_an_exact_rules_version(self):
+        with tempfile.TemporaryDirectory() as directory:
+            describe_output = StringIO()
+            with redirect_stdout(describe_output):
+                self.assertEqual(0, main([
+                    "games", "describe", "ark_nova", "--rules-version",
+                    "base-1.2-controlled-core.6",
+                ]))
+            description = json.loads(describe_output.getvalue())["data"]
+            self.assertEqual("base-1.2-controlled-core.6", description["rules_version"])
+
+            create_output = StringIO()
+            with redirect_stdout(create_output):
+                self.assertEqual(0, main([
+                    "match", "create", "--game", "ark_nova", "--players", "2",
+                    "--seed", "42", "--rules-version", "base-1.2-controlled-core.6",
+                    "--db", str(Path(directory) / "match.sqlite3"),
+                ]))
+            created = json.loads(create_output.getvalue())["data"]
+            self.assertEqual("base-1.2-controlled-core.6", created["rules_version"])
+
     def test_ark_nova_cli_accepts_game_config(self):
         with tempfile.TemporaryDirectory() as directory:
             output = StringIO()
@@ -96,6 +130,26 @@ class CLITests(unittest.TestCase):
                 ])
             self.assertEqual(0, code)
             self.assertEqual("ark_nova", json.loads(output.getvalue())["data"]["game"])
+
+    def test_ark_nova_cli_can_select_map_a(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "match.sqlite3"
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(0, main([
+                    "match", "create", "--game", "ark_nova", "--players", "2",
+                    "--seed", "7", "--map", "map-a", "--db", str(database),
+                ]))
+            match_id = json.loads(output.getvalue())["data"]["match_id"]
+            observed_output = StringIO()
+            with redirect_stdout(observed_output):
+                self.assertEqual(0, main([
+                    "match", "observe", match_id, "--seat", "0",
+                    "--db", str(database),
+                ]))
+            observed = json.loads(observed_output.getvalue())["data"]
+            self.assertEqual("map-a", observed["players"][0]["map"]["id"])
+            self.assertEqual(2, len(observed["players"][0]["map"]["buildings"]))
 
     def test_games_describe_and_create_azul(self):
         with tempfile.TemporaryDirectory() as directory:

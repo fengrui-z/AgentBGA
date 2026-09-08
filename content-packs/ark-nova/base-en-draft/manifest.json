@@ -1,0 +1,74 @@
+{
+  "content_sha256": "bee6de5feb05b1c0b37e3dfe23489fab368302f5a0daa50a44f29bb74c4688c8",
+  "content_version": "map0-release.1",
+  "distribution": {
+    "contains_publisher_art": false,
+    "contains_verbatim_card_text": false,
+    "license": "Project-authored mechanics data; factual short names and identifiers are catalog references",
+    "mode": "repository_safe"
+  },
+  "expected_counts": {
+    "animals": 128,
+    "base_conservation_projects": 12,
+    "bonus_tiles": 9,
+    "final_scoring": 11,
+    "maps": 1,
+    "sponsors": 64,
+    "zoo_conservation_projects": 20
+  },
+  "files": {
+    "animals": "animals.json",
+    "base_conservation_projects": "base_conservation_projects.json",
+    "bonus_tiles": "bonus_tiles.json",
+    "final_scoring": "final_scoring.json",
+    "maps": "maps.json",
+    "sponsors": "sponsors.json",
+    "zoo_conservation_projects": "zoo_conservation_projects.json"
+  },
+  "game_id": "ark_nova",
+  "pack_id": "ark-nova-base-map0-released",
+  "rules_version": "base-1.2-faq-v2-map0.1",
+  "schema_version": "agentbga.ark_nova.content_manifest.v1",
+  "sources": [
+    {
+      "id": "capstone-rulebook-base-en",
+      "kind": "rulebook",
+      "revision": "publisher download checked 2026-08-28",
+      "title": "Ark Nova base-game English rulebook",
+      "url": "https://capstone-games.com/cdn/shop/files/Ark-Nova-Rulebook.pdf",
+      "verified_on": "2026-08-28"
+    },
+    {
+      "id": "community-card-index-base-en",
+      "kind": "community_catalog",
+      "revision": "repository snapshot checked 2026-08-24; base ranges only",
+      "title": "Community Ark Nova card index (discovery lead, not rules authority)",
+      "url": "https://github.com/ssimeonoff/ssimeonoff.github.io/blob/master/ark-nova.html",
+      "verified_on": "2026-08-24"
+    },
+    {
+      "id": "user-structured-base-255",
+      "kind": "physical_component",
+      "revision": "1.0",
+      "title": "User-supplied structured base-game card reference",
+      "verified_on": "2026-08-25"
+    },
+    {
+      "id": "capstone-glossary-base-en",
+      "kind": "rulebook",
+      "revision": "publisher download checked 2026-08-28",
+      "title": "Ark Nova base-game English glossary",
+      "url": "https://cdn.shopify.com/s/files/1/0947/3907/1278/files/Ark-Nova-Glossary.pdf",
+      "verified_on": "2026-08-28"
+    },
+    {
+      "id": "capstone-faq-v2-base-en",
+      "kind": "faq_errata",
+      "revision": "publisher download checked 2026-08-28",
+      "title": "Ark Nova FAQ v2",
+      "url": "https://cdn.shopify.com/s/files/1/0947/3907/1278/files/Ark-Nova-FAQ-v2.pdf",
+      "verified_on": "2026-08-28"
+    }
+  ],
+  "status": "released"
+}

@@ -1,0 +1,1918 @@
+[
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Bavarian Forest National Park"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "introduction_effects": [
+        {
+          "args": {
+            "amount": 1,
+            "track": "reputation"
+          },
+          "op": "move_track",
+          "timing": "on_support"
+        }
+      ],
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 3,
+          "id": "low",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "release",
+      "reference_import_status": "structured_transcription",
+      "release_icon": "europe",
+      "release_levels": {
+        "high": {
+          "icon": "europe",
+          "maximum_size": 5,
+          "minimum_size": 4
+        },
+        "low": {
+          "icon": "europe",
+          "maximum_size": 2,
+          "minimum_size": 1
+        },
+        "middle": {
+          "icon": "europe",
+          "maximum_size": 3,
+          "minimum_size": 3
+        }
+      },
+      "requirement_cn": "放归1只带有“Europe”对应图标/类别的动物；保护分按该动物围栏尺寸结算。",
+      "requirement_en": "Release one animal bearing the Europe icon/category; conservation depends on its enclosure size.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Europe",
+      "tiers": [
+        {
+          "animal_size": "4+",
+          "conservation": 5
+        },
+        {
+          "animal_size": "3",
+          "conservation": 4
+        },
+        {
+          "animal_size": "1-2",
+          "conservation": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-113",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "113",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:113"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Yosemite National Park"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "introduction_effects": [
+        {
+          "args": {
+            "amount": 1,
+            "track": "reputation"
+          },
+          "op": "move_track",
+          "timing": "on_support"
+        }
+      ],
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 3,
+          "id": "low",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "release",
+      "reference_import_status": "structured_transcription",
+      "release_icon": "americas",
+      "release_levels": {
+        "high": {
+          "icon": "americas",
+          "maximum_size": 5,
+          "minimum_size": 4
+        },
+        "low": {
+          "icon": "americas",
+          "maximum_size": 2,
+          "minimum_size": 1
+        },
+        "middle": {
+          "icon": "americas",
+          "maximum_size": 3,
+          "minimum_size": 3
+        }
+      },
+      "requirement_cn": "放归1只带有“Americas”对应图标/类别的动物；保护分按该动物围栏尺寸结算。",
+      "requirement_en": "Release one animal bearing the Americas icon/category; conservation depends on its enclosure size.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Americas",
+      "tiers": [
+        {
+          "animal_size": "4+",
+          "conservation": 5
+        },
+        {
+          "animal_size": "3",
+          "conservation": 4
+        },
+        {
+          "animal_size": "1-2",
+          "conservation": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-114",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "114",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:114"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Angthong National Park"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "introduction_effects": [
+        {
+          "args": {
+            "amount": 1,
+            "track": "reputation"
+          },
+          "op": "move_track",
+          "timing": "on_support"
+        }
+      ],
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 3,
+          "id": "low",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "release",
+      "reference_import_status": "structured_transcription",
+      "release_icon": "asia",
+      "release_levels": {
+        "high": {
+          "icon": "asia",
+          "maximum_size": 5,
+          "minimum_size": 4
+        },
+        "low": {
+          "icon": "asia",
+          "maximum_size": 2,
+          "minimum_size": 1
+        },
+        "middle": {
+          "icon": "asia",
+          "maximum_size": 3,
+          "minimum_size": 3
+        }
+      },
+      "requirement_cn": "放归1只带有“Asia”对应图标/类别的动物；保护分按该动物围栏尺寸结算。",
+      "requirement_en": "Release one animal bearing the Asia icon/category; conservation depends on its enclosure size.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Asia",
+      "tiers": [
+        {
+          "animal_size": "4+",
+          "conservation": 5
+        },
+        {
+          "animal_size": "3",
+          "conservation": 4
+        },
+        {
+          "animal_size": "1-2",
+          "conservation": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-115",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "115",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:115"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Serengeti National Park"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "introduction_effects": [
+        {
+          "args": {
+            "amount": 1,
+            "track": "reputation"
+          },
+          "op": "move_track",
+          "timing": "on_support"
+        }
+      ],
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 3,
+          "id": "low",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "release",
+      "reference_import_status": "structured_transcription",
+      "release_icon": "africa",
+      "release_levels": {
+        "high": {
+          "icon": "africa",
+          "maximum_size": 5,
+          "minimum_size": 4
+        },
+        "low": {
+          "icon": "africa",
+          "maximum_size": 2,
+          "minimum_size": 1
+        },
+        "middle": {
+          "icon": "africa",
+          "maximum_size": 3,
+          "minimum_size": 3
+        }
+      },
+      "requirement_cn": "放归1只带有“Africa”对应图标/类别的动物；保护分按该动物围栏尺寸结算。",
+      "requirement_en": "Release one animal bearing the Africa icon/category; conservation depends on its enclosure size.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Africa",
+      "tiers": [
+        {
+          "animal_size": "4+",
+          "conservation": 5
+        },
+        {
+          "animal_size": "3",
+          "conservation": 4
+        },
+        {
+          "animal_size": "1-2",
+          "conservation": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-116",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "116",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:116"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Blue Mountains National Park"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "introduction_effects": [
+        {
+          "args": {
+            "amount": 1,
+            "track": "reputation"
+          },
+          "op": "move_track",
+          "timing": "on_support"
+        }
+      ],
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 3,
+          "id": "low",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "release",
+      "reference_import_status": "structured_transcription",
+      "release_icon": "australia",
+      "release_levels": {
+        "high": {
+          "icon": "australia",
+          "maximum_size": 5,
+          "minimum_size": 4
+        },
+        "low": {
+          "icon": "australia",
+          "maximum_size": 2,
+          "minimum_size": 1
+        },
+        "middle": {
+          "icon": "australia",
+          "maximum_size": 3,
+          "minimum_size": 3
+        }
+      },
+      "requirement_cn": "放归1只带有“Australia”对应图标/类别的动物；保护分按该动物围栏尺寸结算。",
+      "requirement_en": "Release one animal bearing the Australia icon/category; conservation depends on its enclosure size.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Australia",
+      "tiers": [
+        {
+          "animal_size": "4+",
+          "conservation": 5
+        },
+        {
+          "animal_size": "3",
+          "conservation": 4
+        },
+        {
+          "animal_size": "1-2",
+          "conservation": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-117",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "117",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:117"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Savanna"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "introduction_effects": [
+        {
+          "args": {
+            "amount": 1,
+            "track": "reputation"
+          },
+          "op": "move_track",
+          "timing": "on_support"
+        }
+      ],
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 3,
+          "id": "low",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "release",
+      "reference_import_status": "structured_transcription",
+      "release_icon": "predator",
+      "release_levels": {
+        "high": {
+          "icon": "predator",
+          "maximum_size": 5,
+          "minimum_size": 4
+        },
+        "low": {
+          "icon": "predator",
+          "maximum_size": 2,
+          "minimum_size": 1
+        },
+        "middle": {
+          "icon": "predator",
+          "maximum_size": 3,
+          "minimum_size": 3
+        }
+      },
+      "requirement_cn": "放归1只带有“Predator”对应图标/类别的动物；保护分按该动物围栏尺寸结算。",
+      "requirement_en": "Release one animal bearing the Predator icon/category; conservation depends on its enclosure size.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Predator",
+      "tiers": [
+        {
+          "animal_size": "4+",
+          "conservation": 5
+        },
+        {
+          "animal_size": "3",
+          "conservation": 4
+        },
+        {
+          "animal_size": "1-2",
+          "conservation": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-118",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "118",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:118"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Low Mountain Range"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "introduction_effects": [
+        {
+          "args": {
+            "amount": 1,
+            "track": "reputation"
+          },
+          "op": "move_track",
+          "timing": "on_support"
+        }
+      ],
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 3,
+          "id": "low",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "release",
+      "reference_import_status": "structured_transcription",
+      "release_icon": "bird",
+      "release_levels": {
+        "high": {
+          "icon": "bird",
+          "maximum_size": 5,
+          "minimum_size": 4
+        },
+        "low": {
+          "icon": "bird",
+          "maximum_size": 2,
+          "minimum_size": 1
+        },
+        "middle": {
+          "icon": "bird",
+          "maximum_size": 3,
+          "minimum_size": 3
+        }
+      },
+      "requirement_cn": "放归1只带有“Bird”对应图标/类别的动物；保护分按该动物围栏尺寸结算。",
+      "requirement_en": "Release one animal bearing the Bird icon/category; conservation depends on its enclosure size.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Bird",
+      "tiers": [
+        {
+          "animal_size": "4+",
+          "conservation": 5
+        },
+        {
+          "animal_size": "3",
+          "conservation": 4
+        },
+        {
+          "animal_size": "1-2",
+          "conservation": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-119",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "119",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:119"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Bamboo Forest"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "introduction_effects": [
+        {
+          "args": {
+            "amount": 1,
+            "track": "reputation"
+          },
+          "op": "move_track",
+          "timing": "on_support"
+        }
+      ],
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 3,
+          "id": "low",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "release",
+      "reference_import_status": "structured_transcription",
+      "release_icon": "herbivore",
+      "release_levels": {
+        "high": {
+          "icon": "herbivore",
+          "maximum_size": 5,
+          "minimum_size": 4
+        },
+        "low": {
+          "icon": "herbivore",
+          "maximum_size": 2,
+          "minimum_size": 1
+        },
+        "middle": {
+          "icon": "herbivore",
+          "maximum_size": 3,
+          "minimum_size": 3
+        }
+      },
+      "requirement_cn": "放归1只带有“Herbivore”对应图标/类别的动物；保护分按该动物围栏尺寸结算。",
+      "requirement_en": "Release one animal bearing the Herbivore icon/category; conservation depends on its enclosure size.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Herbivore",
+      "tiers": [
+        {
+          "animal_size": "4+",
+          "conservation": 5
+        },
+        {
+          "animal_size": "3",
+          "conservation": 4
+        },
+        {
+          "animal_size": "1-2",
+          "conservation": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-120",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "120",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:120"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Sea Cave"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "introduction_effects": [
+        {
+          "args": {
+            "amount": 1,
+            "track": "reputation"
+          },
+          "op": "move_track",
+          "timing": "on_support"
+        }
+      ],
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 3,
+          "id": "low",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "release",
+      "reference_import_status": "structured_transcription",
+      "release_icon": "reptile",
+      "release_levels": {
+        "high": {
+          "icon": "reptile",
+          "maximum_size": 5,
+          "minimum_size": 4
+        },
+        "low": {
+          "icon": "reptile",
+          "maximum_size": 2,
+          "minimum_size": 1
+        },
+        "middle": {
+          "icon": "reptile",
+          "maximum_size": 3,
+          "minimum_size": 3
+        }
+      },
+      "requirement_cn": "放归1只带有“Reptile”对应图标/类别的动物；保护分按该动物围栏尺寸结算。",
+      "requirement_en": "Release one animal bearing the Reptile icon/category; conservation depends on its enclosure size.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Reptile",
+      "tiers": [
+        {
+          "animal_size": "4+",
+          "conservation": 5
+        },
+        {
+          "animal_size": "3",
+          "conservation": 4
+        },
+        {
+          "animal_size": "1-2",
+          "conservation": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-121",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "121",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:121"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Jungle"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "introduction_effects": [
+        {
+          "args": {
+            "amount": 1,
+            "track": "reputation"
+          },
+          "op": "move_track",
+          "timing": "on_support"
+        }
+      ],
+      "levels": [
+        {
+          "conservation": 5,
+          "id": "high",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 4,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": []
+        },
+        {
+          "conservation": 3,
+          "id": "low",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "release",
+      "reference_import_status": "structured_transcription",
+      "release_icon": "primate",
+      "release_levels": {
+        "high": {
+          "icon": "primate",
+          "maximum_size": 5,
+          "minimum_size": 4
+        },
+        "low": {
+          "icon": "primate",
+          "maximum_size": 2,
+          "minimum_size": 1
+        },
+        "middle": {
+          "icon": "primate",
+          "maximum_size": 3,
+          "minimum_size": 3
+        }
+      },
+      "requirement_cn": "放归1只带有“Primate”对应图标/类别的动物；保护分按该动物围栏尺寸结算。",
+      "requirement_en": "Release one animal bearing the Primate icon/category; conservation depends on its enclosure size.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Primate",
+      "tiers": [
+        {
+          "animal_size": "4+",
+          "conservation": 5
+        },
+        {
+          "animal_size": "3",
+          "conservation": 4
+        },
+        {
+          "animal_size": "1-2",
+          "conservation": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-122",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "122",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:122"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Bird Breeding Program"
+    },
+    "effects": [],
+    "facts": {
+      "breeding_icon": "bird",
+      "compiled_tier_count": 3,
+      "levels": [
+        {
+          "conservation": 2,
+          "id": "slot-1",
+          "reputation": 2,
+          "requirements": []
+        },
+        {
+          "conservation": 1,
+          "id": "slot-2",
+          "reputation": 2,
+          "requirements": []
+        },
+        {
+          "conservation": 2,
+          "id": "slot-3",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "breeding",
+      "reference_import_status": "structured_transcription",
+      "requirement_cn": "拥有1只Bird动物，且拥有与该动物所在洲匹配的伙伴动物园；按可用支持位结算。",
+      "requirement_en": "Have a Bird animal and a partner zoo matching that animal’s continent; resolve the available support slot.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Bird",
+      "tiers": [
+        {
+          "conservation": 2,
+          "reputation": 2,
+          "support_slot": 1
+        },
+        {
+          "conservation": 1,
+          "reputation": 2,
+          "support_slot": 2
+        },
+        {
+          "conservation": 2,
+          "reputation": 0,
+          "support_slot": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-123",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "123",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:123"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Predator Breeding Program"
+    },
+    "effects": [],
+    "facts": {
+      "breeding_icon": "predator",
+      "compiled_tier_count": 3,
+      "levels": [
+        {
+          "conservation": 2,
+          "id": "slot-1",
+          "reputation": 2,
+          "requirements": []
+        },
+        {
+          "conservation": 1,
+          "id": "slot-2",
+          "reputation": 2,
+          "requirements": []
+        },
+        {
+          "conservation": 2,
+          "id": "slot-3",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "breeding",
+      "reference_import_status": "structured_transcription",
+      "requirement_cn": "拥有1只Predator动物，且拥有与该动物所在洲匹配的伙伴动物园；按可用支持位结算。",
+      "requirement_en": "Have a Predator animal and a partner zoo matching that animal’s continent; resolve the available support slot.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Predator",
+      "tiers": [
+        {
+          "conservation": 2,
+          "reputation": 2,
+          "support_slot": 1
+        },
+        {
+          "conservation": 1,
+          "reputation": 2,
+          "support_slot": 2
+        },
+        {
+          "conservation": 2,
+          "reputation": 0,
+          "support_slot": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-124",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "124",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:124"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Reptile Breeding Program"
+    },
+    "effects": [],
+    "facts": {
+      "breeding_icon": "reptile",
+      "compiled_tier_count": 3,
+      "levels": [
+        {
+          "conservation": 2,
+          "id": "slot-1",
+          "reputation": 2,
+          "requirements": []
+        },
+        {
+          "conservation": 1,
+          "id": "slot-2",
+          "reputation": 2,
+          "requirements": []
+        },
+        {
+          "conservation": 2,
+          "id": "slot-3",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "breeding",
+      "reference_import_status": "structured_transcription",
+      "requirement_cn": "拥有1只Reptile动物，且拥有与该动物所在洲匹配的伙伴动物园；按可用支持位结算。",
+      "requirement_en": "Have a Reptile animal and a partner zoo matching that animal’s continent; resolve the available support slot.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Reptile",
+      "tiers": [
+        {
+          "conservation": 2,
+          "reputation": 2,
+          "support_slot": 1
+        },
+        {
+          "conservation": 1,
+          "reputation": 2,
+          "support_slot": 2
+        },
+        {
+          "conservation": 2,
+          "reputation": 0,
+          "support_slot": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-125",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "125",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:125"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Herbivore Breeding Program"
+    },
+    "effects": [],
+    "facts": {
+      "breeding_icon": "herbivore",
+      "compiled_tier_count": 3,
+      "levels": [
+        {
+          "conservation": 2,
+          "id": "slot-1",
+          "reputation": 2,
+          "requirements": []
+        },
+        {
+          "conservation": 1,
+          "id": "slot-2",
+          "reputation": 2,
+          "requirements": []
+        },
+        {
+          "conservation": 2,
+          "id": "slot-3",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "breeding",
+      "reference_import_status": "structured_transcription",
+      "requirement_cn": "拥有1只Herbivore动物，且拥有与该动物所在洲匹配的伙伴动物园；按可用支持位结算。",
+      "requirement_en": "Have a Herbivore animal and a partner zoo matching that animal’s continent; resolve the available support slot.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Herbivore",
+      "tiers": [
+        {
+          "conservation": 2,
+          "reputation": 2,
+          "support_slot": 1
+        },
+        {
+          "conservation": 1,
+          "reputation": 2,
+          "support_slot": 2
+        },
+        {
+          "conservation": 2,
+          "reputation": 0,
+          "support_slot": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-126",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "126",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:126"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Primate Breeding Program"
+    },
+    "effects": [],
+    "facts": {
+      "breeding_icon": "primate",
+      "compiled_tier_count": 3,
+      "levels": [
+        {
+          "conservation": 2,
+          "id": "slot-1",
+          "reputation": 2,
+          "requirements": []
+        },
+        {
+          "conservation": 1,
+          "id": "slot-2",
+          "reputation": 2,
+          "requirements": []
+        },
+        {
+          "conservation": 2,
+          "id": "slot-3",
+          "reputation": 0,
+          "requirements": []
+        }
+      ],
+      "project_type": "breeding",
+      "reference_import_status": "structured_transcription",
+      "requirement_cn": "拥有1只Primate动物，且拥有与该动物所在洲匹配的伙伴动物园；按可用支持位结算。",
+      "requirement_en": "Have a Primate animal and a partner zoo matching that animal’s continent; resolve the available support slot.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Primate",
+      "tiers": [
+        {
+          "conservation": 2,
+          "reputation": 2,
+          "support_slot": 1
+        },
+        {
+          "conservation": 1,
+          "reputation": 2,
+          "support_slot": 2
+        },
+        {
+          "conservation": 2,
+          "reputation": 0,
+          "support_slot": 3
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-127",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "127",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:127"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Aquatic"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "levels": [
+        {
+          "conservation": 4,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.water_icon_total"
+                },
+                "operator": ">=",
+                "right": 5
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 3,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.water_icon_total"
+                },
+                "operator": ">=",
+                "right": 4
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.water_icon_total"
+                },
+                "operator": ">=",
+                "right": 2
+              },
+              "op": "compare"
+            }
+          ]
+        }
+      ],
+      "project_type": "normal",
+      "reference_import_status": "structured_transcription",
+      "requirement_cn": "统计Water数量，选择达到门槛的支持档位。",
+      "requirement_en": "Count Water; support a tier whose threshold you meet.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Water",
+      "tiers": [
+        {
+          "conservation": 4,
+          "requirement": 5
+        },
+        {
+          "conservation": 3,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-128",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "128",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:128"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Geological"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "levels": [
+        {
+          "conservation": 4,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.rock_icon_total"
+                },
+                "operator": ">=",
+                "right": 5
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 3,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.rock_icon_total"
+                },
+                "operator": ">=",
+                "right": 4
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.rock_icon_total"
+                },
+                "operator": ">=",
+                "right": 2
+              },
+              "op": "compare"
+            }
+          ]
+        }
+      ],
+      "project_type": "normal",
+      "reference_import_status": "structured_transcription",
+      "requirement_cn": "统计Rock数量，选择达到门槛的支持档位。",
+      "requirement_en": "Count Rock; support a tier whose threshold you meet.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Rock",
+      "tiers": [
+        {
+          "conservation": 4,
+          "requirement": 5
+        },
+        {
+          "conservation": 3,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-129",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "129",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:129"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Small Animals"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "levels": [
+        {
+          "conservation": 4,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.small_animal_count"
+                },
+                "operator": ">=",
+                "right": 8
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 3,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.small_animal_count"
+                },
+                "operator": ">=",
+                "right": 5
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.small_animal_count"
+                },
+                "operator": ">=",
+                "right": 2
+              },
+              "op": "compare"
+            }
+          ]
+        }
+      ],
+      "project_type": "normal",
+      "reference_import_status": "structured_transcription",
+      "requirement_cn": "统计Animal size ≤2数量，选择达到门槛的支持档位。",
+      "requirement_en": "Count Animal size ≤2; support a tier whose threshold you meet.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Animal size ≤2",
+      "tiers": [
+        {
+          "conservation": 4,
+          "requirement": 8
+        },
+        {
+          "conservation": 3,
+          "requirement": 5
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-130",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "130",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:130"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Large Animals"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "levels": [
+        {
+          "conservation": 4,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.large_animal_count"
+                },
+                "operator": ">=",
+                "right": 4
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 3,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.large_animal_count"
+                },
+                "operator": ">=",
+                "right": 3
+              },
+              "op": "compare"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "left": {
+                  "ref": "actor.large_animal_count"
+                },
+                "operator": ">=",
+                "right": 2
+              },
+              "op": "compare"
+            }
+          ]
+        }
+      ],
+      "project_type": "normal",
+      "reference_import_status": "structured_transcription",
+      "requirement_cn": "统计Animal size ≥4数量，选择达到门槛的支持档位。",
+      "requirement_en": "Count Animal size ≥4; support a tier whose threshold you meet.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Animal size ≥4",
+      "tiers": [
+        {
+          "conservation": 4,
+          "requirement": 4
+        },
+        {
+          "conservation": 3,
+          "requirement": 3
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-131",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "131",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:131"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Conservation project with 3 structured reward tiers.",
+      "title": "Research"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_tier_count": 3,
+      "levels": [
+        {
+          "conservation": 4,
+          "id": "high",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 5,
+                "icon": "science"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 3,
+          "id": "middle",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 4,
+                "icon": "science"
+              },
+              "op": "has_icon"
+            }
+          ]
+        },
+        {
+          "conservation": 2,
+          "id": "low",
+          "reputation": 0,
+          "requirements": [
+            {
+              "args": {
+                "count": 2,
+                "icon": "science"
+              },
+              "op": "has_icon"
+            }
+          ]
+        }
+      ],
+      "project_type": "normal",
+      "reference_import_status": "structured_transcription",
+      "requirement_cn": "统计Science数量，选择达到门槛的支持档位。",
+      "requirement_en": "Count Science; support a tier whose threshold you meet.",
+      "resources_or_markers": [
+        "player cube/marker placed on supported slot"
+      ],
+      "semantic_compile_status": "compiled",
+      "tag_or_criterion": "Science",
+      "tiers": [
+        {
+          "conservation": 4,
+          "requirement": 5
+        },
+        {
+          "conservation": 3,
+          "requirement": 4
+        },
+        {
+          "conservation": 2,
+          "requirement": 2
+        }
+      ],
+      "unresolved_tiers": []
+    },
+    "id": "ark-nova:project-132",
+    "kind": "zoo_conservation_project",
+    "official_ref": {
+      "component_id": "132",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:zoo_conservation_project:132"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  }
+]

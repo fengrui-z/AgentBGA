@@ -1,0 +1,6338 @@
+[
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: income/immediate, endgame.",
+      "title": "Science Lab"
+    },
+    "effects": [
+      {
+        "args": {},
+        "op": "take_map_reward_card",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {},
+              "op": "take_map_reward_card",
+              "timing": "income"
+            }
+          ],
+          "id": "sponsor-201",
+          "trigger": "income"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "icon": "science",
+          "reward": "conservation",
+          "rewards": [
+            1,
+            2
+          ],
+          "scope": "actor",
+          "thresholds": [
+            3,
+            6
+          ]
+        },
+        "op": "gain_tiered_icon_reward",
+        "timing": "end_of_game"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 2,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "从牌库或声望范围内拿取1张牌。",
+          "summary_en": "Take one card from the deck or from within reputation range.",
+          "timing": "income/immediate"
+        },
+        {
+          "summary_cn": "终局科研图标达到3/6个时得1/2保护分。",
+          "summary_en": "Score 1/2 conservation for reaching 3/6 research icons.",
+          "timing": "endgame"
+        }
+      ],
+      "icons": {
+        "science": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Sponsors II"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-201",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "201",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.action_cards.sponsors.upgraded"
+          },
+          "operator": "==",
+          "right": true
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:201"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive.",
+      "title": "Spokesperson"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 1,
+                "track": "reputation"
+              },
+              "op": "move_track",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-202",
+          "trigger": "icon_entered:self:science"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当科研图标进入你的动物园，获得1声望。",
+          "summary_en": "Whenever a research icon enters your zoo, gain 1 reputation.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "person": 1,
+        "science": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Science"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science",
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-202",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "202",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 1,
+          "icon": "science"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:202"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Veterinarian"
+    },
+    "effects": [
+      {
+        "args": {
+          "count": {
+            "ref": "actor.university_count"
+          },
+          "reward": "money",
+          "rewards": [
+            2,
+            5,
+            10
+          ],
+          "thresholds": [
+            1,
+            2,
+            3
+          ]
+        },
+        "op": "gain_tiered_reward",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 4,
+          "effects": [],
+          "id": "sponsor-203",
+          "kind": "association_project_strength",
+          "trigger": "static"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.university_count"
+            },
+            "operator": ">=",
+            "right": 3
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "支持保护项目时，协会行动强度4即可。",
+          "summary_en": "Supporting a conservation project requires Association strength 4 instead of 5.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "person": 1,
+        "science": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science",
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-203",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "203",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:203"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Science Museum"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "calc": "multiply",
+            "values": [
+              {
+                "ref": "actor.icons.science"
+              },
+              2
+            ]
+          }
+        },
+        "op": "gain_money",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 1,
+                "track": "conservation"
+              },
+              "op": "move_track",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-204",
+          "trigger": "icon_entered:self:science"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当科研图标进入你的动物园，获得1保护分。",
+          "summary_en": "Whenever a research icon enters your zoo, gain 1 conservation.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "science": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Science×4"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-204",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "204",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 4,
+          "icon": "science"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:204"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: immediate.",
+      "title": "Gorilla Field Research"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 2,
+          "track": "reputation"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 1,
+        "reputation": 2
+      },
+      "effects": [
+        {
+          "summary_cn": "提供科研图标，并立即获得2声望和1保护分。",
+          "summary_en": "Provides its printed science icon plus 2 reputation and 1 conservation.",
+          "timing": "immediate"
+        }
+      ],
+      "icons": {
+        "science": 1
+      },
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Science×3"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-205",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "205",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 3,
+          "icon": "science"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:205"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: income.",
+      "title": "Medical Breakthrough"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "calc": "multiply",
+            "values": [
+              {
+                "ref": "actor.supported_project_count"
+              },
+              2
+            ]
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 1,
+                "track": "conservation"
+              },
+              "op": "move_track",
+              "timing": "income"
+            }
+          ],
+          "id": "sponsor-206",
+          "trigger": "income"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "收入阶段获得1保护分。",
+          "summary_en": "Gain 1 conservation during income.",
+          "timing": "income"
+        }
+      ],
+      "icons": {
+        "science": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Science×4"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-206",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "206",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 4,
+          "icon": "science"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:206"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: immediate.",
+      "title": "Basic Research"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "calc": "floor_divide",
+            "values": [
+              {
+                "ref": "actor.distinct_continent_animal_category_count"
+              },
+              2
+            ]
+          },
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": {
+                  "calc": "multiply",
+                  "values": [
+                    {
+                      "calc": "floor_divide",
+                      "values": [
+                        {
+                          "ref": "actor.distinct_continent_animal_category_count"
+                        },
+                        2
+                      ]
+                    },
+                    2
+                  ]
+                }
+              },
+              "op": "gain_money",
+              "timing": "on_play"
+            }
+          ]
+        },
+        "op": "for_each_opponent",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "按符合条件的不同洲/动物类别图标组合获得保护分；你每因此获得1保护分，其他玩家获得2金钱。",
+          "summary_en": "Gain conservation for qualifying pairs of different continent and/or animal-category icons; opponents gain 2 money per conservation you gain this way.",
+          "timing": "immediate"
+        }
+      ],
+      "icons": {
+        "science": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Sponsors II",
+        "Appeal threshold"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-207",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "207",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.action_cards.sponsors.upgraded"
+          },
+          "operator": "==",
+          "right": true
+        },
+        "op": "compare"
+      },
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.appeal"
+          },
+          "operator": "<=",
+          "right": 25
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:207"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive, endgame.",
+      "title": "Science Library"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.science"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 2
+              },
+              "op": "gain_money",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-208",
+          "trigger": "icon_entered:any:science"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.distinct_animal_category_count"
+            },
+            "operator": ">=",
+            "right": 5
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 2,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当任意动物园获得科研图标，你获得2金钱。",
+          "summary_en": "Whenever a research icon enters any zoo, gain 2 money.",
+          "timing": "passive"
+        },
+        {
+          "summary_cn": "若动物园拥有5种动物类别图标，终局得1保护分。",
+          "summary_en": "Gain 1 conservation if your zoo has all five animal-category icons.",
+          "timing": "endgame"
+        }
+      ],
+      "icons": {
+        "science": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-208",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "208",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:208"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: income.",
+      "title": "Technology Institute"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 1
+        },
+        "op": "gain_x_token",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 1
+              },
+              "op": "gain_x_token",
+              "timing": "income"
+            }
+          ],
+          "id": "sponsor-209",
+          "trigger": "income"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.university_count"
+            },
+            "operator": ">=",
+            "right": 3
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "收入阶段获得1个X标记。",
+          "summary_en": "Gain 1 X-token during income.",
+          "timing": "income"
+        }
+      ],
+      "icons": {
+        "science": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [
+        "X-token"
+      ],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-209",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "209",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:209"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive, endgame.",
+      "title": "Expert On The Americas"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.americas"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "building_types": [
+                  "kiosk"
+                ],
+                "maximum": 1
+              },
+              "op": "place_free_building",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-210",
+          "trigger": "icon_entered:self:americas"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.kiosk_count"
+            },
+            "operator": ">=",
+            "right": 5
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 2,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+          {
+            "summary_cn": "每当美洲图标进入你的动物园，可免费放置1个小卖部。",
+            "summary_en": "Whenever an Americas icon enters your zoo, you may place a kiosk for free.",
+            "timing": "passive"
+          },
+          {
+            "summary_cn": "若有至少5个商亭，终局得1保护分。",
+            "summary_en": "Gain 1 conservation if you have at least five kiosks.",
+            "timing": "endgame"
+          }
+      ],
+      "icons": {
+        "americas": 1,
+        "person": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "americas",
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-210",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "210",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:210"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive, endgame.",
+      "title": "Expert On Europe"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.europe"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "building_types": [
+                  "standard_enclosure_1"
+                ],
+                "maximum": 1
+              },
+              "op": "place_free_building",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-211",
+          "trigger": "icon_entered:self:europe"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.occupied_standard_enclosure_size_1_count"
+            },
+            "operator": ">=",
+            "right": 5
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 2,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当欧洲图标进入你的动物园，可免费建造1个1格围栏。",
+          "summary_en": "Whenever a Europe icon enters your zoo, you may build a size-1 enclosure for free.",
+          "timing": "passive"
+        },
+        {
+          "summary_cn": "若有5个已占用的1格围栏，终局得1保护分。",
+          "summary_en": "Gain 1 conservation if you have five occupied size-1 enclosures.",
+          "timing": "endgame"
+        }
+      ],
+      "icons": {
+        "europe": 1,
+        "person": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "europe",
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-211",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "211",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:211"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive.",
+      "title": "Expert On Australia"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.australia"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "maximum": 1
+              },
+              "op": "tuck_hand_cards",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-212",
+          "trigger": "icon_entered:self:australia"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当澳大利亚图标进入你的动物园，可将1张手牌压在此牌下并获得2魅力。",
+          "summary_en": "Whenever an Australia icon enters your zoo, you may tuck one hand card for 2 appeal.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "australia": 1,
+        "person": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "australia",
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-212",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "212",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:212"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive.",
+      "title": "Expert On Asia"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.asia"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "building_types": [
+                  "pavilion"
+                ],
+                "maximum": 1
+              },
+              "op": "place_free_building",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-213",
+          "trigger": "icon_entered:self:asia"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当亚洲图标进入你的动物园，可免费放置1个凉亭。",
+          "summary_en": "Whenever an Asia icon enters your zoo, you may place a pavilion for free.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "asia": 1,
+        "person": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "asia",
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-213",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "213",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:213"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Expert On Africa"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.africa"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.x_tokens"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "optional": true,
+                "target_slot": 1
+              },
+              "op": "reposition_action_card",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-214",
+          "trigger": "icon_entered:self:africa"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.all_border_buildable_spaces_covered"
+            },
+            "operator": "==",
+            "right": true
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当非洲图标进入你的动物园，可将任意行动牌移到1号位。",
+          "summary_en": "Whenever an Africa icon enters your zoo, you may move any action card to slot 1.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "africa": 1,
+        "person": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "africa",
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-214",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "214",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:214"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: immediate, passive, endgame.",
+      "title": "Breeding Cooperation"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 2
+        },
+        "op": "add_source_card_tokens",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "effects": [],
+          "id": "sponsor-215-wildcard",
+          "kind": "base_project_wildcard",
+          "trigger": "static"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.supported_project_count"
+            },
+            "operator": ">=",
+            "right": 5
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 3,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "在此牌上放置2个自己的玩家标记。",
+          "summary_en": "Place 2 of your player tokens on this card.",
+          "timing": "immediate"
+        },
+        {
+          "summary_cn": "支持基础保护项目时，可花掉1个储存标记，将其视为任意所需图标。",
+          "summary_en": "When supporting a base conservation project, you may spend exactly one stored token as a wildcard icon.",
+          "timing": "passive"
+        },
+        {
+          "summary_cn": "若已支持至少5个保护项目，终局得1保护分。",
+          "summary_en": "Gain 1 conservation if you supported at least five conservation projects.",
+          "timing": "endgame"
+        }
+      ],
+      "icons": {},
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Partner Zoo×2"
+      ],
+      "resources_or_markers": [
+        "2 player tokens"
+      ],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-215",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "215",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.partner_zoo_count"
+          },
+          "operator": ">=",
+          "right": 2
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:215"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: immediate.",
+      "title": "Talented Communicator"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 1
+        },
+        "op": "gain_association_worker",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "雇用1名协会工作人员。",
+          "summary_en": "Hire one association worker.",
+          "timing": "immediate"
+        }
+      ],
+      "icons": {
+        "person": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Sponsors II"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-216",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "216",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.action_cards.sponsors.upgraded"
+          },
+          "operator": "==",
+          "right": true
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:216"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Engineer"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 1,
+          "effects": [],
+          "id": "sponsor-217",
+          "kind": "engineer_extra_building",
+          "trigger": "static"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 5,
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.map_complete"
+            },
+            "operator": "==",
+            "right": true
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "建造行动至少建造1个建筑后，可按正常费用额外再建造1个同类建筑；特殊围栏除外。",
+          "summary_en": "When your Build action constructs at least one building, you may construct exactly one additional building of the same kind at normal cost; special enclosures are excluded.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "person": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-217",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "217",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:217"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive/endgame.",
+      "title": "Breeding Program"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 2
+        },
+        "op": "add_source_card_tokens",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "effects": [],
+          "id": "sponsor-218-wildcard",
+          "kind": "base_project_wildcard",
+          "trigger": "static"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.supported_project_count"
+            },
+            "operator": ">=",
+            "right": 5
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "社区转录将此牌关联到与“繁育合作”相同的标记/万能图标/终局模式；用于规则引擎前建议与实体牌核对。",
+          "summary_en": "Community transcription links this card to the same token/wildcard/endgame pattern as Breeding Cooperation; verify against your physical card before rules-engine automation.",
+          "timing": "passive/endgame"
+        }
+      ],
+      "icons": {},
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Science×2"
+      ],
+      "resources_or_markers": [
+        "source-transcription note; token use requires verification"
+      ],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-218",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "218",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 2,
+          "icon": "science"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:218"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive.",
+      "title": "Diversity Researcher"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "calc": "multiply",
+            "values": [
+              {
+                "calc": "add",
+                "values": [
+                  {
+                    "ref": "actor.rock_requirement_total"
+                  },
+                  {
+                    "ref": "actor.water_requirement_total"
+                  }
+                ]
+              },
+              2
+            ]
+          }
+        },
+        "op": "gain_money",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": {
+            "calc": "multiply",
+            "values": [
+              {
+                "calc": "minimum",
+                "values": [
+                  {
+                    "ref": "actor.rock_requirement_total"
+                  },
+                  {
+                    "ref": "actor.water_requirement_total"
+                  },
+                  3
+                ]
+              },
+              2
+            ]
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "effects": [],
+          "id": "sponsor-219",
+          "kind": "diversity_researcher",
+          "trigger": "static"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "可在岩石/水域格建造并忽略岩石/水域摆放要求；打出时，每个牌面岩石/水域要求获得2金钱。",
+          "summary_en": "You may build on rock/water spaces and may ignore rock/water placement requirements; when played, gain 2 money for each rock/water requirement shown.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "person": 1,
+        "science": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Sponsors II"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science",
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-219",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "219",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.action_cards.sponsors.upgraded"
+          },
+          "operator": "==",
+          "right": true
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:219"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: income.",
+      "title": "Federal Grants"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 3
+        },
+        "op": "gain_money",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 3
+              },
+              "op": "gain_money",
+              "timing": "income"
+            }
+          ],
+          "id": "sponsor-220",
+          "trigger": "income"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.tracks.reputation"
+            },
+            "operator": ">=",
+            "right": 9
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "收入阶段获得3金钱。",
+          "summary_en": "Gain 3 money during income.",
+          "timing": "income"
+        }
+      ],
+      "icons": {
+        "science": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-220",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "220",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:220"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Archeologist"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 1,
+          "effects": [],
+          "id": "sponsor-221",
+          "kind": "archeologist_bonus",
+          "trigger": "static"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.all_border_buildable_spaces_covered"
+            },
+            "operator": "==",
+            "right": true
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "当获得地图边缘的放置奖励时，再获得1次额外放置奖励。",
+          "summary_en": "When you receive a border placement bonus, receive one additional free placement bonus.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "person": 1,
+        "science": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Science"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science",
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-221",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "221",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 1,
+          "icon": "science"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:221"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: immediate.",
+      "title": "Release Of Patents"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "calc": "minimum",
+            "values": [
+              {
+                "ref": "actor.icons.science"
+              },
+              3
+            ]
+          },
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": {
+                  "calc": "multiply",
+                  "values": [
+                    {
+                      "calc": "minimum",
+                      "values": [
+                        {
+                          "ref": "actor.icons.science"
+                        },
+                        3
+                      ]
+                    },
+                    2
+                  ]
+                }
+              },
+              "op": "gain_money",
+              "timing": "on_play"
+            }
+          ]
+        },
+        "op": "for_each_opponent",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每个科研图标获得1保护分；你每因此获得1保护分，其他玩家获得2金钱。",
+          "summary_en": "Gain 1 conservation per research icon; for each conservation gained this way, other players gain 2 money.",
+          "timing": "immediate"
+        }
+      ],
+      "icons": {},
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Appeal threshold"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-222",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "222",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.appeal"
+          },
+          "operator": "<=",
+          "right": 25
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:222"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: icons.",
+      "title": "Science Institute"
+    },
+    "effects": [],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "无独立文字效果；提供2个科研图标。",
+          "summary_en": "No separate text effect; provides two research icons.",
+          "timing": "icons"
+        }
+      ],
+      "icons": {
+        "science": 2
+      },
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-223",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "223",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:223"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Migration Recording"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 1
+        },
+        "op": "gain_x_token",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 1,
+                "track": "conservation"
+              },
+              "op": "move_track",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-224",
+          "trigger": "release_project_supported"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "effects": [],
+          "id": "sponsor-224-repeat",
+          "kind": "repeat_release_projects",
+          "trigger": "static"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每次支持放归项目时额外获得1保护分；同一放归项目可被你多次支持。",
+          "summary_en": "Whenever you support a Release project, gain 1 additional conservation; you may support each Release project more than once.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "science": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Science"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "science"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-224",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "224",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 1,
+          "icon": "science"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:224"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: passive, endgame.",
+      "title": "Quarantine Lab"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 1
+        },
+        "op": "gain_x_token",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "flag": "interaction_immunity",
+          "value": true
+        },
+        "op": "set_flag",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "conditions": [
+              {
+                "args": {
+                  "count": 1,
+                  "icon": "africa"
+                },
+                "op": "has_icon"
+              },
+              {
+                "args": {
+                  "count": 1,
+                  "icon": "americas"
+                },
+                "op": "has_icon"
+              },
+              {
+                "args": {
+                  "count": 1,
+                  "icon": "asia"
+                },
+                "op": "has_icon"
+              },
+              {
+                "args": {
+                  "count": 1,
+                  "icon": "australia"
+                },
+                "op": "has_icon"
+              },
+              {
+                "args": {
+                  "count": 1,
+                  "icon": "europe"
+                },
+                "op": "has_icon"
+              }
+            ]
+          },
+          "op": "all"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 2,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "你不受毒液、缠绕、催眠和偷窃效果影响。",
+          "summary_en": "You are protected from Venom, Constriction, Hypnosis and Pilfering effects.",
+          "timing": "passive"
+        },
+        {
+          "summary_cn": "若拥有5种洲图标，终局得1保护分。",
+          "summary_en": "Gain 1 conservation if you have all five continent icons.",
+          "timing": "endgame"
+        }
+      ],
+      "icons": {},
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-225",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "225",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:225"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 6 sponsor; timings: endgame.",
+      "title": "Foreign Institute"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "conditions": [
+              {
+                "args": {
+                  "count": 1,
+                  "icon": "africa"
+                },
+                "op": "has_icon"
+              },
+              {
+                "args": {
+                  "count": 1,
+                  "icon": "americas"
+                },
+                "op": "has_icon"
+              },
+              {
+                "args": {
+                  "count": 1,
+                  "icon": "asia"
+                },
+                "op": "has_icon"
+              },
+              {
+                "args": {
+                  "count": 1,
+                  "icon": "australia"
+                },
+                "op": "has_icon"
+              },
+              {
+                "args": {
+                  "count": 1,
+                  "icon": "europe"
+                },
+                "op": "has_icon"
+              }
+            ]
+          },
+          "op": "all"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "若拥有5种洲图标，终局得1保护分。",
+          "summary_en": "Gain 1 conservation if you have all five continent icons.",
+          "timing": "endgame"
+        }
+      ],
+      "icons": {},
+      "level": 6,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-226",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "226",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:226"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 6 sponsor; timings: immediate/ongoing.",
+      "title": "WAZA Special Assignment"
+    },
+    "effects": [
+      {
+        "args": {
+          "options": [
+            {
+              "effects": [
+                {
+                  "args": {
+                    "flag": "waza_small_only",
+                    "value": true
+                  },
+                  "op": "set_flag",
+                  "timing": "on_play"
+                },
+                {
+                  "args": {
+                    "size_class": "small"
+                  },
+                  "op": "reveal_first_animal_size",
+                  "timing": "on_play"
+                },
+                {
+                  "args": {
+                    "effects": [
+                      {
+                        "args": {
+                          "amount": 2,
+                          "track": "appeal"
+                        },
+                        "op": "move_track",
+                        "timing": "on_trigger"
+                      }
+                    ],
+                    "id": "sponsor-227",
+                    "trigger": "small_animal_played"
+                  },
+                  "op": "add_modifier",
+                  "timing": "on_play"
+                }
+              ],
+              "id": "small",
+              "label": "Small Animals (size 1–2)"
+            },
+            {
+              "effects": [
+                {
+                  "args": {
+                    "flag": "waza_large_only",
+                    "value": true
+                  },
+                  "op": "set_flag",
+                  "timing": "on_play"
+                },
+                {
+                  "args": {
+                    "size_class": "large"
+                  },
+                  "op": "reveal_first_animal_size",
+                  "timing": "on_play"
+                },
+                {
+                  "args": {
+                    "effects": [
+                      {
+                        "args": {
+                          "amount": 4,
+                          "track": "appeal"
+                        },
+                        "op": "move_track",
+                        "timing": "on_trigger"
+                      }
+                    ],
+                    "id": "sponsor-227",
+                    "trigger": "large_animal_played"
+                  },
+                  "op": "add_modifier",
+                  "timing": "on_play"
+                }
+              ],
+              "id": "large",
+              "label": "Large Animals (size 4–5)"
+            }
+          ],
+          "prompt": "Choose the WAZA Special Assignment size class"
+        },
+        "op": "choose_one",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "选择并标记“小型”或“大型”动物，按牌面翻牌直到出现匹配动物。之后动物出牌受所选尺寸类别限制，匹配动物按小型/大型的牌面数值获得额外魅力。",
+          "summary_en": "Choose and mark small or large animals; reveal cards until a matching animal is found as printed. You then restrict future animal play to the marked size class, while matching animals grant bonus appeal (small/large use different printed values).",
+          "timing": "immediate/ongoing"
+        }
+      ],
+      "icons": {},
+      "level": 6,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Reputation threshold"
+      ],
+      "resources_or_markers": [
+        "choice/mark token"
+      ],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-227",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "227",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.reputation"
+          },
+          "operator": ">=",
+          "right": 6
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:227"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive.",
+      "title": "WAZA Small Animal Program"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "calc": "multiply",
+            "values": [
+              {
+                "ref": "actor.small_animal_count"
+              },
+              2
+            ]
+          }
+        },
+        "op": "gain_money",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "effects": [],
+          "id": "sponsor-228",
+          "kind": "waza_small_animal_program",
+          "trigger": "static"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "若动物行动只打出小型动物，可按正常费用额外打出1只小型动物；之后若展示区有小型动物，可拿取1张。",
+          "summary_en": "If an Animals action plays only small animals, you may play one additional small animal at normal cost; afterward you may take a small animal from the display if available.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {},
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Reputation threshold"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-228",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "228",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.reputation"
+          },
+          "operator": ">=",
+          "right": 3
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:228"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive.",
+      "title": "Expert In Small Animals"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.small_animal_count"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 3,
+          "animal_size": "small",
+          "effects": [],
+          "id": "sponsor-229",
+          "kind": "animal_cost_discount",
+          "trigger": "static"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "打出小型动物少支付3金钱。",
+          "summary_en": "Small animals cost 3 less money.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "person": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-229",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "229",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:229"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Expert In Large Animals"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "calc": "multiply",
+            "values": [
+              {
+                "ref": "actor.large_animal_count"
+              },
+              2
+            ]
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 4,
+          "animal_size": "large",
+          "effects": [],
+          "id": "sponsor-230",
+          "kind": "animal_cost_discount",
+          "trigger": "static"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "打出大型动物少支付4金钱。",
+          "summary_en": "Large animals cost 4 less money.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "person": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-230",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "230",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:230"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: income.",
+      "title": "Sponsorship: Primates"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.primate"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "icon": "primate",
+                "reward": "money",
+                "rewards": [
+                  3,
+                  6,
+                  9
+                ],
+                "scope": "actor",
+                "thresholds": [
+                  1,
+                  3,
+                  5
+                ]
+              },
+              "op": "gain_tiered_icon_reward",
+              "timing": "income"
+            }
+          ],
+          "id": "sponsor-231",
+          "trigger": "income"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "灵长类图标达到1/3/5个时，收入为3/6/9金钱。",
+          "summary_en": "Income is 3/6/9 money at 1/3/5 primate icons.",
+          "timing": "income"
+        }
+      ],
+      "icons": {},
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Primate"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-231",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "231",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 1,
+          "icon": "primate"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:231"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: income.",
+      "title": "Sponsorship: Reptiles"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.reptile"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "icon": "reptile",
+                "reward": "money",
+                "rewards": [
+                  3,
+                  6,
+                  9
+                ],
+                "scope": "actor",
+                "thresholds": [
+                  1,
+                  3,
+                  5
+                ]
+              },
+              "op": "gain_tiered_icon_reward",
+              "timing": "income"
+            }
+          ],
+          "id": "sponsor-232",
+          "trigger": "income"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "爬行类图标达到1/3/5个时，收入为3/6/9金钱。",
+          "summary_en": "Income is 3/6/9 money at 1/3/5 reptile icons.",
+          "timing": "income"
+        }
+      ],
+      "icons": {},
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Reptile"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-232",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "232",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 1,
+          "icon": "reptile"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:232"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: income.",
+      "title": "Sponsorship: Vultures"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.bird"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "icon": "bird",
+                "reward": "money",
+                "rewards": [
+                  3,
+                  6,
+                  9
+                ],
+                "scope": "actor",
+                "thresholds": [
+                  1,
+                  3,
+                  5
+                ]
+              },
+              "op": "gain_tiered_icon_reward",
+              "timing": "income"
+            }
+          ],
+          "id": "sponsor-233",
+          "trigger": "income"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "鸟类图标达到1/3/5个时，收入为3/6/9金钱。",
+          "summary_en": "Income is 3/6/9 money at 1/3/5 bird icons.",
+          "timing": "income"
+        }
+      ],
+      "icons": {},
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Bird"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-233",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "233",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 1,
+          "icon": "bird"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:233"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: income.",
+      "title": "Sponsorship: Lions"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.predator"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "icon": "predator",
+                "reward": "money",
+                "rewards": [
+                  3,
+                  6,
+                  9
+                ],
+                "scope": "actor",
+                "thresholds": [
+                  1,
+                  3,
+                  5
+                ]
+              },
+              "op": "gain_tiered_icon_reward",
+              "timing": "income"
+            }
+          ],
+          "id": "sponsor-234",
+          "trigger": "income"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "食肉动物图标达到1/3/5个时，收入为3/6/9金钱。",
+          "summary_en": "Income is 3/6/9 money at 1/3/5 predator icons.",
+          "timing": "income"
+        }
+      ],
+      "icons": {},
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Predator"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-234",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "234",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 1,
+          "icon": "predator"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:234"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: income.",
+      "title": "Sponsorship: Elephants"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.herbivore"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "icon": "herbivore",
+                "reward": "money",
+                "rewards": [
+                  3,
+                  6,
+                  9
+                ],
+                "scope": "actor",
+                "thresholds": [
+                  1,
+                  3,
+                  5
+                ]
+              },
+              "op": "gain_tiered_icon_reward",
+              "timing": "income"
+            }
+          ],
+          "id": "sponsor-235",
+          "trigger": "income"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "食草动物图标达到1/3/5个时，收入为3/6/9金钱。",
+          "summary_en": "Income is 3/6/9 money at 1/3/5 herbivore icons.",
+          "timing": "income"
+        }
+      ],
+      "icons": {},
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Herbivore"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-235",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "235",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "count": 1,
+          "icon": "herbivore"
+        },
+        "op": "has_icon"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:235"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Primatologist"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 3
+              },
+              "op": "gain_money",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-236",
+          "trigger": "icon_entered:any:primate"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当任意动物园获得灵长类图标，你获得3金钱。",
+          "summary_en": "Whenever a primate icon enters any zoo, gain 3 money.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "person": 1,
+        "primate": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person",
+        "primate"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-236",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "236",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:236"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Herpetologist"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 3
+              },
+              "op": "gain_money",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-237",
+          "trigger": "icon_entered:any:reptile"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当任意动物园获得爬行类图标，你获得3金钱。",
+          "summary_en": "Whenever a reptile icon enters any zoo, gain 3 money.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "person": 1,
+        "reptile": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person",
+        "reptile"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-237",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "237",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:237"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Ornithologist"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 3
+              },
+              "op": "gain_money",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-238",
+          "trigger": "icon_entered:any:bird"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当任意动物园获得鸟类图标，你获得3金钱。",
+          "summary_en": "Whenever a bird icon enters any zoo, gain 3 money.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "bird": 1,
+        "person": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person",
+        "bird"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-238",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "238",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:238"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Expert In Predators"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 3
+              },
+              "op": "gain_money",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-239",
+          "trigger": "icon_entered:any:predator"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当任意动物园获得食肉动物图标，你获得3金钱。",
+          "summary_en": "Whenever a predator icon enters any zoo, gain 3 money.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "person": 1,
+        "predator": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person",
+        "predator"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-239",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "239",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:239"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 4 sponsor; timings: passive.",
+      "title": "Expert In Herbivores"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 3
+              },
+              "op": "gain_money",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-240",
+          "trigger": "icon_entered:any:herbivore"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当任意动物园获得食草动物图标，你获得3金钱。",
+          "summary_en": "Whenever a herbivore icon enters any zoo, gain 3 money.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "herbivore": 1,
+        "person": 1
+      },
+      "level": 4,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person",
+        "herbivore"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-240",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "240",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:240"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: placement/passive, endgame.",
+      "title": "Hydrologist"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.icons.water"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": {
+                  "ref": "binding.adjacent_water_cells"
+                }
+              },
+              "op": "gain_money",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-241",
+          "trigger": "building_placed"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.water_spaces_connected"
+            },
+            "operator": "==",
+            "right": true
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 2,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每覆盖1个与水域相邻的格子，获得1金钱。",
+          "summary_en": "Gain 1 money for each covered space adjacent to water.",
+          "timing": "placement/passive"
+        },
+        {
+          "summary_cn": "若所有水域格连通，终局得1保护分。",
+          "summary_en": "Gain 1 conservation if all water spaces are connected.",
+          "timing": "endgame"
+        }
+      ],
+      "icons": {
+        "person": 1,
+        "water": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person",
+        "water"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 1
+    },
+    "id": "ark-nova:sponsor-241",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "241",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:241"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: placement/passive, endgame.",
+      "title": "Geologist"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "calc": "multiply",
+            "values": [
+              {
+                "calc": "floor_divide",
+                "values": [
+                  {
+                    "ref": "actor.icons.rock"
+                  },
+                  2
+                ]
+              },
+              3
+            ]
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": {
+                  "ref": "binding.adjacent_rock_cells"
+                }
+              },
+              "op": "gain_money",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-242",
+          "trigger": "building_placed"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.rock_spaces_connected"
+            },
+            "operator": "==",
+            "right": true
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 2,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每覆盖1个与岩石相邻的格子，获得1金钱。",
+          "summary_en": "Gain 1 money for each covered space adjacent to rock.",
+          "timing": "placement/passive"
+        },
+        {
+          "summary_cn": "若所有岩石格连通，终局得1保护分。",
+          "summary_en": "Gain 1 conservation if all rock spaces are connected.",
+          "timing": "endgame"
+        }
+      ],
+      "icons": {
+        "person": 1,
+        "rock": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 1,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person",
+        "rock"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-242",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "242",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:242"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: placement/passive.",
+      "title": "Meerkat Den"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 2,
+                "track": "appeal"
+              },
+              "op": "move_track",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-243",
+          "trigger": "icon_entered:self:herbivore"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.icons.herbivore"
+            },
+            "operator": ">=",
+            "right": 6
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "必须邻接至少1个岩石格；每个己方食草动物图标获得2魅力。",
+          "summary_en": "Place adjacent to at least one rock. Gain 2 appeal for each herbivore icon in your zoo.",
+          "timing": "placement/passive"
+        }
+      ],
+      "icons": {
+        "herbivore": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Reputation threshold"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 1,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "herbivore"
+      ],
+      "unique_building": {
+        "adjacent_count": 1,
+        "adjacent_terrain": "rock",
+        "building_type": "unique_sponsor_243",
+        "size": 3
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-243",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "243",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.reputation"
+          },
+          "operator": ">=",
+          "right": 3
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:243"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: placement/passive.",
+      "title": "Penguin Pool"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 2,
+                "track": "appeal"
+              },
+              "op": "move_track",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-244",
+          "trigger": "icon_entered:self:bird"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.icons.bird"
+            },
+            "operator": ">=",
+            "right": 6
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "必须邻接至少1个水域格；每个己方鸟类图标获得2魅力。",
+          "summary_en": "Place adjacent to at least one water space. Gain 2 appeal for each bird icon in your zoo.",
+          "timing": "placement/passive"
+        }
+      ],
+      "icons": {
+        "bird": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Reputation threshold"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "bird"
+      ],
+      "unique_building": {
+        "adjacent_count": 1,
+        "adjacent_terrain": "water",
+        "building_type": "unique_sponsor_244",
+        "size": 4
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 1
+    },
+    "id": "ark-nova:sponsor-244",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "244",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.reputation"
+          },
+          "operator": ">=",
+          "right": 3
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:244"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: placement/passive.",
+      "title": "Aquarium"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 2,
+                "track": "appeal"
+              },
+              "op": "move_track",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-245",
+          "trigger": "icon_entered:self:water"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.icons.water"
+            },
+            "operator": ">=",
+            "right": 6
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "必须邻接至少2个水域格；每个己方水域图标获得2魅力。",
+          "summary_en": "Place adjacent to at least two water spaces. Gain 2 appeal for each water icon in your zoo.",
+          "timing": "placement/passive"
+        }
+      ],
+      "icons": {
+        "water": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Reputation threshold"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "water"
+      ],
+      "unique_building": {
+        "adjacent_count": 2,
+        "adjacent_terrain": "water",
+        "building_type": "unique_sponsor_245",
+        "size": 4
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 2
+    },
+    "id": "ark-nova:sponsor-245",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "245",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.reputation"
+          },
+          "operator": ">=",
+          "right": 3
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:245"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 6 sponsor; timings: placement/passive.",
+      "title": "Cable Car"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 2,
+                "track": "appeal"
+              },
+              "op": "move_track",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-246",
+          "trigger": "icon_entered:self:rock"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.icons.rock"
+            },
+            "operator": ">=",
+            "right": 6
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "必须邻接至少2个岩石格；每个己方岩石图标获得2魅力。",
+          "summary_en": "Place adjacent to at least two rock spaces. Gain 2 appeal for each rock icon in your zoo.",
+          "timing": "placement/passive"
+        }
+      ],
+      "icons": {
+        "rock": 1
+      },
+      "level": 6,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 2,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "rock"
+      ],
+      "unique_building": {
+        "adjacent_count": 2,
+        "adjacent_terrain": "rock",
+        "building_type": "unique_sponsor_246",
+        "size": 4
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-246",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "246",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:246"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 6 sponsor; timings: placement/passive.",
+      "title": "Baboon Rock"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 2,
+                "track": "appeal"
+              },
+              "op": "move_track",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-247",
+          "trigger": "icon_entered:self:primate"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.icons.primate"
+            },
+            "operator": ">=",
+            "right": 6
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "必须邻接至少1个岩石格；每个己方灵长类图标获得2魅力。",
+          "summary_en": "Place adjacent to at least one rock. Gain 2 appeal for each primate icon in your zoo.",
+          "timing": "placement/passive"
+        }
+      ],
+      "icons": {
+        "primate": 1
+      },
+      "level": 6,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 1,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "primate"
+      ],
+      "unique_building": {
+        "adjacent_count": 1,
+        "adjacent_terrain": "rock",
+        "building_type": "unique_sponsor_247",
+        "size": 4
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-247",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "247",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:247"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive.",
+      "title": "Rhesus Monkey Park"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 1
+              },
+              "op": "gain_x_token",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-248",
+          "trigger": "icon_entered:self:primate"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当灵长类图标进入你的动物园，获得1个X标记。",
+          "summary_en": "Whenever a primate icon enters your zoo, gain 1 X-token.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "primate": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [
+        "X-token"
+      ],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "primate"
+      ],
+      "unique_building": {
+        "building_type": "unique_sponsor_248",
+        "size": 4
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-248",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "248",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:248"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 6 sponsor; timings: passive.",
+      "title": "Barred Owl Hut"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "draw": 2,
+                "keep": 1
+              },
+              "op": "draw_keep_cards",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-249",
+          "trigger": "icon_entered:self:bird"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当鸟类图标进入你的动物园，执行“洞察2”（抽2留1）。",
+          "summary_en": "Whenever a bird icon enters your zoo, resolve Perception 2 (draw two, keep one).",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "bird": 1
+      },
+      "level": 6,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "bird"
+      ],
+      "unique_building": {
+        "building_type": "unique_sponsor_249",
+        "size": 3
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-249",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "249",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:249"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive.",
+      "title": "Sea Turtle Tank"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "maximum": 2
+              },
+              "op": "sell_hand_cards",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-250",
+          "trigger": "icon_entered:self:reptile"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当爬行类图标进入你的动物园，可出售至多2张手牌，每张4金钱。",
+          "summary_en": "Whenever a reptile icon enters your zoo, you may sell up to two hand cards for 4 money each.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "reptile": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "reptile"
+      ],
+      "unique_building": {
+        "adjacent_count": 1,
+        "adjacent_terrain": "water",
+        "building_type": "unique_sponsor_250",
+        "size": 4
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 1
+    },
+    "id": "ark-nova:sponsor-250",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "250",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:250"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive.",
+      "title": "Polar Bear Exhibit"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": 2,
+                "track": "appeal"
+              },
+              "op": "move_track",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-251",
+          "trigger": "icon_entered:any:bear"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "icon": "bear",
+          "reward": "conservation",
+          "rewards": [
+            1,
+            2
+          ],
+          "scope": "actor",
+          "thresholds": [
+            3,
+            6
+          ]
+        },
+        "op": "gain_tiered_icon_reward",
+        "timing": "end_of_game"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当任意动物园获得熊图标，你获得2魅力。",
+          "summary_en": "Whenever a bear icon enters any zoo, gain 2 appeal.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "bear": 1,
+        "predator": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "bear",
+        "predator"
+      ],
+      "unique_building": {
+        "adjacent_count": 1,
+        "adjacent_terrain": "water",
+        "building_type": "unique_sponsor_251",
+        "size": 4
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-251",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "251",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:251"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive.",
+      "title": "Spotted Hyena Compound"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "draw": {
+                  "ref": "actor.icons.predator"
+                },
+                "keep": 1
+              },
+              "op": "reveal_keep_animal",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-252",
+          "trigger": "icon_entered:self:predator"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当食肉动物图标进入你的动物园，执行“猎手X”，X为己方食肉动物图标数。",
+          "summary_en": "Whenever a predator icon enters your zoo, resolve Hunter X where X is your predator-icon count.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "predator": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 1,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "predator"
+      ],
+      "unique_building": {
+        "adjacent_count": 1,
+        "adjacent_terrain": "rock",
+        "building_type": "unique_sponsor_252",
+        "size": 4
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-252",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "252",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:252"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 6 sponsor; timings: immediate, passive.",
+      "title": "Okapi Stable"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 3
+        },
+        "op": "add_source_card_tokens",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {},
+              "op": "open_bonus_sponsor_play",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-253",
+          "trigger": "icon_entered:self:herbivore"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 2,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "在此牌上放置3个玩家标记。",
+          "summary_en": "Place 3 of your player tokens on this card.",
+          "timing": "immediate"
+        },
+        {
+          "summary_cn": "每当食草动物图标进入你的动物园，可移除1个储存标记并打出1张赞助商牌，支付等同其等级的金钱。",
+          "summary_en": "When a herbivore icon enters your zoo, you may remove one stored token to play a Sponsor card, paying money equal to its level.",
+          "timing": "passive"
+        }
+      ],
+      "icons": {
+        "herbivore": 1
+      },
+      "level": 6,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [
+        "3 player tokens"
+      ],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "herbivore"
+      ],
+      "unique_building": {
+        "building_type": "unique_sponsor_253",
+        "size": 4
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-253",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "253",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:253"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: placement/immediate.",
+      "title": "Zoo School"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 1,
+          "track": "reputation"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {},
+        "op": "take_map_reward_card",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 1,
+        "reputation": 1
+      },
+      "effects": [
+        {
+          "summary_cn": "该特殊建筑必须接触至少2个地图边缘格；从牌库或声望范围拿1张牌，并直接获得1保护分。",
+          "summary_en": "This unique building must touch at least two border spaces; take one card from the deck or reputation range. It also grants 1 conservation directly.",
+          "timing": "placement/immediate"
+        }
+      ],
+      "icons": {},
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": {
+        "border_count": 2,
+        "building_type": "unique_sponsor_254",
+        "size": 3
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-254",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "254",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:254"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: placement.",
+      "title": "Adventure Playground"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 4,
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 4,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "该特殊建筑必须邻接至少1个岩石格。",
+          "summary_en": "This unique building must be placed adjacent to at least one rock space.",
+          "timing": "placement"
+        }
+      ],
+      "icons": {},
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 1,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": {
+        "adjacent_count": 1,
+        "adjacent_terrain": "rock",
+        "building_type": "unique_sponsor_255",
+        "size": 2
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-255",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "255",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:255"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: placement.",
+      "title": "Water Playground"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 4,
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 4,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "该特殊建筑必须邻接至少1个水域格。",
+          "summary_en": "This unique building must be placed adjacent to at least one water space.",
+          "timing": "placement"
+        }
+      ],
+      "icons": {},
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": {
+        "adjacent_count": 1,
+        "adjacent_terrain": "water",
+        "building_type": "unique_sponsor_256",
+        "size": 2
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 1
+    },
+    "id": "ark-nova:sponsor-256",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "256",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:256"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: placement, income, endgame.",
+      "title": "Side Entrance"
+    },
+    "effects": [
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "amount": {
+                  "calc": "multiply",
+                  "values": [
+                    {
+                      "ref": "actor.side_entrance_income_building_count"
+                    },
+                    2
+                  ]
+                }
+              },
+              "op": "gain_money",
+              "timing": "income"
+            }
+          ],
+          "id": "sponsor-257",
+          "trigger": "income"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 5,
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.map_complete"
+            },
+            "operator": "==",
+            "right": true
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 3,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "放置时覆盖/接触2个地图边缘位置，这两个位置无需相邻。",
+          "summary_en": "Place on two border spaces; the two border contacts need not be adjacent.",
+          "timing": "placement"
+        },
+        {
+          "summary_cn": "每个邻接侧门且符合条件的建筑带来2金钱收入（空的普通围栏不计）。",
+          "summary_en": "Gain 2 money per qualifying building next to the Side Entrance (empty standard enclosures excluded).",
+          "timing": "income"
+        },
+        {
+          "summary_cn": "若动物园地图完全覆盖，终局获得5魅力。",
+          "summary_en": "Gain 5 appeal if your zoo map is completely covered.",
+          "timing": "endgame"
+        }
+      ],
+      "icons": {},
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": {
+        "border_count": 2,
+        "building_type": "unique_sponsor_257",
+        "ignore_existing_adjacency": true,
+        "size": 2
+      },
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-257",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "257",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:257"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: immediate/scoring.",
+      "title": "Native Seabirds"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.connected_water_space_count"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": {
+            "calc": "floor_divide",
+            "values": [
+              {
+                "ref": "actor.unconnected_water_space_count"
+              },
+              2
+            ]
+          },
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每个连通的水域格获得1魅力；每2个未连通水域格获得1保护分。",
+          "summary_en": "Gain 1 appeal per connected water space; gain 1 conservation per two unconnected water spaces.",
+          "timing": "immediate/scoring"
+        }
+      ],
+      "icons": {
+        "bird": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Appeal threshold"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "bird"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-258",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "258",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.appeal"
+          },
+          "operator": "<=",
+          "right": 25
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:258"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: immediate/scoring.",
+      "title": "Native Lizards"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.connected_rock_space_count"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": {
+            "calc": "floor_divide",
+            "values": [
+              {
+                "ref": "actor.unconnected_rock_space_count"
+              },
+              2
+            ]
+          },
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每个连通的岩石格获得1魅力；每2个未连通岩石格获得1保护分。",
+          "summary_en": "Gain 1 appeal per connected rock space; gain 1 conservation per two unconnected rock spaces.",
+          "timing": "immediate/scoring"
+        }
+      ],
+      "icons": {
+        "reptile": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Appeal threshold"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "reptile"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-259",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "259",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.appeal"
+          },
+          "operator": "<=",
+          "right": 25
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:259"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: immediate/scoring.",
+      "title": "Native Farm Animals"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.connected_uncovered_border_space_count"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.empty_buildable_group_of_six_count"
+          },
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每个连通且未有建筑的边缘格获得1魅力；每6个未覆盖格获得1保护分。",
+          "summary_en": "Gain 1 appeal per connected border space without a building; gain 1 conservation per group of six uncovered spaces.",
+          "timing": "immediate/scoring"
+        }
+      ],
+      "icons": {
+        "herbivore": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Appeal threshold"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "herbivore"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-260",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "260",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.appeal"
+          },
+          "operator": "<=",
+          "right": 25
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:260"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 3 sponsor; timings: immediate, endgame.",
+      "title": "Guided School Tours"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 1,
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": 1,
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game",
+        "when": {
+          "args": {
+            "left": {
+              "ref": "actor.distinct_animal_category_count"
+            },
+            "operator": ">=",
+            "right": 5
+          },
+          "op": "compare"
+        }
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 1,
+        "conservation": 1,
+        "reputation": 0
+      },
+      "effects": [
+        {
+            "summary_cn": "若动物园拥有5种动物类别图标，终局获得1保护分。",
+            "summary_en": "Gain 1 conservation if your zoo has all five animal-category icons.",
+            "timing": "endgame"
+        }
+      ],
+      "icons": {},
+      "level": 3,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-261",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "261",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:261"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive, additional.",
+      "title": "Explorer"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "calc": "multiply",
+            "values": [
+              {
+                "ref": "actor.distinct_continent_animal_category_count"
+              },
+              2
+            ]
+          }
+        },
+        "op": "gain_money",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "effects": [
+            {
+              "args": {
+                "appeal": 1,
+                "money": 2
+              },
+              "op": "gain_resources",
+              "timing": "on_trigger"
+            }
+          ],
+          "id": "sponsor-262",
+          "trigger": "distinct_icon_entered"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 2,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每当动物园首次获得一种新的洲或动物类别图标，获得1魅力和2金钱。",
+          "summary_en": "When a continent or animal-category icon new to your zoo appears, gain 1 appeal and 2 money.",
+          "timing": "passive"
+        },
+        {
+          "summary_cn": "社区转录还记录了“每种不同图标2金钱”的效果；自动化前建议核对实体牌上的触发时点。",
+          "summary_en": "Community transcription also records a 2-money-per-different-icon effect; timing should be verified on the physical card before automation.",
+          "timing": "additional"
+        }
+      ],
+      "icons": {
+        "person": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Sponsors II"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "person"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-262",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "262",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.action_cards.sponsors.upgraded"
+          },
+          "operator": "==",
+          "right": true
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:262"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: passive, immediate.",
+      "title": "WAZA Large Animal Program"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": 1,
+          "effects": [],
+          "id": "sponsor-263",
+          "kind": "large_animal_ignore_prerequisite",
+          "trigger": "static"
+        },
+        "op": "add_modifier",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "building_types": [
+            "standard_enclosure_5"
+          ],
+          "maximum": 1
+        },
+        "op": "place_free_building",
+        "timing": "on_play"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 2,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "打出大型动物时，可忽略1项条件。",
+          "summary_en": "When playing a large animal, you may ignore one condition.",
+          "timing": "passive"
+        },
+        {
+          "summary_cn": "免费放置1个5格普通围栏。",
+          "summary_en": "Place a size-5 standard enclosure for free.",
+          "timing": "immediate"
+        }
+      ],
+      "icons": {},
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Sponsors II",
+        "Reputation threshold"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-263",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "263",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.action_cards.sponsors.upgraded"
+          },
+          "operator": "==",
+          "right": true
+        },
+        "op": "compare"
+      },
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.reputation"
+          },
+          "operator": ">=",
+          "right": 6
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:263"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  },
+  {
+    "display": {
+      "summary": "Level 5 sponsor; timings: immediate/scoring.",
+      "title": "Free-Range New World Monkeys"
+    },
+    "effects": [
+      {
+        "args": {
+          "amount": {
+            "ref": "actor.connected_placement_bonus_space_count"
+          },
+          "track": "appeal"
+        },
+        "op": "move_track",
+        "timing": "on_play"
+      },
+      {
+        "args": {
+          "amount": {
+            "calc": "floor_divide",
+            "values": [
+              {
+                "ref": "actor.unconnected_placement_bonus_space_count"
+              },
+              2
+            ]
+          },
+          "track": "conservation"
+        },
+        "op": "move_track",
+        "timing": "end_of_game"
+      }
+    ],
+    "facts": {
+      "compiled_effect_records": 1,
+      "direct_rewards": {
+        "appeal": 0,
+        "conservation": 0,
+        "reputation": 0
+      },
+      "effects": [
+        {
+          "summary_cn": "每个连通的放置奖励格获得1魅力；每2个未连通的放置奖励格获得1保护分。",
+          "summary_en": "Gain 1 appeal per connected placement-bonus space; gain 1 conservation per two unconnected placement-bonus spaces.",
+          "timing": "immediate/scoring"
+        }
+      ],
+      "icons": {
+        "primate": 1
+      },
+      "level": 5,
+      "notes": "",
+      "reference_import_status": "structured_transcription",
+      "requirements": [
+        "Appeal threshold"
+      ],
+      "resources_or_markers": [],
+      "rock_requirement": 0,
+      "semantic_compile_status": "compiled",
+      "tags": [
+        "primate"
+      ],
+      "unique_building": null,
+      "unresolved_effect_records": [],
+      "unresolved_requirements": [],
+      "water_requirement": 0
+    },
+    "id": "ark-nova:sponsor-264",
+    "kind": "sponsor",
+    "official_ref": {
+      "component_id": "264",
+      "source_ids": [
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [
+      {
+        "args": {
+          "left": {
+            "ref": "actor.tracks.appeal"
+          },
+          "operator": "<=",
+          "right": 25
+        },
+        "op": "compare"
+      }
+    ],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:sponsor:264"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  }
+]

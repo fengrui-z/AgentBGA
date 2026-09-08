@@ -186,7 +186,11 @@ class HarnessTests(unittest.TestCase):
                 call_tool(path, "submit_action", {"action_id": "a-good"})
 
     def test_mcp_exposes_only_seat_tools(self):
-        self.assertEqual({"observe", "legal_actions", "submit_action", "read_notes", "write_notes"}, {tool["name"] for tool in TOOLS})
+        self.assertEqual({
+            "observe", "legal_actions", "inspect_card", "inspect_rules", "inspect_map",
+            "inspect_played_cards", "inspect_history", "submit_action",
+            "read_notes", "write_notes",
+        }, {tool["name"] for tool in TOOLS})
 
     def test_notes_ignore_mutable_context_path_and_reject_symlink_escape(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -406,7 +410,7 @@ class HarnessTests(unittest.TestCase):
             )
             responses = [json.loads(line) for line in completed.stdout.splitlines()]
             self.assertEqual("agentbga-seat", responses[0]["result"]["serverInfo"]["name"])
-            self.assertEqual(5, len(responses[1]["result"]["tools"]))
+            self.assertEqual(10, len(responses[1]["result"]["tools"]))
 
     def test_harness_commands_resume_sessions(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", side_effect=lambda name: f"/bin/{name}"):
@@ -448,6 +452,11 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual(claude.session.session_id, command[command.index("--resume") + 1])
             self.assertIn("mcp__agentbga__observe", command)
             self.assertIn("mcp__agentbga__legal_actions", command)
+            self.assertIn("mcp__agentbga__inspect_card", command)
+            self.assertIn("mcp__agentbga__inspect_rules", command)
+            self.assertIn("mcp__agentbga__inspect_map", command)
+            self.assertIn("mcp__agentbga__inspect_played_cards", command)
+            self.assertIn("mcp__agentbga__inspect_history", command)
             self.assertIn("mcp__agentbga__submit_action", command)
             self.assertEqual("max", command[command.index("--effort") + 1])
             self.assertEqual(["--", "turn"], command[-2:])
@@ -663,8 +672,27 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("{env:CUSTOM_KEY}", configured["provider"]["agentbga"]["options"]["apiKey"])
             # Reasoning is controlled explicitly, not inferred from the endpoint URL.
             variant = configured["provider"]["agentbga"]["models"]["custom-model"]["variants"]["max"]
-            self.assertEqual("max", variant["reasoning_effort"])
-            self.assertIn("agentbga/custom-model", opencode._command("turn"))
+            self.assertEqual("max", variant["reasoningEffort"])
+            opencode_command = opencode._command("turn")
+            self.assertIn("agentbga/custom-model", opencode_command)
+            self.assertIn("--print-logs", opencode_command)
+            self.assertIn("--title=AgentBGA-seat-1", opencode_command)
+            self.assertNotIn("read", configured["permission"])
+            self.assertNotIn("edit", configured["permission"])
+            opencode_environment = opencode._environment()
+            self.assertEqual(
+                str(opencode.session.workspace / "opencode.json"),
+                opencode_environment["OPENCODE_CONFIG"],
+            )
+            self.assertEqual("1", opencode_environment["OPENCODE_DISABLE_PROJECT_CONFIG"])
+            self.assertEqual(
+                str(opencode.session.runtime / "turn-context.json"),
+                configured["mcp"]["agentbga"]["command"][4],
+            )
+            self.assertEqual(
+                str(opencode.session.workspace),
+                configured["mcp"]["agentbga"]["command"][6],
+            )
 
             proxied_deepseek = HarnessAgent(PlayerConfig.from_dict({
                 "name": "OpenCode", "backend": "opencode", "model": "deepseek-v4-flash",
@@ -686,7 +714,7 @@ class HarnessTests(unittest.TestCase):
             non_deepseek_url._prepare_turn({"state_version": 1}, LEGAL)
             non_deepseek_config = json.loads((non_deepseek_url.session.workspace / "opencode.json").read_text())
             non_deepseek_variant = non_deepseek_config["provider"]["agentbga"]["models"]["deepseek-v4-flash"]["variants"]["high"]
-            self.assertEqual("high", non_deepseek_variant["reasoning_effort"])
+            self.assertEqual("high", non_deepseek_variant["reasoningEffort"])
             self.assertNotIn("thinking", non_deepseek_variant)
             self.assertIn("--thinking", non_deepseek_url._command("turn"))
 
@@ -698,7 +726,7 @@ class HarnessTests(unittest.TestCase):
             glm._prepare_turn({"state_version": 1}, LEGAL)
             glm_config = json.loads((glm.session.workspace / "opencode.json").read_text())
             glm_variant = glm_config["provider"]["agentbga"]["models"]["glm-5.2"]["variants"]["high"]
-            self.assertEqual("high", glm_variant["reasoning_effort"])
+            self.assertEqual("high", glm_variant["reasoningEffort"])
             self.assertTrue(glm_variant["tool_stream"])
 
             kimi = HarnessAgent(PlayerConfig.from_dict({

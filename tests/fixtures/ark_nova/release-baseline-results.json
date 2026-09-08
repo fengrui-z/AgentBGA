@@ -1,0 +1,52 @@
+{
+  "content_sha256": "bee6de5feb05b1c0b37e3dfe23489fab368302f5a0daa50a44f29bb74c4688c8",
+  "executed_on": "2026-08-28",
+  "results": [
+    {
+      "decisions": 71,
+      "players": 1,
+      "result_sha256": "75a51513ac3881745725ae75088dd3b6a346984029e8885051d31d0d7b7ce03f",
+      "seed": 202608281,
+      "state_hash": "ee569953f91a4ab145df54fe89d15f2dcd65970942c1554a149f42d75494d076",
+      "turns": 27,
+      "winner_seats": [
+        0
+      ]
+    },
+    {
+      "decisions": 784,
+      "players": 2,
+      "result_sha256": "8a7845b2d5e04bd363746348dbe129003175abffa679c19ca751e3ac33edb721",
+      "seed": 202608282,
+      "state_hash": "ed7794ad73a1f5d3b4014bc66e81024ae6292d18b96f91fccd12379ccba743b2",
+      "turns": 277,
+      "winner_seats": [
+        1
+      ]
+    },
+    {
+      "decisions": 1225,
+      "players": 3,
+      "result_sha256": "5e0e33fea297f872ec1e52c11346d9761c9a576cae7a1982f8184a658488c992",
+      "seed": 202608283,
+      "state_hash": "fef19bc45f0e860dffee70f81e41365a1c2373fe80db9a1e925f8158ae77af71",
+      "turns": 479,
+      "winner_seats": [
+        2
+      ]
+    },
+    {
+      "decisions": 1283,
+      "players": 4,
+      "result_sha256": "97bd63a7fcc9d5814ffc5eae7aaacaa6fb15319d043be850411945b23951c350",
+      "seed": 202608284,
+      "state_hash": "e389f3b0acce949155e72f592bbddb6b262cec6e973366c407ea9d7a4d3e2f49",
+      "turns": 450,
+      "winner_seats": [
+        3
+      ]
+    }
+  ],
+  "rules_version": "base-1.2-faq-v2-map0.1",
+  "schema_version": "agentbga.ark_nova.release_baselines.v1"
+}

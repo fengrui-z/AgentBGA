@@ -3,11 +3,20 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import ArenaPage from "./arena/page";
+import {
+  ArkNovaPlayerSummary, ArkNovaTable,
+  type ArkPlayerView, type ArkView,
+} from "./ark-nova-table";
 import { canAddToken, counts, reservationChoices, resolveSelection, selectionCandidates, tokenTotal } from "./splendor-selection";
 
 // ── i18n ─────────────────────────────────────────────────────────────
 type Lang = "zh" | "en";
+type ArkMapId = "map-0" | "map-a";
 type Dict = Record<string, string>;
+const ARK_ACTION_LABELS: Record<Lang, Record<string, string>> = {
+  zh: {animals: "动物", cards: "卡牌", build: "建造", association: "协会", sponsors: "赞助商"},
+  en: {animals: "Animals", cards: "Cards", build: "Build", association: "Association", sponsors: "Sponsors"},
+};
 const STR: Record<Lang, Dict> = {
   zh: {
     // hero
@@ -15,7 +24,7 @@ const STR: Record<Lang, Dict> = {
     hero_title_a: "把模型放上牌桌，",
     hero_title_b: "看见",
     hero_title_c: "每一次决策。",
-    hero_mark_1: "多游戏插件", hero_mark_2: "座位隔离观察", hero_mark_3: "完整对局引擎", hero_mark_ark: "CONTROLLED CORE",
+    hero_mark_1: "多游戏插件", hero_mark_2: "座位隔离观察", hero_mark_3: "完整对局引擎", hero_mark_ark: "SEMANTIC WORKBENCH",
     // setup
     new_table: "NEW TABLE", create_table: "创建一桌", g_human: "人类 vs Agent", g_harness: "Harness 对战",
     players_count: "PLAYERS", pick_game: "选择游戏",
@@ -27,6 +36,7 @@ const STR: Record<Lang, Dict> = {
     ph_endpoint: "如 http://127.0.0.1:8000/v1（本地模型 / 网关）",
     add_human: "＋ 添加人类", add_ai: "＋ 添加 AI / 基线", shuffle: "⤨ 随机座次",
     start: "开始对局 →", starting: "正在入席…", err_start: "无法启动对局",
+    reconnect: "重新连接对局", reconnecting: "正在连接…", reconnect_id: "对局 ID", reconnect_hint: "Web 服务未重启时，可输入对局 ID 无缝恢复可视化与实时记录。",
     human_note: "轮到该座位时在牌桌上操作", random_note: "无需 API，自动随机行动",
     seat_label: "座位", player_label: "玩家",
     move_up: "前移", move_down: "后移", remove: "移除",
@@ -36,7 +46,8 @@ const STR: Record<Lang, Dict> = {
     s_finished: "已结束", s_wait_pause: "等待暂停", s_paused: "已暂停", s_active: "进行中",
     processing: "处理中…", resume: "▶ 继续对局", pause: "Ⅱ 暂停", new_match: "新对局",
     watch_live: "观战已有牌桌", watch: "开始观战 →", watching: "正在接入…",
-    watch_id: "对局 ID", live_tables: "本地牌桌", no_tables: "还没有可观战的对局。CLI 或 Web 开桌后会出现在这里。",
+    watch_id: "搜索对局 ID、玩家或游戏", live_tables: "本地牌桌", no_tables: "还没有可观战的对局。CLI 或 Web 开桌后会出现在这里。",
+    no_matching_tables: "没有匹配的牌桌，请更换搜索内容。",
     spectator: "观战", err_watch: "无法接入对局",
     err_pause: "无法更新暂停状态", err_submit: "无法提交行动",
     err_ws: "实时连接已断开，可刷新页面后重新开始。", call_failed: "调用失败",
@@ -46,9 +57,7 @@ const STR: Record<Lang, Dict> = {
     // human turn
     your_turn: "YOUR TURN · SEAT", pick_action: "，请选择行动", legal_opts: "个合法选项",
     submitting: "提交中…", returning: "归还", buying: "支付", reserving: "预留",
-    confirm_action: "确认操作", confirm_submit: "确认并提交 →", selection_ready: "已选择",
-    confirm_idle: "尚未选择完整操作", confirm_help: "点击选项只会暂存；确认后才会正式提交。",
-    select_action_required: "请先点选一个操作，再按确认。", selection_expired: "当前选择已失效，请根据最新局面重新选择。",
+    selection_expired: "当前选择已失效，请根据最新局面重新选择。",
     azul_source_required: "请先选择砖块来源。", azul_color_required: "请选择要拿取的颜色。", azul_destination_required: "请选择图案线或地板线。",
     // splendor board
     supply: "供应区", gem_bank: "宝石银行", nobles: "贵族", available: "AVAILABLE",
@@ -57,16 +66,16 @@ const STR: Record<Lang, Dict> = {
     // player panel
     tokens: "宝石", engine: "引擎", purchased: "已购", reserved: "预留", nobles_owned: "贵族",
     // ark nova
-    ark_eyebrow: "ARK NOVA · CONTROLLED CORE",
+    ark_eyebrow: "ARK NOVA · OFFICIAL BASE CANDIDATE",
     ark_phase_select: "正在选择起始手牌", ark_phase_play: "多阶段对局进行中",
-    ark_phase_note: "回合、行动牌、建造、动物、协会、赞助商和 Break 已接通；当前使用无特殊能力的研究卡池，不代表完整商业卡池。",
+    ark_phase_note: "当前对局运行基础版官方语义候选：255 张实体卡、5 种行动牌、Map 0 与 Map A 已接入统一规则引擎。",
     ark_tracks: "TRACKS / BREAK", ark_tracks_h: "公共轨道", cur_decision: "CURRENT DECISION",
     ark_display: "CARD DISPLAY", ark_display_h: "中央卡牌展示区", deck: "牌库", discard: "弃牌",
     ark_after_select: "起始选牌后翻开",
     ark_assoc: "ASSOCIATION BOARD", ark_assoc_h: "协会板与基础保育项目",
     ark_partner: "合作动物园", ark_uni: "大学", ark_donation: "捐款", ark_blocked: "双人封锁", ark_avail: "可用",
-    ark_zoo: "BEGINNER MAP A", ark_zoo_h: "玩家动物园", ark_zoo_unit: "3 格起始围栏 · 空置",
-    ark_zoo_note: "本里程碑的坐标为可测试的示意几何；正式 footprint 会在地图规则阶段按规则场景校准。",
+    ark_zoo: "ZOO MAP", ark_zoo_h: "玩家动物园", ark_zoo_unit: "官方坐标 footprint",
+    ark_zoo_note: "水域、山脉、覆盖奖励与多格建筑均由后端以 axial coordinate 校验。",
     hand: "手牌", money_c: "₡",
     // brass
     brass_canal: "运河时代", brass_rail: "铁路时代", round: "轮",
@@ -89,7 +98,7 @@ const STR: Record<Lang, Dict> = {
     thinking: "思考过程", collapsible: "可折叠", answer: "回复", attempt: "尝试", generating: "生成中",
     actions: "ACTIONS", decision_log: "决策记录", view_tool: "查看工具数据",
     // winner
-    winner: "WINNER", play_again: "再来一局", match_over: "对局结束",
+    winner: "WINNER", play_again: "再来一局", match_over: "对局结束", view_final_board: "查看终局游戏界面",
     // describeAction
     da_error: "调用失败", da_abort: "对局中止",
     // humanActionText / tokens
@@ -101,7 +110,7 @@ const STR: Record<Lang, Dict> = {
     hero_title_a: "Put models at the table,",
     hero_title_b: "watch",
     hero_title_c: "every decision.",
-    hero_mark_1: "Multi-game plugins", hero_mark_2: "Seat-isolated views", hero_mark_3: "Full-match engine", hero_mark_ark: "CONTROLLED CORE",
+    hero_mark_1: "Multi-game plugins", hero_mark_2: "Seat-isolated views", hero_mark_3: "Full-match engine", hero_mark_ark: "SEMANTIC WORKBENCH",
     new_table: "NEW TABLE", create_table: "New table · ", g_human: "Human vs Agent", g_harness: "Harness Battle",
     players_count: "PLAYERS", pick_game: "Select game",
     f_name: "Player name", f_provider: "Harness / provider", f_backend: "Runtime", f_endpoint: "Endpoint",
@@ -112,6 +121,7 @@ const STR: Record<Lang, Dict> = {
     ph_endpoint: "e.g. http://127.0.0.1:8000/v1 (local model / gateway)",
     add_human: "+ Add human", add_ai: "+ Add AI / baseline", shuffle: "⤨ Shuffle seats",
     start: "Start match →", starting: "Seating…", err_start: "Failed to start match",
+    reconnect: "Reconnect match", reconnecting: "Connecting…", reconnect_id: "Match ID", reconnect_hint: "If the Web service has not restarted, enter the match ID to restore the live table and event stream.",
     human_note: "Play at the table when it's this seat's turn", random_note: "No API needed, random actions",
     seat_label: "Seat", player_label: "Player",
     move_up: "Move up", move_down: "Move down", remove: "Remove",
@@ -120,7 +130,8 @@ const STR: Record<Lang, Dict> = {
     s_finished: "Finished", s_wait_pause: "Waiting to pause", s_paused: "Paused", s_active: "Running",
     processing: "Working…", resume: "▶ Resume", pause: "Ⅱ Pause", new_match: "New match",
     watch_live: "Watch an existing table", watch: "Watch →", watching: "Opening…",
-    watch_id: "Match ID", live_tables: "Local tables", no_tables: "No watchable tables yet. CLI or web matches will show up here.",
+    watch_id: "Search match ID, player, or game", live_tables: "Local tables", no_tables: "No watchable tables yet. CLI or web matches will show up here.",
+    no_matching_tables: "No matching tables. Try another search.",
     spectator: "Spectator", err_watch: "Failed to watch match",
     err_pause: "Failed to update pause state", err_submit: "Failed to submit action",
     err_ws: "Live connection dropped. Refresh and restart.", call_failed: "Call failed",
@@ -129,24 +140,22 @@ const STR: Record<Lang, Dict> = {
     paused_desc: "The table stops at a safe turn boundary. Click Resume to continue.",
     your_turn: "YOUR TURN · SEAT", pick_action: ", choose an action", legal_opts: "legal options",
     submitting: "Submitting…", returning: "Return", buying: "Pay", reserving: "Reserve",
-    confirm_action: "CONFIRM ACTION", confirm_submit: "Confirm & submit →", selection_ready: "SELECTED",
-    confirm_idle: "No complete action selected", confirm_help: "Choosing only stages an action; it is submitted after confirmation.",
-    select_action_required: "Choose an action before confirming.", selection_expired: "This choice is no longer legal. Choose again from the latest position.",
+    selection_expired: "This choice is no longer legal. Choose again from the latest position.",
     azul_source_required: "Choose a tile source first.", azul_color_required: "Choose the color to draft.", azul_destination_required: "Choose a pattern line or the floor.",
     supply: "Supply", gem_bank: "Gem Bank", nobles: "Nobles", available: "AVAILABLE",
     tier: "TIER", cards_unit: "cards",
     reserve_label: "Reserve", buy_label: "Buy",
     tokens: "Gems", engine: "Engine", purchased: "Purchased", reserved: "Reserved", nobles_owned: "Nobles",
-    ark_eyebrow: "ARK NOVA · CONTROLLED CORE",
+    ark_eyebrow: "ARK NOVA · OFFICIAL BASE CANDIDATE",
     ark_phase_select: "Selecting starting hand", ark_phase_play: "Multi-phase match in progress",
-    ark_phase_note: "Turns, action cards, building, animals, association, sponsors and Break are wired up; uses an ability-free research card pool, not the full commercial pool.",
+    ark_phase_note: "This match runs the official-base semantic candidate: all 255 physical cards, five Action cards, Map 0, and Map A are wired into one rules engine.",
     ark_tracks: "TRACKS / BREAK", ark_tracks_h: "Public tracks", cur_decision: "CURRENT DECISION",
     ark_display: "CARD DISPLAY", ark_display_h: "Card display", deck: "Deck", discard: "Discard",
     ark_after_select: "Revealed after pick",
     ark_assoc: "ASSOCIATION BOARD", ark_assoc_h: "Association board & conservation projects",
     ark_partner: "Partner zoos", ark_uni: "Universities", ark_donation: "Donations", ark_blocked: "Two-player locked", ark_avail: "available",
-    ark_zoo: "BEGINNER MAP A", ark_zoo_h: "Player zoo", ark_zoo_unit: "3-cell starter enclosure · empty",
-    ark_zoo_note: "Coordinates are test-only schematic geometry; real footprints land in the map phase.",
+    ark_zoo: "ZOO MAP", ark_zoo_h: "Player zoo", ark_zoo_unit: "Official coordinate footprint",
+    ark_zoo_note: "Water, rock, placement bonuses, and polyhex buildings are validated by the backend in axial coordinates.",
     hand: "Hand", money_c: "₡",
     brass_canal: "Canal Era", brass_rail: "Rail Era", round: "round",
     brass_actions: "ACTIONS", coal_market: "Coal market", iron_market: "Iron market", turn_order: "Turn order",
@@ -165,7 +174,7 @@ const STR: Record<Lang, Dict> = {
     waiting_note: "This milestone doesn't launch a model; thinking, tool calls and replies show here once wired up.",
     thinking: "Reasoning", collapsible: "collapsible", answer: "Answer", attempt: "attempt", generating: "generating",
     actions: "ACTIONS", decision_log: "Decision log", view_tool: "View tool data",
-    winner: "WINNER", play_again: "Play again", match_over: "Match over",
+    winner: "WINNER", play_again: "Play again", match_over: "Match over", view_final_board: "View final game state",
     da_error: "Call failed", da_abort: "Match aborted",
     take_tokens: "Take gems", buy_visible: "Buy visible card", buy_reserved: "Buy reserved card",
     reserve_visible: "Reserve visible card", reserve_deck: "Reserve from deck", choose_noble: "Choose noble", pass: "Other",
@@ -207,29 +216,6 @@ type AzulView = {
   center_has_start_marker: boolean; start_marker_holder_seat: number | null;
   factories: {id: string; tiles: AzulCounts}[]; center: AzulCounts;
   wall_pattern: AzulColor[][]; players: AzulPlayerView[];
-};
-type ArkCard = {id?: string; card_type?: string; tags?: string[]; implementation?: string; hidden?: true};
-type ArkActionCard = {action: string; strength: number; upgraded: boolean; tokens: string[]};
-type ArkMap = {
-  id: string; name: string; geometry_status: string;
-  cells: {q: number; r: number; terrain: "water" | "rock" | "buildable"}[];
-  buildings: {id: string; type: string; size: number; occupied: boolean; cells: {q: number; r: number}[]}[];
-};
-type ArkPlayerView = {
-  seat: number; money: number; x_tokens: number; appeal: number; conservation: number; reputation: number;
-  action_cards: ArkActionCard[]; association_workers: {active: number; reserve: number; committed: unknown[]};
-  partner_zoos: string[]; universities: string[]; map: ArkMap; hand_count: number; initial_draw_count: number;
-  initial_keep_required: number; hand: ArkCard[]; initial_draw: ArkCard[]; played_cards: ArkCard[]; final_scoring_cards: (ArkCard | {hidden: true})[];
-  supported_projects: string[]; upgrade_rewards_claimed: number[]; final_card_choice_resolved: boolean;
-};
-type ArkView = {
-  game: "ark_nova"; rules_version: string; implementation_status: string; status: string; phase: string;
-  turn_count: number; decision_count: number; active_seat: number; turn: {active_seat: number; decision: string; action_card: string | null; remaining_plays: number};
-  break_track: {position: number; start_marker: string; triggered: boolean}; card_display: ArkCard[];
-  game_board_bonus_tiles: {id: string; implementation: string}[];
-  deck_count: number; discard_count: number; base_conservation_projects: {id: string; tag: string; levels: number[]}[];
-  association_board: {partner_zoos: Record<string, number>; universities: Record<string, number>; blocked_two_player: string[]; donations: {seat: number; cost: number}[]};
-  players: ArkPlayerView[];
 };
 type BrassIndustry = {
   id: string; tile_id?: string; industry: string; level: number; owner: number; location: string;
@@ -309,16 +295,18 @@ type SevenView = {
 type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
 type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
-  paused: boolean; pause_pending: boolean; mode?: "live" | "spectator" | "store";
+  paused: boolean; pause_pending: boolean; running?: boolean; mode?: "live" | "spectator" | "store";
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
   players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView)[];
+  spectator_view?: ArkView;
+  rankings?: {seat: number; player: string}[];
 };
 type TableSummary = {
   match_id: string; game: GameId; status: string; turn_count: number; seed: number;
   mode?: string; active_seat?: number;
   players: {seat: number; name: string; backend: string; model?: string}[];
 };
-type LegalAction = {id: string; action: Record<string, unknown>};
+type LegalAction = {id: string; label?: string; benefit_summary?: string; benefit_summary_cn?: string; action: Record<string, unknown>};
 type TimelineEvent = {
   type: string; player?: string; seat?: number; error?: string; turns?: number;
   backend?: string; agent?: {latency_ms?: number; action_latency_ms?: number; process_latency_ms?: number}; action?: Record<string, unknown>;
@@ -354,7 +342,7 @@ const AZUL_META: Record<AzulColor, Record<Lang, string>> = {
 const GAME_COPY: Record<GameId, {eyebrow: string; name: Record<Lang,string>; description: Record<Lang,string>; badge: string; note: Record<Lang,string>}> = {
   splendor: {eyebrow: "SPLENDOR", name: {zh:"璀璨宝石",en:"Splendor"}, description: {zh:"配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；每个 Agent Harness 都可独立设置思考强度。",en:"Configure 2–4 model or human players. On your turn, pick a legal action at the table; each agent harness can use its own reasoning effort."}, badge: "PLAYABLE", note: {zh:"完整基础版引擎",en:"Full base-game engine"}},
   azul: {eyebrow: "AZUL", name: {zh:"花砖物语",en:"Azul"}, description: {zh:"从工厂展示区或中央区选取同色花砖，规划图案线并铺设墙面；兼顾相邻计分、地板罚分与终局时机。",en:"Draft one color from factories or the center, fill pattern lines and tile your wall while balancing adjacency, floor penalties and endgame timing."}, badge: "PLAYABLE BETA", note: {zh:"选砖 · 拼墙 · 空间规划",en:"Draft · tile · spatial planning"}},
-  ark_nova: {eyebrow: "ARK NOVA", name: {zh:"方舟动物园",en:"Ark Nova"}, description: {zh:"在受控研究卡池中测试多阶段决策：起始选牌、五张行动牌、六角建造、动物入园、协会任务与 Break 都会逐步提交。",en:"Test multi-stage decisions in a controlled research-card pool: opening hand, five action cards, hex building, animal placement, association tasks and Break."}, badge: "CONTROLLED CORE V2", note: {zh:"升级 · 捐款 · 释放 · 效果系统",en:"Upgrades · donations · release · effect system"}},
+  ark_nova: {eyebrow: "ARK NOVA", name: {zh:"方舟动物园",en:"Ark Nova"}, description: {zh:"基础版 255 张实体卡、5 种行动牌、Map 0 与 Map A 已接入可审计语义引擎，覆盖条件、费用、触发、互动、收入与终局计分。",en:"All 255 physical base cards, five Action cards, Map 0, and Map A run through an auditable semantic engine covering requirements, costs, triggers, interaction, income, and final scoring."}, badge: "OFFICIAL BASE CANDIDATE", note: {zh:"完整卡牌语义 · Map 0 / Map A",en:"Complete card semantics · Map 0 / Map A"}},
   brass_birmingham: {eyebrow: "BRASS: BIRMINGHAM", name: {zh:"伯明翰",en:"Brass: Birmingham"}, description: {zh:"测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。",en:"Test long-term planning in a two-era economic network: industry building, resource sourcing, merchant selling, dynamic turn order and canal-to-rail transitions."}, badge: "PLAYABLE BETA", note: {zh:"产业 · 网络 · 双时代经济",en:"Industry · network · two-era economy"}},
   century_spice_road: {eyebrow: "CENTURY: SPICE ROAD", name: {zh:"香料之路",en:"Century: Spice Road"}, description: {zh:"经营自己的商队：获取商人牌、升级或交换香料、争夺金币银币，并抢先完成高分订单。支持 2–5 名玩家。",en:"Run your caravan: acquire merchant cards, upgrade or trade spices, race for gold and silver coins to fulfill high-score orders. 2–5 players."}, badge: "CLASSIC BASE", note: {zh:"商人牌 · 香料引擎 · 订单竞速",en:"Merchant cards · spice engine · order race"}},
   seven_wonders: {eyebrow: "7 WONDERS", name: {zh:"七大奇迹",en:"7 Wonders"}, description: {zh:"在三个时代中密封选牌并传递手牌，通过生产、贸易、军事、科技与奇迹建设塑造古代文明。支持 3–7 名玩家。",en:"Draft sealed choices across three Ages, passing hands while developing production, trade, military, science and a Wonder. 3–7 players."}, badge: "SECOND EDITION BASE", note: {zh:"轮抽 · 邻城贸易 · 七维计分",en:"Draft · neighbor trade · seven-part scoring"}},
@@ -402,12 +390,12 @@ const PROVIDERS: Record<Provider, {label: Record<Lang,string>; backend: Backend;
 };
 
 function player(seed: number, backend: Backend = "openai"): PlayerForm {
-  return { id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "custom", backend, model: "", base_url: BACKENDS[backend].url, api_key: "", auth_mode: "api_key", reasoning_effort: "max" };
+  return { id: `player-${seed}-${backend}`, name: `Agent ${seed}`, provider: "custom", backend, model: "", base_url: BACKENDS[backend].url, api_key: "", auth_mode: "api_key", reasoning_effort: "max" };
 }
 
 function deepseekHarnessPlayer(seed: number, backend: "opencode" | "dsh" | "hermes" | "minimal"): PlayerForm {
   return {
-    id: crypto.randomUUID(), name: `Agent ${seed}`, provider: backend, backend,
+    id: `player-${seed}-${backend}`, name: `Agent ${seed}`, provider: backend, backend,
     model: "deepseek-v4-flash", base_url: "https://api.deepseek.com", api_key: "",
     auth_mode: "api_key", reasoning_effort: "max",
   };
@@ -415,14 +403,14 @@ function deepseekHarnessPlayer(seed: number, backend: "opencode" | "dsh" | "herm
 
 function codexHarnessPlayer(seed: number): PlayerForm {
   return {
-    id: crypto.randomUUID(), name: `Agent ${seed}`, provider: "codex", backend: "codex",
+    id: `player-${seed}-codex`, name: `Agent ${seed}`, provider: "codex", backend: "codex",
     model: "gpt-5.6", base_url: "https://api.openai.com/v1", api_key: "",
     auth_mode: "api_key", reasoning_effort: "max",
   };
 }
 
 function humanPlayer(seed: number): PlayerForm {
-  return {id: crypto.randomUUID(), name: seed === 1 ? "你" : `玩家 ${seed}`, provider: "custom", backend: "human", model: "", base_url: "", api_key: "", auth_mode: "api_key", reasoning_effort: "max"};
+  return {id: `player-${seed}-human`, name: seed === 1 ? "你" : `玩家 ${seed}`, provider: "custom", backend: "human", model: "", base_url: "", api_key: "", auth_mode: "api_key", reasoning_effort: "max"};
 }
 
 function api(path: string) { return path; }
@@ -876,6 +864,9 @@ function describeAction(item: Timeline, names: Record<number, string>, lang: Lan
   if (event.type === "harness_tool_result") return zh ? `${event.player} 收到 ${event.tool} 结果` : `${event.player} got ${event.tool} result`;
   if (event.type === "harness_finished") return zh ? `${event.player} 通过 ${event.harness} 提交 ${event.action_id}` : `${event.player} submitted ${event.action_id} via ${event.harness}`;
   if (event.type === "harness_error") return zh ? `${event.player} Harness 失败：${event.error}` : `${event.player} harness failed: ${event.error}`;
+  if (event.type === "break_triggered") return zh ? "休息阶段已触发：所有玩家依次处理休息结算" : "Break triggered: all players resolve the Break sequence";
+  if (event.type === "break_finished") return zh ? "休息阶段结束，下一位玩家继续行动" : "Break finished; play continues with the next player";
+  if (event.type === "break_hand_limit_checked") return zh ? `座位 ${Number(event.seat) + 1} 检查休息阶段手牌上限` : `Seat ${Number(event.seat) + 1} checks the Break hand limit`;
   if (event.type === "match_created") return zh ? "对局开始" : "Match started";
   if (event.type === "noble_acquired") {
     const who = event.player || names[event.seat ?? 0] || `${zh ? "座位" : "Seat"} ${(event.seat ?? 0) + 1}`;
@@ -941,7 +932,16 @@ function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?
   if (action.type === "rest") return zh ? "休息并收回所有已打出的商人牌" : "Rest and recover all played merchant cards";
   if (action.type === "select_action" && action.action) return zh ? `选择 ${BL[String(action.action)] || String(action.action).toUpperCase()}行动` : `Choose ${BL[String(action.action)] || String(action.action)} action`;
   if (action.type === "select_action") return zh ? `使用 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card}，强度 ${action.strength}${action.x_tokens ? `（X +${action.x_tokens}）` : ""}` : `Use ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card}, strength ${action.strength}${action.x_tokens ? ` (X +${action.x_tokens})` : ""}`;
+  if (action.type === "start_action") {
+    const allocations = Array.isArray(action.x_by_execution) ? action.x_by_execution.map(Number) : [0];
+    const multiplier = Number(action.multiplier_tokens || 0);
+    const card = String(action.action_card_id || "");
+    return zh
+      ? `使用${ARK_ACTION_LABELS[lang][card] || card}${multiplier ? `并消耗 X2 标记，连续执行两次（X 分配 ${allocations.join("/")}）` : "，执行一次"}`
+      : `Use ${ARK_ACTION_LABELS[lang][card] || card}${multiplier ? ` with X2, performing it twice (X allocation ${allocations.join("/")})` : " once"}`;
+  }
   if (action.type === "take_x_token") return zh ? `将 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} 移到 1 并获得 X token` : `Move ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} to 1, gain X token`;
+  if (action.type === "cancel_action") return zh ? `取消 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card}，重新选择行动牌` : `Cancel ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} and reselect`;
   if (action.type === "draw_cards") return zh ? `抽 ${action.draw_count} 张牌${action.discard_count ? `，再弃 ${action.discard_count} 张` : ""}` : `Draw ${action.draw_count} cards${action.discard_count ? `, discard ${action.discard_count}` : ""}`;
   if (action.type === "snap_card") return zh ? `拿取展示区 ${action.card_id}` : `Take display card ${action.card_id}`;
   if (action.type === "discard_card" || action.type === "break_discard") {
@@ -958,6 +958,9 @@ function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?
   if (action.type === "make_donation") return zh ? `捐款 ₡${action.cost}，获得 1 保育点` : `Donate ₡${action.cost}, gain 1 conservation`;
   if (action.type === "upgrade_action_card") return zh ? `升级 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} 行动牌` : `Upgrade ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} card`;
   if (action.type === "choose_conservation_bonus") return action.choice === "money" ? (zh ? `选择保育奖励：₡${action.amount}` : `Conservation bonus: ₡${action.amount}`) : (zh ? `选择奖励标记 ${action.tile_id}` : `Choose bonus tile ${action.tile_id}`);
+  if (action.type === "take_map_card") return action.source === "deck" ? (zh ? "地图奖励：拿取牌库顶牌" : "Map reward: take top deck card") : (zh ? `地图奖励：拿取展示区 ${action.display_slot} 的 ${action.card_id}` : `Map reward: take ${action.card_id} from display slot ${action.display_slot}`);
+  if (action.type === "take_build_reward_card") return action.source === "deck" ? (zh ? "覆盖奖励：从牌库抽1张" : "Placement reward: draw 1 card from the deck") : (zh ? `覆盖奖励：拿取声望范围内的展示牌 ${action.card_id}` : `Placement reward: take ${action.card_id} from within Reputation range`);
+  if (action.type === "clever_action_card") return zh ? `机敏：将 ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} 移到强度 1` : `Clever: move ${ARK_ACTION_LABELS[lang][String(action.action_card)] || action.action_card} to strength 1`;
   if (action.type === "keep_final_card") return zh ? `保留终局牌 ${action.card_id}` : `Keep final card ${action.card_id}`;
   if (action.type === "play_sponsor") return zh ? `打出赞助商 ${action.card_id}` : `Play sponsor ${action.card_id}`;
   if (action.type === "advance_break") return zh ? `推进 Break ${action.steps} 格，获得 ₡${action.money}` : `Advance Break ${action.steps}, gain ₡${action.money}`;
@@ -1012,12 +1015,12 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
   zh: {
     buy_visible: "购买公开牌", buy_reserved: "购买预留牌", take_tokens: "拿取宝石",
     reserve_visible: "预留公开牌", reserve_deck: "预留牌库顶牌", choose_noble: "选择贵族", pass: "其他",
-    choose_initial_hand: "选择起始手牌", select_action: "选择行动牌", take_x_token: "替代 X-token 行动",
+    choose_initial_hand: "选择起始手牌", select_action: "选择行动牌", take_x_token: "替代 X-token 行动", cancel_action: "返回重选行动",
     draw_cards: "抽牌", snap_card: "拿取展示牌", discard_card: "弃牌", break_discard: "Break 弃牌",
     place_building: "放置建筑", play_animal: "打出动物", association_task: "协会任务",
     play_sponsor: "打出赞助商", advance_break: "推进 Break", finish_action: "结束行动",
     make_donation: "捐款", upgrade_action_card: "升级行动牌", keep_final_card: "选择终局牌",
-    choose_conservation_bonus: "选择保育奖励", finish_association_tasks: "结束协会任务",
+    choose_conservation_bonus: "选择保育奖励", take_map_card: "拿取地图奖励牌", take_build_reward_card: "拿取覆盖奖励牌", clever_action_card: "机敏奖励", finish_association_tasks: "结束协会任务",
     discard_wild: "弃置万能牌", scout_discard_extra: "侦察弃牌", develop_tiles: "选择研发板块",
     build_industry: "选择产业与城市", build_link: "铺设运河", select_network_count: "铁路数量",
     select_network_link: "选择铁路", take_resource: "选择资源来源", sell_industry: "出售产业",
@@ -1030,12 +1033,12 @@ const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
   en: {
     buy_visible: "Buy visible card", buy_reserved: "Buy reserved card", take_tokens: "Take gems",
     reserve_visible: "Reserve visible card", reserve_deck: "Reserve deck card", choose_noble: "Choose noble", pass: "Other",
-    choose_initial_hand: "Choose starting hand", select_action: "Select action card", take_x_token: "X-token action",
+    choose_initial_hand: "Choose starting hand", select_action: "Select action card", take_x_token: "X-token action", cancel_action: "Cancel selected action",
     draw_cards: "Draw cards", snap_card: "Take display card", discard_card: "Discard card", break_discard: "Break discard",
     place_building: "Place building", play_animal: "Play animal", association_task: "Association task",
     play_sponsor: "Play sponsor", advance_break: "Advance Break", finish_action: "End action",
     make_donation: "Donate", upgrade_action_card: "Upgrade action card", keep_final_card: "Choose final card",
-    choose_conservation_bonus: "Conservation bonus", finish_association_tasks: "End association tasks",
+    choose_conservation_bonus: "Conservation bonus", take_map_card: "Map card reward", take_build_reward_card: "Placement card reward", clever_action_card: "Clever reward", finish_association_tasks: "End association tasks",
     discard_wild: "Discard wild card", scout_discard_extra: "Scout discard", develop_tiles: "Select develop tiles",
     build_industry: "Choose industry & city", build_link: "Build canal", select_network_count: "Rail count",
     select_network_link: "Choose rail link", take_resource: "Choose resource source", sell_industry: "Sell industry",
@@ -1059,6 +1062,18 @@ function groupActions(actions: LegalAction[]) {
 
 const CARD_ACTION_TYPES = new Set(["buy_visible", "buy_reserved", "reserve_visible"]);
 const CENTURY_ACTION_TYPES = new Set(["play_merchant", "acquire_merchant", "claim_point", "rest"]);
+const ARK_TABLE_ACTION_TYPES = new Set([
+  "choose_initial_hand", "select_action", "start_action", "take_x_token", "take_x_token_action", "cancel_action", "draw_cards", "snap_card", "discard_card",
+  "place_building", "play_animal", "finish_action", "association_task", "make_donation",
+  "perform_association_task", "make_association_donation", "finish_association_action",
+  "upgrade_association_reward_card",
+  "place_unique_sponsor_building",
+  "finish_association_tasks", "advance_break", "play_sponsor", "break_discard",
+  "resolve_semantic_choice",
+  "choose_conservation_bonus", "upgrade_action_card", "keep_final_card", "take_map_card",
+  "take_build_reward_card",
+  "clever_action_card",
+]);
 
 function findActionCard(action: Record<string, unknown>, view?: View) {
   const cardId = String(action.card_id ?? "");
@@ -1193,45 +1208,9 @@ function AzulActionPicker({actions, disabled, submitting, selectedId, onSelect}:
   </div>;
 }
 
-function HumanActionConfirmation({selected, brassView, issue, requirement, submitting, onConfirm}: {selected: LegalAction | null; brassView?: BrassView; issue: string; requirement?: string; submitting: boolean; onConfirm: () => void}) {
-  const lang = useLang(); const t = makeT(lang);
-  return <footer className={`human-action-confirmation ${selected ? "is-ready" : ""} ${issue ? "has-error" : ""}`}>
-    <div><span>{selected ? t("selection_ready") : t("confirm_action")}</span><strong>{selected ? humanActionText(selected.action, lang, brassView) : t("confirm_idle")}</strong><small className={issue ? "validation-message" : ""} role={issue ? "alert" : undefined}>{issue || (!selected && requirement) || t("confirm_help")}</small></div>
-    <button type="button" disabled={submitting} onClick={onConfirm}><b>{submitting ? t("submitting") : t("confirm_submit")}</b><i>{selected ? "✓" : "!"}</i></button>
-  </footer>;
-}
-
-const ARK_ACTION_LABELS: Record<Lang, Record<string, string>> = {
-  zh: { animals: "动物", cards: "卡牌", build: "建造", association: "协会", sponsors: "赞助商" },
-  en: { animals: "Animals", cards: "Cards", build: "Build", association: "Association", sponsors: "Sponsors" },
-};
-
-function ArkTrack({label, value, tone}: {label: string; value: number; tone: string}) {
-  return <div className={`ark-track track-${tone}`}><span>{label}</span><div><i style={{width: `${Math.min(100, Math.max(3, value * 2.5))}%`}}/></div><b>{value}</b></div>;
-}
-
-function ArkZooMap({map}: {map: ArkMap}) {
+function ArkPlayerPanel({player, identity, active}: {player: ArkPlayerView; identity?: Snapshot["players"][number]; active: boolean}) {
   const lang = useLang();
-  const occupied = new Set(map.buildings.flatMap(building => building.cells.map(cell => `${cell.q}:${cell.r}`)));
-  return <div className="ark-map" aria-label={`${map.name} ${lang === "zh" ? "六角地图" : "hex map"}`}>
-    {map.cells.map(cell => <i key={`${cell.q}:${cell.r}`} className={`ark-hex terrain-${cell.terrain} ${occupied.has(`${cell.q}:${cell.r}`) ? "is-built" : ""}`}
-      style={{left: `calc(50% + ${cell.q * 25 + cell.r * 12.5}px)`, top: `calc(50% + ${cell.r * 22}px)`}}
-      title={`(${cell.q}, ${cell.r}) · ${cell.terrain}`}/>) }
-  </div>;
-}
-
-function ArkPlayerPanel({player: p, identity}: {player: ArkPlayerView; identity?: Snapshot["players"][number]}) {
-  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
-  return <section className="player-panel ark-player-panel">
-    <header><div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `${t("player_label")} ${p.seat + 1}`}</h3></div><div className="ark-money"><strong>{p.money}</strong><span>₡</span></div></header>
-    <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{lang === "zh" ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>
-    <div className="ark-mini-tracks"><span>{zh ? "吸引力" : "Appeal"} <b>{p.appeal}</b></span><span>{zh ? "保育" : "Conservation"} <b>{p.conservation}</b></span><span>{zh ? "声望" : "Reputation"} <b>{p.reputation}</b></span></div>
-    <div className="ark-worker-row"><span>X TOKEN <b>{p.x_tokens}/5</b></span><span>{zh ? "协会工人" : "Assoc. workers"} <b>{p.association_workers.active}</b> + {p.association_workers.reserve}</span></div>
-    <div className="ark-actions">{[...p.action_cards].sort((a, b) => b.strength - a.strength).map(card => <div key={card.action} className={`ark-action action-${card.action}`}><b>{card.strength}</b><span>{ARK_ACTION_LABELS[lang][card.action]}</span>{card.upgraded && <i>Ⅱ</i>}</div>)}</div>
-    <div className="ark-hidden-row"><span>{zh ? "起始抽牌" : "Initial draw"} <b>{p.initial_draw_count}</b> / {zh ? "留" : "keep"} {p.initial_keep_required}</span><span>{zh ? "终局牌" : "Final cards"} <b>{p.final_scoring_cards.length}</b></span></div>
-    <div className="ark-hidden-row"><span>{t("ark_partner")} <b>{p.partner_zoos.length}</b></span><span>{t("ark_uni")} <b>{p.universities.length}</b></span><span>{zh ? "项目" : "Projects"} <b>{p.supported_projects.length}</b></span></div>
-    <div className="ark-hand-preview"><span>{t("hand")} {p.hand_count}</span>{p.hand.slice(0, 6).map((card, index) => <i key={card.id || index} title={card.id || "hidden"}>{card.hidden ? "?" : card.card_type?.slice(0, 1).toUpperCase()}</i>)}</div>
-  </section>;
+  return <ArkNovaPlayerSummary player={player} identity={identity} active={active} lang={lang}/>;
 }
 
 const BRASS_INDUSTRY_LABELS: Record<Lang, Record<string, string>> = {
@@ -1416,20 +1395,13 @@ function SplendorBoard({view}: {view?: View}) {
   </>;
 }
 
-function ArkNovaBoard({view, players}: {view?: ArkView; players: Snapshot["players"]}) {
-  const lang = useLang(); const t = makeT(lang);
-  if (!view) return null;
-  return <div className="ark-board">
-    <section className="ark-milestone"><div><span>{t("ark_eyebrow")}</span><h2>{view.phase === "initial_hand_selection" ? t("ark_phase_select") : t("ark_phase_play")}</h2></div><p>{t("ark_phase_note")}</p><code>{view.rules_version}</code></section>
-    <section className="ark-track-board">
-      <div><span>{t("ark_tracks")}</span><h3>{t("ark_tracks_h")}</h3></div>
-      <div className="ark-track-stack"><ArkTrack label="BREAK" value={view.break_track.position} tone="break"/><ArkTrack label="ACTIVE APPEAL" value={view.players[view.active_seat]?.appeal || 0} tone="appeal"/><ArkTrack label="ACTIVE CONSERVATION" value={view.players[view.active_seat]?.conservation || 0} tone="conservation"/><ArkTrack label="ACTIVE REPUTATION" value={view.players[view.active_seat]?.reputation || 0} tone="reputation"/></div>
-      <div className="ark-decision"><span>{t("cur_decision")}</span><strong>{view.turn.decision.replaceAll("_", " ")}</strong><small>{view.phase.replaceAll("_", " ")}</small></div>
-    </section>
-    <section className="ark-display"><header><div><span>{t("ark_display")}</span><h3>{t("ark_display_h")}</h3></div><b>{t("deck")} {view.deck_count} · {t("discard")} {view.discard_count}</b></header><div>{view.card_display.map((card, index) => <article key={card.id || index} className={card.hidden ? "is-facedown" : ""}><span>0{index + 1}</span><strong>{card.hidden ? t("ark_after_select") : card.card_type?.replaceAll("_", " ")}</strong><small>{card.tags?.join(" · ")}</small>{card.id && <code>{card.id}</code>}</article>)}</div></section>
-    <section className="ark-association"><header><span>{t("ark_assoc")}</span><h3>{t("ark_assoc_h")}</h3></header><div className="ark-projects">{view.base_conservation_projects.map(project => <article key={project.id}><b>{project.tag}</b><span>{project.levels.join(" / ")}</span><code>{project.id}</code></article>)}</div><div className="ark-association-meta"><span>{t("ark_partner")} {Object.values(view.association_board.partner_zoos).filter(Boolean).length} {t("ark_avail")}</span><span>{t("ark_uni")} {Object.values(view.association_board.universities).filter(Boolean).length} {t("ark_avail")}</span><span>{t("ark_donation")} {view.association_board.donations?.length || 0}</span>{view.association_board.blocked_two_player.length > 0 && <span>{t("ark_blocked")} {view.association_board.blocked_two_player.length}</span>}</div></section>
-    <section className="ark-zoo-section"><header><span>{t("ark_zoo")}</span><h3>{t("ark_zoo_h")}</h3></header><div>{view.players.map(player => <article key={player.seat}><div><strong>{players[player.seat]?.name || `${t("player_label")} ${player.seat + 1}`}</strong><span>{t("ark_zoo_unit")}</span></div><ArkZooMap map={player.map}/></article>)}</div><small>{t("ark_zoo_note")}</small></section>
-  </div>;
+function ArkNovaBoard({view, players, legalActions, submitting, selectedActionId, onChoose}: {
+  view?: ArkView; players: Snapshot["players"]; legalActions: LegalAction[]; submitting: string;
+  selectedActionId: string;
+  onChoose: (item: LegalAction) => void;
+}) {
+  const lang = useLang();
+  return <ArkNovaTable view={view} identities={players} lang={lang} legalActions={legalActions} submitting={submitting} selectedActionId={selectedActionId} onChoose={onChoose}/>;
 }
 
 export default function Home() {
@@ -1466,6 +1438,8 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   ]);
   const [seed, setSeed] = useState("42");
   const [speed, setSpeed] = useState(650);
+  const [soloStartingAppeal, setSoloStartingAppeal] = useState<0 | 10 | 20>(20);
+  const [arkMap, setArkMap] = useState<ArkMapId>("map-0");
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [timeline, setTimeline] = useState<Timeline[]>([]);
   const [chat, setChat] = useState<ChatTurn[]>([]);
@@ -1477,69 +1451,45 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const [tables, setTables] = useState<TableSummary[]>([]);
   const [watchId, setWatchId] = useState("");
   const sourceRef = useRef<EventSource | null>(null);
+  const finalBoardRef = useRef<HTMLElement | null>(null);
   const watchingRef = useRef(false);
   const humanTurnKey = snapshot?.human_turn ? `${snapshot.match_id}:${snapshot.human_turn.seat}:${snapshot.human_turn.version}` : "";
   const currentHumanActionState = humanActionState?.turnKey === humanTurnKey ? humanActionState : null;
   const selectedHumanAction = currentHumanActionState?.selected ?? null;
-  const humanActionIssue = currentHumanActionState?.issue ?? "";
   const humanSeat = snapshot?.human_turn?.seat ?? snapshot?.players.find(player => player.backend === "human")?.seat ?? 0;
   const viewer = snapshot?.views[humanSeat];
   const splendorView = snapshot?.game === "splendor" ? viewer as View : undefined;
   const azulView = snapshot?.game === "azul" ? viewer as AzulView : undefined;
-  const arkView = snapshot?.game === "ark_nova" ? viewer as ArkView : undefined;
+  const arkView = snapshot?.game === "ark_nova"
+    ? (snapshot.spectator_view ?? viewer) as ArkView : undefined;
   const brassView = snapshot?.game === "brass_birmingham" ? viewer as BrassView : undefined;
   const centuryView = snapshot?.game === "century_spice_road" ? viewer as CenturyView : undefined;
   const sevenView = snapshot?.game === "seven_wonders" ? viewer as SevenView : undefined;
   const sevenSpectatorViews = snapshot?.game === "seven_wonders" && !snapshot.players.some(player => player.backend === "human")
     ? snapshot.views as SevenView[] : undefined;
+  const isArkTableAction = (item: LegalAction) => ARK_TABLE_ACTION_TYPES.has(String(item.action.type));
+  const arkMapInteraction = snapshot?.game === "ark_nova" && Boolean(snapshot.human_turn?.legal_actions.some(isArkTableAction));
   const maxPlayers = game === "seven_wonders" ? 7 : game === "century_spice_road" ? 5 : 4;
+  const minPlayers = game === "ark_nova" ? 1 : game === "seven_wonders" ? 3 : 2;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
   const spectator = snapshot?.mode === "spectator";
-
-  function attachStream(matchId: string, initialVersion: number) {
-    sourceRef.current?.close();
-    const source = new EventSource(api(`/api/matches/${matchId}/events`));
-    source.addEventListener("match", raw => {
-      const item: Timeline = JSON.parse((raw as MessageEvent).data);
-      if (item.snapshot) setSnapshot(item.snapshot);
-      const event = item.event;
-      const seat = event.seat ?? 0;
-      const attempt = event.attempt ?? 1;
-      const key = `${event.version ?? item.snapshot?.version ?? initialVersion}:${seat}:${attempt}`;
-      if (event.type === "agent_started") {
-        setChat(current => [...current, {key, seat, attempt, player: event.player || `Agent ${seat + 1}`,
-          backend: event.backend || "model", reasoning: "", content: "", status: "thinking", startedAt: Date.now()}]);
-      } else if (event.type === "agent_stream" || event.type === "harness_output") {
-        setChat(current => {
-          const index = [...current].reverse().findIndex(turn => turn.seat === seat && turn.attempt === attempt && turn.status === "thinking");
-          if (index < 0) return current;
-          const actual = current.length - 1 - index;
-          return current.map((turn, i) => i === actual ? {...turn,
-            [event.channel === "reasoning" ? "reasoning" : "content"]:
-              turn[event.channel === "reasoning" ? "reasoning" : "content"] + (event.delta || "")
-          } : turn);
-        });
-      } else if (event.type === "agent_finished" || event.type === "agent_error") {
-        setChat(current => {
-          const index = [...current].reverse().findIndex(turn => turn.seat === seat && turn.attempt === attempt && turn.status === "thinking");
-          if (index < 0) return current;
-          const actual = current.length - 1 - index;
-          return current.map((turn, i) => i === actual ? {...turn,
-            status: event.type === "agent_error" ? "error" : "done",
-            actionLatencyMs: event.agent?.action_latency_ms,
-            processLatencyMs: event.agent?.process_latency_ms ?? event.agent?.latency_ms,
-            content: event.type === "agent_error" && !turn.content ? event.error || "调用失败" : turn.content,
-          } : turn);
-        });
-      }
-      if (!["agent_stream", "harness_output"].includes(event.type)) setTimeline(current => [...current, item]);
-      if (["match_finished", "match_failed"].includes(item.event.type)) source.close();
+  const filteredTables = useMemo(() => {
+    const query = watchId.trim().toLocaleLowerCase(lang === "zh" ? "zh-CN" : "en");
+    if (!query) return tables;
+    return tables.filter(table => {
+      const gameName = GAME_COPY[table.game]?.name[lang] || table.game;
+      const status = table.status === "finished" ? t("s_finished") : t("s_active");
+      return [table.match_id, table.game, gameName, status, ...table.players.map(player => player.name)]
+        .some(value => String(value || "").toLocaleLowerCase(lang === "zh" ? "zh-CN" : "en").includes(query));
     });
-    source.onerror = () => {
-      if (source.readyState === EventSource.CLOSED) setError(t("err_ws"));
-    };
-    sourceRef.current = source;
-  }
+  }, [lang, tables, t, watchId]);
+  const watchTarget = useMemo(() => {
+    const query = watchId.trim();
+    const exact = tables.find(table => table.match_id.toLowerCase() === query.toLowerCase());
+    if (exact) return exact.match_id;
+    if (filteredTables.length === 1) return filteredTables[0].match_id;
+    return /^[a-f\d]{8,}$/i.test(query) ? query : "";
+  }, [filteredTables, tables, watchId]);
 
   async function watchMatch(matchId: string) {
     const id = matchId.trim().toLowerCase();
@@ -1550,10 +1500,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       const response = await fetch(api(`/api/matches/${id}`));
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || t("err_watch"));
-      setSnapshot(data);
-      window.history.replaceState(null, "", `?match=${id}`);
-      requestAnimationFrame(() => window.scrollTo({top: 0, behavior: "smooth"}));
-      attachStream(id, data.version);
+      attachMatch(data as Snapshot, true);
     } catch (e) {
       watchingRef.current = false;
       setError(e instanceof Error ? e.message : String(e));
@@ -1620,12 +1567,18 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     setPlayers(selected);
   }
 
+  function setSoloMatch() {
+    setGame("ark_nova");
+    setPlayers([humanPlayer(1)]);
+  }
+
   function selectGame(next: GameId) {
     setGame(next);
     const maximum = next === "seven_wonders" ? 7 : next === "century_spice_road" ? 5 : 4;
+    const minimum = next === "ark_nova" ? 1 : next === "seven_wonders" ? 3 : 2;
     setPlayers(current => {
       const selected = current.slice(0, maximum);
-      while (next === "seven_wonders" && selected.length < 3) selected.push(player(selected.length + 1, "random"));
+      while (selected.length < minimum) selected.push(player(selected.length + 1, "random"));
       return selected;
     });
   }
@@ -1640,6 +1593,74 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     } : p));
   }
 
+  function updateMatchUrl(matchId?: string) {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (matchId) url.searchParams.set("match", matchId);
+    else url.searchParams.delete("match");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  function attachMatch(data: Snapshot, resetHistory = true) {
+    sourceRef.current?.close();
+    if (resetHistory) { setTimeline([]); setChat([]); }
+    setSnapshot(data); setGame(data.game);
+    updateMatchUrl(data.match_id);
+    requestAnimationFrame(() => window.scrollTo({top: 0, behavior: "smooth"}));
+    const source = new EventSource(api(`/api/matches/${data.match_id}/events`));
+    source.addEventListener("match", raw => {
+      const item: Timeline = JSON.parse((raw as MessageEvent).data);
+      if (item.snapshot) setSnapshot(current => !current || item.snapshot!.version >= current.version ? item.snapshot! : current);
+      const event = item.event;
+      const seat = event.seat ?? 0;
+      const attempt = event.attempt ?? 1;
+      const key = `${event.version ?? item.snapshot?.version ?? data.version}:${seat}:${attempt}`;
+      if (event.type === "agent_started") {
+        setChat(current => [...current, {key, seat, attempt, player: event.player || `Agent ${seat + 1}`,
+          backend: event.backend || "model", reasoning: "", content: "", status: "thinking", startedAt: Date.now()}]);
+      } else if (event.type === "agent_stream" || event.type === "harness_output") {
+        setChat(current => {
+          const index = [...current].reverse().findIndex(turn => turn.seat === seat && turn.attempt === attempt && turn.status === "thinking");
+          if (index < 0) return current;
+          const actual = current.length - 1 - index;
+          return current.map((turn, i) => i === actual ? {...turn,
+            [event.channel === "reasoning" ? "reasoning" : "content"]:
+              turn[event.channel === "reasoning" ? "reasoning" : "content"] + (event.delta || "")
+          } : turn);
+        });
+      } else if (event.type === "agent_finished" || event.type === "agent_error") {
+        setChat(current => {
+          const index = [...current].reverse().findIndex(turn => turn.seat === seat && turn.attempt === attempt && turn.status === "thinking");
+          if (index < 0) return current;
+          const actual = current.length - 1 - index;
+          return current.map((turn, i) => i === actual ? {...turn,
+            status: event.type === "agent_error" ? "error" : "done",
+            actionLatencyMs: event.agent?.action_latency_ms,
+            processLatencyMs: event.agent?.process_latency_ms ?? event.agent?.latency_ms,
+            content: event.type === "agent_error" && !turn.content ? event.error || "调用失败" : turn.content,
+          } : turn);
+        });
+      }
+      if (!["agent_stream", "harness_output"].includes(event.type)) setTimeline(current => current.some(existing => existing.seq === item.seq) ? current : [...current, item]);
+      if (["match_finished", "match_failed"].includes(item.event.type)) source.close();
+    });
+    source.onerror = () => {
+      if (source.readyState === EventSource.CLOSED) setError(lang === "zh" ? "实时连接已断开；只要 Web 服务未重启，可使用本页恢复链接重新连接。" : "Live connection closed. If the Web service is still running, use this page's reconnect link.");
+    };
+    sourceRef.current = source;
+  }
+
+  function leaveMatch() {
+    sourceRef.current?.close(); sourceRef.current = null;
+    watchingRef.current = false;
+    setSnapshot(null); setTimeline([]); setChat([]); setError("");
+    updateMatchUrl();
+  }
+
+  function viewFinalBoard() {
+    finalBoardRef.current?.scrollIntoView({behavior: "smooth", block: "start"});
+  }
+
   async function startMatch() {
     setStarting(true); setError(""); setTimeline([]); setChat([]); sourceRef.current?.close();
     try {
@@ -1647,7 +1668,10 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         method: "POST", headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
           game, seed: seed === "" ? null : Number(seed), speed_ms: speed,
-          ...(game === "ark_nova" ? {game_config: {turn_limit: 60}} : {}),
+          ...(game === "ark_nova" ? {game_config: {
+            map: arkMap,
+            ...(players.length === 1 ? {solo_starting_appeal: soloStartingAppeal} : {}),
+          }} : {}),
           players: players.map(p => ({
             name: p.name, backend: p.backend, model: p.model,
             ...(p.backend === "codex" ? {auth_mode: p.auth_mode} : {}),
@@ -1658,10 +1682,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || "无法启动对局");
-      setSnapshot(data);
-      window.history.replaceState(null, "", `?match=${data.match_id}`);
-      requestAnimationFrame(() => window.scrollTo({top: 0, behavior: "smooth"}));
-      attachStream(data.match_id, data.version);
+      attachMatch(data as Snapshot, true);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setStarting(false); }
   }
@@ -1670,11 +1691,26 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     if (!snapshot || snapshot.status !== "active") return;
     setControlling(true); setError("");
     try {
-      const action = snapshot.paused ? "resume" : "pause";
-      const response = await fetch(api(`/api/matches/${snapshot.match_id}/${action}`), {method: "POST"});
+      const action = snapshot.paused || snapshot.mode === "spectator" || snapshot.running === false ? "resume" : "pause";
+      const playerPayload = players.length === snapshot.players.length && players.every((player, index) => {
+        const persisted = snapshot.players[index];
+        return player.name === persisted?.name && player.backend === persisted?.backend;
+      }) ? players.map(player => ({
+        name: player.name, backend: player.backend, model: player.model,
+        ...(player.backend === "codex" ? {auth_mode: player.auth_mode} : {}),
+        ...(!(player.backend === "codex" && player.auth_mode === "subscription") ? {
+          base_url: player.base_url, api_key: player.api_key,
+        } : {}),
+        ...(HARNESS_BACKENDS.has(player.backend) ? {reasoning_effort: player.reasoning_effort} : {}),
+      })) : undefined;
+      const response = await fetch(api(`/api/matches/${snapshot.match_id}/${action}`), {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(action === "resume" && playerPayload ? {players: playerPayload} : {}),
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || "无法更新暂停状态");
-      setSnapshot(data);
+      if (snapshot.mode === "spectator" || snapshot.running === false) attachMatch(data, false);
+      else setSnapshot(data);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setControlling(false); }
   }
@@ -1706,21 +1742,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     if (!humanTurnKey) return;
     setError("");
     setHumanActionState({turnKey: humanTurnKey, selected: item, requirement, issue: ""});
-  }
-
-  function confirmHumanAction() {
-    if (!snapshot?.human_turn || submittingAction) return;
-    if (!selectedHumanAction) {
-      const message = currentHumanActionState?.requirement || (snapshot.game === "azul" ? t("azul_source_required") : t("select_action_required"));
-      setHumanActionState({turnKey: humanTurnKey, selected: null, requirement: currentHumanActionState?.requirement || "", issue: message});
-      return;
-    }
-    const legalAction = snapshot.human_turn.legal_actions.find(item => item.id === selectedHumanAction.id);
-    if (!legalAction) {
-      setHumanActionState({turnKey: humanTurnKey, selected: null, requirement: "", issue: t("selection_expired")});
-      return;
-    }
-    void submitHumanAction(legalAction);
+    if (item) void submitHumanAction(item);
   }
 
   if (!snapshot) return <main className="setup-shell">
@@ -1736,15 +1758,17 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       <section className="live-tables">
         <header>
           <div><span>{t("live_tables")}</span><h2>{t("watch_live")}</h2></div>
-          <form className="watch-form" onSubmit={event => { event.preventDefault(); void watchMatch(watchId); }}>
+          <form className="watch-form" onSubmit={event => { event.preventDefault(); if (watchTarget) void watchMatch(watchTarget); }}>
             <label htmlFor="watch-id">{t("watch_id")}</label>
-            <input id="watch-id" value={watchId} spellCheck={false} placeholder="b8323d2a27f34578" onChange={event => setWatchId(event.target.value)}/>
-            <button type="submit" disabled={starting || watchId.trim().length < 8}>{starting ? t("watching") : t("watch")}</button>
+            <input id="watch-id" type="search" value={watchId} spellCheck={false} autoComplete="off" placeholder={t("watch_id")} aria-controls="live-table-results" onChange={event => setWatchId(event.target.value)}/>
+            <button type="submit" disabled={starting || !watchTarget}>{starting ? t("watching") : t("watch")}</button>
           </form>
         </header>
-        <div className="live-table-list">
+        <div className="live-table-results-meta" aria-live="polite"><span>{filteredTables.length} / {tables.length}</span><small>{watchId.trim() ? t("watch_id") : zh ? "滚轮浏览牌桌" : "Scroll to browse tables"}</small></div>
+        <div className="live-table-list" id="live-table-results">
           {tables.length === 0 && <p className="live-table-empty">{t("no_tables")}</p>}
-          {tables.map(table => {
+          {tables.length > 0 && filteredTables.length === 0 && <p className="live-table-empty">{t("no_matching_tables")}</p>}
+          {filteredTables.map(table => {
             const names = table.players.map(player => player.name).filter(Boolean);
             const title = names.length ? names.join(" vs ") : table.match_id;
             return <button type="button" key={table.match_id} onClick={() => void watchMatch(table.match_id)}>
@@ -1756,7 +1780,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         </div>
       </section>
       <div className="game-picker" role="group" aria-label={t("pick_game")}>{(Object.keys(GAME_COPY) as GameId[]).map(id => <button key={id} className={game === id ? "selected" : ""} onClick={() => selectGame(id)}><span>{GAME_COPY[id].badge}</span><b>{GAME_COPY[id].name[lang]}</b><small>{GAME_COPY[id].note[lang]}</small></button>)}</div>
-      <header><div><span>{t("new_table")}</span><h2>{t("create_table")}{GAME_COPY[game].name[lang]}</h2></div><div className="matchup-presets"><button onClick={() => setMatchup("human")}>{t("g_human")}</button><button onClick={() => setMatchup("harness")}>{t("g_harness")}</button><b>{players.length} {t("players_count")}</b></div></header>
+      <header><div><span>{t("new_table")}</span><h2>{t("create_table")}{GAME_COPY[game].name[lang]}</h2></div><div className="matchup-presets">{game === "ark_nova" && <button className={players.length === 1 ? "selected-preset" : ""} onClick={setSoloMatch}>{zh ? "单人模式" : "Solo"}</button>}<button onClick={() => setMatchup("human")}>{t("g_human")}</button><button onClick={() => setMatchup("harness")}>{t("g_harness")}</button><b>{players.length} {t("players_count")}</b></div></header>
       <div className="players-config">{players.map((p, index) => <article className="player-config" key={p.id}>
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`${p.name} ${t("move_up")}`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`${p.name} ${t("move_down")}`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>{t("f_name")}</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
@@ -1771,17 +1795,19 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
           <div className="provider-note">{PROVIDERS[p.provider].note[lang]}</div>
         </>}
         {(["random", "human"] as Backend[]).includes(p.backend) && <div className="field manual-backend"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select><small>{p.backend === "human" ? t("human_note") : t("random_note")}</small></div>}
-        {players.length > 2 && <button className="remove" aria-label={`${t("remove")} ${p.name}`} onClick={() => setPlayers(x => x.filter(y => y.id !== p.id))}>×</button>}
+        {players.length > minPlayers && <button className="remove" aria-label={`${t("remove")} ${p.name}`} onClick={() => setPlayers(x => x.filter(y => y.id !== p.id))}>×</button>}
       </article>)}</div>
       <div className="setup-actions">
         <button className="add-player human-add" disabled={players.length >= maxPlayers} onClick={() => setPlayers(x => [...x, humanPlayer(x.length + 1)])}>{t("add_human")}</button>
         <button className="add-player" disabled={players.length >= maxPlayers} onClick={() => setPlayers(x => [...x, player(x.length + 1, "random")])}>{t("add_ai")}</button>
         <button className="shuffle-order" onClick={shufflePlayers}>{t("shuffle")}</button>
+        {game === "ark_nova" && <div className="field ark-map-setup"><label htmlFor="ark-zoo-map">{zh ? "动物园地图" : "Zoo map"}</label><select id="ark-zoo-map" value={arkMap} onChange={event => setArkMap(event.target.value as ArkMapId)}><option value="map-0">Map 0 · {zh ? "空地图开局" : "empty-map setup"}</option><option value="map-a">Map A · {zh ? "预置 3 格围栏与商亭" : "3-space enclosure + kiosk"}</option></select><small>{arkMap === "map-a" ? (zh ? "Map A 的两座开局建筑免费且已经放置。" : "Map A's two setup buildings are free and already placed.") : (zh ? "Map 0 不提供免费开局建筑。" : "Map 0 has no free setup buildings.")}</small></div>}
+        {game === "ark_nova" && players.length === 1 && <div className="field ark-solo-setup"><label htmlFor="ark-solo-appeal">{zh ? "单人难度 / 初始魅力" : "Solo difficulty / starting Appeal"}</label><select id="ark-solo-appeal" value={soloStartingAppeal} onChange={event => setSoloStartingAppeal(Number(event.target.value) as 0 | 10 | 20)}><option value={20}>{zh ? "标准 · 魅力 20" : "Standard · Appeal 20"}</option><option value={10}>{zh ? "进阶 · 魅力 10" : "Advanced · Appeal 10"}</option><option value={0}>{zh ? "专家 · 魅力 0" : "Expert · Appeal 0"}</option></select><small>{zh ? "固定 6 轮，共 27 次行动；最终分数达到 0 即获胜。" : "Six fixed rounds, 27 turns total; finish with at least 0 VP to win."}</small></div>}
         <div className="field mini"><label htmlFor="match-seed">{t("f_seed")}</label><input id="match-seed" inputMode="numeric" value={seed} onChange={e => setSeed(e.target.value)}/></div>
         <div className="field mini speed"><label htmlFor="match-speed">{t("f_speed")} <b>{speed}ms</b></label><input id="match-speed" type="range" min="0" max="2000" step="50" value={speed} onChange={e => setSpeed(Number(e.target.value))}/></div>
         <button className="start" disabled={starting} onClick={startMatch}>{starting ? t("starting") : t("start")}</button>
       </div>
-      {game === "ark_nova" && <div className="setup-scope-note"><b>{GAME_COPY.ark_nova.badge}</b> {zh ? "已支持行动升级、合作动物园折扣、捐款、释放动物、地图奖励、效果原语和终局目标；仍使用结构化研究卡池与示意 Map A，并非完整商业卡池复刻。" : "Supports action upgrades, partner-zoo discounts, donations, animal release, map rewards, effect primitives, final objectives; uses a structured research-card pool and schematic Map A, not the full commercial pool."}</div>}
+      {game === "ark_nova" && <div className="setup-scope-note"><b>{GAME_COPY.ark_nova.badge}</b> {zh ? "基础版 128 动物、64 赞助商、32 保育项目、11 终局计分和 5 种行动牌均已程式化；实体 255 张清单用于校验重复牌与牌库守恒。" : "The base set's 128 Animals, 64 Sponsors, 32 Conservation Projects, 11 Final Scoring cards, and five Action cards are executable; the 255-card physical roster validates duplicates and deck conservation."}</div>}
       {game === "azul" && <div className="setup-scope-note"><b>{GAME_COPY.azul.badge}</b> {zh ? "支持彩色墙基础版、100 枚具名花砖、工厂与中央区选砖、图案线、地板罚分、相邻计分、终局奖励和确定性回放；不包含灰墙玩法、扩展或出版商美术。" : "Supports the colored-wall base game, 100 identity-safe tiles, factory/center drafting, pattern lines, floor penalties, adjacency scoring, endgame bonuses and deterministic replay; no gray wall, expansions or publisher artwork."}</div>}
       {game === "brass_birmingham" && <div className="setup-scope-note"><b>{GAME_COPY.brass_birmingham.badge}</b> {zh ? "支持官方人数牌组、产业板、市场、商人、Build/Sell/Develop、单双铁路、负收入变卖、双时代计分与完整回放；界面不包含出版商美术。" : "Supports official player counts, industry board, markets, merchants, Build/Sell/Develop, single/double rail, negative-income liquidation, two-era scoring and full replay; no publisher artwork."}</div>}
       {game === "century_spice_road" && <div className="setup-scope-note"><b>{GAME_COPY.century_spice_road.badge}</b> {zh ? "完整基础牌组数值、重复交易、升级、市场压香料、商队容量、金币银币、终局与计分均已接通；不包含出版商卡图。" : "Full base-set values, repeat trades, upgrades, market spice, caravan capacity, gold/silver coins, endgame and scoring wired up; no publisher artwork."}</div>}
@@ -1793,42 +1819,51 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
  return <main className="table-shell">
     <header className="table-header">
       <div><span className="brand-mark">ABGA</span><strong>{snapshot.game_description.name} {snapshot.game === "splendor" ? t("live_table") : snapshot.game === "century_spice_road" ? t("trade_arena") : t("controlled_arena")}</strong></div>
-      <div className="match-meta"><span>{t("match")} <code>{snapshot.match_id}</code></span><span>{t("turn")} <b>{snapshot.turn_count}</b>{snapshot.game === "ark_nova" && <> · {t("decision")} <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span>{spectator && <span className="status status-setup">{t("spectator")}</span>}<span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? t("s_finished") : snapshot.paused ? (snapshot.pause_pending ? t("s_wait_pause") : t("s_paused")) : t("s_active")}</span></div>
+      <div className="match-meta"><span>{t("match")} <a className="match-reconnect-link" href={`?match=${snapshot.match_id}`} title={lang === "zh" ? "此对局的恢复链接" : "Reconnect link for this match"}><code>{snapshot.match_id}</code></a></span><span>{t("turn")} <b>{snapshot.turn_count}</b>{snapshot.game === "ark_nova" && <> · {t("decision")} <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span>{spectator && <span className="status status-setup">{t("spectator")}</span>}<span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? t("s_finished") : snapshot.paused ? (snapshot.pause_pending ? t("s_wait_pause") : t("s_paused")) : t("s_active")}</span></div>
       <div className="table-actions">
         <button className="lang-toggle" onClick={toggleLang} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
-        {!spectator && <button className={`pause-button ${snapshot.paused ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? t("processing") : snapshot.paused ? t("resume") : t("pause")}</button>}
-        <button onClick={() => { sourceRef.current?.close(); watchingRef.current = false; setSnapshot(null); setTimeline([]); setChat([]); setError(""); window.history.replaceState(null, "", window.location.pathname); }}>{t("new_match")}</button>
+        {(!spectator || snapshot.status === "active") && <button className={`pause-button ${(snapshot.paused || spectator || snapshot.running === false) ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? t("processing") : (snapshot.paused || spectator || snapshot.running === false) ? t("resume") : t("pause")}</button>}
+        <button onClick={leaveMatch}>{t("new_match")}</button>
       </div>
     </header>
     {error && <div className="table-error" role="alert">{error}</div>}
+    {snapshot.status === "finished" && <section className="winner-summary" aria-label={t("match_over")}>
+      <div><span>{t("winner")}</span><strong>{snapshot.rankings?.[0]?.player || timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong></div>
+      <div><button className="view-final-board" onClick={viewFinalBoard}>{t("view_final_board")}</button><button onClick={leaveMatch}>{t("play_again")}</button></div>
+    </section>}
     <div className="table-grid">
       <aside className="players-column">{snapshot.players.map(identity => {
-        // Render the whole table from the human seat. Without a human, seat 0 is the spectator view.
-        const visiblePlayer = viewer?.players[identity.seat];
+        // Ark Nova agent-only matches use a dedicated omniscient Web projection;
+        // player/agent observations remain seat-isolated in the runner.
+        const visiblePlayer = snapshot.game === "ark_nova"
+          ? arkView?.players[identity.seat] : viewer?.players[identity.seat];
         return snapshot.game === "splendor"
           ? <PlayerPanel key={identity.seat} player={visiblePlayer as PlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
           : snapshot.game === "azul"
             ? <AzulPlayerPanel key={identity.seat} player={visiblePlayer as AzulPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat} holdsStartMarker={azulView?.start_marker_holder_seat === identity.seat}/>
           : snapshot.game === "ark_nova"
-            ? <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity}/>
+            ? <ArkPlayerPanel key={identity.seat} player={visiblePlayer as ArkPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
             : snapshot.game === "brass_birmingham"
               ? <BrassPlayerPanel key={identity.seat} player={visiblePlayer as BrassPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
               : snapshot.game === "century_spice_road"
                 ? <CenturyPlayerPanel key={identity.seat} player={visiblePlayer as CenturyPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
                 : <SevenPlayerPanel key={identity.seat} player={visiblePlayer as SevenPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>;
       })}</aside>
-      <section className={`board ${snapshot.human_turn ? "has-human-action" : ""}`}>
+      <section className={`board ${snapshot.human_turn ? "has-human-action" : ""}`} ref={finalBoardRef}>
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? t("pause_pending") : t("paused")}</strong><span>{snapshot.pause_pending ? t("pause_pending_desc") : t("paused_desc")}</span></div>}
         {snapshot.human_turn && <section className="human-turn" aria-live="polite">
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}{t("pick_action")}</h2></div><b>{snapshot.human_turn.legal_actions.length} {t("legal_opts")}</b></header>
-          {snapshot.game === "splendor" && splendorView ? <SplendorActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} view={splendorView} disabled={Boolean(submittingAction)} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "azul" ? <AzulActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
+          {snapshot.game === "splendor" && splendorView ? <SplendorActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} view={splendorView} disabled={Boolean(submittingAction)} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "azul" ? <AzulActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : arkMapInteraction ? <div className="ark-map-action-notice"><div><b>{lang === "zh" ? "请在对应板块直接操作" : "Act directly on the matching board"}</b><span>{lang === "zh" ? "行动牌、手牌和地图位于玩家板；展示牌与抽牌位于整体游戏板；协会事务位于协会板。" : "Action cards, hand, and map are on the player board; display and draw actions are on the main board; association tasks are on the association board."}</span></div>{snapshot.human_turn.legal_actions.filter(item => !isArkTableAction(item)).map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
             <h3>{ACTION_GROUPS[lang][kind] || kind}<span>{actions.length}</span></h3>
             <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div>
           </section>)}</div>}
-          <HumanActionConfirmation selected={selectedHumanAction} brassView={brassView} issue={humanActionIssue} requirement={currentHumanActionState?.requirement} submitting={Boolean(submittingAction)} onConfirm={confirmHumanAction}/>
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/> : snapshot.game === "azul" ? <AzulBoard view={azulView}/> : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players}/> : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/> : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/> : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
-        {snapshot.status === "finished" && <div className="winner-banner"><span>{t("winner")}</span><strong>{timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong><button onClick={() => { setSnapshot(null); setTimeline([]); }}>{t("play_again")}</button></div>}
+        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/>
+          : snapshot.game === "azul" ? <AzulBoard view={azulView}/>
+          : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players} legalActions={snapshot.human_turn?.legal_actions || []} submitting={submittingAction} selectedActionId={selectedHumanAction?.id || submittingAction} onChoose={item => stageHumanAction(item)}/>
+          : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/>
+          : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/>
+          : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
       </section>
       <aside className="timeline">
         <header><div><span>{t("model_stream")}</span><h2>{t("chat_h")}</h2></div><i className={snapshot.status === "active" && (!snapshot.paused || snapshot.pause_pending) ? "pulse" : ""}/></header>

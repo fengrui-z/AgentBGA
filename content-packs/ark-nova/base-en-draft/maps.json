@@ -1,0 +1,56 @@
+[
+  {
+    "display": {
+      "summary": "Beginner Map 0 axial footprint; no free setup buildings.",
+      "title": "Zoo Map 0"
+    },
+    "effects": [],
+    "facts": {
+      "build_ii_cells": [
+        [
+          3,
+          -2
+        ],
+        [
+          2,
+          -1
+        ]
+      ],
+      "cell_count": 58,
+      "completion_reward": {
+        "amount": 7,
+        "type": "gain_appeal"
+      },
+      "coordinate_system": "flat_top_axial",
+      "geometry_version": "agentbga.ark_nova.map.v3",
+      "map_id": "0",
+      "placement_bonus_count": 12,
+      "setup_buildings": [],
+      "terrain_counts": {
+        "buildable": 39,
+        "rock": 9,
+        "water": 10
+      }
+    },
+    "id": "ark-nova:map-0",
+    "kind": "map",
+    "official_ref": {
+      "component_id": "0",
+      "source_ids": [
+        "capstone-rulebook-base-en",
+        "user-structured-base-255"
+      ]
+    },
+    "references": [],
+    "requirements": [],
+    "review": {
+      "reviewer": "source-crosswalk-pass-v1",
+      "scenario_tests": [
+        "ark-nova-map0-release:map:0"
+      ],
+      "second_reviewer": "runtime-scenario-pass-v1",
+      "status": "released"
+    },
+    "schema_version": "agentbga.ark_nova.card.v1"
+  }
+]

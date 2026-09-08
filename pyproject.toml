@@ -18,5 +18,8 @@ agentbga = "agentbga.cli:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/agentbga"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"content-packs/ark-nova/base-en-draft" = "agentbga/ark_nova_official/data/base-en-draft"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

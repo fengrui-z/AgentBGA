@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentbga.dev/schemas/ark-nova-content-manifest-v1.schema.json",
+  "title": "AgentBGA Ark Nova semantic content pack manifest v1",
+  "type": "object",
+  "required": [
+    "schema_version", "pack_id", "game_id", "rules_version", "content_version",
+    "status", "distribution", "sources", "expected_counts", "files"
+  ],
+  "properties": {
+    "schema_version": {"const": "agentbga.ark_nova.content_manifest.v1"},
+    "pack_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$"},
+    "game_id": {"const": "ark_nova"},
+    "rules_version": {"type": "string", "minLength": 1, "maxLength": 128},
+    "content_version": {"type": "string", "minLength": 1, "maxLength": 128},
+    "status": {"enum": ["draft", "review", "released"]},
+    "distribution": {
+      "type": "object",
+      "required": ["mode", "license", "contains_publisher_art", "contains_verbatim_card_text"],
+      "properties": {
+        "mode": {"enum": ["repository_safe", "local_only"]},
+        "license": {"type": "string", "minLength": 1, "maxLength": 256},
+        "contains_publisher_art": {"const": false},
+        "contains_verbatim_card_text": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "title", "revision", "verified_on"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+          "kind": {"enum": ["rulebook", "faq_errata", "physical_component", "publisher_listing", "community_catalog"]},
+          "title": {"type": "string", "minLength": 1, "maxLength": 256},
+          "revision": {"type": "string", "minLength": 1, "maxLength": 128},
+          "url": {"type": "string", "format": "uri"},
+          "verified_on": {"type": "string", "format": "date"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "expected_counts": {
+      "type": "object",
+      "required": [
+        "animals", "sponsors", "zoo_conservation_projects",
+        "base_conservation_projects", "final_scoring", "bonus_tiles", "maps"
+      ],
+      "properties": {
+        "animals": {"const": 128},
+        "sponsors": {"const": 64},
+        "zoo_conservation_projects": {"const": 20},
+        "base_conservation_projects": {"const": 12},
+        "final_scoring": {"const": 11},
+        "bonus_tiles": {"const": 9},
+        "maps": {"const": 10}
+      },
+      "additionalProperties": false
+    },
+    "files": {
+      "type": "object",
+      "required": [
+        "animals", "sponsors", "zoo_conservation_projects",
+        "base_conservation_projects", "final_scoring", "bonus_tiles", "maps"
+      ],
+      "properties": {
+        "animals": {"$ref": "#/$defs/relativeJsonPath"},
+        "sponsors": {"$ref": "#/$defs/relativeJsonPath"},
+        "zoo_conservation_projects": {"$ref": "#/$defs/relativeJsonPath"},
+        "base_conservation_projects": {"$ref": "#/$defs/relativeJsonPath"},
+        "final_scoring": {"$ref": "#/$defs/relativeJsonPath"},
+        "bonus_tiles": {"$ref": "#/$defs/relativeJsonPath"},
+        "maps": {"$ref": "#/$defs/relativeJsonPath"}
+      },
+      "additionalProperties": false
+    },
+    "content_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "released"}}},
+      "then": {"required": ["content_sha256"]}
+    }
+  ],
+  "$defs": {
+    "relativeJsonPath": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+\\.json$"
+    }
+  },
+  "additionalProperties": false
+}

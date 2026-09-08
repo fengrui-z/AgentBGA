@@ -14,6 +14,7 @@ import sys
 import time
 from typing import Any, Callable
 
+from .agent_context import CONTEXT_V2, prepare_seat_context
 from .agents import AgentError, PlayerConfig, StreamSink, harness_executable_name
 from .memory import memory_identity, stable_session_id
 from .usage import (
@@ -39,6 +40,9 @@ Play by using the agentbga MCP tools. Do not inspect the parent project, databas
 Hidden opponent information is unavailable by design.
 
 Call observe, then legal_actions, then commit exactly one choice with submit_action.
+The default observation is compact. Use inspect_card, inspect_rules, inspect_map,
+inspect_played_cards, or inspect_history when those details are relevant. Never guess
+an action, building, income, reward, keyword, or card rule that those tools can answer.
 You must call submit_action exactly once for this decision step before finishing. A player turn may
 contain later decision steps with the same active seat. You may keep strategic notes inside this seat
 workspace for later decisions and turns. After submitting, briefly report completion.
@@ -57,14 +61,98 @@ async function audit(tool: string, args: object, result: unknown) {
   await appendFile(auditPath, JSON.stringify({ tool, arguments: args, result, created_at: Date.now() / 1000 }) + "\n");
 }
 function result(value: unknown) { return { content: [{ type: "text", text: JSON.stringify(value) }], details: value }; }
+function pageLegal(value: any, args: any) {
+  const actions = value.legal_actions || [];
+  if (value.schema_version !== "agentbga.seat-context.v2") return actions;
+  const group = args?.group;
+  if (group === undefined && actions.length > 20) return {
+    state_version: value.version, mode: "groups", total: actions.length,
+    groups: value.legal_action_groups || [],
+    instruction: "Call legal_actions again with a group to list concrete action IDs."
+  };
+  const selected = actions.filter((item: any) => group === undefined || item._group === group);
+  const cursor = Number.isInteger(args?.cursor) && args.cursor >= 0 ? args.cursor : 0;
+  const limit = Math.max(1, Math.min(50, Number.isInteger(args?.limit) ? args.limit : 20));
+  const page = selected.slice(cursor, cursor + limit).map((item: any) => {
+    const { _group, ...visible } = item; return visible;
+  });
+  const next = cursor + page.length;
+  return { state_version: value.version, mode: "actions", group: group ?? null,
+    total: selected.length, cursor, next_cursor: next < selected.length ? next : null, actions: page };
+}
+function integerArg(value: unknown, fallback: number) {
+  return Number.isInteger(value) && Number(value) >= 0 ? Number(value) : fallback;
+}
+function rewardExplanation(effect: any) {
+  if (!effect) return null;
+  if (effect.type === "gain_money") return `Immediately gain ${effect.amount} money when covered.`;
+  if (effect.type === "gain_x_token") return `Immediately gain ${effect.amount} X-token(s) when covered.`;
+  if (effect.type === "gain_reputation") return `Immediately gain ${effect.amount} Reputation when covered.`;
+  if (effect.type === "take_card") return "Immediately take one card from the deck or from within Reputation range.";
+  if (effect.type === "clever") return "Clever: after the current action finishes, move any chosen Action card to slot 1. It does not execute that card.";
+  return null;
+}
 
 export default function (pi: any) {
   pi.registerTool({ name: "observe", label: "Observe", description: "Read your seat-scoped board-game observation.",
     promptSnippet: "Read the current seat-scoped board state", parameters: Type.Object({}, { additionalProperties: false }),
     async execute() { const value = (await context()).observation; await audit("observe", {}, value); return result(value); } });
   pi.registerTool({ name: "legal_actions", label: "Legal actions", description: "List legal action IDs for this seat and state.",
-    promptSnippet: "List the current legal board-game actions", parameters: Type.Object({}, { additionalProperties: false }),
-    async execute() { const value = (await context()).legal_actions; await audit("legal_actions", {}, value); return result(value); } });
+    promptSnippet: "List the current legal board-game actions", parameters: Type.Object({
+      group: Type.Optional(Type.String()), cursor: Type.Optional(Type.Integer({ minimum: 0 })),
+      limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 50 }))
+    }, { additionalProperties: false }),
+    async execute(_id: string, args: any) { const value = pageLegal(await context(), args); await audit("legal_actions", args, value); return result(value); } });
+  pi.registerTool({ name: "inspect_card", label: "Inspect card", description: "Read complete details for one visible card reference or bare card id.",
+    parameters: Type.Object({ card_ref: Type.String() }, { additionalProperties: false }),
+    async execute(_id: string, args: any) { const value = await context(); const reference = args.card_ref.startsWith("card:") ? args.card_ref : `card:${args.card_ref}`; const card = value.resources?.cards?.[reference];
+      if (!card) throw new Error("card_ref is unavailable in this seat-scoped observation");
+      await audit("inspect_card", args, card); return result(card); } });
+  pi.registerTool({ name: "inspect_rules", label: "Inspect rules", description: "Read an engine-aligned Ark Nova rules topic instead of guessing from action IDs.",
+    parameters: Type.Object({ topic: Type.Optional(Type.String()) }, { additionalProperties: false }),
+    async execute(_id: string, args: any) { const value = await context(); const catalog = value.resources?.rules;
+      if (!catalog) throw new Error("rules reference is unavailable for this game");
+      if (!args.topic) { const { details, ...index } = catalog; await audit("inspect_rules", args, index); return result(index); }
+      const topic = catalog.details?.[args.topic]; if (!topic) throw new Error(`unknown rules topic: ${args.topic}`);
+      const shown = { game: "ark_nova", topic: args.topic, ...topic };
+      await audit("inspect_rules", args, shown); return result(shown); } });
+  pi.registerTool({ name: "inspect_map", label: "Inspect map", description: "Read a public player map on demand.",
+    parameters: Type.Object({ seat: Type.Optional(Type.Integer({ minimum: 0 })),
+      sections: Type.Optional(Type.Array(Type.Union([Type.Literal("terrain"), Type.Literal("buildings"), Type.Literal("rewards"), Type.Literal("player_board")]), { uniqueItems: true }))
+    }, { additionalProperties: false }),
+    async execute(_id: string, args: any) { const value = await context(); const seat = args.seat ?? value.seat;
+      const resource = value.resources?.maps?.[`map:seat-${seat}`]; if (!resource) throw new Error("map is unavailable");
+      let shown: any = resource; if (args.sections?.length) { const map = resource.map || {}, display = resource.map_display || {}, buildings = map.buildings || [];
+        shown = { seat, map_id: map.id, placement_rules: {
+          current_connectivity_rule: buildings.length ? "Every new building must be adjacent to at least one existing building." : "This is the first building: it must cover at least one map-border hex.",
+          shape_and_occupancy: "The full fixed polyhex must be in bounds on legal unoccupied cells; Build-II cells require the Build card to be upgraded.", rules_topic: "build" } };
+        if (args.sections.includes("terrain")) shown.terrain = { coordinate_system: map.coordinate_system, cells: map.cells || [] };
+        if (args.sections.includes("buildings")) shown.buildings = buildings;
+        if (args.sections.includes("rewards")) { shown.placement_rewards = (display.placement_rewards || []).map((reward: any) => ({ ...reward, effect_explanation: rewardExplanation(reward.effect) })); shown.conservation_rewards = display.conservation_rewards || []; shown.coverage = display.coverage || {}; }
+        if (args.sections.includes("player_board")) shown.player_board = display.player_board || {};
+      } await audit("inspect_map", args, shown); return result(shown); } });
+  pi.registerTool({ name: "inspect_played_cards", label: "Inspect played cards", description: "List public played cards for one seat.",
+    parameters: Type.Object({ seat: Type.Optional(Type.Integer({ minimum: 0 })), kind: Type.Optional(Type.String()),
+      cursor: Type.Optional(Type.Integer({ minimum: 0 })), limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 50 }))
+    }, { additionalProperties: false }),
+    async execute(_id: string, args: any) { const value = await context(); const seat = args.seat ?? value.seat;
+      const zone = value.resources?.zones?.[`zone:seat-${seat}:played`]; if (!zone) throw new Error("played-card zone is unavailable");
+      const cards = (zone.cards || []).filter((card: any) => !args.kind || (card.card_type || card.kind) === args.kind);
+      const cursor = integerArg(args.cursor, 0), limit = Math.max(1, Math.min(50, integerArg(args.limit, 20)));
+      const page = cards.slice(cursor, cursor + limit).map((card: any) => ({ id: card.id, entry_id: card.entry_id,
+        title: card.display_title, type: card.card_type || card.kind, detail_ref: `card:${card.id || card.entry_id}` }));
+      const next = cursor + page.length; const shown = { seat, kind: args.kind ?? null, total: cards.length, cursor,
+        next_cursor: next < cards.length ? next : null, cards: page }; await audit("inspect_played_cards", args, shown); return result(shown); } });
+  pi.registerTool({ name: "inspect_history", label: "Inspect history", description: "Read seat-safe changes accumulated across observations.",
+    parameters: Type.Object({ since_version: Type.Optional(Type.Integer({ minimum: 0 })),
+      cursor: Type.Optional(Type.Integer({ minimum: 0 })), limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 50 }))
+    }, { additionalProperties: false }),
+    async execute(_id: string, args: any) { const value = await context(); let rows = value.history || [];
+      if (args.since_version !== undefined) rows = rows.filter((row: any) => Number(row.to_version ?? -1) > args.since_version);
+      const cursor = integerArg(args.cursor, 0), limit = Math.max(1, Math.min(50, integerArg(args.limit, 20)));
+      const page = rows.slice(cursor, cursor + limit), next = cursor + page.length;
+      const shown = { history_scope: "observed_state_changes", complete_from_version: rows[0]?.from_version ?? null, total: rows.length, cursor,
+        next_cursor: next < rows.length ? next : null, items: page }; await audit("inspect_history", args, shown); return result(shown); } });
   pi.registerTool({ name: "submit_action", label: "Submit action", description: "Commit exactly one current legal action ID.",
     promptSnippet: "Commit exactly one legal action ID", promptGuidelines: ["Call submit_action exactly once before finishing the turn."],
     parameters: Type.Object({ action_id: Type.String() }, { additionalProperties: false }),
@@ -177,6 +265,11 @@ class HarnessAgent:
             allowed_tools = [
                 "mcp__agentbga__observe",
                 "mcp__agentbga__legal_actions",
+                "mcp__agentbga__inspect_card",
+                "mcp__agentbga__inspect_rules",
+                "mcp__agentbga__inspect_map",
+                "mcp__agentbga__inspect_played_cards",
+                "mcp__agentbga__inspect_history",
                 "mcp__agentbga__submit_action",
             ]
             command = [self.binary, "--print", "--output-format", "stream-json", "--verbose",
@@ -258,8 +351,12 @@ class HarnessAgent:
             return [*command, "-p", prompt]
         if self.config.backend == "opencode":
             selected_model = model if "/" in model else f"agentbga/{model}"
-            command = [self.binary, "run", "--pure", "--format", "json", "--model", selected_model,
-                       "--variant", reasoning_effort, "--dir", "."]
+            command = [
+                self.binary, "run", "--pure", "--print-logs", "--log-level", "ERROR",
+                "--format", "json", "--model", selected_model,
+                "--variant", reasoning_effort, "--dir", ".",
+                f"--title=AgentBGA-seat-{self.session.seat + 1}",
+            ]
             # OpenCode's CLI flag controls whether reasoning blocks are shown;
             # provider-specific request options are configured separately below.
             if reasoning_enabled:
@@ -366,6 +463,13 @@ class HarnessAgent:
                 target = self.session.workspace / dirname
                 target.mkdir(exist_ok=True)
                 env[variable] = str(target)
+            # OpenCode resolves a session against the enclosing Git worktree.
+            # A seat workspace nested below that worktree is therefore not
+            # guaranteed to remain the active config directory after startup.
+            # Pin the generated seat config explicitly and prevent a project
+            # config from replacing its isolated provider/tool permissions.
+            env["OPENCODE_CONFIG"] = str(self.session.workspace / "opencode.json")
+            env["OPENCODE_DISABLE_PROJECT_CONFIG"] = "1"
             if key:
                 env[self.config.api_key_env or "DEEPSEEK_API_KEY"] = key
         elif self.config.backend == "claude":
@@ -441,16 +545,13 @@ class HarnessAgent:
         audit_path.unlink(missing_ok=True)
         self._dsh_metadata_path.unlink(missing_ok=True)
         self._dsh_turn_metadata = {}
-        context = {
-            "schema_version": "agentbga.seat-context.v1",
-            "match_id": self.session.match_id,
-            "seat": self.session.seat,
-            "version": observation.get("state_version", observation.get("turn_count")),
-            "observation": observation,
-            "legal_actions": [{"id": item["id"], **item["action"]} for item in legal],
-        }
-        context_path.write_text(
-            json.dumps(context, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
+        prepare_seat_context(
+            context_path,
+            match_id=self.session.match_id,
+            seat=self.session.seat,
+            version=observation.get("state_version", observation.get("turn_count")),
+            observation=observation,
+            legal=legal,
         )
         package_root = Path(__file__).resolve().parents[1]
         inherited = os.environ.get("PYTHONPATH")
@@ -459,6 +560,13 @@ class HarnessAgent:
         mcp_command = [
             sys.executable, "-m", "agentbga.seat_mcp", "--context", relative_context,
             "--notes-root", ".",
+        ]
+        # OpenCode associates sessions with the surrounding Git worktree, so
+        # its MCP child may run from the repository root instead of the nested
+        # seat workspace. Give that backend location-independent paths.
+        opencode_mcp_command = [
+            sys.executable, "-m", "agentbga.seat_mcp", "--context", str(context_path),
+            "--notes-root", str(self.session.workspace),
         ]
         escaped_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
         requested_effort = self.config.reasoning_effort or "max"
@@ -706,10 +814,11 @@ class HarnessAgent:
             provider_id, model_id = "agentbga", provider_id
         opencode_config: dict[str, Any] = {
             "$schema": "https://opencode.ai/config.json",
-            "mcp": {"agentbga": {"type": "local", "command": mcp_command, "enabled": True}},
+            "mcp": {"agentbga": {
+                "type": "local", "command": opencode_mcp_command, "enabled": True,
+            }},
             "permission": {
-                "*": "deny", "read": "allow", "edit": "allow",
-                "agentbga_*": "allow",
+                "*": "deny", "agentbga_*": "allow",
             },
         }
         if provider_id and model_id:
@@ -717,16 +826,10 @@ class HarnessAgent:
             endpoint = (self.config.base_url or "").lower()
             deepseek_native = "deepseek" in endpoint
             if reasoning_enabled:
-                # The OpenAI SDK consumes camelCase options and serializes
-                # Responses fields. Generic OpenAI-compatible providers receive
-                # variant fields as raw request-body extensions, so use the
-                # snake_case spelling expected by DashScope and similar APIs.
-                effort_key = (
-                    "reasoningEffort"
-                    if self.config.wire_api == "responses" or deepseek_native
-                    else "reasoning_effort"
-                )
-                variant = {effort_key: requested_effort}
+                # OpenCode model settings use the AI SDK's camelCase option.
+                # Its OpenAI-compatible adapter serializes this as the
+                # ``reasoning_effort`` request field expected by DashScope.
+                variant = {"reasoningEffort": requested_effort}
                 if deepseek_native:
                     variant["thinking"] = {"type": "enabled"}
             elif deepseek_native:
@@ -1220,7 +1323,17 @@ class HarnessAgent:
         audit_path = self.session.runtime / "tool-events.jsonl"
         submission_path = self.session.runtime / "submission.json"
         observation_snapshot = observation
-        legal_snapshot = [{"id": item["id"], **item["action"]} for item in legal]
+        legal_snapshot: Any = [{"id": item["id"], **item["action"]} for item in legal]
+        try:
+            prepared_context = json.loads(context_path.read_text(encoding="utf-8"))
+            if prepared_context.get("schema_version") == CONTEXT_V2:
+                observation_snapshot = prepared_context["observation"]
+                legal_snapshot = {
+                    "total": len(prepared_context.get("legal_actions", [])),
+                    "groups": prepared_context.get("legal_action_groups", []),
+                }
+        except (OSError, json.JSONDecodeError, KeyError):
+            pass
         executed: list[dict[str, Any]] = []
         if audit_path.is_file():
             for line in audit_path.read_text(encoding="utf-8").splitlines():

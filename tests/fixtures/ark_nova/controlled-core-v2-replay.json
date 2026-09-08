@@ -1,0 +1,186 @@
+{
+  "config": {
+    "map": "a",
+    "turn_limit": 12
+  },
+  "decisions": [
+    {
+      "action": {
+        "card_ids": [
+          "research-animal-023",
+          "research-animal-036",
+          "research-sponsor-046",
+          "research-sponsor-061"
+        ],
+        "type": "choose_initial_hand"
+      },
+      "seat": 0,
+      "state_hash": "3a1a5255858f1f4dd9b26be21949cbbabcfdfe1bed39977e04bfe5def787019e"
+    },
+    {
+      "action": {
+        "card_ids": [
+          "research-animal-009",
+          "research-animal-024",
+          "research-animal-056",
+          "research-sponsor-024"
+        ],
+        "type": "choose_initial_hand"
+      },
+      "seat": 1,
+      "state_hash": "8e7d5d8c000c468fc3039ac3abfbca835d62bc9625b1e881844a5f912f6d502f"
+    },
+    {
+      "action": {
+        "action_card": "cards",
+        "base_strength": 4,
+        "strength": 4,
+        "type": "select_action",
+        "x_tokens": 0
+      },
+      "seat": 0,
+      "state_hash": "03f8f6326925078a7a5313d84692667b092d007047852e0526b02ae0f87f3648"
+    },
+    {
+      "action": {
+        "discard_count": 0,
+        "draw_count": 2,
+        "type": "draw_cards"
+      },
+      "seat": 0,
+      "state_hash": "a117066eab7fa818b2b054e255613cdfc590f304fcba03ecfce3ce63b35b0aec"
+    },
+    {
+      "action": {
+        "action_card": "animals",
+        "type": "take_x_token"
+      },
+      "seat": 1,
+      "state_hash": "66877f9fec9b767eaed46a6424fd2cdb50d437e766084e34f6cbb17e9f5618c0"
+    },
+    {
+      "action": {
+        "action_card": "sponsors",
+        "base_strength": 5,
+        "strength": 5,
+        "type": "select_action",
+        "x_tokens": 0
+      },
+      "seat": 0,
+      "state_hash": "4b9fb92928717078b0551a52c7dde38d1da13d5cc9673948f5425db4f329336e"
+    },
+    {
+      "action": {
+        "money": 5,
+        "steps": 5,
+        "type": "advance_break"
+      },
+      "seat": 0,
+      "state_hash": "04f5eec2f7708122935b5ec3b7665570d1f4c1eaca94feec88190115a97390b9"
+    },
+    {
+      "action": {
+        "action_card": "sponsors",
+        "type": "take_x_token"
+      },
+      "seat": 1,
+      "state_hash": "0fcab8b2cf371d01548b7b0e581ea8de20dc01ccbb146ed0209520504deac6aa"
+    },
+    {
+      "action": {
+        "action_card": "association",
+        "type": "take_x_token"
+      },
+      "seat": 0,
+      "state_hash": "c0fcdfe884c4161ccd3c8a97c4236856ad3fbf330a0fd764b43aeb855247b7e8"
+    },
+    {
+      "action": {
+        "action_card": "sponsors",
+        "base_strength": 1,
+        "strength": 2,
+        "type": "select_action",
+        "x_tokens": 1
+      },
+      "seat": 1,
+      "state_hash": "f85066dbe750c6c368310dd9a28593660f652f1b518a986b8014ec3e66b18013"
+    },
+    {
+      "action": {
+        "money": 2,
+        "steps": 2,
+        "type": "advance_break"
+      },
+      "seat": 1,
+      "state_hash": "5fe5480f4c3d6f364b2e9aa17b48dec9506523b788c4dc22cfdf9c4a9f0ff422"
+    },
+    {
+      "action": {
+        "action_card": "association",
+        "base_strength": 1,
+        "strength": 2,
+        "type": "select_action",
+        "x_tokens": 1
+      },
+      "seat": 0,
+      "state_hash": "f207fa2303fc177785a82b91494ba7432861fccd5a4d749149d4e2f51d638265"
+    },
+    {
+      "action": {
+        "task": "reputation",
+        "type": "association_task",
+        "value": 2,
+        "workers": 1
+      },
+      "seat": 0,
+      "state_hash": "c2622cc091b946022c4e99fa63d6f14c1d58f175035cad7ca87af5c41136823e"
+    },
+    {
+      "action": {
+        "action_card": "build",
+        "base_strength": 3,
+        "strength": 3,
+        "type": "select_action",
+        "x_tokens": 0
+      },
+      "seat": 1,
+      "state_hash": "7f40460e8e537ebdbe5ff4565bc549bc62c5486ca9f486ea89630bf88b9e4686"
+    },
+    {
+      "action": {
+        "building_type": "standard_enclosure",
+        "cells": [
+          {
+            "q": 1,
+            "r": -2
+          },
+          {
+            "q": 1,
+            "r": -1
+          }
+        ],
+        "cost": 4,
+        "size": 2,
+        "type": "place_building"
+      },
+      "seat": 1,
+      "state_hash": "84cbe12d6936e114d2ca7da09f66c1b75c21a684931855624295c13a8744efef"
+    },
+    {
+      "action": {
+        "action_card": "sponsors",
+        "base_strength": 2,
+        "strength": 2,
+        "type": "select_action",
+        "x_tokens": 0
+      },
+      "seat": 0,
+      "state_hash": "f3fa6d36a4febb5c559417806b8c1032167cf17d921e3f6f608f05e5c0e7980f"
+    }
+  ],
+  "initial_state_hash": "5ae59d3db8ecee652763bcf9244b513bbcb1f8284c0ece28c5e1047ea8e518b0",
+  "players": 2,
+  "rules_version": "base-1.2-controlled-core.2",
+  "seed": 42,
+  "source_commit": "e1afe2d9c5b4c6075e30522f04cfaf727c3e4804"
+}

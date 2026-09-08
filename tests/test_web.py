@@ -1,5 +1,6 @@
 import json
 from http.server import ThreadingHTTPServer
+import os
 from pathlib import Path
 import tempfile
 import threading
@@ -9,11 +10,75 @@ import urllib.request
 from unittest import mock
 
 from agentbga.agents import PlayerConfig
+from agentbga.runner import run_match
 from agentbga.store import Store
 from agentbga.web import MatchHub, WebHandler, serve
 
 
 class WebTests(unittest.TestCase):
+    def test_finished_ark_nova_match_reopens_with_rankings_and_final_board(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            match_id, _, _ = store.create(
+                2, 12, "ark_nova", {"turn_limit": 8},
+                rules_version="base-1.2-controlled-core.6",
+            )
+            players = [
+                PlayerConfig.from_dict({"name": "A", "backend": "random"}, 0),
+                PlayerConfig.from_dict({"name": "B", "backend": "random"}, 1),
+            ]
+            result = run_match(store, match_id, players, max_turns=20)
+            expected_views = [
+                store.game(match_id).observe(store.load(match_id)[1], seat)
+                for seat in range(2)
+            ]
+            store.close()
+
+            hub = MatchHub(database)
+            restored = hub.get(match_id)
+
+            self.assertEqual("finished", restored["status"])
+            self.assertFalse(restored["paused"])
+            self.assertEqual(result["rankings"], restored["rankings"])
+            self.assertEqual(expected_views, restored["views"])
+            self.assertNotIn("match_report", restored)
+            events, running = hub.events_after(match_id, -1, wait=0)
+            finished = [item["event"] for item in events if item["event"]["type"] == "match_finished"]
+            self.assertFalse(running)
+            self.assertEqual(1, len(finished))
+            self.assertEqual(result["rankings"], finished[0]["rankings"])
+            self.assertNotIn("match_report", finished[0])
+
+    def test_official_solo_human_match_finishes_without_optional_reports(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            try:
+                match_id, _, _ = store.create(1, 42, "ark_nova")
+                player = PlayerConfig.from_dict({"name": "Solo human", "backend": "human"}, 0)
+                choices = []
+
+                def choose(seat, version, observation, legal):
+                    choices.append((seat, version))
+                    return legal[0]["id"]
+
+                result = run_match(
+                    store, match_id, [player], max_turns=200, human_choice=choose,
+                )
+                final_state = store.load(match_id)[1]
+                self.assertTrue(choices)
+                self.assertEqual("finished", final_state["status"])
+                self.assertEqual(result["version"], store.replay(match_id)[-1]["version"])
+            finally:
+                store.close()
+            restored = MatchHub(database).get(match_id)
+            self.assertEqual("base-1.2-faq-v2-map0.1", restored["rules_version"])
+            self.assertEqual(result["rankings"], restored["rankings"])
+            self.assertEqual("Solo human", restored["rankings"][0]["player"])
+            self.assertTrue(restored["views"][0]["players"])
+            self.assertNotIn("match_report", restored)
+
     def test_games_endpoint_lists_registered_renderers(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -104,9 +169,76 @@ class WebTests(unittest.TestCase):
                 ],
             })
             self.assertEqual("ark_nova", created["game"])
-            self.assertEqual("controlled_core", created["game_description"]["implementation_status"])
+            self.assertEqual("released", created["game_description"]["implementation_status"])
             self.assertEqual("active", created["status"])
             self.assertEqual("ark_nova", created["views"][0]["game"])
+            self.assertEqual(
+                "休息阶段固定流程",
+                created["views"][0]["break_rules_summary"]["title_cn"],
+            )
+            self.assertIn(
+                "estimated_total",
+                created["views"][0]["players"][0]["next_break_projection"]["money_income"],
+            )
+            self.assertEqual("spectator", created["spectator_view"]["viewer_mode"])
+            self.assertTrue(all(
+                "hidden" not in card
+                for player in created["spectator_view"]["players"]
+                for card in player["initial_draw"] + player["final_scoring_cards"]
+            ))
+            self.assertEqual(
+                {"hidden": True}, created["views"][0]["players"][1]["initial_draw"][0],
+            )
+            self.assertTrue(stopped.wait(2))
+
+    def test_ark_nova_web_setup_supports_solo_difficulty_and_board_projection(self):
+        stopped = threading.Event()
+
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "ark_nova", "seed": 43,
+                "game_config": {"map": "map-0", "solo_starting_appeal": 10},
+                "players": [{"name": "Solo", "backend": "human"}],
+            })
+            view = created["views"][0]
+            self.assertEqual(1, created["game_description"]["players"]["minimum"])
+            self.assertEqual(10, view["players"][0]["appeal"])
+            self.assertEqual(10, view["solo_board"]["starting_appeal"])
+            self.assertEqual([7, 6, 5, 4, 3, 2], view["solo_board"]["schedule"])
+            self.assertEqual(7, view["solo_board"]["tokens_left"])
+            self.assertTrue(stopped.wait(2))
+
+    def test_web_create_can_select_an_exact_rules_version(self):
+        stopped = threading.Event()
+
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "ark_nova",
+                "rules_version": "base-1.2-controlled-core.6",
+                "players": [
+                    {"name": "Red", "backend": "random"},
+                    {"name": "Blue", "backend": "random"},
+                ],
+            })
+            self.assertEqual(
+                "base-1.2-controlled-core.6",
+                created["game_description"]["rules_version"],
+            )
+            self.assertEqual("base-1.2-controlled-core.6", created["rules_version"])
             self.assertTrue(stopped.wait(2))
 
     def test_brass_setup_snapshot_uses_game_renderer_contract(self):
@@ -361,6 +493,110 @@ class WebTests(unittest.TestCase):
                 deadline = time.monotonic() + 2
                 while hub.events_after(created["match_id"], -1, wait=0)[1] and time.monotonic() < deadline:
                     time.sleep(0.01)
+
+    def test_failed_active_match_can_restart_with_retained_player_configs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            calls = 0
+            second_run = threading.Event()
+            finish_second_run = threading.Event()
+            fake_done = threading.Event()
+
+            def fake_run(_store, _match_id, players, sink, **_options):
+                nonlocal calls
+                calls += 1
+                self.assertEqual(["random", "human"], [player.backend for player in players])
+                if calls == 2:
+                    second_run.set()
+                    finish_second_run.wait(2)
+                sink({"type": "match_failed", "error": "test stop"})
+                if calls == 2:
+                    fake_done.set()
+
+            with mock.patch("agentbga.web.run_match", side_effect=fake_run):
+                created = hub.create({"players": [
+                    {"name": "Baseline", "backend": "random"},
+                    {"name": "Human", "backend": "human"},
+                ]})
+                deadline = time.monotonic() + 2
+                while hub.get(created["match_id"])["running"] and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                stopped = hub.get(created["match_id"])
+                self.assertFalse(stopped["running"])
+
+                resumed = hub.set_paused(created["match_id"], False)
+
+                self.assertTrue(resumed["running"])
+                self.assertTrue(second_run.wait(2))
+                finish_second_run.set()
+                self.assertTrue(fake_done.wait(2))
+                time.sleep(0.05)
+
+    def test_persisted_model_match_requires_fresh_credentials_before_resume(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            match_id, _, _ = store.create(2, 9)
+            stored_players = [
+                PlayerConfig.from_dict({
+                    "name": "API", "backend": "openai", "model": "m",
+                }, 0),
+                PlayerConfig.from_dict({"name": "Baseline", "backend": "random"}, 1),
+            ]
+            store.set_players(match_id, [player.public_dict() for player in stored_players])
+            store.close()
+
+            hub = MatchHub(database)
+            hub.watch(match_id)
+            with mock.patch.dict(os.environ, {}, clear=True), mock.patch(
+                "agentbga.web.run_match",
+            ) as run:
+                with self.assertRaisesRegex(ValueError, "fresh ephemeral credentials"):
+                    hub.set_paused(match_id, False)
+            self.assertEqual("spectator", hub.get(match_id)["mode"])
+            run.assert_not_called()
+            with hub.condition:
+                hub.matches[match_id]["running"] = False
+                hub.condition.notify_all()
+            time.sleep(0.4)
+
+    def test_persisted_model_match_resumes_with_fresh_matching_credentials(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            match_id, _, _ = store.create(2, 9)
+            stored_players = [
+                PlayerConfig.from_dict({
+                    "name": "API", "backend": "openai", "model": "m",
+                }, 0),
+                PlayerConfig.from_dict({"name": "Baseline", "backend": "random"}, 1),
+            ]
+            store.set_players(match_id, [player.public_dict() for player in stored_players])
+            store.close()
+
+            hub = MatchHub(database)
+            hub.watch(match_id)
+            started = threading.Event()
+
+            def fake_run(_store, _match_id, players, sink, **_options):
+                self.assertEqual("fresh-key", players[0].api_key)
+                started.set()
+                sink({"type": "match_failed", "error": "test stop"})
+
+            with mock.patch("agentbga.web.run_match", side_effect=fake_run):
+                resumed = hub.set_paused(match_id, False, resume_players=[
+                    {
+                        "name": "API", "backend": "openai", "model": "m",
+                        "api_key": "fresh-key",
+                    },
+                    {"name": "Baseline", "backend": "random"},
+                ])
+                self.assertEqual("live", resumed["mode"])
+                self.assertTrue(started.wait(2))
+                deadline = time.monotonic() + 2
+                while hub.get(match_id)["running"] and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                time.sleep(0.4)
 
     def test_model_player_requires_nonempty_key(self):
         with tempfile.TemporaryDirectory() as directory:
