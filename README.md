@@ -37,12 +37,16 @@ Multi-model matches via JSON config:
 ./agentbga run --players-config examples/multi-llm-match.json --seed 42 --jsonl
 ```
 
-Local live web table:
+Local live web table (Node.js 22.13+):
 
 ```console
-cd web && npm install && npm run build && cd ..
+cd web && npm ci && npm run build && cd ..
 ./agentbga web   # http://127.0.0.1:8765
 ```
+
+Choose Ark Nova and the solo human preset to play without an API key or external
+agent CLI. For multiplayer, choose human or random controllers for key-free play;
+LLM controllers require their provider credentials or CLI authentication.
 
 The setup page lists recent SQLite matches, including tables created by
 `agentbga run` or `agentbga match create`. Click one, or open
@@ -145,7 +149,6 @@ Every harness turn is saved as a structured JSON trace:
 ./agentbga match traces MATCH_ID --json          # list all traces
 ./agentbga match traces MATCH_ID --seat 0 --turn 7  # export one turn
 ./agentbga match harness-events MATCH_ID --json      # tool call audit trail
-./agentbga match report MATCH_ID --json          # deterministic Ark Nova postgame report
 ```
 
 Ark Nova defaults to the released Map 0 board. Pass `--map map-a` to

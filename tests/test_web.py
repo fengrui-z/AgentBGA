@@ -16,7 +16,7 @@ from agentbga.web import MatchHub, WebHandler, serve
 
 
 class WebTests(unittest.TestCase):
-    def test_finished_ark_nova_match_reopens_from_sqlite_with_report(self):
+    def test_finished_ark_nova_match_reopens_with_rankings_and_final_board(self):
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "matches.sqlite3"
             store = Store(database)
@@ -28,17 +28,56 @@ class WebTests(unittest.TestCase):
                 PlayerConfig.from_dict({"name": "A", "backend": "random"}, 0),
                 PlayerConfig.from_dict({"name": "B", "backend": "random"}, 1),
             ]
-            run_match(store, match_id, players, max_turns=20)
+            result = run_match(store, match_id, players, max_turns=20)
+            expected_views = [
+                store.game(match_id).observe(store.load(match_id)[1], seat)
+                for seat in range(2)
+            ]
             store.close()
 
-            restored = MatchHub(database).get(match_id)
+            hub = MatchHub(database)
+            restored = hub.get(match_id)
 
             self.assertEqual("finished", restored["status"])
             self.assertFalse(restored["paused"])
-            self.assertEqual(
-                "agentbga.ark-nova.match-report.v6",
-                restored["match_report"]["schema_version"],
-            )
+            self.assertEqual(result["rankings"], restored["rankings"])
+            self.assertEqual(expected_views, restored["views"])
+            self.assertNotIn("match_report", restored)
+            events, running = hub.events_after(match_id, -1, wait=0)
+            finished = [item["event"] for item in events if item["event"]["type"] == "match_finished"]
+            self.assertFalse(running)
+            self.assertEqual(1, len(finished))
+            self.assertEqual(result["rankings"], finished[0]["rankings"])
+            self.assertNotIn("match_report", finished[0])
+
+    def test_official_solo_human_match_finishes_without_optional_reports(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            try:
+                match_id, _, _ = store.create(1, 42, "ark_nova")
+                player = PlayerConfig.from_dict({"name": "Solo human", "backend": "human"}, 0)
+                choices = []
+
+                def choose(seat, version, observation, legal):
+                    choices.append((seat, version))
+                    return legal[0]["id"]
+
+                result = run_match(
+                    store, match_id, [player], max_turns=200, human_choice=choose,
+                )
+                final_state = store.load(match_id)[1]
+                self.assertTrue(choices)
+                self.assertEqual("finished", final_state["status"])
+                self.assertEqual(result["version"], store.replay(match_id)[-1]["version"])
+            finally:
+                store.close()
+            restored = MatchHub(database).get(match_id)
+            self.assertEqual("base-1.2-faq-v2-map0.1", restored["rules_version"])
+            self.assertEqual(result["rankings"], restored["rankings"])
+            self.assertEqual("Solo human", restored["rankings"][0]["player"])
+            self.assertTrue(restored["views"][0]["players"])
+            self.assertNotIn("match_report", restored)
 
     def test_games_endpoint_lists_registered_renderers(self):
         with tempfile.TemporaryDirectory() as directory:

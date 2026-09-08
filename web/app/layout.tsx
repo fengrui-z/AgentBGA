@@ -1,19 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "./ark-nova-workbench.css";
 import "./ark-nova-table.css";
-
-const title = "AgentBGA · Long-Horizon Game Arena";
-const description = "Compare model and harness configurations across long-horizon board-game tournaments.";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
-  title,
-  description,
+  title: "AgentBGA · Long-Horizon Game Arena",
+  description: "Compare model and harness configurations across long-horizon board-game tournaments.",
   icons: {icon: `${basePath}/favicon.svg`},
-  openGraph: {title, description, type: "website", images: [`${basePath}/og.jpg`]},
-  twitter: {card: "summary_large_image", title, description, images: [`${basePath}/og.jpg`]},
 };
 
 export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {

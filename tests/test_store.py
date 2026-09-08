@@ -79,6 +79,31 @@ class StoreTests(unittest.TestCase):
                 store.create(2, 1, "ark_nova", rules_version="does-not-exist")
             store.close()
 
+    def test_existing_optional_report_data_is_left_untouched(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "test.sqlite3"
+            with sqlite3.connect(database) as connection:
+                connection.execute(
+                    "CREATE TABLE match_reports (match_id TEXT PRIMARY KEY, "
+                    "schema_version TEXT NOT NULL, state_version INTEGER NOT NULL, "
+                    "report_json TEXT NOT NULL, generated_at REAL NOT NULL)"
+                )
+                connection.execute(
+                    "INSERT INTO match_reports VALUES (?, ?, ?, ?, ?)",
+                    ("old-match", "old-report", 1, '{"archived": true}', 0),
+                )
+            connection.close()
+            store = Store(database)
+            try:
+                match_id, _, _ = store.create(1, 42, "ark_nova")
+                self.assertEqual("ark_nova", store.game_id(match_id))
+                archived = store.connection.execute(
+                    "SELECT report_json FROM match_reports WHERE match_id='old-match'"
+                ).fetchone()
+                self.assertEqual('{"archived": true}', archived["report_json"])
+            finally:
+                store.close()
+
     def test_create_act_and_replay_azul(self):
         with tempfile.TemporaryDirectory() as directory:
             store = Store(Path(directory) / "test.sqlite3")
@@ -105,14 +130,22 @@ class StoreTests(unittest.TestCase):
             ]
             result = run_match(store, match_id, players, max_turns=20)
             self.assertEqual("ark_nova", result["game"])
+            self.assertEqual(2, len(result["rankings"]))
+            self.assertEqual({"A", "B"}, {row["player"] for row in result["rankings"]})
             self.assertEqual(
-                "agentbga.ark-nova.match-report.v6",
-                result["match_report"]["schema_version"],
+                store.game(match_id).rankings(store.load(match_id)[1]),
+                [
+                    {key: value for key, value in row.items() if key not in {"player", "backend"}}
+                    for row in result["rankings"]
+                ],
             )
-            report_metrics = result["match_report"]["players"][0]["metrics"]
-            self.assertIn("final_track_score", report_metrics)
-            self.assertIn("score", report_metrics)
-            self.assertEqual(result["match_report"], store.match_report(match_id))
+            self.assertNotIn("match_report", result)
+            tables = {
+                row["name"] for row in store.connection.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
+            }
+            self.assertNotIn("match_reports", tables)
             self.assertEqual([], result["harness_metrics"]["players"])
             self.assertTrue(result["harness_metrics"]["totals"]["complete"])
             self.assertGreater(result["decisions"], result["turns"])

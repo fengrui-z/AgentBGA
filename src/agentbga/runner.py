@@ -9,7 +9,6 @@ import time
 from typing import Any, Callable
 
 from .agents import AgentError, HARNESS_BACKENDS, PlayerConfig, build_model_agent, random_choice
-from .ark_nova_match_report import generate_match_report
 from .harness import build_harness_agent
 from .minimal_harness import build_minimal_agent
 from .public_projection import (
@@ -327,7 +326,5 @@ def run_match(
             store.harness_events(match_id), HARNESS_BACKENDS, attempt_errors,
         ),
     }
-    if game.game_id == "ark_nova":
-        result["match_report"] = generate_match_report(store, match_id)
     emit({"type": "match_finished", **result})
     return result

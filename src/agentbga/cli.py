@@ -100,7 +100,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_db(create)
 
-    for name in ("observe", "legal-actions", "status", "verify", "replay", "harness-events", "report"):
+    for name in ("observe", "legal-actions", "status", "verify", "replay", "harness-events"):
         item = match_sub.add_parser(name)
         item.add_argument("match_id")
         if name in ("observe", "legal-actions"):
@@ -360,13 +360,6 @@ def execute(args: argparse.Namespace) -> int:
             elif args.command == "harness-events":
                 version, _, _ = store.load(args.match_id)
                 emit(envelope(store.harness_events(args.match_id), match_id=args.match_id, version=version))
-            elif args.command == "report":
-                from .ark_nova_match_report import generate_match_report
-                version, _, _ = store.load(args.match_id)
-                report = store.match_report(args.match_id)
-                if report is None:
-                    report = generate_match_report(store, args.match_id)
-                emit(envelope(report, match_id=args.match_id, version=version))
             elif args.command == "traces":
                 version, _, _ = store.load(args.match_id)
                 root = Path.cwd() / ".agentbga" / "runs" / "_traces" / args.match_id

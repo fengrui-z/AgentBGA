@@ -3,8 +3,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import ArenaPage from "./arena/page";
-import { ArkNovaWorkbench } from "./ark-nova-workbench";
-import { ArkNovaMatchReport, type ArkNovaMatchReportData } from "./ark-nova-match-report";
 import {
   ArkNovaPlayerSummary, ArkNovaTable,
   type ArkPlayerView, type ArkView,
@@ -301,7 +299,7 @@ type Snapshot = {
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
   players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView)[];
   spectator_view?: ArkView;
-  match_report?: ArkNovaMatchReportData;
+  rankings?: {seat: number; player: string}[];
 };
 type TableSummary = {
   match_id: string; game: GameId; status: string; turn_count: number; seed: number;
@@ -1783,7 +1781,6 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       </section>
       <div className="game-picker" role="group" aria-label={t("pick_game")}>{(Object.keys(GAME_COPY) as GameId[]).map(id => <button key={id} className={game === id ? "selected" : ""} onClick={() => selectGame(id)}><span>{GAME_COPY[id].badge}</span><b>{GAME_COPY[id].name[lang]}</b><small>{GAME_COPY[id].note[lang]}</small></button>)}</div>
       <header><div><span>{t("new_table")}</span><h2>{t("create_table")}{GAME_COPY[game].name[lang]}</h2></div><div className="matchup-presets">{game === "ark_nova" && <button className={players.length === 1 ? "selected-preset" : ""} onClick={setSoloMatch}>{zh ? "单人模式" : "Solo"}</button>}<button onClick={() => setMatchup("human")}>{t("g_human")}</button><button onClick={() => setMatchup("harness")}>{t("g_harness")}</button><b>{players.length} {t("players_count")}</b></div></header>
-      {game === "ark_nova" && <ArkNovaWorkbench lang={lang}/>}
       <div className="players-config">{players.map((p, index) => <article className="player-config" key={p.id}>
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`${p.name} ${t("move_up")}`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`${p.name} ${t("move_down")}`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>{t("f_name")}</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
@@ -1831,7 +1828,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     </header>
     {error && <div className="table-error" role="alert">{error}</div>}
     {snapshot.status === "finished" && <section className="winner-summary" aria-label={t("match_over")}>
-      <div><span>{t("winner")}</span><strong>{snapshot.match_report?.players[0]?.name || timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong></div>
+      <div><span>{t("winner")}</span><strong>{snapshot.rankings?.[0]?.player || timeline.at(-1)?.event.rankings?.[0]?.player || t("match_over")}</strong></div>
       <div><button className="view-final-board" onClick={viewFinalBoard}>{t("view_final_board")}</button><button onClick={leaveMatch}>{t("play_again")}</button></div>
     </section>}
     <div className="table-grid">
@@ -1867,7 +1864,6 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
           : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/>
           : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/>
           : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
-        {snapshot.status === "finished" && snapshot.game === "ark_nova" && snapshot.match_report && <ArkNovaMatchReport report={snapshot.match_report} lang={lang}/>}
       </section>
       <aside className="timeline">
         <header><div><span>{t("model_stream")}</span><h2>{t("chat_h")}</h2></div><i className={snapshot.status === "active" && (!snapshot.paused || snapshot.pause_pending) ? "pulse" : ""}/></header>

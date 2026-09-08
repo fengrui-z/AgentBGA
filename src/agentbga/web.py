@@ -16,7 +16,6 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from .agents import PlayerConfig
-from .ark_nova_match_report import generate_match_report
 from .public_projection import public_action_id
 from .registry import get_game, list_games
 from .runner import run_match
@@ -53,11 +52,18 @@ class MatchHub:
                 "players": players,
                 "views": views,
             }
-            if game.game_id == "ark_nova" and state["status"] == "finished":
-                snapshot["match_report"] = (
-                    store.match_report(match_id)
-                    or generate_match_report(store, match_id)
-                )
+            if state["status"] == "finished":
+                # Final results come from the game itself, including when a
+                # browser reconnects before receiving any live runner events.
+                names = {row["seat"]: row for row in players}
+                snapshot["rankings"] = [
+                    {
+                        **row,
+                        "player": names.get(row["seat"], {}).get("name", f"Seat {row['seat'] + 1}"),
+                        "backend": names.get(row["seat"], {}).get("backend"),
+                    }
+                    for row in game.rankings(state)
+                ]
             # Only the browser receives this agent-only observer projection. Match
             # runners continue to call game.observe(state, seat) directly.
             spectator_observe = getattr(game, "observe_spectator", None)
@@ -533,19 +539,11 @@ class MatchHub:
 
     @staticmethod
     def _finished_event(match_id: str, snapshot: dict[str, Any]) -> dict[str, Any]:
-        names = {row["seat"]: row for row in snapshot.get("players") or []}
-        view = (snapshot.get("views") or [{}])[0]
-        rankings = [
-            {**row, **({"player": names[row["seat"]]["name"], "backend": names[row["seat"]].get("backend")}
-                       if row.get("seat") in names else {})}
-            for row in (view.get("rankings") or [])
-        ]
         return {
             "type": "match_finished", "match_id": match_id, "game": snapshot.get("game"),
             "version": snapshot.get("version"), "turns": snapshot.get("turn_count"),
             "decisions": snapshot.get("decision_count", snapshot.get("turn_count")),
-            "players": snapshot.get("players") or [], "rankings": rankings,
-            "match_report": snapshot.get("match_report"),
+            "players": snapshot.get("players") or [], "rankings": snapshot.get("rankings") or [],
         }
 
     def events_after(self, match_id: str, after: int, wait: float = 15) -> tuple[list[dict[str, Any]], bool]:

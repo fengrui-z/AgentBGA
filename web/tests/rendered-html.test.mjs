@@ -68,7 +68,6 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /selectedActionId/);
   assert.match(source, /随机座次|movePlayer/);
   assert.match(source, /ArkNovaBoard/);
-  assert.match(source, /ArkNovaWorkbench/);
   assert.match(source, /AzulBoard/);
   assert.match(source, /AzulActionPicker/);
   assert.match(source, /AzulOffer counts=\{factory\.tiles\} expanded/);
@@ -110,26 +109,20 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.doesNotMatch(html, /react-loading-skeleton|Your site is taking shape/);
 });
 
-test("Ark Nova workbench uses the validated P8 catalog projection", async () => {
-  const source = await readFile(new URL("app/ark-nova-workbench.tsx", root), "utf8");
-  const catalog = JSON.parse(await readFile(new URL("public/ark-nova-content.json", root), "utf8"));
-
-  assert.match(source, /\/ark-nova-content\.json/);
-  assert.match(source, /RulesInspector/);
-  assert.match(source, /条件|Requirements/);
-  assert.match(source, /即时效果|Immediate/);
-  assert.match(source, /持续效果|Ongoing/);
-  assert.match(source, /互动效果|Interaction/);
-  assert.match(source, /终局计分|Endgame/);
-  assert.equal(catalog.schema_version, "agentbga.ark_nova.catalog.v1");
-  assert.equal(catalog.pack.content_version, "map0-release.1");
-  assert.equal(catalog.pack.status, "released");
-  assert.equal(catalog.coverage.total, 245);
-  assert.equal(catalog.coverage.roster_indexed, 245);
-  assert.equal(catalog.coverage.semantic_entries, 243);
-  assert.equal(catalog.coverage.scenario_covered_entries, 245);
-  assert.equal(catalog.entries.length, 245);
-  await access(new URL("dist/client/ark-nova-content.json", root));
+test("playable table has no optional workbench, report, or share-image dependencies", async () => {
+  const source = await readFile(new URL("app/page.tsx", root), "utf8");
+  const styles = await readFile(new URL("app/globals.css", root), "utf8");
+  const layout = await readFile(new URL("app/layout.tsx", root), "utf8");
+  assert.doesNotMatch(source, /ArkNovaWorkbench|ArkNovaMatchReport|match_report/);
+  assert.doesNotMatch(styles, /ark-match-report|ark-report-/);
+  assert.doesNotMatch(layout, /ark-nova-workbench|og\.jpg|openGraph|twitter:/);
+  assert.match(source, /snapshot\.rankings\?\.\[0\]\?\.player/);
+  assert.match(source, /viewFinalBoard/);
+  for (const asset of ["ark-nova-content.json", "og.jpg"]) {
+    for (const directory of ["public", "dist/client"]) {
+      await assert.rejects(access(new URL(`${directory}/${asset}`, root)), {code: "ENOENT"});
+    }
+  }
 });
 
 test("Ark Nova table exposes the public board, association, summary, and interactive map surfaces", async () => {
