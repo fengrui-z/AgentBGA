@@ -100,4 +100,9 @@ def public_game_event(event: Mapping[str, Any]) -> dict[str, Any]:
     elif event_type == "final_scoring_card_discarded":
         result.pop("card_id", None)
         result["discarded_count"] = 1
+    elif event_type == "map_card_reward_taken" and result.get("source") == "deck":
+        # Both Build rewards and semantic card effects emit this event. The
+        # authoritative event keeps the identity for replay/auditing, while
+        # only cards taken from the public display may reveal it here.
+        result.pop("card_id", None)
     return result
