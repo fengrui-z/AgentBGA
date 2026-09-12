@@ -184,7 +184,9 @@ def call_tool(
     context_path: Path, tool: str, arguments: dict[str, Any] | None = None, *,
     notes_root: Path | None = None,
 ) -> Any:
-    arguments = arguments or {}
+    arguments = {} if arguments is None else arguments
+    if not isinstance(arguments, dict):
+        raise ValueError("tool arguments must be an object")
     context = _load(context_path)
     if tool == "observe":
         result = context["observation"]
@@ -237,7 +239,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--context", required=True)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("observe")
-    commands.add_parser("legal-actions")
+    legal = commands.add_parser("legal-actions")
+    legal.add_argument("--filters", type=json.loads, default={})
+    legal.add_argument("--group")
+    legal.add_argument("--cursor", type=int)
+    legal.add_argument("--limit", type=int)
     submit = commands.add_parser("submit-action")
     submit.add_argument("--action-id", required=True)
     args = parser.parse_args(argv)
@@ -246,6 +252,11 @@ def main(argv: list[str] | None = None) -> int:
         tool, arguments = "observe", {}
     elif args.command == "legal-actions":
         tool, arguments = "legal_actions", {}
+        if args.filters:
+            arguments["filters"] = args.filters
+        for key in ("group", "cursor", "limit"):
+            if getattr(args, key) is not None:
+                arguments[key] = getattr(args, key)
     else:
         tool, arguments = "submit_action", {"action_id": args.action_id}
     result = call_tool(context_path, tool, arguments)

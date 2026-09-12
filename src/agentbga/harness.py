@@ -17,6 +17,7 @@ from typing import Any, Callable
 from .agent_context import CONTEXT_V2, prepare_seat_context
 from .agents import AgentError, PlayerConfig, StreamSink, harness_executable_name
 from .memory import memory_identity, stable_session_id
+from .legal_action_query import QUERY_DESCRIPTION, query_schema
 from .usage import (
     TokenUsageAccumulator,
     TokenUsageSample,
@@ -40,6 +41,8 @@ Play by using the agentbga MCP tools. Do not inspect the parent project, databas
 Hidden opponent information is unavailable by design.
 
 Call observe, then legal_actions, then commit exactly one choice with submit_action.
+If legal_actions returns groups or next_cursor, use its filters/group/cursor parameters to
+retrieve concrete action IDs. Keep the same filters when paging. Do not read output files.
 The default observation is compact. Use inspect_card, inspect_rules, inspect_map,
 inspect_played_cards, or inspect_history when those details are relevant. Never guess
 an action, building, income, reward, keyword, or card rule that those tools can answer.
@@ -61,7 +64,10 @@ async function audit(tool: string, args: object, result: unknown) {
   await appendFile(auditPath, JSON.stringify({ tool, arguments: args, result, created_at: Date.now() / 1000 }) + "\n");
 }
 function result(value: unknown) { return { content: [{ type: "text", text: JSON.stringify(value) }], details: value }; }
+/* LEGAL_QUERY_IMPLEMENTATION */
 function pageLegal(value: any, args: any) {
+  if (value.legal_action_query) return filteredLegal(value, args ?? {});
+  if (args?.filters !== undefined) throw new Error("legal action filters are not supported for this game");
   const actions = value.legal_actions || [];
   if (value.schema_version !== "agentbga.seat-context.v2") return actions;
   const group = args?.group;
@@ -97,11 +103,9 @@ export default function (pi: any) {
   pi.registerTool({ name: "observe", label: "Observe", description: "Read your seat-scoped board-game observation.",
     promptSnippet: "Read the current seat-scoped board state", parameters: Type.Object({}, { additionalProperties: false }),
     async execute() { const value = (await context()).observation; await audit("observe", {}, value); return result(value); } });
-  pi.registerTool({ name: "legal_actions", label: "Legal actions", description: "List legal action IDs for this seat and state.",
-    promptSnippet: "List the current legal board-game actions", parameters: Type.Object({
-      group: Type.Optional(Type.String()), cursor: Type.Optional(Type.Integer({ minimum: 0 })),
-      limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 50 }))
-    }, { additionalProperties: false }),
+  pi.registerTool({ name: "legal_actions", label: "Legal actions", description: __LEGAL_QUERY_DESCRIPTION__,
+    promptSnippet: "List/filter current legal actions; follow next_cursor with the same query",
+    parameters: Type.Unsafe(__LEGAL_QUERY_SCHEMA__),
     async execute(_id: string, args: any) { const value = pageLegal(await context(), args); await audit("legal_actions", args, value); return result(value); } });
   pi.registerTool({ name: "inspect_card", label: "Inspect card", description: "Read complete details for one visible card reference or bare card id.",
     parameters: Type.Object({ card_ref: Type.String() }, { additionalProperties: false }),
@@ -167,6 +171,10 @@ export default function (pi: any) {
     } });
 }
 '''
+PI_EXTENSION = (PI_EXTENSION
+    .replace("/* LEGAL_QUERY_IMPLEMENTATION */", Path(__file__).with_name("legal_action_query.js").read_text(encoding="utf-8"))
+    .replace("__LEGAL_QUERY_SCHEMA__", json.dumps(query_schema()))
+    .replace("__LEGAL_QUERY_DESCRIPTION__", json.dumps(QUERY_DESCRIPTION)))
 
 
 @dataclass
