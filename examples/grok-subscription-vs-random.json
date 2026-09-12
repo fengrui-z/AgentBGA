@@ -4,7 +4,7 @@
     {
       "name": "Grok Build · SuperGrok",
       "backend": "grok",
-      "model": "grok-build",
+      "model": "grok-4.6",
       "auth_mode": "subscription"
     },
     {"name": "Random Baseline", "backend": "random"}

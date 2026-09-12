@@ -138,7 +138,7 @@ grok models
 Select **Grok Build → SuperGrok subscription** in the Web UI. This mode does not
 send an API key or endpoint. JSON configurations must explicitly set
 `auth_mode: "subscription"`; omitting it preserves the existing API-key behavior.
-The subscription model defaults to `grok-build`, with the model's native reasoning
+The subscription model defaults to `grok-4.6`, with the model's native reasoning
 default. A JSON config can request a supported `reasoning_effort` explicitly.
 
 Subscription mode keeps a seat-local `GROK_HOME` and the existing strict tool

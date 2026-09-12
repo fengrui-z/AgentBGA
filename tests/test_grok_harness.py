@@ -48,7 +48,7 @@ class GrokHarnessTests(unittest.TestCase):
     def test_config_defaults_and_rejected_credentials(self):
         config = self.agent().config
         self.assertEqual("subscription", config.auth_mode)
-        self.assertEqual("grok-build", config.model)
+        self.assertEqual("grok-4.6", config.model)
         self.assertIsNone(config.reasoning_effort)
         self.assertIsNone(config.api_key_env)
         for field, value in (("base_url", "https://api.x.ai/v1"),

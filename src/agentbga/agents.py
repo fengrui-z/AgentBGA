@@ -67,7 +67,7 @@ class PlayerConfig:
             raise ValueError(f"player {seat} name cannot be empty")
         model = value.get("model")
         if backend == "grok" and value.get("auth_mode") == "subscription" and not model:
-            model = "grok-build"
+            model = "grok-4.6"
         if backend not in {"random", "human"} and not model:
             raise ValueError(f"player {seat} using {backend} requires model")
         auth_mode = value.get("auth_mode")
