@@ -246,7 +246,7 @@ def execute(args: argparse.Namespace) -> int:
             players = load_players_config(args.players_config)
             player_checks = []
             for seat, player in enumerate(players):
-                subscription_auth = player.backend == "codex" and player.auth_mode == "subscription"
+                subscription_auth = player.backend in {"codex", "grok"} and player.auth_mode == "subscription"
                 key_required = player.backend not in {"random", "human"} and not subscription_auth
                 key_configured = not key_required or bool(os.environ.get(player.api_key_env or ""))
                 harness_required = player.backend in HARNESS_BACKENDS
@@ -260,10 +260,17 @@ def execute(args: argparse.Namespace) -> int:
                 auth_configured = key_configured
                 auth_status = None
                 if subscription_auth:
-                    auth_configured, auth_status = (
-                        _codex_subscription_status(executable) if executable
-                        else (False, "codex executable not found")
-                    )
+                    if player.backend == "grok":
+                        from .grok_harness import subscription_status
+                        auth_configured, auth_status = (
+                            subscription_status(dict(os.environ)) if executable
+                            else (False, "grok executable not found; install Grok Build and run grok login")
+                        )
+                    else:
+                        auth_configured, auth_status = (
+                            _codex_subscription_status(executable) if executable
+                            else (False, "codex executable not found")
+                        )
                 check = {
                     "seat": seat, **player.public_dict(),
                     "api_key_configured": None if subscription_auth else key_configured,

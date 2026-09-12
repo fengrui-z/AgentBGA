@@ -177,8 +177,8 @@ def harness_usage_samples(backend: str, payload: Any) -> list[TokenUsageSample]:
         if event_type == "result":
             candidates.append((payload.get("usage"), "cursor.result"))
     elif backend == "grok":
-        if event_type == "end":
-            candidates.append((payload.get("usage"), "grok.end"))
+        if event_type in {"end", "error"}:
+            candidates.append((payload.get("usage"), f"grok.{event_type}"))
 
     result = []
     for raw, source in candidates:

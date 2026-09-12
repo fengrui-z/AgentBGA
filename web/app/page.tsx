@@ -30,7 +30,7 @@ const STR: Record<Lang, Dict> = {
     players_count: "PLAYERS", pick_game: "选择游戏",
     f_name: "选手名", f_provider: "Harness / 服务商", f_backend: "运行方式", f_endpoint: "Endpoint",
     f_model: "模型名", f_key: "API Key", f_auth: "Codex 认证", f_seed: "Seed", f_speed: "每步间隔",
-    auth_api_key: "API Key（按量）", auth_subscription: "ChatGPT 订阅",
+    auth_api_key: "API Key（按量）", auth_subscription: "ChatGPT 订阅", auth_grok: "SuperGrok 订阅（本机登录）",
     og_harness: "Agent Harness", og_direct: "直连模型 API",
     ph_model: "可选择或输入 model-id", ph_key: "仅在本次对局使用",
     ph_endpoint: "如 http://127.0.0.1:8000/v1（本地模型 / 网关）",
@@ -115,7 +115,7 @@ const STR: Record<Lang, Dict> = {
     players_count: "PLAYERS", pick_game: "Select game",
     f_name: "Player name", f_provider: "Harness / provider", f_backend: "Runtime", f_endpoint: "Endpoint",
     f_model: "Model id", f_key: "API key", f_auth: "Codex auth", f_seed: "Seed", f_speed: "Step interval",
-    auth_api_key: "API key (usage-based)", auth_subscription: "ChatGPT subscription",
+    auth_api_key: "API key (usage-based)", auth_subscription: "ChatGPT subscription", auth_grok: "SuperGrok subscription (local login)",
     og_harness: "Agent Harness", og_direct: "Direct model API",
     ph_model: "Pick or type model-id", ph_key: "Used for this match only",
     ph_endpoint: "e.g. http://127.0.0.1:8000/v1 (local model / gateway)",
@@ -356,7 +356,7 @@ const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: 
   qwen: { label: {zh: "Qwen Code", en: "Qwen Code"}, url: "https://coding.dashscope.aliyuncs.com/v1", key: "", model: "" },
   codex: { label: {zh: "Codex Harness", en: "Codex Harness"}, url: "https://api.openai.com/v1", key: "", model: "" },
   cursor: { label: {zh: "Cursor CLI", en: "Cursor CLI"}, url: "", key: "", model: "" },
-  grok: { label: {zh: "Grok Build", en: "Grok Build"}, url: "https://api.x.ai/v1", key: "", model: "" },
+  grok: { label: {zh: "Grok Build", en: "Grok Build"}, url: "https://api.x.ai/v1", key: "", model: "grok-build" },
   opencode: { label: {zh: "OpenCode Harness", en: "OpenCode Harness"}, url: "https://api.deepseek.com", key: "", model: "" },
   dsh: { label: {zh: "DeepSeek Harness", en: "DeepSeek Harness"}, url: "https://api.deepseek.com", key: "", model: "" },
   hermes: { label: {zh: "Hermes Agent", en: "Hermes Agent"}, url: "https://api.deepseek.com", key: "", model: "" },
@@ -378,7 +378,7 @@ const PROVIDERS: Record<Provider, {label: Record<Lang,string>; backend: Backend;
   qwen: {label: {zh:"Qwen Code",en:"Qwen Code"}, backend: "qwen", url: "https://coding.dashscope.aliyuncs.com/v1", models: ["qwen3-coder-plus"], note: {zh:"Qwen Code 持久 session + 独立 QWEN_HOME + 仅座位 MCP 工具；默认阿里云 Coding Plan Endpoint",en:"Persistent session + isolated QWEN_HOME + seat-only MCP tools; defaults to the Alibaba Cloud Coding Plan endpoint"}},
   codex: {label: {zh:"Codex",en:"Codex"}, backend: "codex", url: "https://api.openai.com/v1", models: ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "gpt-5.4", "gpt-5.4-mini", "gpt-5.3-codex-spark"], note: {zh:"可复用本机 codex login 的 ChatGPT 订阅，或使用按量 API Key；自定义 Endpoint 必须支持 Responses API",en:"Reuse the local codex login ChatGPT subscription or use a metered API key; custom endpoints must support the Responses API"}},
   cursor: {label: {zh:"Cursor CLI",en:"Cursor CLI"}, backend: "cursor", url: "", models: ["gpt-5.6-sol", "grok-4.6"], note: {zh:"Cursor Agent CLI 持久 session + 独立数据目录 + 仅座位 MCP 工具；使用 Cursor API Key",en:"Persistent Cursor Agent CLI session + isolated data directory + seat-only MCP tools; uses a Cursor API key"}},
-  grok: {label: {zh:"Grok Build",en:"Grok Build"}, backend: "grok", url: "https://api.x.ai/v1", models: ["grok-4.6", "grok-4.5", "grok-build"], note: {zh:"xAI Grok Build CLI 持久 session + 独立 GROK_HOME + 仅座位 MCP 工具",en:"Persistent xAI Grok Build CLI session + isolated GROK_HOME + seat-only MCP tools"}},
+  grok: {label: {zh:"Grok Build",en:"Grok Build"}, backend: "grok", url: "https://api.x.ai/v1", models: ["grok-build", "grok-4.6", "grok-4.5"], note: {zh:"可复用本机 grok login 的 SuperGrok 订阅，或使用 API Key；订阅模式使用模型默认思考强度，可用模型见 grok models",en:"Reuse local grok login for SuperGrok or use an API key. Subscription mode uses native reasoning defaults; see grok models."}},
   opencode: {label: {zh:"OpenCode",en:"OpenCode"}, backend: "opencode", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"OpenCode 持久 session + 座位隔离 MCP",en:"Persistent session + seat-isolated MCP"}},
   dsh: {label: {zh:"DeepSeek Harness",en:"DeepSeek Harness"}, backend: "dsh", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"DeepSeek Harness (dsh) headless + 座位隔离 MCP；每回合独立 session，workspace 笔记持久",en:"dsh headless + seat-isolated MCP; fresh session each turn, workspace notes persist"}},
   hermes: {label: {zh:"Hermes Agent",en:"Hermes Agent"}, backend: "hermes", url: "https://api.deepseek.com", models: ["deepseek-v4-flash", "deepseek-v4-pro"], note: {zh:"Hermes Agent 持久 session + 独立 HERMES_HOME + 座位隔离 MCP",en:"Persistent session + isolated HERMES_HOME + seat-isolated MCP"}},
@@ -1532,7 +1532,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       if (p.id !== id) return p;
       if (patch.backend && patch.backend !== p.backend) {
         const defaults = BACKENDS[patch.backend];
-        return {...p, ...patch, provider: "custom", base_url: defaults.url, model: "", api_key: ""};
+        return {...p, ...patch, provider: patch.backend === "grok" ? "grok" : "custom", base_url: defaults.url, model: defaults.model, api_key: "", auth_mode: patch.backend === "grok" ? "subscription" : "api_key"};
       }
       return {...p, ...patch};
     }));
@@ -1588,6 +1588,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     setPlayers(current => current.map(p => p.id === id ? {
       ...p, provider, backend: provider === "custom" ? p.backend : preset.backend,
       base_url: provider === "custom" ? p.base_url : preset.url,
+      ...(provider === "grok" ? {auth_mode: "subscription" as AuthMode, api_key: ""} : {}),
       model: provider === "custom" ? p.model : preset.models[0],
       reasoning_effort: ["codex", "qwen"].includes(preset.backend) && p.reasoning_effort === "none" ? "max" : p.reasoning_effort,
     } : p));
@@ -1674,9 +1675,9 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
           }} : {}),
           players: players.map(p => ({
             name: p.name, backend: p.backend, model: p.model,
-            ...(p.backend === "codex" ? {auth_mode: p.auth_mode} : {}),
-            ...(!(p.backend === "codex" && p.auth_mode === "subscription") ? {base_url: p.base_url, api_key: p.api_key} : {}),
-            ...(HARNESS_BACKENDS.has(p.backend) ? {reasoning_effort: p.reasoning_effort} : {}),
+            ...(["codex", "grok"].includes(p.backend) ? {auth_mode: p.auth_mode} : {}),
+            ...(!(["codex", "grok"].includes(p.backend) && p.auth_mode === "subscription") ? {base_url: p.base_url, api_key: p.api_key} : {}),
+            ...((HARNESS_BACKENDS.has(p.backend) && !(p.backend === "grok" && p.auth_mode === "subscription")) ? {reasoning_effort: p.reasoning_effort} : {}),
           })),
         }),
       });
@@ -1697,11 +1698,11 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         return player.name === persisted?.name && player.backend === persisted?.backend;
       }) ? players.map(player => ({
         name: player.name, backend: player.backend, model: player.model,
-        ...(player.backend === "codex" ? {auth_mode: player.auth_mode} : {}),
-        ...(!(player.backend === "codex" && player.auth_mode === "subscription") ? {
+        ...(["codex", "grok"].includes(player.backend) ? {auth_mode: player.auth_mode} : {}),
+        ...(!(["codex", "grok"].includes(player.backend) && player.auth_mode === "subscription") ? {
           base_url: player.base_url, api_key: player.api_key,
         } : {}),
-        ...(HARNESS_BACKENDS.has(player.backend) ? {reasoning_effort: player.reasoning_effort} : {}),
+        ...((HARNESS_BACKENDS.has(player.backend) && !(player.backend === "grok" && player.auth_mode === "subscription")) ? {reasoning_effort: player.reasoning_effort} : {}),
       })) : undefined;
       const response = await fetch(api(`/api/matches/${snapshot.match_id}/${action}`), {
         method: "POST", headers: {"Content-Type": "application/json"},
@@ -1787,11 +1788,11 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         {!(["random", "human"] as Backend[]).includes(p.backend) && <>
           <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>{t("f_provider")}</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label={t("og_harness")}>{(["claude_code", "pi", "qwen", "codex", "cursor", "grok", "opencode", "dsh", "hermes", "minimal"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup><optgroup label={t("og_direct")}>{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup></select></div>
           <div className="field backend-field"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).filter(([id]) => id !== "random").map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select></div>
-          {p.backend === "codex" && <div className="field auth-field"><label htmlFor={`${p.id}-auth`}>{t("f_auth")}</label><select id={`${p.id}-auth`} value={p.auth_mode} onChange={e => updatePlayer(p.id, {auth_mode: e.target.value as AuthMode})}><option value="subscription">{t("auth_subscription")}</option><option value="api_key">{t("auth_api_key")}</option></select></div>}
-          {!(p.backend === "codex" && p.auth_mode === "subscription") && <div className="field grow endpoint-field"><label htmlFor={`${p.id}-endpoint`}>{t("f_endpoint")}</label><input id={`${p.id}-endpoint`} value={p.base_url} placeholder={t("ph_endpoint")} onChange={e => updatePlayer(p.id, {provider: "custom", base_url: e.target.value})}/></div>}
+          {["codex", "grok"].includes(p.backend) && <div className="field auth-field"><label htmlFor={`${p.id}-auth`}>{t("f_auth")}</label><select id={`${p.id}-auth`} value={p.auth_mode} onChange={e => updatePlayer(p.id, {auth_mode: e.target.value as AuthMode})}><option value="subscription">{t(p.backend === "grok" ? "auth_grok" : "auth_subscription")}</option><option value="api_key">{t("auth_api_key")}</option></select></div>}
+          {!(["codex", "grok"].includes(p.backend) && p.auth_mode === "subscription") && <div className="field grow endpoint-field"><label htmlFor={`${p.id}-endpoint`}>{t("f_endpoint")}</label><input id={`${p.id}-endpoint`} value={p.base_url} placeholder={t("ph_endpoint")} onChange={e => updatePlayer(p.id, {provider: "custom", base_url: e.target.value})}/></div>}
           <div className="field model-field"><label htmlFor={`${p.id}-model`}>{t("f_model")}</label><input id={`${p.id}-model`} list={`${p.id}-models`} placeholder={t("ph_model")} value={p.model} onChange={e => updatePlayer(p.id, {model: e.target.value})}/><datalist id={`${p.id}-models`}>{PROVIDERS[p.provider].models.map(model => <option key={model} value={model}/>)}</datalist></div>
-          {!(p.backend === "codex" && p.auth_mode === "subscription") && <div className="field key-field"><label htmlFor={`${p.id}-key`}>{t("f_key")}</label><input id={`${p.id}-key`} type="password" autoComplete="off" placeholder={t("ph_key")} value={p.api_key} onChange={e => updatePlayer(p.id, {api_key: e.target.value})}/></div>}
-          {HARNESS_BACKENDS.has(p.backend) && <div className="field reasoning-field"><label htmlFor={`${p.id}-reasoning`}>Reasoning Effort</label><select id={`${p.id}-reasoning`} value={p.reasoning_effort} onChange={e => updatePlayer(p.id, {reasoning_effort: e.target.value as ReasoningEffort})}>{REASONING_OPTIONS.filter(option => !["codex", "qwen"].includes(p.backend) || option.value !== "none").map(option => <option key={option.value} value={option.value}>{option.label[lang]}</option>)}</select></div>}
+          {!(["codex", "grok"].includes(p.backend) && p.auth_mode === "subscription") && <div className="field key-field"><label htmlFor={`${p.id}-key`}>{t("f_key")}</label><input id={`${p.id}-key`} type="password" autoComplete="off" placeholder={t("ph_key")} value={p.api_key} onChange={e => updatePlayer(p.id, {api_key: e.target.value})}/></div>}
+          {(HARNESS_BACKENDS.has(p.backend) && !(p.backend === "grok" && p.auth_mode === "subscription")) && <div className="field reasoning-field"><label htmlFor={`${p.id}-reasoning`}>Reasoning Effort</label><select id={`${p.id}-reasoning`} value={p.reasoning_effort} onChange={e => updatePlayer(p.id, {reasoning_effort: e.target.value as ReasoningEffort})}>{REASONING_OPTIONS.filter(option => !["codex", "qwen"].includes(p.backend) || option.value !== "none").map(option => <option key={option.value} value={option.value}>{option.label[lang]}</option>)}</select></div>}
           <div className="provider-note">{PROVIDERS[p.provider].note[lang]}</div>
         </>}
         {(["random", "human"] as Backend[]).includes(p.backend) && <div className="field manual-backend"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select><small>{p.backend === "human" ? t("human_note") : t("random_note")}</small></div>}

@@ -230,8 +230,10 @@ class HarnessAgent:
                 "seat": self.session.seat, "player": self.config.name, **payload,
             })
 
-    def _native_reasoning_effort(self) -> str:
+    def _native_reasoning_effort(self) -> str | None:
         """Translate the benchmark effort label to a harness-native value."""
+        if self.config.backend == "grok" and self.config.auth_mode == "subscription" and self.config.reasoning_effort is None:
+            return None
         requested = self.config.reasoning_effort or "max"
         if self.config.backend in {"codex", "pi"} and requested == "max":
             return "xhigh"
@@ -344,8 +346,9 @@ class HarnessAgent:
                 "--tools", "",
                 "--no-plan", "--no-subagents", "--no-memory",
                 "--disable-web-search", "--model", model,
-                "--effort", reasoning_effort,
             ]
+            if reasoning_effort is not None:
+                command.extend(["--effort", reasoning_effort])
             if self.session.session_id:
                 command.extend(["--resume", self.session.session_id])
             return [*command, "-p", prompt]
@@ -444,6 +447,11 @@ class HarnessAgent:
             if key:
                 env["CURSOR_API_KEY"] = key
         elif self.config.backend == "grok":
+            if self.config.auth_mode == "subscription":
+                from .grok_harness import environment
+                if self.config.api_key or self.config.api_key_env or self.config.base_url:
+                    raise AgentError("Grok subscription mode cannot use API keys or endpoint overrides")
+                env = environment(self.session.workspace, source_env, env)
             grok_home = self.session.workspace / ".grok-home"
             grok_home.mkdir(mode=0o700, exist_ok=True)
             env["GROK_HOME"] = str(grok_home)
@@ -561,6 +569,11 @@ class HarnessAgent:
             sys.executable, "-m", "agentbga.seat_mcp", "--context", relative_context,
             "--notes-root", ".",
         ]
+        if self.config.backend == "grok" and self.config.auth_mode == "subscription":
+            from .grok_harness import prepare
+            prepare(self.session.workspace, mcp_command, self._pythonpath,
+                    self.binary, self._environment())
+            return submission_path
         # OpenCode associates sessions with the surrounding Git worktree, so
         # its MCP child may run from the repository root instead of the nested
         # seat workspace. Give that backend location-independent paths.
@@ -1199,6 +1212,8 @@ class HarnessAgent:
 
     @staticmethod
     def _tool_details(payload: dict[str, Any]) -> tuple[str, Any] | None:
+        if payload.get("type") == "tool_call_update":
+            return None  # Completion is not a second tool invocation.
         if payload.get("type") == "tool_execution_start":
             return str(payload.get("toolName") or "tool"), payload.get("args") or {}
         cursor_call = payload.get("tool_call")
@@ -1309,6 +1324,8 @@ class HarnessAgent:
             if process.poll() is None:
                 process.kill()
                 process.wait()
+            process.stdout.close()
+            process.stderr.close()
         return "\n".join(output), "\n".join(errors), returncode
 
     def _write_trace(

@@ -50,6 +50,8 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /backend: "qwen"/);
   assert.match(source, /backend: "cursor"/);
   assert.match(source, /backend: "grok"/);
+  assert.match(source, /auth_grok: "SuperGrok/);
+  assert.match(source, /\["codex", "grok"\]\.includes\(player\.backend\)/);
   assert.match(styles, /\.player-config \.auth-field \{ grid-column:2 \/ span 2; \}/);
   assert.match(source, /MODEL STREAM|模型 Chat/);
   assert.match(source, /暂停|继续对局/);
