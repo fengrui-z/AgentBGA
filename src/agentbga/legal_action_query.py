@@ -22,6 +22,17 @@ GAME_FILTERS = {
         "noble_id": STRING,
         "max_payment": NONNEGATIVE,
     },
+    "seven_wonders": {
+        "type": STRING,
+        "card_id": STRING,
+        "card_color": {"type": "string", "enum": ["brown", "gray", "blue", "yellow", "red", "green", "purple"]},
+        "card_age": {"type": "integer", "minimum": 1, "maximum": 3},
+        "stage": {"type": "integer", "minimum": 1},
+        "free_source": STRING,
+        "max_payment": NONNEGATIVE,
+        "max_left_payment": NONNEGATIVE,
+        "max_right_payment": NONNEGATIVE,
+    },
 }
 
 
@@ -40,7 +51,8 @@ def query_schema() -> dict[str, Any]:
 QUERY_DESCRIPTION = (
     "List current legal action IDs. Small unfiltered lists are returned in full; large lists "
     "return groups. Select a group (action type), or combine exact-match filters with AND. "
-    "max_payment is an upper bound on the total payment. Check available_filters in a groups "
+    "max_payment bounds total payment; max_left_payment/max_right_payment bound neighbor coins "
+    "in 7 Wonders. Check available_filters in a groups "
     "response for this game's fields. Follow next_cursor with the SAME group/filters to read "
     "all pages; cursors apply only to this decision. Never read output files to find actions."
 )
@@ -52,6 +64,14 @@ def filter_values(game: str, item: Mapping[str, Any]) -> dict[str, Any]:
         from .splendor import CARDS
         card = CARDS.get(item.get("card_id"), {})
         values.update({key: card[key] for key in ("tier", "bonus") if key in card})
+    elif game == "seven_wonders":
+        from .seven_wonders import CARDS
+        card = CARDS.get(item.get("card_id"), {})
+        values.update({f"card_{key}": card[key] for key in ("color", "age") if key in card})
+        payment = item.get("payment")
+        if isinstance(payment, dict):
+            values.update({f"max_{side}_payment": payment[side]
+                           for side in ("left", "right") if side in payment})
     if isinstance(item.get("payment"), dict):
         values["max_payment"] = sum(item["payment"].values())
     return {key: values[key] for key in GAME_FILTERS[game] if key in values}
