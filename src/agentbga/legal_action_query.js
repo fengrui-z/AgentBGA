@@ -49,7 +49,8 @@ function filteredLegal(value, args) {
     if (group !== undefined && item.type !== group) return false;
     const values = metadata.values[item.id];
     return Object.entries(filters).every(([key, v]) => key in values &&
-      (key.startsWith("max_") ? values[key] <= v : values[key] === v));
+      (key.startsWith("max_") ? values[key] <= v :
+        Array.isArray(values[key]) ? values[key].includes(v) : values[key] === v));
   });
   const cursor = args.cursor ?? 0, limit = args.limit ?? 50;
   if (cursor > selected.length) throw new Error("cursor exceeds the filtered action count");

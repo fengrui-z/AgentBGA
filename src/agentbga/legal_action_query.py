@@ -33,6 +33,26 @@ GAME_FILTERS = {
         "max_left_payment": NONNEGATIVE,
         "max_right_payment": NONNEGATIVE,
     },
+    "brass_birmingham": {
+        "type": STRING,
+        "action": {"type": "string", "enum": ["pass", "build", "network", "develop", "sell", "loan", "scout"]},
+        "card_id": STRING,
+        "wild_type": {"type": "string", "enum": ["location", "industry"]},
+        "industry": {"type": "string", "enum": ["cotton_mill", "coal_mine", "iron_works", "manufacturer", "pottery", "brewery"]},
+        "location_id": STRING,
+        "slot_id": STRING,
+        "tile_id": STRING,
+        "industry_id": STRING,
+        "merchant_location_id": STRING,
+        "merchant_slot_id": STRING,
+        "connection_id": STRING,
+        "resource": {"type": "string", "enum": ["coal", "iron", "beer"]},
+        "source": {"type": "string", "enum": ["industry", "market", "merchant"]},
+        "source_id": STRING,
+        "owner": NONNEGATIVE,
+        "max_cost": NONNEGATIVE,
+        "max_estimated_market_cost": NONNEGATIVE,
+    },
 }
 
 
@@ -52,7 +72,9 @@ QUERY_DESCRIPTION = (
     "List current legal action IDs. Small unfiltered lists are returned in full; large lists "
     "return groups. Select a group (action type), or combine exact-match filters with AND. "
     "max_payment bounds total payment; max_left_payment/max_right_payment bound neighbor coins "
-    "in 7 Wonders. Check available_filters in a groups "
+    "in 7 Wonders. In Brass, card_id/industry also match membership in multi-card/industry "
+    "actions; max_cost bounds the action's stated cost, max_estimated_market_cost its "
+    "development estimate (neither is a full-turn cost forecast). Check available_filters in a groups "
     "response for this game's fields. Follow next_cursor with the SAME group/filters to read "
     "all pages; cursors apply only to this decision. Never read output files to find actions."
 )
@@ -72,6 +94,13 @@ def filter_values(game: str, item: Mapping[str, Any]) -> dict[str, Any]:
         if isinstance(payment, dict):
             values.update({f"max_{side}_payment": payment[side]
                            for side in ("left", "right") if side in payment})
+    elif game == "brass_birmingham":
+        for singular, plural in (("card_id", "card_ids"), ("industry", "industries")):
+            if plural in item:
+                values[singular] = item[plural]
+        for key in ("cost", "estimated_market_cost"):
+            if key in item:
+                values[f"max_{key}"] = item[key]
     if isinstance(item.get("payment"), dict):
         values["max_payment"] = sum(item["payment"].values())
     return {key: values[key] for key in GAME_FILTERS[game] if key in values}
@@ -146,7 +175,8 @@ def query_actions(context: Mapping[str, Any], arguments: Mapping[str, Any]) -> A
             continue
         values = metadata["values"][item["id"]]
         if all(key in values and (
-            values[key] <= value if key.startswith("max_") else values[key] == value
+            values[key] <= value if key.startswith("max_") else
+            value in values[key] if isinstance(values[key], list) else values[key] == value
         ) for key, value in filters.items()):
             selected.append(item)
     cursor, limit = arguments.get("cursor", 0), arguments.get("limit", PAGE_SIZE)

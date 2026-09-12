@@ -1,6 +1,6 @@
 # Legal action queries
 
-Splendor and 7 Wonders support seat-local `legal_actions` filters through MCP, Minimal, Pi,
+Splendor, 7 Wonders and Brass: Birmingham support seat-local `legal_actions` filters through MCP, Minimal, Pi,
 and the seat CLI. The engine still enumerates the complete legal action set;
 queries select from that set without changing IDs, payment alternatives, game
 rules, or submission validation. Other games retain their existing behavior.
@@ -48,6 +48,43 @@ Payment alternatives remain separate actions. For example, paying the left
 neighbor and paying the right neighbor are not merged. Only the acting seat's
 legal options are queried, including discard-building and seventh-card phases;
 opponents' sealed choices and hands are not added to the result.
+
+## Brass: Birmingham
+
+```json
+{"filters":{"type":"build_industry","industry":"brewery","location_id":"burton_on_trent","max_cost":10}}
+```
+
+```json
+{"filters":{"type":"take_resource","resource":"beer","source":"industry","owner":0}}
+```
+
+| Filter | Meaning |
+|---|---|
+| `type` | Exact current decision type, e.g. `select_action`, `build_industry`, `take_resource` |
+| `action` | Main action: pass, build, network, develop, sell, loan, or scout; matches `select_action` |
+| `card_id` | Exact discarded card, or membership in a scout action's two-card discard |
+| `wild_type` | Discarded wild card kind: location or industry |
+| `industry` | Industry type for a build/merchant development, or membership in a development combination |
+| `location_id`, `slot_id`, `tile_id` | Exact location, board slot, or tile when present on the action |
+| `industry_id` | Exact industry being sold or liquidated |
+| `merchant_location_id`, `merchant_slot_id` | Exact merchant destination of a sale |
+| `connection_id` | Exact link connection |
+| `resource` | coal, iron, or beer |
+| `source`, `source_id` | Resource source kind (industry, market, merchant) and exact source ID |
+| `owner` | Zero-based resource-source owner; ownerless market/merchant actions do not match |
+| `max_cost` | Upper bound on the action's existing `cost` field |
+| `max_estimated_market_cost` | Upper bound on a development choice's existing market estimate |
+
+A build's `cost` is its tile's money cost; subsequent resource purchases can cost
+more. A resource action's `cost` is for that source choice. Neither filter invents
+a full-turn total. Actions without the corresponding cost field do not match.
+Location and industry filters use fields already on each legal action; they do
+not infer a source's location or a sold industry's type from unrelated state.
+
+Multi-industry development and scout discard combinations remain whole actions,
+including double development of the same industry. Queries never create remote
+resource sources, illegal links, or new actions in another decision phase.
 
 ## When paging is necessary
 
