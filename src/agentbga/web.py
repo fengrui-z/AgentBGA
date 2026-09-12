@@ -205,7 +205,9 @@ class MatchHub:
             api_key = raw.get("api_key")
             public = {key: value for key, value in raw.items() if key != "api_key"}
             config = PlayerConfig.from_dict(public, seat)
-            subscription_auth = config.backend == "codex" and config.auth_mode == "subscription"
+            subscription_auth = config.backend in {"codex", "grok"} and config.auth_mode == "subscription"
+            if config.backend == "grok" and subscription_auth and api_key:
+                raise ValueError(f"player {seat} grok subscription auth cannot use api_key")
             if config.backend not in {"random", "human"} and not subscription_auth and (
                 not isinstance(api_key, str) or not api_key.strip()
             ):
@@ -287,7 +289,7 @@ class MatchHub:
     def _has_runtime_credentials(config: PlayerConfig) -> bool:
         if config.backend in {"random", "human"}:
             return True
-        if config.backend == "codex" and config.auth_mode == "subscription":
+        if config.backend in {"codex", "grok"} and config.auth_mode == "subscription":
             return True
         return bool(config.api_key or os.environ.get(config.api_key_env or ""))
 

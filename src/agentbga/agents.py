@@ -66,22 +66,26 @@ class PlayerConfig:
         if not name:
             raise ValueError(f"player {seat} name cannot be empty")
         model = value.get("model")
+        if backend == "grok" and value.get("auth_mode") == "subscription" and not model:
+            model = "grok-4.6"
         if backend not in {"random", "human"} and not model:
             raise ValueError(f"player {seat} using {backend} requires model")
         auth_mode = value.get("auth_mode")
         if auth_mode is not None:
-            if backend != "codex":
-                raise ValueError(f"player {seat} auth_mode is only supported by the codex backend")
+            if backend not in {"codex", "grok"}:
+                raise ValueError(f"player {seat} auth_mode is only supported by the codex backend or grok backend")
             if not isinstance(auth_mode, str) or auth_mode.lower() not in {"api_key", "subscription"}:
                 raise ValueError(f"player {seat} auth_mode must be api_key or subscription")
             auth_mode = auth_mode.lower()
         elif backend == "codex":
             auth_mode = "api_key"
         if auth_mode == "subscription":
+            if backend == "grok" and value.get("wire_api"):
+                raise ValueError(f"player {seat} grok subscription auth cannot use wire_api")
             if value.get("base_url"):
-                raise ValueError(f"player {seat} codex subscription auth cannot use base_url")
+                raise ValueError(f"player {seat} {backend} subscription auth cannot use base_url")
             if value.get("api_key_env"):
-                raise ValueError(f"player {seat} codex subscription auth cannot use api_key_env")
+                raise ValueError(f"player {seat} {backend} subscription auth cannot use api_key_env")
         defaults = {
             "openai": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
             "anthropic": ("https://api.anthropic.com", "ANTHROPIC_API_KEY"),
@@ -143,7 +147,7 @@ class PlayerConfig:
                     f"player {seat} qwen reasoning_effort cannot be none; "
                     "Qwen Code does not expose a no-reasoning effort"
                 )
-        elif backend in HARNESS_BACKENDS:
+        elif backend in HARNESS_BACKENDS and not (backend == "grok" and auth_mode == "subscription"):
             reasoning_effort = HARNESS_REASONING_EFFORT
         series_id = value.get("series_id")
         if series_id is not None:

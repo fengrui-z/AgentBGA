@@ -70,7 +70,7 @@ Each seat can use one of:
 | `pi` | Harness | Pi + native TS extension, persistent session |
 | `qwen` | Harness | Qwen Code + MCP, isolated provider config, persistent session |
 | `cursor` | Harness | Cursor Agent CLI + MCP, isolated data directory, persistent session |
-| `grok` | Harness | xAI Grok Build CLI + MCP, isolated home and sandbox, persistent session |
+| `grok` | Harness | xAI Grok Build CLI + MCP, isolated home and sandbox, persistent session; API key or SuperGrok subscription |
 | `minimal` | Harness | Pure Python, in-process, direct LLM + 10 seat-scoped tools |
 | `human` | — | Browser-based play |
 | `random` | — | Random baseline |
@@ -96,7 +96,7 @@ export BAILIAN_CODING_PLAN_API_KEY='...'
 ```
 
 The `cursor` backend requires the `cursor-agent` executable and a `CURSOR_API_KEY`.
-The `grok` backend requires the xAI `grok` executable and an `XAI_API_KEY`. Both
+The `grok` backend requires the xAI `grok` executable and, by default, an `XAI_API_KEY`. Both
 run headlessly with persistent native sessions, disable built-in coding and web
 tools, and expose only AgentBGA's seat-scoped MCP tools. Their user configuration,
 credentials, and sessions remain isolated per participant workspace.
@@ -121,6 +121,39 @@ Subscription mode bridges only the active Codex credential into a seat-isolated
 `CODEX_HOME`, forces ChatGPT login, and disables personal plugins, skills, shell access,
 history, and memories. It does not inject `OPENAI_API_KEY` or endpoint overrides. The
 default `api_key` mode keeps the existing seat-isolated usage-based API configuration.
+
+### Grok Build with a SuperGrok subscription
+
+This extends the Grok Build backend introduced in [PR #39](https://github.com/fengrui-z/AgentBGA/pull/39).
+Existing API-key configurations and the Cursor backend are unchanged. To opt into
+subscription auth, install the [official CLI](https://docs.x.ai/build/overview), then:
+
+```console
+grok login
+grok models
+./agentbga doctor --players-config examples/grok-subscription-vs-random.json
+./agentbga run --game azul --players-config examples/grok-subscription-vs-random.json --seed 42 --jsonl
+```
+
+Select **Grok Build → SuperGrok subscription** in the Web UI. This mode does not
+send an API key or endpoint. JSON configurations must explicitly set
+`auth_mode: "subscription"`; omitting it preserves the existing API-key behavior.
+The subscription model defaults to `grok-4.6`, with the model's native reasoning
+default. A JSON config can request a supported `reasoning_effort` explicitly.
+
+Subscription mode keeps a seat-local `GROK_HOME` and the existing strict tool
+sandbox. It uses the official `GROK_AUTH_PATH` override for the original login,
+so Grok manages token refresh and locking without copying credentials.
+`GROK_DISABLE_API_KEY_AUTH=1` prevents fallback to metered API authentication.
+Personal plugins are disabled by name after read-only discovery; skill injection
+and ambient compatibility integrations are disabled. Git bounds upward project
+discovery to the generated seat workspace. All current seat MCP tools remain
+available, including the inspection tools used by Ark Nova.
+
+Configuration/MCP discovery was checked with Grok Build 1.0.30. `doctor` checks
+the executable and local credential file, not live entitlement; subscription
+limits and model availability still depend on the account. Offline tests do not
+consume model quota. Missing usage/cost must not be treated as zero.
 
 Every harness backend assigns match memory to `(match_id, seat)`. In a learning series,
 memory is instead assigned to `(series_id, participant_id)`, so a competitor keeps its
