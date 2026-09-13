@@ -9,6 +9,7 @@ import sys
 from typing import Any
 
 from .seat_tool import call_tool
+from .legal_action_query import QUERY_DESCRIPTION, query_schema
 
 
 TOOLS = [
@@ -19,19 +20,8 @@ TOOLS = [
     },
     {
         "name": "legal_actions",
-        "description": (
-            "List legal actions for this state version. Large action spaces return groups; "
-            "call again with group/cursor to retrieve concrete action IDs."
-        ),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "group": {"type": "string"},
-                "cursor": {"type": "integer", "minimum": 0},
-                "limit": {"type": "integer", "minimum": 1, "maximum": 50},
-            },
-            "additionalProperties": False,
-        },
+        "description": QUERY_DESCRIPTION,
+        "inputSchema": query_schema(),
     },
     {
         "name": "inspect_card",

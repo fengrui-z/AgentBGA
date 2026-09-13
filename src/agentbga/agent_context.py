@@ -26,6 +26,9 @@ from .ark_nova_agent_rules import (
 from .ark_nova_tracks import conservation_target_appeal
 
 
+from .legal_action_query import GAME_FILTERS, query_actions, query_metadata
+
+
 CONTEXT_V1 = "agentbga.seat-context.v1"
 CONTEXT_V2 = "agentbga.seat-context.v2"
 DEFAULT_ACTION_PAGE_SIZE = 20
@@ -576,6 +579,10 @@ def project_legal_actions(
     context: Mapping[str, Any], arguments: Mapping[str, Any] | None = None,
 ) -> Any:
     """Return v1 actions unchanged or a paginated v2 legal-action view."""
+    if context.get("observation", {}).get("game") in GAME_FILTERS:
+        return query_actions(context, arguments if arguments is not None else {})
+    if arguments and "filters" in arguments:
+        raise ValueError("legal action filters are not supported for this game")
     actions = list(context.get("legal_actions", []))
     if context.get("schema_version") == CONTEXT_V1:
         return actions
@@ -992,6 +999,8 @@ def prepare_seat_context(
             "version": version, "observation": observation,
             "legal_actions": flattened,
         }
+        if observation.get("game") in GAME_FILTERS:
+            context["legal_action_query"] = query_metadata(observation["game"], flattened)
         context_path.write_text(
             json.dumps(context, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8",

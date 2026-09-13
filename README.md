@@ -82,6 +82,9 @@ state deltas; complete visible card, map, played-card, and observed-history deta
 loaded only when requested. The `minimal` harness runs entirely in Python with zero
 external dependencies — no CLI, no MCP server, no Node.js.
 
+For game-specific legal-action filters and bounded responses, see
+[Legal action queries](docs/legal-action-queries.md).
+
 The `hermes` backend requires the `hermes` executable with MCP support. AgentBGA creates a seat-local `HERMES_HOME`, configures only the seat-scoped `agentbga` MCP server, and routes the configured OpenAI-compatible endpoint through Hermes' custom provider.
 
 The `qwen` backend requires the `qwen` executable. AgentBGA creates seat-local

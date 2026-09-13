@@ -21,6 +21,7 @@ import time
 from typing import Any, Callable
 
 from .agent_context import prepare_seat_context
+from .legal_action_query import QUERY_DESCRIPTION, query_schema
 from .agents import AgentError, PlayerConfig, StreamSink
 from .seat_tool import call_tool as _seat_call_tool
 from .harness_features import HarnessFeatures
@@ -48,12 +49,8 @@ MINIMAL_TOOLS = [
     }},
     {"type": "function", "function": {
         "name": "legal_actions",
-        "description": "List legal actions. Large action spaces return groups that can be paged.",
-        "parameters": {"type": "object", "properties": {
-            "group": {"type": "string"},
-            "cursor": {"type": "integer", "minimum": 0},
-            "limit": {"type": "integer", "minimum": 1, "maximum": 50},
-        }, "additionalProperties": False},
+        "description": QUERY_DESCRIPTION,
+        "parameters": query_schema(),
     }},
     {"type": "function", "function": {
         "name": "inspect_card",
@@ -882,11 +879,6 @@ class DirectGameAgent:
             and observation.get("game") == "splendor"
         ):
             return self._format_observation(observation)
-        if (
-            name == "legal_actions" and legal is not None and self.profile
-            and observation is not None and observation.get("game") == "splendor"
-        ):
-            return self._format_legal_actions(legal, observation or {})
         context_path = self.runtime / "turn-context.json"
         return _seat_call_tool(context_path, name, arguments, notes_root=self.workspace)
 
