@@ -1,6 +1,6 @@
 # Legal action queries
 
-Splendor supports seat-local `legal_actions` filters through MCP, Minimal, Pi,
+Splendor and 7 Wonders support seat-local `legal_actions` filters through MCP, Minimal, Pi,
 and the seat CLI. The engine still enumerates the complete legal action set;
 queries select from that set without changing IDs, payment alternatives, game
 rules, or submission validation. Other games retain their existing behavior.
@@ -26,6 +26,28 @@ Filters combine with AND:
 interface. For these filtered games, unknown groups, unsupported filter names,
 invalid values, and conflicting `group`/`filters.type` fail explicitly. A valid
 filter with no legal matches returns an empty page, not another seat's actions.
+
+## 7 Wonders
+
+```json
+{"filters":{"type":"build_card","card_color":"green","max_left_payment":0}}
+```
+
+| Filter | Meaning |
+|---|---|
+| `type` | Exact action type, including `build_card`, `build_wonder`, `sell_card`, `build_discard`, and phase-specific skip actions |
+| `card_id` | Exact card used by the action, including a card sacrificed to build a wonder |
+| `card_color` | Card color: brown, gray, blue, yellow, red, green, or purple |
+| `card_age` | Card age 1–3 |
+| `stage` | One-based wonder stage, for wonder-building actions |
+| `free_source` | Exact free-build reason provided by the action, e.g. `chain` |
+| `max_payment` | Maximum total coins paid to the bank and both neighbors |
+| `max_left_payment`, `max_right_payment` | Maximum coins paid to the specified neighbor |
+
+Payment alternatives remain separate actions. For example, paying the left
+neighbor and paying the right neighbor are not merged. Only the acting seat's
+legal options are queried, including discard-building and seventh-card phases;
+opponents' sealed choices and hands are not added to the result.
 
 ## When paging is necessary
 
