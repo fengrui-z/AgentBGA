@@ -27,6 +27,7 @@ from .ark_nova_tracks import conservation_target_appeal
 
 
 from .legal_action_query import GAME_FILTERS, query_actions, query_metadata
+from .agent_view import prepare_view
 
 
 CONTEXT_V1 = "agentbga.seat-context.v1"
@@ -1001,6 +1002,9 @@ def prepare_seat_context(
         }
         if observation.get("game") in GAME_FILTERS:
             context["legal_action_query"] = query_metadata(observation["game"], flattened)
+        view = prepare_view(observation, version=version, match_id=match_id, seat=seat)
+        if view is not None:
+            context["observation"], context["view_resources"] = view
         context_path.write_text(
             json.dumps(context, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8",

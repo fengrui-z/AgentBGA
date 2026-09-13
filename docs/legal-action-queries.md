@@ -51,6 +51,8 @@ opponents' sealed choices and hands are not added to the result.
 
 ## Brass: Birmingham
 
+Brass also has a [compact observation and bounded detail queries](brass-observation.md).
+
 ```json
 {"filters":{"type":"build_industry","industry":"brewery","location_id":"burton_on_trent","max_cost":10}}
 ```
