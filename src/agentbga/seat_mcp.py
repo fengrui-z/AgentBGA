@@ -10,9 +10,11 @@ from typing import Any
 
 from .seat_tool import call_tool
 from .legal_action_query import QUERY_DESCRIPTION, query_schema
+from .agent_view.resources import INSPECT_DESCRIPTION, INSPECT_SCHEMA
 
 
 TOOLS = [
+    {"name": "inspect", "description": INSPECT_DESCRIPTION, "inputSchema": INSPECT_SCHEMA},
     {
         "name": "observe",
         "description": "Read your seat-scoped current board-game observation.",

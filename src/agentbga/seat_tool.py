@@ -11,6 +11,8 @@ import stat
 import time
 from typing import Any
 
+from .agent_view.resources import inspect
+
 from .agent_context import (
     CONTEXT_V1,
     CONTEXT_V2,
@@ -190,6 +192,8 @@ def call_tool(
     context = _load(context_path)
     if tool == "observe":
         result = context["observation"]
+    elif tool == "inspect":
+        result = inspect(context, arguments)
     elif tool == "legal_actions":
         result = project_legal_actions(context, arguments)
     elif tool == "inspect_card":
@@ -239,6 +243,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--context", required=True)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("observe")
+    inspection = commands.add_parser("inspect")
+    inspection.add_argument("--ref", default="observation")
+    inspection.add_argument("--cursor")
+    inspection.add_argument("--state-version", type=int)
     legal = commands.add_parser("legal-actions")
     legal.add_argument("--filters", type=json.loads, default={})
     legal.add_argument("--group")
@@ -250,6 +258,10 @@ def main(argv: list[str] | None = None) -> int:
     context_path = Path(args.context).resolve()
     if args.command == "observe":
         tool, arguments = "observe", {}
+    elif args.command == "inspect":
+        tool = "inspect"
+        arguments = {key: getattr(args, key) for key in ("ref", "cursor", "state_version")
+                     if getattr(args, key) is not None}
     elif args.command == "legal-actions":
         tool, arguments = "legal_actions", {}
         if args.filters:

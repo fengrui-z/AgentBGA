@@ -18,6 +18,7 @@ from .agent_context import CONTEXT_V2, prepare_seat_context
 from .agents import AgentError, PlayerConfig, StreamSink, harness_executable_name
 from .memory import memory_identity, stable_session_id
 from .legal_action_query import QUERY_DESCRIPTION, query_schema
+from .agent_view.resources import INSPECT_DESCRIPTION, INSPECT_SCHEMA
 from .usage import (
     TokenUsageAccumulator,
     TokenUsageSample,
@@ -43,7 +44,7 @@ Hidden opponent information is unavailable by design.
 Call observe, then legal_actions, then commit exactly one choice with submit_action.
 If legal_actions returns groups or next_cursor, use its filters/group/cursor parameters to
 retrieve concrete action IDs. Keep the same filters when paging. Do not read output files.
-The default observation is compact. Use inspect_card, inspect_rules, inspect_map,
+The default observation is compact. Follow inspect_ref with inspect for Brass details. Use inspect_card, inspect_rules, inspect_map,
 inspect_played_cards, or inspect_history when those details are relevant. Never guess
 an action, building, income, reward, keyword, or card rule that those tools can answer.
 You must call submit_action exactly once for this decision step before finishing. A player turn may
@@ -99,7 +100,20 @@ function rewardExplanation(effect: any) {
   return null;
 }
 
+function inspectResource(value: any, args: any) {
+  if (!args || typeof args !== "object" || Array.isArray(args) || Object.keys(args).some(k => !["ref", "cursor", "state_version"].includes(k))) throw new Error("invalid inspect arguments");
+  for (const key of ["ref", "cursor"]) if (key in args && (typeof args[key] !== "string" || !args[key])) throw new Error("invalid " + key);
+  if ("state_version" in args && (!Number.isInteger(args.state_version) || args.state_version < 0 || args.state_version !== value.version)) throw new Error("invalid or stale state_version");
+  const ref = args.ref ?? "observation", documents = value.view_resources?.documents;
+  if (!documents || !Object.prototype.hasOwnProperty.call(documents, ref)) throw new Error("inspect ref unavailable in this seat's observation");
+  const page = documents[ref].find((p: any) => p.cursor === (args.cursor ?? null));
+  if (!page) throw new Error("stale cursor or wrong ref; restart inspection");
+  return page;
+}
 export default function (pi: any) {
+  pi.registerTool({ name: "inspect", label: "Inspect", description: __INSPECT_DESCRIPTION__,
+    parameters: Type.Unsafe(__INSPECT_SCHEMA__),
+    async execute(_id: string, args: any) { const page = inspectResource(await context(), args); await audit("inspect", args, page); return result(page); } });
   pi.registerTool({ name: "observe", label: "Observe", description: "Read your seat-scoped board-game observation.",
     promptSnippet: "Read the current seat-scoped board state", parameters: Type.Object({}, { additionalProperties: false }),
     async execute() { const value = (await context()).observation; await audit("observe", {}, value); return result(value); } });
@@ -174,7 +188,9 @@ export default function (pi: any) {
 PI_EXTENSION = (PI_EXTENSION
     .replace("/* LEGAL_QUERY_IMPLEMENTATION */", Path(__file__).with_name("legal_action_query.js").read_text(encoding="utf-8"))
     .replace("__LEGAL_QUERY_SCHEMA__", json.dumps(query_schema()))
-    .replace("__LEGAL_QUERY_DESCRIPTION__", json.dumps(QUERY_DESCRIPTION)))
+    .replace("__LEGAL_QUERY_DESCRIPTION__", json.dumps(QUERY_DESCRIPTION))
+    .replace("__INSPECT_SCHEMA__", json.dumps(INSPECT_SCHEMA))
+    .replace("__INSPECT_DESCRIPTION__", json.dumps(INSPECT_DESCRIPTION)))
 
 
 @dataclass
@@ -275,6 +291,7 @@ class HarnessAgent:
             allowed_tools = [
                 "mcp__agentbga__observe",
                 "mcp__agentbga__legal_actions",
+                "mcp__agentbga__inspect",
                 "mcp__agentbga__inspect_card",
                 "mcp__agentbga__inspect_rules",
                 "mcp__agentbga__inspect_map",

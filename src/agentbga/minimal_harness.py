@@ -22,6 +22,7 @@ from typing import Any, Callable
 
 from .agent_context import prepare_seat_context
 from .legal_action_query import QUERY_DESCRIPTION, query_schema
+from .agent_view.resources import INSPECT_DESCRIPTION, INSPECT_SCHEMA
 from .agents import AgentError, PlayerConfig, StreamSink
 from .seat_tool import call_tool as _seat_call_tool
 from .harness_features import HarnessFeatures
@@ -33,6 +34,7 @@ from .usage import TokenUsageAccumulator
 MINIMAL_SYSTEM = (
     "You are a board-game player in an AgentBGA benchmark. "
     "Call observe to see the board, legal_actions to see your options, "
+    "For Brass, follow inspect_ref using inspect to read details. "
     "use inspect_card, inspect_rules, inspect_map, inspect_played_cards, or inspect_history when details matter, "
     "and never guess a game rule that inspect_rules or inspect_card can answer. "
     "read_notes to check your strategy notes, write_notes to update them, "
@@ -42,6 +44,7 @@ MINIMAL_SYSTEM = (
 )
 
 MINIMAL_TOOLS = [
+    {"type": "function", "function": {"name": "inspect", "description": INSPECT_DESCRIPTION, "parameters": INSPECT_SCHEMA}},
     {"type": "function", "function": {
         "name": "observe",
         "description": "Read your seat-scoped current board-game observation.",

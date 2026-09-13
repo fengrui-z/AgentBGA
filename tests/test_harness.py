@@ -187,7 +187,7 @@ class HarnessTests(unittest.TestCase):
 
     def test_mcp_exposes_only_seat_tools(self):
         self.assertEqual({
-            "observe", "legal_actions", "inspect_card", "inspect_rules", "inspect_map",
+            "observe", "legal_actions", "inspect", "inspect_card", "inspect_rules", "inspect_map",
             "inspect_played_cards", "inspect_history", "submit_action",
             "read_notes", "write_notes",
         }, {tool["name"] for tool in TOOLS})
@@ -410,7 +410,7 @@ class HarnessTests(unittest.TestCase):
             )
             responses = [json.loads(line) for line in completed.stdout.splitlines()]
             self.assertEqual("agentbga-seat", responses[0]["result"]["serverInfo"]["name"])
-            self.assertEqual(10, len(responses[1]["result"]["tools"]))
+            self.assertEqual(11, len(responses[1]["result"]["tools"]))
 
     def test_harness_commands_resume_sessions(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", side_effect=lambda name: f"/bin/{name}"):
@@ -457,6 +457,7 @@ class HarnessTests(unittest.TestCase):
             self.assertIn("mcp__agentbga__inspect_map", command)
             self.assertIn("mcp__agentbga__inspect_played_cards", command)
             self.assertIn("mcp__agentbga__inspect_history", command)
+            self.assertIn("mcp__agentbga__inspect", command)
             self.assertIn("mcp__agentbga__submit_action", command)
             self.assertEqual("max", command[command.index("--effort") + 1])
             self.assertEqual(["--", "turn"], command[-2:])
