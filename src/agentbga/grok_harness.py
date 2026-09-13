@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -63,6 +64,28 @@ def discovered_plugins(binary: str, workspace: Path, env: dict[str, str]) -> lis
         raise AgentError("Unable to inspect Grok plugins safely; update Grok Build and retry") from error
 
 
+def credential_read_scope(path: Path) -> tuple[str, list[str]]:
+    """Grok grants directories only; deny every sibling except the auth file.
+
+    Absolute deny globs are enforced at runtime by macOS Seatbelt, including
+    siblings created after launch. The parent remains read-only. Linux uses
+    launch-time glob expansion, so refuse this compatibility grant there.
+    """
+    if sys.platform != "darwin":
+        raise AgentError("Shared subscription credentials under strict sandbox require macOS")
+    parent, name = str(path.parent), path.name
+    if any(c in parent for c in "*?[") or not re.fullmatch(r"[A-Za-z0-9_.]+", name):
+        raise AgentError("Grok auth path cannot be represented by exact sandbox deny rules")
+    denied = []
+    for index, char in enumerate(name):
+        prefix = name[:index]
+        if prefix:
+            denied.append(f"{parent}/{prefix}")
+        denied.append(f"{parent}/{prefix}[!{char}]*")
+    denied.append(f"{path}?*")
+    return parent, denied
+
+
 def prepare(workspace: Path, mcp_command: list[str], pythonpath: str,
             binary: str, env: dict[str, str]) -> None:
     workspace = workspace.resolve()
@@ -78,13 +101,16 @@ def prepare(workspace: Path, mcp_command: list[str], pythonpath: str,
     grok_home.mkdir(mode=0o700, exist_ok=True)
     # Retain PR #39's strict tool sandbox and the seat MCP runtime access.
     context_path = (workspace / mcp_command[mcp_command.index("--context") + 1]).resolve()
+    auth_parent, credential_denies = credential_read_scope(Path(env["GROK_AUTH_PATH"]).resolve())
     readable_roots = list(dict.fromkeys((
         str(Path(__file__).resolve().parents[1]),
         str(Path(sys.executable).resolve().parents[1]),
+        auth_parent,
     )))
     (grok_home / "sandbox.toml").write_text(
         '[profiles.agentbga]\nextends = "strict"\n'
         f"read_only = {json.dumps(readable_roots)}\n"
+        f"deny = {json.dumps(credential_denies)}\n"
         f"read_write = {json.dumps([str(context_path.parent)])}\n",
         encoding="utf-8",
     )

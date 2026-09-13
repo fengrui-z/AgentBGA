@@ -1,6 +1,7 @@
 from contextlib import redirect_stdout
 from io import StringIO
 import json
+import fnmatch
 import os
 from pathlib import Path
 import sys
@@ -35,6 +36,9 @@ class GrokHarnessTests(unittest.TestCase):
         self.environment = mock.patch.dict(os.environ, {"GROK_HOME": str(self.home)})
         self.environment.start()
         self.addCleanup(self.environment.stop)
+        platform = mock.patch("agentbga.grok_harness.sys.platform", "darwin")
+        platform.start()
+        self.addCleanup(platform.stop)
         discovery = mock.patch("agentbga.grok_harness.discovered_plugins", return_value=["personal-plugin"])
         discovery.start()
         self.addCleanup(discovery.stop)
@@ -102,6 +106,12 @@ class GrokHarnessTests(unittest.TestCase):
         sandbox = tomllib.loads((local / "sandbox.toml").read_text())["profiles"]["agentbga"]
         self.assertEqual("strict", sandbox["extends"])
         self.assertIn(str(agent.session.runtime.resolve()), sandbox["read_write"])
+        self.assertIn(str(self.home.resolve()), sandbox["read_only"])
+        for name in ("config.toml", "sessions", "hooks", "auth.json.lock", "auth", "new-secret", "auth.json.extra"):
+            self.assertTrue(any(fnmatch.fnmatchcase(str((self.home / name).resolve()), rule) for rule in sandbox["deny"]))
+        self.assertFalse(any(fnmatch.fnmatchcase(env["GROK_AUTH_PATH"], rule) for rule in sandbox["deny"]))
+        self.assertNotIn(str(self.home.resolve()), sandbox["read_write"])
+        self.assertNotIn(env["GROK_AUTH_PATH"], sandbox["read_write"])
         self.assertEqual([agent.session.workspace.anchor], config["skills"]["ignore"])
         self.assertTrue((agent.session.workspace / ".git").is_dir())
         self.assertNotEqual(env["GROK_HOME"], self.agent(seat=1)._environment()["GROK_HOME"])
