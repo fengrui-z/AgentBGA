@@ -198,6 +198,7 @@ class HarnessAgent:
         self.config = config
         self.timeout = timeout
         self.event_sink = event_sink
+        self.new_match_context: str | None = None
         root = Path(runs_root) if runs_root else Path.cwd() / ".agentbga" / "runs"
         self.runs_root = root
         identity = memory_identity(root, config, match_id, seat)
@@ -1464,6 +1465,8 @@ class HarnessAgent:
             version=observation.get("state_version", observation.get("turn_count")),
             game=observation.get("game", "board-game"),
         )
+        if self.new_match_context:
+            prompt = self.new_match_context + "\n\n" + prompt
         version = observation.get("state_version", observation.get("turn_count"))
         started = time.monotonic()
         started_wall = time.time()
@@ -1508,6 +1511,7 @@ class HarnessAgent:
             )
             raise AgentError(f"{self.config.backend} harness exited {returncode}: {detail}")
         self._save_harness_session_state(resumed=turn_resumed)
+        self.new_match_context = None
         submission = None
         if submission_path.is_file():
             submission = json.loads(submission_path.read_text(encoding="utf-8"))
@@ -1563,6 +1567,54 @@ class HarnessAgent:
             session_resumed=turn_resumed,
         )
         return action_id, metadata
+
+    def review_match(self, observation: dict[str, Any], feedback: dict[str, Any]) -> dict[str, Any]:
+        """Deliver terminal feedback in the same native session, without an action.
+
+        Both experimental arms receive this identical protocol. Empty legal
+        actions prevent stale submissions; only seat-safe terminal data is used.
+        Exceptions remain fatal to the series, since native memory may have
+        changed even if a process failed to acknowledge completion.
+        """
+        self._prepare_turn(observation, [])
+        self._turn_usage = TokenUsageAccumulator()
+        self._trace_steps = []
+        prompt = (
+            "This match has ended. This is a post-match review, not a decision turn. "
+            "Do not call submit_action. The prior instruction to submit an action "
+            "does not apply to this review. Use only the seat-scoped game tools; "
+            "do not inspect the project, database, output files or another seat. "
+            "Review the public outcome below and your own observations. In at most "
+            "200 words, distinguish general strategy lessons from tentative "
+            "opponent tendencies, noting uncertainty. You may update your own "
+            "strategy notes. Do not invent unseen opponent information. Then finish.\n"
+            + json.dumps(feedback, ensure_ascii=False, sort_keys=True)
+        )
+        started = time.monotonic()
+        resumed = bool(self.session.session_id)
+        status, error = "error", None
+        try:
+            raw, stderr, returncode = self._run(self._command(prompt))
+            if returncode:
+                raise AgentError(f"post-match review exited {returncode}: "
+                                 + self._redact_text((stderr or raw)[-1000:]))
+            status = "ok"
+        except Exception as exc:
+            error = self._redact_text(str(exc))
+            raise
+        finally:
+            self._recover_dsh_turn_metadata()
+            self._save_harness_session_state(resumed=resumed and status == "ok")
+            self._emit_tool_audit()
+            self._write_trace(
+                prompt=prompt, observation=observation, legal=[],
+                version=observation.get("state_version", observation.get("turn_count")),
+                status=status, error=error, action_latency_ms=None,
+                process_latency_ms=round((time.monotonic() - started) * 1000, 3),
+                trace_kind="post-match", session_resumed=resumed,
+            )
+        return {"status": status, "session_id": self.session.session_id,
+                "usage": self._turn_usage.summary()}
 
 
 

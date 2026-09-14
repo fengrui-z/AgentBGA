@@ -1,0 +1,66 @@
+{
+  "schema_version": "agentbga.longterm.v1",
+  "experiment_id": "splendor-longterm-selfplay-v1",
+  "game": "splendor",
+  "rules_version": "classic-1.0",
+  "agents": [
+    {
+      "id": "qwen38-max-opencode",
+      "player": {
+        "model": "qwen3.8-max",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max",
+        "backend": "opencode"
+      }
+    },
+    {
+      "id": "qwen38-max-qwen",
+      "player": {
+        "model": "qwen3.8-max",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max",
+        "backend": "qwen"
+      }
+    },
+    {
+      "id": "deepseek-v4-flash-0731-opencode",
+      "player": {
+        "model": "deepseek-v4-flash-0731",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max",
+        "backend": "opencode"
+      }
+    },
+    {
+      "id": "deepseek-v4-flash-0731-dsh",
+      "player": {
+        "model": "deepseek-v4-flash-0731",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max",
+        "backend": "dsh"
+      }
+    }
+  ],
+  "stages": {
+    "pilot": {
+      "length": 10,
+      "replicates": 1,
+      "base_seed": 2026091501,
+      "order_seed": 2026091502
+    },
+    "main": {
+      "length": 20,
+      "replicates": 3,
+      "base_seed": 2026092501,
+      "order_seed": 2026092502
+    }
+  },
+  "run": {
+    "timeout_seconds": 600,
+    "max_turns": 250
+  }
+}

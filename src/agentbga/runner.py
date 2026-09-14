@@ -70,6 +70,7 @@ def run_match(
     sink: EventSink | None = None,
     turn_gate: TurnGate | None = None,
     human_choice: HumanChoice | None = None,
+    harness_factory: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     version, state, _ = store.load(match_id)
     game = store.game(match_id)
@@ -121,7 +122,11 @@ def run_match(
                     pending_harness_events.append((version, seat, enriched))
             emit(enriched)
 
-        if harness_config.backend == "minimal":
+        if harness_factory is not None:
+            model_agents[harness_seat] = harness_factory(
+                harness_config, match_id, harness_seat, event_sink=harness_sink,
+            )
+        elif harness_config.backend == "minimal":
             model_agents[harness_seat] = build_minimal_agent(
                 harness_config, match_id, harness_seat, event_sink=harness_sink,
                 game_id=game.game_id,

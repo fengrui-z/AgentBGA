@@ -220,6 +220,13 @@ configured in [`examples/frontier12-tournament.json`](examples/frontier12-tourna
 See [`docs/frontier12-server-run.zh-CN.md`](docs/frontier12-server-run.zh-CN.md) for
 credential checks, the four-match all-participant probe, 16-worker execution, and recovery.
 
+For matched persistent-vs-fresh self-play in Splendor, see
+[`docs/splendor-longterm.zh-CN.md`](docs/splendor-longterm.zh-CN.md).
+`python3 examples/splendor_longterm.py schedule --stage pilot` validates the
+40-match pilot without model calls; `--stage main` plans twelve independent
+20-game series. The dedicated runner includes terminal feedback and verified
+between-match session checkpoints.
+
 Every run writes cumulative `agentbga.results.v1` documents atomically. `latest.json`
 is refreshed after every configured batch, `results-000020.json` is an immutable
 checkpoint, and `final.json` is the complete artifact. Set `results.emit_every` to `1`
