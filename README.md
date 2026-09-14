@@ -220,6 +220,11 @@ configured in [`examples/frontier12-tournament.json`](examples/frontier12-tourna
 See [`docs/frontier12-server-run.zh-CN.md`](docs/frontier12-server-run.zh-CN.md) for
 credential checks, the four-match all-participant probe, 16-worker execution, and recovery.
 
+For a separate 72-match Qwen3.8 Max / DeepSeek V4 Flash 0731 matched harness bridge
+on DashScope, see [`docs/matched-bridge-72.zh-CN.md`](docs/matched-bridge-72.zh-CN.md).
+`python3 examples/matched_harness_bridge.py --out .agentbga/matched-bridge-72-plan`
+exports a validated schedule and per-match CLI inputs without calling any model APIs.
+
 Every run writes cumulative `agentbga.results.v1` documents atomically. `latest.json`
 is refreshed after every configured batch, `results-000020.json` is an immutable
 checkpoint, and `final.json` is the complete artifact. Set `results.emit_every` to `1`

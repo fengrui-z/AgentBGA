@@ -1,0 +1,95 @@
+{
+  "schema_version": "agentbga.matched-harness-bridge.v1",
+  "experiment_id": "qwen38-max-deepseek-v4-flash-0731-dashscope-bridge-72-v2",
+  "expected_matches": 72,
+  "models": [
+    {
+      "id": "qwen38-max",
+      "name": "Qwen3.8 Max",
+      "player": {
+        "model": "qwen3.8-max",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      },
+      "arms": [
+        {
+          "id": "opencode",
+          "name": "OpenCode",
+          "backend": "opencode"
+        },
+        {
+          "id": "qwen",
+          "name": "Qwen Code",
+          "backend": "qwen"
+        }
+      ]
+    },
+    {
+      "id": "deepseek-v4-flash-0731",
+      "name": "DeepSeek V4 Flash 0731",
+      "player": {
+        "model": "deepseek-v4-flash-0731",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      },
+      "arms": [
+        {
+          "id": "opencode",
+          "name": "OpenCode",
+          "backend": "opencode"
+        },
+        {
+          "id": "dsh",
+          "name": "DSh",
+          "backend": "dsh"
+        }
+      ]
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor-qwen38-max-opencode",
+      "player": {
+        "name": "Anchor Qwen3.8 Max · OpenCode",
+        "backend": "opencode",
+        "model": "qwen3.8-max",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    },
+    {
+      "id": "anchor-deepseek-v4-flash-0731-opencode",
+      "player": {
+        "name": "Anchor DeepSeek V4 Flash 0731 · OpenCode",
+        "backend": "opencode",
+        "model": "deepseek-v4-flash-0731",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "api_key_env": "DASHSCOPE_API_KEY",
+        "reasoning_effort": "max"
+      }
+    }
+  ],
+  "schedule": {
+    "player_count": 3,
+    "paired_blocks_per_model_game": 9,
+    "base_seed": 2026091401,
+    "order_seed": 2026091402,
+    "games": [
+      {
+        "id": "splendor",
+        "rules_version": "classic-1.0"
+      },
+      {
+        "id": "seven_wonders",
+        "rules_version": "second-edition-base-1.0"
+      }
+    ]
+  },
+  "run": {
+    "retries": 0,
+    "fallback": "fail"
+  }
+}
