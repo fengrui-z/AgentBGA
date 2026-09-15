@@ -16,6 +16,43 @@ from agentbga.web import MatchHub, WebHandler, serve
 
 
 class WebTests(unittest.TestCase):
+    def test_harmonies_human_match_finishes_and_reopens(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db=Path(directory)/'matches.sqlite3'
+            hub=MatchHub(db)
+            created=hub.create({'game':'harmonies','seed':17,'speed_ms':0,
+                                'game_config':{'board_side':'B','nature_spirits':True},
+                                'players':[{'name':'You','backend':'human'}]})
+            match_id=created['match_id'];seen=set();deadline=time.monotonic()+15
+            snapshot=created
+            try:
+                while time.monotonic()<deadline:
+                    snapshot=hub.get(match_id)
+                    if snapshot['status']=='finished':break
+                    turn=snapshot.get('human_turn')
+                    if turn:
+                        actions=turn['legal_actions']
+                        priority={'choose_spirit':0,'place_animal':1,'take_animal':2,'take_tokens':3,'place_token':4,'end_turn':5}
+                        item=min(actions,key=lambda a:priority[a['action']['type']])
+                        seen.add(item['action']['type'])
+                        hub.submit_human_action(match_id,turn['seat'],turn['version'],item['id'])
+                    else:
+                        time.sleep(.005)
+                self.assertEqual('finished',snapshot['status'])
+                self.assertTrue({'choose_spirit','take_animal','take_tokens','place_token','end_turn'}<=seen)
+                view=snapshot['views'][0]
+                self.assertEqual('harmonies',view['game'])
+                self.assertEqual(23,len(view['players'][0]['cells']))
+                self.assertEqual('B',view['board_side'])
+                self.assertIsInstance(view['solo_suns'],int)
+                restored=MatchHub(db).get(match_id)
+                self.assertEqual(snapshot['rankings'],restored['rankings'])
+                self.assertEqual(view,restored['views'][0])
+            finally:
+                with hub.condition:
+                    hub.matches[match_id]['running']=False
+                    hub.condition.notify_all()
+
     def test_finished_ark_nova_match_reopens_with_rankings_and_final_board(self):
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "matches.sqlite3"
@@ -97,7 +134,7 @@ class WebTests(unittest.TestCase):
             finally:
                 server.shutdown()
                 server.server_close()
-            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "century_spice_road", "seven_wonders"],
+            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "century_spice_road", "seven_wonders", "harmonies"],
                              [game["id"] for game in response["games"]])
 
     def test_seven_wonders_setup_snapshot_uses_game_renderer_contract(self):

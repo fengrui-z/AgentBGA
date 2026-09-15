@@ -15,6 +15,7 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /伯明翰/);
   assert.match(html, /香料之路/);
   assert.match(html, /七大奇迹/);
+  assert.match(html, /自然和弦/);
   assert.match(html, /OFFICIAL BASE CANDIDATE/);
   assert.match(html, /OpenAI 兼容/);
   assert.match(html, /Anthropic/);

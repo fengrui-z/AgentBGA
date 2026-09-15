@@ -20,6 +20,8 @@ packages = ["src/agentbga"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "content-packs/ark-nova/base-en-draft" = "agentbga/ark_nova_official/data/base-en-draft"
+"THIRD_PARTY_NOTICES.md" = "agentbga/THIRD_PARTY_NOTICES.md"
+"licenses/harmonies-bot-APACHE-2.0.txt" = "agentbga/data/harmonies-license.txt"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

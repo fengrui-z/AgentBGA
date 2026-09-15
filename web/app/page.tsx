@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import ArenaPage from "./arena/page";
+import { HarmoniesTable, HarmoniesPlayerPanel, type HarmoniesView, type HarmoniesPlayer } from "./harmonies-table";
 import {
   ArkNovaPlayerSummary, ArkNovaTable,
   type ArkPlayerView, type ArkView,
@@ -188,7 +189,7 @@ const useLang = () => useContext(LangCtx);
 
 type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "qwen" | "codex" | "cursor" | "grok" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
 type Provider = "custom" | "claude_code" | "pi" | "qwen" | "codex" | "cursor" | "grok" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
-type GameId = "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road" | "seven_wonders";
+type GameId = "harmonies" | "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "century_spice_road" | "seven_wonders";
 type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "max" | "xhigh";
 type AuthMode = "api_key" | "subscription";
 type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string; auth_mode: AuthMode; reasoning_effort: ReasoningEffort };
@@ -297,7 +298,7 @@ type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
   paused: boolean; pause_pending: boolean; running?: boolean; mode?: "live" | "spectator" | "store";
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
-  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView)[];
+  players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | CenturyView | SevenView | HarmoniesView)[];
   spectator_view?: ArkView;
   rankings?: {seat: number; player: string}[];
 };
@@ -341,6 +342,7 @@ const AZUL_META: Record<AzulColor, Record<Lang, string>> = {
 };
 const GAME_COPY: Record<GameId, {eyebrow: string; name: Record<Lang,string>; description: Record<Lang,string>; badge: string; note: Record<Lang,string>}> = {
   splendor: {eyebrow: "SPLENDOR", name: {zh:"璀璨宝石",en:"Splendor"}, description: {zh:"配置 2–4 名模型或人类玩家。轮到你时直接在牌桌选择合法行动；每个 Agent Harness 都可独立设置思考强度。",en:"Configure 2–4 model or human players. On your turn, pick a legal action at the table; each agent harness can use its own reasoning effort."}, badge: "PLAYABLE", note: {zh:"完整基础版引擎",en:"Full base-game engine"}},
+  harmonies: {eyebrow: "HARMONIES", name: {zh:"自然和弦",en:"Harmonies"}, description: {zh:"在六角棋盘上叠放地形、连接河流，为动物营造栖息地。支持 1–4 人、双面地图与自然之灵。",en:"Stack landscapes, connect rivers and create animal habitats on a hex board. 1–4 players, both boards and optional Nature’s Spirits."}, badge: "PLAYABLE BETA", note: {zh:"地形堆叠 · 动物栖息地 · 空间规划",en:"Landscapes · habitats · spatial planning"}},
   azul: {eyebrow: "AZUL", name: {zh:"花砖物语",en:"Azul"}, description: {zh:"从工厂展示区或中央区选取同色花砖，规划图案线并铺设墙面；兼顾相邻计分、地板罚分与终局时机。",en:"Draft one color from factories or the center, fill pattern lines and tile your wall while balancing adjacency, floor penalties and endgame timing."}, badge: "PLAYABLE BETA", note: {zh:"选砖 · 拼墙 · 空间规划",en:"Draft · tile · spatial planning"}},
   ark_nova: {eyebrow: "ARK NOVA", name: {zh:"方舟动物园",en:"Ark Nova"}, description: {zh:"基础版 255 张实体卡、5 种行动牌、Map 0 与 Map A 已接入可审计语义引擎，覆盖条件、费用、触发、互动、收入与终局计分。",en:"All 255 physical base cards, five Action cards, Map 0, and Map A run through an auditable semantic engine covering requirements, costs, triggers, interaction, income, and final scoring."}, badge: "OFFICIAL BASE CANDIDATE", note: {zh:"完整卡牌语义 · Map 0 / Map A",en:"Complete card semantics · Map 0 / Map A"}},
   brass_birmingham: {eyebrow: "BRASS: BIRMINGHAM", name: {zh:"伯明翰",en:"Brass: Birmingham"}, description: {zh:"测试模型在双时代经济网络中的长期规划：产业建设、资源来源、商人出售、动态顺位和运河到铁路的资产转换。",en:"Test long-term planning in a two-era economic network: industry building, resource sourcing, merchant selling, dynamic turn order and canal-to-rail transitions."}, badge: "PLAYABLE BETA", note: {zh:"产业 · 网络 · 双时代经济",en:"Industry · network · two-era economy"}},
@@ -1439,6 +1441,8 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const [seed, setSeed] = useState("42");
   const [speed, setSpeed] = useState(650);
   const [soloStartingAppeal, setSoloStartingAppeal] = useState<0 | 10 | 20>(20);
+  const [harmoniesSide, setHarmoniesSide] = useState<"A" | "B">("A");
+  const [harmoniesSpirits, setHarmoniesSpirits] = useState(false);
   const [arkMap, setArkMap] = useState<ArkMapId>("map-0");
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [timeline, setTimeline] = useState<Timeline[]>([]);
@@ -1459,6 +1463,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const humanSeat = snapshot?.human_turn?.seat ?? snapshot?.players.find(player => player.backend === "human")?.seat ?? 0;
   const viewer = snapshot?.views[humanSeat];
   const splendorView = snapshot?.game === "splendor" ? viewer as View : undefined;
+  const harmoniesView = snapshot?.game === "harmonies" ? viewer as HarmoniesView : undefined;
   const azulView = snapshot?.game === "azul" ? viewer as AzulView : undefined;
   const arkView = snapshot?.game === "ark_nova"
     ? (snapshot.spectator_view ?? viewer) as ArkView : undefined;
@@ -1470,7 +1475,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const isArkTableAction = (item: LegalAction) => ARK_TABLE_ACTION_TYPES.has(String(item.action.type));
   const arkMapInteraction = snapshot?.game === "ark_nova" && Boolean(snapshot.human_turn?.legal_actions.some(isArkTableAction));
   const maxPlayers = game === "seven_wonders" ? 7 : game === "century_spice_road" ? 5 : 4;
-  const minPlayers = game === "ark_nova" ? 1 : game === "seven_wonders" ? 3 : 2;
+  const minPlayers = ["ark_nova", "harmonies"].includes(game) ? 1 : game === "seven_wonders" ? 3 : 2;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
   const spectator = snapshot?.mode === "spectator";
   const filteredTables = useMemo(() => {
@@ -1568,14 +1573,14 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   }
 
   function setSoloMatch() {
-    setGame("ark_nova");
+    if (game !== "harmonies") setGame("ark_nova");
     setPlayers([humanPlayer(1)]);
   }
 
   function selectGame(next: GameId) {
     setGame(next);
     const maximum = next === "seven_wonders" ? 7 : next === "century_spice_road" ? 5 : 4;
-    const minimum = next === "ark_nova" ? 1 : next === "seven_wonders" ? 3 : 2;
+    const minimum = ["ark_nova", "harmonies"].includes(next) ? 1 : next === "seven_wonders" ? 3 : 2;
     setPlayers(current => {
       const selected = current.slice(0, maximum);
       while (selected.length < minimum) selected.push(player(selected.length + 1, "random"));
@@ -1669,6 +1674,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         method: "POST", headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
           game, seed: seed === "" ? null : Number(seed), speed_ms: speed,
+          ...(game === "harmonies" ? {game_config: {board_side: harmoniesSide, nature_spirits: harmoniesSpirits}} : {}),
           ...(game === "ark_nova" ? {game_config: {
             map: arkMap,
             ...(players.length === 1 ? {solo_starting_appeal: soloStartingAppeal} : {}),
@@ -1781,7 +1787,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         </div>
       </section>
       <div className="game-picker" role="group" aria-label={t("pick_game")}>{(Object.keys(GAME_COPY) as GameId[]).map(id => <button key={id} className={game === id ? "selected" : ""} onClick={() => selectGame(id)}><span>{GAME_COPY[id].badge}</span><b>{GAME_COPY[id].name[lang]}</b><small>{GAME_COPY[id].note[lang]}</small></button>)}</div>
-      <header><div><span>{t("new_table")}</span><h2>{t("create_table")}{GAME_COPY[game].name[lang]}</h2></div><div className="matchup-presets">{game === "ark_nova" && <button className={players.length === 1 ? "selected-preset" : ""} onClick={setSoloMatch}>{zh ? "单人模式" : "Solo"}</button>}<button onClick={() => setMatchup("human")}>{t("g_human")}</button><button onClick={() => setMatchup("harness")}>{t("g_harness")}</button><b>{players.length} {t("players_count")}</b></div></header>
+      <header><div><span>{t("new_table")}</span><h2>{t("create_table")}{GAME_COPY[game].name[lang]}</h2></div><div className="matchup-presets">{["ark_nova", "harmonies"].includes(game) && <button className={players.length === 1 ? "selected-preset" : ""} onClick={setSoloMatch}>{zh ? "单人模式" : "Solo"}</button>}<button onClick={() => setMatchup("human")}>{t("g_human")}</button><button onClick={() => setMatchup("harness")}>{t("g_harness")}</button><b>{players.length} {t("players_count")}</b></div></header>
       <div className="players-config">{players.map((p, index) => <article className="player-config" key={p.id}>
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`${p.name} ${t("move_up")}`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`${p.name} ${t("move_down")}`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>{t("f_name")}</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
@@ -1802,6 +1808,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         <button className="add-player human-add" disabled={players.length >= maxPlayers} onClick={() => setPlayers(x => [...x, humanPlayer(x.length + 1)])}>{t("add_human")}</button>
         <button className="add-player" disabled={players.length >= maxPlayers} onClick={() => setPlayers(x => [...x, player(x.length + 1, "random")])}>{t("add_ai")}</button>
         <button className="shuffle-order" onClick={shufflePlayers}>{t("shuffle")}</button>
+        {game === "harmonies" && <><div className="field"><label htmlFor="harmonies-side">{zh ? "个人地图" : "Personal board"}</label><select id="harmonies-side" value={harmoniesSide} onChange={e => setHarmoniesSide(e.target.value as "A" | "B")}><option value="A">A · {zh ? "河流" : "Rivers"}</option><option value="B">B · {zh ? "岛屿" : "Islands"}</option></select></div><div className="field"><label htmlFor="harmonies-spirits">{zh ? "自然之灵" : "Nature’s Spirits"}</label><select id="harmonies-spirits" value={String(harmoniesSpirits)} onChange={e => setHarmoniesSpirits(e.target.value === "true")}><option value="false">{zh ? "关闭 · 推荐初次游戏" : "Off · first game"}</option><option value="true">{zh ? "开启 · 额外计分目标" : "On · extra scoring goals"}</option></select></div></>}
         {game === "ark_nova" && <div className="field ark-map-setup"><label htmlFor="ark-zoo-map">{zh ? "动物园地图" : "Zoo map"}</label><select id="ark-zoo-map" value={arkMap} onChange={event => setArkMap(event.target.value as ArkMapId)}><option value="map-0">Map 0 · {zh ? "空地图开局" : "empty-map setup"}</option><option value="map-a">Map A · {zh ? "预置 3 格围栏与商亭" : "3-space enclosure + kiosk"}</option></select><small>{arkMap === "map-a" ? (zh ? "Map A 的两座开局建筑免费且已经放置。" : "Map A's two setup buildings are free and already placed.") : (zh ? "Map 0 不提供免费开局建筑。" : "Map 0 has no free setup buildings.")}</small></div>}
         {game === "ark_nova" && players.length === 1 && <div className="field ark-solo-setup"><label htmlFor="ark-solo-appeal">{zh ? "单人难度 / 初始魅力" : "Solo difficulty / starting Appeal"}</label><select id="ark-solo-appeal" value={soloStartingAppeal} onChange={event => setSoloStartingAppeal(Number(event.target.value) as 0 | 10 | 20)}><option value={20}>{zh ? "标准 · 魅力 20" : "Standard · Appeal 20"}</option><option value={10}>{zh ? "进阶 · 魅力 10" : "Advanced · Appeal 10"}</option><option value={0}>{zh ? "专家 · 魅力 0" : "Expert · Appeal 0"}</option></select><small>{zh ? "固定 6 轮，共 27 次行动；最终分数达到 0 即获胜。" : "Six fixed rounds, 27 turns total; finish with at least 0 VP to win."}</small></div>}
         <div className="field mini"><label htmlFor="match-seed">{t("f_seed")}</label><input id="match-seed" inputMode="numeric" value={seed} onChange={e => setSeed(e.target.value)}/></div>
@@ -1809,6 +1816,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         <button className="start" disabled={starting} onClick={startMatch}>{starting ? t("starting") : t("start")}</button>
       </div>
       {game === "ark_nova" && <div className="setup-scope-note"><b>{GAME_COPY.ark_nova.badge}</b> {zh ? "基础版 128 动物、64 赞助商、32 保育项目、11 终局计分和 5 种行动牌均已程式化；实体 255 张清单用于校验重复牌与牌库守恒。" : "The base set's 128 Animals, 64 Sponsors, 32 Conservation Projects, 11 Final Scoring cards, and five Action cards are executable; the 255-card physical roster validates duplicates and deck conservation."}</div>}
+      {game === "harmonies" && <div className="setup-scope-note"><b>PLAYABLE BETA</b> {zh ? "支持 32 张编号动物牌、120 枚地形、双面棋盘、单人规则和可选自然之灵；使用原创 SVG 图形与社区转录的牌组数据。" : "32 numbered animal cards, 120 tokens, both boards, solo rules and optional spirits; original SVG graphics and community-transcribed card data."}</div>}
       {game === "azul" && <div className="setup-scope-note"><b>{GAME_COPY.azul.badge}</b> {zh ? "支持彩色墙基础版、100 枚具名花砖、工厂与中央区选砖、图案线、地板罚分、相邻计分、终局奖励和确定性回放；不包含灰墙玩法、扩展或出版商美术。" : "Supports the colored-wall base game, 100 identity-safe tiles, factory/center drafting, pattern lines, floor penalties, adjacency scoring, endgame bonuses and deterministic replay; no gray wall, expansions or publisher artwork."}</div>}
       {game === "brass_birmingham" && <div className="setup-scope-note"><b>{GAME_COPY.brass_birmingham.badge}</b> {zh ? "支持官方人数牌组、产业板、市场、商人、Build/Sell/Develop、单双铁路、负收入变卖、双时代计分与完整回放；界面不包含出版商美术。" : "Supports official player counts, industry board, markets, merchants, Build/Sell/Develop, single/double rail, negative-income liquidation, two-era scoring and full replay; no publisher artwork."}</div>}
       {game === "century_spice_road" && <div className="setup-scope-note"><b>{GAME_COPY.century_spice_road.badge}</b> {zh ? "完整基础牌组数值、重复交易、升级、市场压香料、商队容量、金币银币、终局与计分均已接通；不包含出版商卡图。" : "Full base-set values, repeat trades, upgrades, market spice, caravan capacity, gold/silver coins, endgame and scoring wired up; no publisher artwork."}</div>}
@@ -1817,10 +1825,10 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     </section>
   </main>;
 
- return <main className="table-shell">
+ return <main className={`table-shell ${snapshot.game === "harmonies" ? "game-harmonies" : ""}`}>
     <header className="table-header">
-      <div><span className="brand-mark">ABGA</span><strong>{snapshot.game_description.name} {snapshot.game === "splendor" ? t("live_table") : snapshot.game === "century_spice_road" ? t("trade_arena") : t("controlled_arena")}</strong></div>
-      <div className="match-meta"><span>{t("match")} <a className="match-reconnect-link" href={`?match=${snapshot.match_id}`} title={lang === "zh" ? "此对局的恢复链接" : "Reconnect link for this match"}><code>{snapshot.match_id}</code></a></span><span>{t("turn")} <b>{snapshot.turn_count}</b>{snapshot.game === "ark_nova" && <> · {t("decision")} <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span>{spectator && <span className="status status-setup">{t("spectator")}</span>}<span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? t("s_finished") : snapshot.paused ? (snapshot.pause_pending ? t("s_wait_pause") : t("s_paused")) : t("s_active")}</span></div>
+      <div><span className="brand-mark">ABGA</span><strong>{snapshot.game === "harmonies" ? GAME_COPY.harmonies.name[lang] : snapshot.game_description.name} {snapshot.game === "harmonies" ? "" : snapshot.game === "splendor" ? t("live_table") : snapshot.game === "century_spice_road" ? t("trade_arena") : t("controlled_arena")}</strong></div>
+      <div className="match-meta"><span>{t("match")} <a className="match-reconnect-link" href={`?match=${snapshot.match_id}`} title={lang === "zh" ? "此对局的恢复链接" : "Reconnect link for this match"}><code>{snapshot.match_id}</code></a></span><span>{t("turn")} <b>{snapshot.game === "harmonies" ? harmoniesView?.round : snapshot.turn_count}</b>{snapshot.game === "harmonies" && <> · {t("decision")} <b>{snapshot.turn_count}</b></>}{snapshot.game === "ark_nova" && <> · {t("decision")} <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span>{spectator && <span className="status status-setup">{t("spectator")}</span>}<span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? t("s_finished") : snapshot.paused ? (snapshot.pause_pending ? t("s_wait_pause") : t("s_paused")) : t("s_active")}</span></div>
       <div className="table-actions">
         <button className="lang-toggle" onClick={toggleLang} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
         {(!spectator || snapshot.status === "active") && <button className={`pause-button ${(snapshot.paused || spectator || snapshot.running === false) ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? t("processing") : (snapshot.paused || spectator || snapshot.running === false) ? t("resume") : t("pause")}</button>}
@@ -1840,6 +1848,8 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
           ? arkView?.players[identity.seat] : viewer?.players[identity.seat];
         return snapshot.game === "splendor"
           ? <PlayerPanel key={identity.seat} player={visiblePlayer as PlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat}/>
+          : snapshot.game === "harmonies"
+            ? <HarmoniesPlayerPanel key={identity.seat} player={visiblePlayer as HarmoniesPlayer} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat} lang={lang}/>
           : snapshot.game === "azul"
             ? <AzulPlayerPanel key={identity.seat} player={visiblePlayer as AzulPlayerView} identity={identity} active={snapshot.status === "active" && snapshot.active_seat === identity.seat} holdsStartMarker={azulView?.start_marker_holder_seat === identity.seat}/>
           : snapshot.game === "ark_nova"
@@ -1854,12 +1864,13 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? t("pause_pending") : t("paused")}</strong><span>{snapshot.pause_pending ? t("pause_pending_desc") : t("paused_desc")}</span></div>}
         {snapshot.human_turn && <section className="human-turn" aria-live="polite">
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}{t("pick_action")}</h2></div><b>{snapshot.human_turn.legal_actions.length} {t("legal_opts")}</b></header>
-          {snapshot.game === "splendor" && splendorView ? <SplendorActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} view={splendorView} disabled={Boolean(submittingAction)} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "azul" ? <AzulActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : arkMapInteraction ? <div className="ark-map-action-notice"><div><b>{lang === "zh" ? "请在对应板块直接操作" : "Act directly on the matching board"}</b><span>{lang === "zh" ? "行动牌、手牌和地图位于玩家板；展示牌与抽牌位于整体游戏板；协会事务位于协会板。" : "Action cards, hand, and map are on the player board; display and draw actions are on the main board; association tasks are on the association board."}</span></div>{snapshot.human_turn.legal_actions.filter(item => !isArkTableAction(item)).map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
+          {snapshot.game === "harmonies" ? <p>{zh ? "在下方市场、棋盘和动物牌上直接操作。" : "Act directly on the market, board and animal cards below."}</p> : snapshot.game === "splendor" && splendorView ? <SplendorActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} view={splendorView} disabled={Boolean(submittingAction)} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "azul" ? <AzulActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : arkMapInteraction ? <div className="ark-map-action-notice"><div><b>{lang === "zh" ? "请在对应板块直接操作" : "Act directly on the matching board"}</b><span>{lang === "zh" ? "行动牌、手牌和地图位于玩家板；展示牌与抽牌位于整体游戏板；协会事务位于协会板。" : "Action cards, hand, and map are on the player board; display and draw actions are on the main board; association tasks are on the association board."}</span></div>{snapshot.human_turn.legal_actions.filter(item => !isArkTableAction(item)).map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
             <h3>{ACTION_GROUPS[lang][kind] || kind}<span>{actions.length}</span></h3>
             <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div>
           </section>)}</div>}
         </section>}
         {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/>
+          : snapshot.game === "harmonies" ? <HarmoniesTable key={harmoniesView?.turn_count} view={harmoniesView} lang={lang} identities={snapshot.players} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} onChoose={item => stageHumanAction(item)}/>
           : snapshot.game === "azul" ? <AzulBoard view={azulView}/>
           : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players} legalActions={snapshot.human_turn?.legal_actions || []} submitting={submittingAction} selectedActionId={selectedHumanAction?.id || submittingAction} onChoose={item => stageHumanAction(item)}/>
           : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/>
