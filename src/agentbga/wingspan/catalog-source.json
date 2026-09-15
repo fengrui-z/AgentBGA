@@ -1,0 +1,22 @@
+{
+  "source": "https://github.com/navarog/wingsearch",
+  "commit": "43e5036de9e68fa9c4fabaf4c760412a887adf05",
+  "source_path": "src/assets/data/master.json",
+  "source_license": "GPL-3.0",
+  "retrieved": "2026-09-15",
+  "selection": {
+    "Set": "core",
+    "Swift Start": false
+  },
+  "bird_count": 170,
+  "bonus_count": 26,
+  "goal_tile_count": 8,
+  "changes": [
+    "Mechanical fields only; omit card prose, flavor text and artwork",
+    "Normalize wild nest to star",
+    "Replace power text with independent declarative effects",
+    "Base English Anatomist excludes expansion keyword tuft; back is not a base keyword",
+    "Bonus rules implemented independently from English base edition values"
+  ],
+  "catalog_sha256": "1c2920732fa2b4ee79f612d7a78030373285e73eed2b658c15b223ba8caa604a"
+}

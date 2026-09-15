@@ -11,6 +11,8 @@ _PRIVATE_ACTION_TYPES = frozenset({"choose_initial_hand", "resolve_semantic_choi
 
 
 def _private_action_type(action_id: str) -> str | None:
+    if action_id.startswith("wingspan-private-"):
+        return "wingspan_private_choice"
     if action_id.startswith("setup:keep:"):
         return "choose_initial_hand"
     if action_id.startswith("semantic-choice-"):
@@ -28,6 +30,8 @@ def public_action(action: Mapping[str, Any]) -> dict[str, Any]:
     """Return an action payload that cannot expose private option identities."""
 
     action_type = action.get("type")
+    if action.get("private") == "wingspan":
+        return {"type": action_type, "private": "wingspan"}
     if action_type == "choose_initial_hand":
         card_ids = action.get("card_ids")
         return {
@@ -54,11 +58,11 @@ def public_action_id(
     cards.
     """
 
-    if action.get("type") not in _PRIVATE_ACTION_TYPES:
+    if action.get("type") not in _PRIVATE_ACTION_TYPES and action.get("private") != "wingspan":
         return action_id
     return _opaque_action_id(
         match_id=match_id, version=version, seat=seat,
-        action_type=str(action.get("type")),
+        action_type="wingspan_private_choice" if action.get("private") == "wingspan" else str(action.get("type")),
     )
 
 

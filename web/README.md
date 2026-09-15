@@ -50,3 +50,11 @@ explicitly; solo replacement is available in the end-turn menu.
 The renderer is `app/harmonies-table.tsx` with `app/harmonies-table.css`.
 It consumes the standard match observation and authoritative legal action IDs.
 Animal cards use stable numbers; no publisher artwork is required.
+
+### Wingspan
+
+Choose **Wingspan / 展翅翱翔** for 2–5 players and green/blue goal scoring.
+The board supports initial bird selection, food/egg payments, three habitat actions,
+optional powers and inter-player effect choices. Cards and bonus conditions include
+Chinese and English mechanical descriptions. The renderer is
+`app/wingspan-table.tsx`, styled by `app/wingspan-table.css`.

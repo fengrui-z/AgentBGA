@@ -1,0 +1,6 @@
+{
+  "players": [
+    {"name": "Forest", "backend": "random"},
+    {"name": "Wetland", "backend": "random"}
+  ]
+}

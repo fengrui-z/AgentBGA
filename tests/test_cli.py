@@ -11,6 +11,17 @@ from agentbga.cli import main
 
 
 class CLITests(unittest.TestCase):
+    def test_wingspan_cli_five_players_and_goal_config(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = StringIO()
+            with redirect_stdout(output):
+                code = main(['match', 'create', '--game', 'wingspan', '--players', '5',
+                             '--seed', '42', '--game-config', '{"goal_board":"blue"}',
+                             '--db', str(Path(directory) / 'matches.sqlite3'), '--json'])
+            self.assertEqual(0, code)
+            created = json.loads(output.getvalue())['data']
+            self.assertEqual('wingspan', created['game'])
+
     def test_harmonies_cli_solo_setup_options(self):
         with tempfile.TemporaryDirectory() as directory:
             output=StringIO()
