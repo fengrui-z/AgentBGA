@@ -38,6 +38,25 @@ class ExperimentTests(unittest.TestCase):
         self.assertEqual(["beta", "alpha"], [item.id for item in schedule[1].competitors])
         self.assertEqual([11, 11, 12, 12], [item.seed for item in schedule])
 
+    def test_schedule_pins_an_exact_rules_version(self):
+        manifest = {
+            "schema_version": "agentbga.experiment.v1",
+            "experiment_id": "version-pinned",
+            "mode": "duel",
+            "games": ["ark_nova"],
+            "rules_versions": {"ark_nova": "base-1.2-controlled-core.6"},
+            "competitors": [random_competitor("alpha"), random_competitor("beta")],
+            "schedule": {"seeds": [11]},
+        }
+        schedule = schedule_experiment(manifest)
+        self.assertEqual(
+            ["base-1.2-controlled-core.6", "base-1.2-controlled-core.6"],
+            [item.rules_version for item in schedule],
+        )
+        manifest["rules_versions"]["ark_nova"] = "missing"
+        with self.assertRaisesRegex(ValueError, "unknown rules version"):
+            validate_experiment(manifest)
+
     def test_tournament_uses_all_cyclic_seat_rotations(self):
         manifest = {
             "schema_version": "agentbga.experiment.v1",
@@ -226,6 +245,7 @@ class ExperimentTests(unittest.TestCase):
             loaded = json.loads((Path(directory) / "final.json").read_text())
             self.assertEqual(4, len(loaded["matches"]))
             self.assertEqual(64, len(loaded["integrity"]["content_digest"]))
+            self.assertTrue(all(row["rules_version"] for row in loaded["matches"]))
 
     def test_cli_validates_experiment_manifest(self):
         manifest = {

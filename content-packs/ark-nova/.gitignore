@@ -1,0 +1,4 @@
+local/
+
+# Optional import evidence; released runtime data and its ledger stay tracked.
+/base-en-draft/*.reference.json

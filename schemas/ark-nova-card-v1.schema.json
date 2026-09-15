@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentbga.dev/schemas/ark-nova-card-v1.schema.json",
+  "title": "AgentBGA Ark Nova semantic content entry v1",
+  "description": "A mechanics-first representation. It intentionally excludes publisher art and verbatim card prose.",
+  "type": "object",
+  "required": [
+    "schema_version", "id", "official_ref", "kind", "display", "facts",
+    "requirements", "effects", "references", "review"
+  ],
+  "properties": {
+    "schema_version": {"const": "agentbga.ark_nova.card.v1"},
+    "id": {"type": "string", "pattern": "^ark-nova:[a-z0-9][a-z0-9._-]*$"},
+    "official_ref": {
+      "type": "object",
+      "required": ["component_id", "source_ids"],
+      "properties": {
+        "component_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 64},
+        "source_ids": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"}
+        },
+        "faq_refs": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 128}
+        }
+      },
+      "additionalProperties": false
+    },
+    "kind": {
+      "enum": [
+        "animal", "sponsor", "zoo_conservation_project",
+        "base_conservation_project", "final_scoring", "bonus_tile", "map"
+      ]
+    },
+    "display": {
+      "type": "object",
+      "required": ["title", "summary"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1, "maxLength": 96},
+        "summary": {"type": "string", "minLength": 1, "maxLength": 280}
+      },
+      "additionalProperties": false
+    },
+    "facts": {
+      "type": "object",
+      "description": "Factual printed values such as cost, size, tags, icons, strength, and scoring steps.",
+      "additionalProperties": {
+        "type": ["string", "number", "integer", "boolean", "null", "array", "object"]
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/operation"}
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {"$ref": "#/$defs/operation"},
+          {
+            "type": "object",
+            "required": ["timing"],
+            "properties": {
+              "timing": {
+                "enum": [
+                  "on_play", "immediate", "ongoing", "income", "on_trigger",
+                  "interaction", "end_of_game", "on_support", "on_release", "after_finishing"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "references": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^ark-nova:[a-z0-9][a-z0-9._-]*$"}
+    },
+    "review": {
+      "type": "object",
+      "required": ["status", "scenario_tests"],
+      "properties": {
+        "status": {
+          "enum": [
+            "unentered", "transcribed", "schema_valid", "rules_reviewed",
+            "scenario_tested", "double_checked", "released"
+          ]
+        },
+        "scenario_tests": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 128}
+        },
+        "reviewer": {"type": "string", "minLength": 1, "maxLength": 128},
+        "second_reviewer": {"type": "string", "minLength": 1, "maxLength": 128}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "released"}}},
+          "then": {"required": ["reviewer", "second_reviewer"]}
+        }
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "operation": {
+      "type": "object",
+      "required": ["op", "args"],
+      "properties": {
+        "op": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$", "maxLength": 64},
+        "args": {"type": "object"},
+        "when": {"$ref": "#/$defs/operation"},
+        "custom_id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]*$", "maxLength": 128},
+        "timing": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "projectLevel": {
+      "type": "object",
+      "required": ["id", "requirements", "conservation"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]*$", "maxLength": 64},
+        "requirements": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/operation"}
+        },
+        "conservation": {"type": "integer", "minimum": 0, "maximum": 41},
+        "reputation": {"type": "integer", "minimum": 0, "maximum": 15}
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "review": {
+            "properties": {"status": {"not": {"const": "unentered"}}},
+            "required": ["status"]
+          }
+        },
+        "required": ["review"]
+      },
+      "then": {
+        "properties": {
+          "official_ref": {
+            "properties": {"component_id": {"type": "string", "minLength": 1}}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "kind": {"enum": ["zoo_conservation_project", "base_conservation_project"]}
+            },
+            "required": ["kind"]
+          },
+          {
+            "properties": {
+              "review": {
+                "properties": {"status": {"not": {"const": "unentered"}}},
+                "required": ["status"]
+              }
+            },
+            "required": ["review"]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "facts": {
+            "required": ["levels"],
+            "properties": {
+              "levels": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"$ref": "#/$defs/projectLevel"}
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

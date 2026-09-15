@@ -9,6 +9,7 @@ import sys
 from typing import Any
 
 from .seat_tool import call_tool
+from .legal_action_query import QUERY_DESCRIPTION, query_schema
 
 
 TOOLS = [
@@ -19,8 +20,68 @@ TOOLS = [
     },
     {
         "name": "legal_actions",
-        "description": "List the only actions legal for your seat in this decision and state version.",
-        "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
+        "description": QUERY_DESCRIPTION,
+        "inputSchema": query_schema(),
+    },
+    {
+        "name": "inspect_card",
+        "description": "Read complete details for one visible card. Accepts a detail_ref such as card:zoo-421 or a bare visible card id such as zoo-421.",
+        "inputSchema": {
+            "type": "object", "properties": {"card_ref": {"type": "string"}},
+            "required": ["card_ref"], "additionalProperties": False,
+        },
+    },
+    {
+        "name": "inspect_rules",
+        "description": "Read one bounded, engine-aligned Ark Nova rules topic. Call without a topic to list available topics; use this instead of guessing rules from legal actions.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {"topic": {"type": "string"}},
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "inspect_map",
+        "description": "Read a public player map on demand, optionally selecting terrain, buildings, rewards, or player_board.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "seat": {"type": "integer", "minimum": 0},
+                "sections": {
+                    "type": "array",
+                    "items": {"enum": ["terrain", "buildings", "rewards", "player_board"]},
+                    "uniqueItems": True,
+                },
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "inspect_played_cards",
+        "description": "List public played cards for one seat without repeating every card program in observe.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "seat": {"type": "integer", "minimum": 0},
+                "kind": {"type": "string"},
+                "cursor": {"type": "integer", "minimum": 0},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "inspect_history",
+        "description": "Read seat-safe state changes accumulated across prior observations.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "since_version": {"type": "integer", "minimum": 0},
+                "cursor": {"type": "integer", "minimum": 0},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+            },
+            "additionalProperties": False,
+        },
     },
     {
         "name": "submit_action",

@@ -2,14 +2,19 @@
 
 A headless, deterministic board-game environment for evaluating LLM agents in long-horizon adversarial decision-making. Supports agent-vs-agent and human-vs-agent play across multiple Euro-style strategy games.
 
+## Runtime architecture
+
+![AgentBGA runtime architecture](docs/images/agentbga-runtime-share-card.png)
+
 ## Games
 
 - **Splendor** (2–4 players, fully playable)
+- **Harmonies / 自然和弦** (1–4 players, A/B boards, 32 animal cards, optional Nature’s Spirits; playable beta)
 - **Azul** (2–4 players, colored-wall base game, playable beta)
 - **Brass: Birmingham** (2–4 players, playable beta)
 - **The Castles of Burgundy** (2–4 players, 2019 base game, playable beta)
 - **Century: Spice Road** (2–5 players, fully playable)
-- **Ark Nova** (2–4 players, controlled core V2 — generated research cards, no publisher data)
+- **Ark Nova** (1–4 players, released base-game Map 0 semantic rules plus an opt-in Map A preview; mechanics-only card data)
 - **7 Wonders** (3–7 players, complete Second Edition base rules, Day/Night Wonders)
 
 ## Quick start
@@ -34,12 +39,42 @@ Multi-model matches via JSON config:
 ./agentbga run --players-config examples/multi-llm-match.json --seed 42 --jsonl
 ```
 
-Local live web table:
+Local live web table (Node.js 22.13+):
 
 ```console
-cd web && npm install && npm run build && cd ..
+cd web && npm ci && npm run build && cd ..
 ./agentbga web   # http://127.0.0.1:8765
 ```
+
+Choose Ark Nova and the solo human preset to play without an API key or external
+agent CLI. For multiplayer, choose human or random controllers for key-free play;
+LLM controllers require their provider credentials or CLI authentication.
+
+The setup page lists recent SQLite matches, including tables created by
+`agentbga run` or `agentbga match create`. Click one, or open
+`http://127.0.0.1:8765/?match=MATCH_ID`, to spectate without taking over the
+runners. Pause still applies only to matches started from the web form.
+
+### Harmonies / 自然和弦
+
+```console
+./agentbga run --game harmonies --players 2 --controllers random,random --seed 42
+./agentbga run --game harmonies --players 1 --controllers random --seed 42 \
+  --game-config '{"board_side":"B","nature_spirits":true}'
+```
+
+In the Web setup choose **自然和弦 / Harmonies**, select A (river) or B (islands),
+and optionally enable Nature's Spirits. The **Solo** preset needs no API key.
+Take a token group, select a token and click a highlighted hex. Animal cards show
+exact stack heights and mark the cube target; click **Settle animal** and a
+highlighted target when available. Optional card/animal actions can interrupt
+placements. Click **End turn** after all three tokens are placed.
+
+Includes deterministic replay, cumulative animal scores, the equal-turn final
+round, solo market refresh and sun ratings. Cards use stable numbers and original
+SVG diagrams; the mechanical catalog is community-transcribed and the game is
+labelled playable beta. No publisher art or expansion cards are bundled. See the
+[implementation and validation plan](docs/harmonies-implementation-plan.md).
 
 ## Harness backends
 
@@ -57,11 +92,21 @@ Each seat can use one of:
 | `claude` | Harness | Claude Code + MCP, persistent session |
 | `pi` | Harness | Pi + native TS extension, persistent session |
 | `qwen` | Harness | Qwen Code + MCP, isolated provider config, persistent session |
-| `minimal` | Harness | Pure Python, in-process, direct LLM + 5 tools |
+| `cursor` | Harness | Cursor Agent CLI + MCP, isolated data directory, persistent session |
+| `grok` | Harness | xAI Grok Build CLI + MCP, isolated home and sandbox, persistent session; API key or SuperGrok subscription |
+| `minimal` | Harness | Pure Python, in-process, direct LLM + 10 seat-scoped tools |
 | `human` | — | Browser-based play |
 | `random` | — | Random baseline |
 
-All harness seats share a unified 5-tool interface: `observe`, `legal_actions`, `submit_action`, `read_notes`, `write_notes`. The `minimal` harness runs entirely in Python with zero external dependencies — no CLI, no MCP server, no Node.js.
+All harness seats share a unified seat-scoped interface: `observe`, paged `legal_actions`,
+`inspect_card`, `inspect_rules`, `inspect_map`, `inspect_played_cards`, `inspect_history`, `submit_action`,
+`read_notes`, and `write_notes`. Ark Nova uses a compact default observation plus
+state deltas; complete visible card, map, played-card, and observed-history details are
+loaded only when requested. The `minimal` harness runs entirely in Python with zero
+external dependencies — no CLI, no MCP server, no Node.js.
+
+For game-specific legal-action filters and bounded responses, see
+[Legal action queries](docs/legal-action-queries.md).
 
 The `hermes` backend requires the `hermes` executable with MCP support. AgentBGA creates a seat-local `HERMES_HOME`, configures only the seat-scoped `agentbga` MCP server, and routes the configured OpenAI-compatible endpoint through Hermes' custom provider.
 
@@ -74,6 +119,19 @@ model provider, disables ambient tools and memory, and exposes only the seat-sco
 export BAILIAN_CODING_PLAN_API_KEY='...'
 ./agentbga doctor --players-config examples/qwen-code-vs-random.json
 ./agentbga run --players-config examples/qwen-code-vs-random.json --seed 42 --jsonl
+```
+
+The `cursor` backend requires the `cursor-agent` executable and a `CURSOR_API_KEY`.
+The `grok` backend requires the xAI `grok` executable and, by default, an `XAI_API_KEY`. Both
+run headlessly with persistent native sessions, disable built-in coding and web
+tools, and expose only AgentBGA's seat-scoped MCP tools. Their user configuration,
+credentials, and sessions remain isolated per participant workspace.
+
+```console
+export CURSOR_API_KEY='...'
+export XAI_API_KEY='...'
+./agentbga doctor --players-config examples/cursor-cli-vs-grok-build.json
+./agentbga run --players-config examples/cursor-cli-vs-grok-build.json --seed 42 --jsonl
 ```
 
 Codex can reuse the ChatGPT subscription already authenticated by the local CLI. Log in
@@ -89,6 +147,39 @@ Subscription mode bridges only the active Codex credential into a seat-isolated
 `CODEX_HOME`, forces ChatGPT login, and disables personal plugins, skills, shell access,
 history, and memories. It does not inject `OPENAI_API_KEY` or endpoint overrides. The
 default `api_key` mode keeps the existing seat-isolated usage-based API configuration.
+
+### Grok Build with a SuperGrok subscription
+
+This extends the Grok Build backend introduced in [PR #39](https://github.com/fengrui-z/AgentBGA/pull/39).
+Existing API-key configurations and the Cursor backend are unchanged. To opt into
+subscription auth, install the [official CLI](https://docs.x.ai/build/overview), then:
+
+```console
+grok login
+grok models
+./agentbga doctor --players-config examples/grok-subscription-vs-random.json
+./agentbga run --game azul --players-config examples/grok-subscription-vs-random.json --seed 42 --jsonl
+```
+
+Select **Grok Build → SuperGrok subscription** in the Web UI. This mode does not
+send an API key or endpoint. JSON configurations must explicitly set
+`auth_mode: "subscription"`; omitting it preserves the existing API-key behavior.
+The subscription model defaults to `grok-4.6`, with the model's native reasoning
+default. A JSON config can request a supported `reasoning_effort` explicitly.
+
+Subscription mode keeps a seat-local `GROK_HOME` and the existing strict tool
+sandbox. It uses the official `GROK_AUTH_PATH` override for the original login,
+so Grok manages token refresh and locking without copying credentials.
+`GROK_DISABLE_API_KEY_AUTH=1` prevents fallback to metered API authentication.
+Personal plugins are disabled by name after read-only discovery; skill injection
+and ambient compatibility integrations are disabled. Git bounds upward project
+discovery to the generated seat workspace. All current seat MCP tools remain
+available, including the inspection tools used by Ark Nova.
+
+Configuration/MCP discovery was checked with Grok Build 1.0.30. `doctor` checks
+the executable and local credential file, not live entitlement; subscription
+limits and model availability still depend on the account. Offline tests do not
+consume model quota. Missing usage/cost must not be treated as zero.
 
 Every harness backend assigns match memory to `(match_id, seat)`. In a learning series,
 memory is instead assigned to `(series_id, participant_id)`, so a competitor keeps its
@@ -118,6 +209,9 @@ Every harness turn is saved as a structured JSON trace:
 ./agentbga match traces MATCH_ID --seat 0 --turn 7  # export one turn
 ./agentbga match harness-events MATCH_ID --json      # tool call audit trail
 ```
+
+Ark Nova defaults to the released Map 0 board. Pass `--map map-a` to
+`match create` or `match run` to exercise the separately labelled Map A preview.
 
 Trace files live under `.agentbga/runs/_traces/MATCH_ID/seat-N/turn-XXXX.json` and record the full decision sequence: prompt, assistant reasoning/content, tool calls with results, and the final submission. Traces also record the participant, stable session scope, resume count, and any DSh compaction events.
 

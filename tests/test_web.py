@@ -1,5 +1,6 @@
 import json
 from http.server import ThreadingHTTPServer
+import os
 from pathlib import Path
 import tempfile
 import threading
@@ -9,11 +10,112 @@ import urllib.request
 from unittest import mock
 
 from agentbga.agents import PlayerConfig
+from agentbga.runner import run_match
 from agentbga.store import Store
 from agentbga.web import MatchHub, WebHandler, serve
 
 
 class WebTests(unittest.TestCase):
+    def test_harmonies_human_match_finishes_and_reopens(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db=Path(directory)/'matches.sqlite3'
+            hub=MatchHub(db)
+            created=hub.create({'game':'harmonies','seed':17,'speed_ms':0,
+                                'game_config':{'board_side':'B','nature_spirits':True},
+                                'players':[{'name':'You','backend':'human'}]})
+            match_id=created['match_id'];seen=set();deadline=time.monotonic()+15
+            snapshot=created
+            try:
+                while time.monotonic()<deadline:
+                    snapshot=hub.get(match_id)
+                    if snapshot['status']=='finished':break
+                    turn=snapshot.get('human_turn')
+                    if turn:
+                        actions=turn['legal_actions']
+                        priority={'choose_spirit':0,'place_animal':1,'take_animal':2,'take_tokens':3,'place_token':4,'end_turn':5}
+                        item=min(actions,key=lambda a:priority[a['action']['type']])
+                        seen.add(item['action']['type'])
+                        hub.submit_human_action(match_id,turn['seat'],turn['version'],item['id'])
+                    else:
+                        time.sleep(.005)
+                self.assertEqual('finished',snapshot['status'])
+                self.assertTrue({'choose_spirit','take_animal','take_tokens','place_token','end_turn'}<=seen)
+                view=snapshot['views'][0]
+                self.assertEqual('harmonies',view['game'])
+                self.assertEqual(23,len(view['players'][0]['cells']))
+                self.assertEqual('B',view['board_side'])
+                self.assertIsInstance(view['solo_suns'],int)
+                restored=MatchHub(db).get(match_id)
+                self.assertEqual(snapshot['rankings'],restored['rankings'])
+                self.assertEqual(view,restored['views'][0])
+            finally:
+                with hub.condition:
+                    hub.matches[match_id]['running']=False
+                    hub.condition.notify_all()
+
+    def test_finished_ark_nova_match_reopens_with_rankings_and_final_board(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            match_id, _, _ = store.create(
+                2, 12, "ark_nova", {"turn_limit": 8},
+                rules_version="base-1.2-controlled-core.6",
+            )
+            players = [
+                PlayerConfig.from_dict({"name": "A", "backend": "random"}, 0),
+                PlayerConfig.from_dict({"name": "B", "backend": "random"}, 1),
+            ]
+            result = run_match(store, match_id, players, max_turns=20)
+            expected_views = [
+                store.game(match_id).observe(store.load(match_id)[1], seat)
+                for seat in range(2)
+            ]
+            store.close()
+
+            hub = MatchHub(database)
+            restored = hub.get(match_id)
+
+            self.assertEqual("finished", restored["status"])
+            self.assertFalse(restored["paused"])
+            self.assertEqual(result["rankings"], restored["rankings"])
+            self.assertEqual(expected_views, restored["views"])
+            self.assertNotIn("match_report", restored)
+            events, running = hub.events_after(match_id, -1, wait=0)
+            finished = [item["event"] for item in events if item["event"]["type"] == "match_finished"]
+            self.assertFalse(running)
+            self.assertEqual(1, len(finished))
+            self.assertEqual(result["rankings"], finished[0]["rankings"])
+            self.assertNotIn("match_report", finished[0])
+
+    def test_official_solo_human_match_finishes_without_optional_reports(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            try:
+                match_id, _, _ = store.create(1, 42, "ark_nova")
+                player = PlayerConfig.from_dict({"name": "Solo human", "backend": "human"}, 0)
+                choices = []
+
+                def choose(seat, version, observation, legal):
+                    choices.append((seat, version))
+                    return legal[0]["id"]
+
+                result = run_match(
+                    store, match_id, [player], max_turns=200, human_choice=choose,
+                )
+                final_state = store.load(match_id)[1]
+                self.assertTrue(choices)
+                self.assertEqual("finished", final_state["status"])
+                self.assertEqual(result["version"], store.replay(match_id)[-1]["version"])
+            finally:
+                store.close()
+            restored = MatchHub(database).get(match_id)
+            self.assertEqual("base-1.2-faq-v2-map0.1", restored["rules_version"])
+            self.assertEqual(result["rankings"], restored["rankings"])
+            self.assertEqual("Solo human", restored["rankings"][0]["player"])
+            self.assertTrue(restored["views"][0]["players"])
+            self.assertNotIn("match_report", restored)
+
     def test_games_endpoint_lists_registered_renderers(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -32,31 +134,8 @@ class WebTests(unittest.TestCase):
             finally:
                 server.shutdown()
                 server.server_close()
-            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "castles_of_burgundy", "century_spice_road", "seven_wonders"],
+            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "castles_of_burgundy", "century_spice_road", "seven_wonders", "harmonies"],
                              [game["id"] for game in response["games"]])
-
-    def test_castles_of_burgundy_setup_snapshot_uses_game_renderer_contract(self):
-        stopped = threading.Event()
-        def fake_run(_store, _match_id, _players, **options):
-            options["sink"]({"type": "match_failed", "error": "test stop"})
-            stopped.set()
-        with tempfile.TemporaryDirectory() as directory, mock.patch(
-            "agentbga.web.run_match", side_effect=fake_run,
-        ):
-            hub = MatchHub(Path(directory) / "matches.sqlite3")
-            created = hub.create({
-                "game": "castles_of_burgundy", "seed": 42,
-                "players": [
-                    {"name": "Burgundy", "backend": "random"},
-                    {"name": "Loire", "backend": "random"},
-                ],
-            })
-            self.assertEqual("castles_of_burgundy", created["game"])
-            self.assertEqual("playable_beta", created["game_description"]["implementation_status"])
-            self.assertEqual("castles_of_burgundy", created["views"][0]["game"])
-            self.assertEqual(37, len(created["views"][0]["players"][0]["duchy"]))
-            self.assertEqual(6, len(created["views"][0]["depots"]))
-            self.assertTrue(stopped.wait(2))
 
     def test_seven_wonders_setup_snapshot_uses_game_renderer_contract(self):
         stopped = threading.Event()
@@ -127,9 +206,76 @@ class WebTests(unittest.TestCase):
                 ],
             })
             self.assertEqual("ark_nova", created["game"])
-            self.assertEqual("controlled_core", created["game_description"]["implementation_status"])
+            self.assertEqual("released", created["game_description"]["implementation_status"])
             self.assertEqual("active", created["status"])
             self.assertEqual("ark_nova", created["views"][0]["game"])
+            self.assertEqual(
+                "休息阶段固定流程",
+                created["views"][0]["break_rules_summary"]["title_cn"],
+            )
+            self.assertIn(
+                "estimated_total",
+                created["views"][0]["players"][0]["next_break_projection"]["money_income"],
+            )
+            self.assertEqual("spectator", created["spectator_view"]["viewer_mode"])
+            self.assertTrue(all(
+                "hidden" not in card
+                for player in created["spectator_view"]["players"]
+                for card in player["initial_draw"] + player["final_scoring_cards"]
+            ))
+            self.assertEqual(
+                {"hidden": True}, created["views"][0]["players"][1]["initial_draw"][0],
+            )
+            self.assertTrue(stopped.wait(2))
+
+    def test_ark_nova_web_setup_supports_solo_difficulty_and_board_projection(self):
+        stopped = threading.Event()
+
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "ark_nova", "seed": 43,
+                "game_config": {"map": "map-0", "solo_starting_appeal": 10},
+                "players": [{"name": "Solo", "backend": "human"}],
+            })
+            view = created["views"][0]
+            self.assertEqual(1, created["game_description"]["players"]["minimum"])
+            self.assertEqual(10, view["players"][0]["appeal"])
+            self.assertEqual(10, view["solo_board"]["starting_appeal"])
+            self.assertEqual([7, 6, 5, 4, 3, 2], view["solo_board"]["schedule"])
+            self.assertEqual(7, view["solo_board"]["tokens_left"])
+            self.assertTrue(stopped.wait(2))
+
+    def test_web_create_can_select_an_exact_rules_version(self):
+        stopped = threading.Event()
+
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "ark_nova",
+                "rules_version": "base-1.2-controlled-core.6",
+                "players": [
+                    {"name": "Red", "backend": "random"},
+                    {"name": "Blue", "backend": "random"},
+                ],
+            })
+            self.assertEqual(
+                "base-1.2-controlled-core.6",
+                created["game_description"]["rules_version"],
+            )
+            self.assertEqual("base-1.2-controlled-core.6", created["rules_version"])
             self.assertTrue(stopped.wait(2))
 
     def test_brass_setup_snapshot_uses_game_renderer_contract(self):
@@ -151,6 +297,30 @@ class WebTests(unittest.TestCase):
             self.assertEqual("brass_birmingham", created["game"])
             self.assertEqual("playable_beta", created["game_description"]["implementation_status"])
             self.assertEqual("brass_birmingham", created["views"][0]["game"])
+            self.assertTrue(stopped.wait(2))
+
+    def test_castles_of_burgundy_setup_snapshot_uses_game_renderer_contract(self):
+        stopped = threading.Event()
+
+        def fake_run(_store, _match_id, _players, **options):
+            options["sink"]({"type": "match_failed", "error": "test stop"})
+            stopped.set()
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch(
+            "agentbga.web.run_match", side_effect=fake_run,
+        ):
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            created = hub.create({
+                "game": "castles_of_burgundy", "seed": 42,
+                "players": [
+                    {"name": "Burgundy", "backend": "random"},
+                    {"name": "Loire", "backend": "random"},
+                ],
+            })
+            self.assertEqual("castles_of_burgundy", created["game"])
+            self.assertEqual("playable_beta", created["game_description"]["implementation_status"])
+            self.assertEqual(37, len(created["views"][0]["players"][0]["duchy"]))
+            self.assertEqual(6, len(created["views"][0]["depots"]))
             self.assertTrue(stopped.wait(2))
 
     def test_century_setup_snapshot_uses_game_renderer_contract(self):
@@ -385,6 +555,110 @@ class WebTests(unittest.TestCase):
                 while hub.events_after(created["match_id"], -1, wait=0)[1] and time.monotonic() < deadline:
                     time.sleep(0.01)
 
+    def test_failed_active_match_can_restart_with_retained_player_configs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            hub = MatchHub(Path(directory) / "matches.sqlite3")
+            calls = 0
+            second_run = threading.Event()
+            finish_second_run = threading.Event()
+            fake_done = threading.Event()
+
+            def fake_run(_store, _match_id, players, sink, **_options):
+                nonlocal calls
+                calls += 1
+                self.assertEqual(["random", "human"], [player.backend for player in players])
+                if calls == 2:
+                    second_run.set()
+                    finish_second_run.wait(2)
+                sink({"type": "match_failed", "error": "test stop"})
+                if calls == 2:
+                    fake_done.set()
+
+            with mock.patch("agentbga.web.run_match", side_effect=fake_run):
+                created = hub.create({"players": [
+                    {"name": "Baseline", "backend": "random"},
+                    {"name": "Human", "backend": "human"},
+                ]})
+                deadline = time.monotonic() + 2
+                while hub.get(created["match_id"])["running"] and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                stopped = hub.get(created["match_id"])
+                self.assertFalse(stopped["running"])
+
+                resumed = hub.set_paused(created["match_id"], False)
+
+                self.assertTrue(resumed["running"])
+                self.assertTrue(second_run.wait(2))
+                finish_second_run.set()
+                self.assertTrue(fake_done.wait(2))
+                time.sleep(0.05)
+
+    def test_persisted_model_match_requires_fresh_credentials_before_resume(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            match_id, _, _ = store.create(2, 9)
+            stored_players = [
+                PlayerConfig.from_dict({
+                    "name": "API", "backend": "openai", "model": "m",
+                }, 0),
+                PlayerConfig.from_dict({"name": "Baseline", "backend": "random"}, 1),
+            ]
+            store.set_players(match_id, [player.public_dict() for player in stored_players])
+            store.close()
+
+            hub = MatchHub(database)
+            hub.watch(match_id)
+            with mock.patch.dict(os.environ, {}, clear=True), mock.patch(
+                "agentbga.web.run_match",
+            ) as run:
+                with self.assertRaisesRegex(ValueError, "fresh ephemeral credentials"):
+                    hub.set_paused(match_id, False)
+            self.assertEqual("spectator", hub.get(match_id)["mode"])
+            run.assert_not_called()
+            with hub.condition:
+                hub.matches[match_id]["running"] = False
+                hub.condition.notify_all()
+            time.sleep(0.4)
+
+    def test_persisted_model_match_resumes_with_fresh_matching_credentials(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "matches.sqlite3"
+            store = Store(database)
+            match_id, _, _ = store.create(2, 9)
+            stored_players = [
+                PlayerConfig.from_dict({
+                    "name": "API", "backend": "openai", "model": "m",
+                }, 0),
+                PlayerConfig.from_dict({"name": "Baseline", "backend": "random"}, 1),
+            ]
+            store.set_players(match_id, [player.public_dict() for player in stored_players])
+            store.close()
+
+            hub = MatchHub(database)
+            hub.watch(match_id)
+            started = threading.Event()
+
+            def fake_run(_store, _match_id, players, sink, **_options):
+                self.assertEqual("fresh-key", players[0].api_key)
+                started.set()
+                sink({"type": "match_failed", "error": "test stop"})
+
+            with mock.patch("agentbga.web.run_match", side_effect=fake_run):
+                resumed = hub.set_paused(match_id, False, resume_players=[
+                    {
+                        "name": "API", "backend": "openai", "model": "m",
+                        "api_key": "fresh-key",
+                    },
+                    {"name": "Baseline", "backend": "random"},
+                ])
+                self.assertEqual("live", resumed["mode"])
+                self.assertTrue(started.wait(2))
+                deadline = time.monotonic() + 2
+                while hub.get(match_id)["running"] and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                time.sleep(0.4)
+
     def test_model_player_requires_nonempty_key(self):
         with tempfile.TemporaryDirectory() as directory:
             hub = MatchHub(Path(directory) / "matches.sqlite3")
@@ -533,6 +807,77 @@ class WebTests(unittest.TestCase):
                     server.server_close()
             self.assertIsNone(response["human_turn"])
             self.assertTrue(finished.wait(2))
+
+    def test_watch_attaches_cli_match_and_follows_store_actions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db = Path(directory) / "matches.sqlite3"
+            store = Store(db)
+            match_id, version, state = store.create(2, 42, "splendor")
+            store.set_players(match_id, [
+                PlayerConfig.from_dict(
+                    {"name": "Grok 4.5", "backend": "grok", "model": "grok-4.5"}, 0,
+                ).public_dict(),
+                PlayerConfig.from_dict(
+                    {"name": "Grok 4.6", "backend": "grok", "model": "grok-4.6"}, 1,
+                ).public_dict(),
+            ])
+            action = store.game(match_id).legal_actions(state, 0)[0]["action"]
+            version, state, _ = store.act(match_id, 0, version, action)
+            store.close()
+
+            hub = MatchHub(db)
+            watched = hub.watch(match_id)
+            self.assertEqual("spectator", watched["mode"])
+            self.assertEqual("splendor", watched["game"])
+            self.assertEqual(1, watched["turn_count"])
+            self.assertEqual("Grok 4.5", watched["players"][0]["name"])
+            self.assertEqual("Grok 4.6", watched["players"][1]["name"])
+            with self.assertRaisesRegex(ValueError, "spectator"):
+                hub.set_paused(match_id, True)
+
+            store = Store(db)
+            _, state, _ = store.load(match_id)
+            action = store.game(match_id).legal_actions(state, 1)[0]["action"]
+            store.act(match_id, 1, version, action)
+            store.close()
+
+            snapshot = hub.get(match_id)
+            deadline = time.monotonic() + 2
+            while snapshot["turn_count"] < 2 and time.monotonic() < deadline:
+                time.sleep(0.05)
+                snapshot = hub.get(match_id)
+            self.assertEqual(2, snapshot["turn_count"])
+            self.assertEqual(match_id, hub.list_tables()[0]["match_id"])
+            self.assertEqual("spectator", hub.list_tables()[0]["mode"])
+
+    def test_http_lists_and_watches_existing_match(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "index.html").write_text("<h1>AgentBGA</h1>", encoding="utf-8")
+            db = root / "matches.sqlite3"
+            store = Store(db)
+            match_id, _, _ = store.create(2, 7, "splendor")
+            store.set_players(match_id, [
+                {"name": "A", "backend": "random"},
+                {"name": "B", "backend": "random"},
+            ])
+            store.close()
+            handler = type("TestWebHandler", (WebHandler,), {
+                "hub": MatchHub(db), "static_dir": root,
+            })
+            server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                base = f"http://127.0.0.1:{server.server_port}"
+                listed = json.load(urllib.request.urlopen(base + "/api/matches"))
+                self.assertEqual(match_id, listed["matches"][0]["match_id"])
+                watched = json.load(urllib.request.urlopen(base + f"/api/matches/{match_id}"))
+                self.assertEqual("spectator", watched["mode"])
+                self.assertEqual("A", watched["players"][0]["name"])
+            finally:
+                server.shutdown()
+                server.server_close()
 
     def test_web_server_refuses_nonlocal_bind_and_missing_build(self):
         with self.assertRaisesRegex(ValueError, "localhost"):

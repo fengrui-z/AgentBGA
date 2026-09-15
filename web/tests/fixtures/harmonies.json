@@ -1,0 +1,744 @@
+{
+  "view": {
+    "game": "harmonies",
+    "rules_version": "libellud-2024-base-1.0",
+    "viewer_seat": 0,
+    "status": "active",
+    "phase": "turn",
+    "active_seat": 0,
+    "turn_count": 1,
+    "completed_turns": 0,
+    "round": 1,
+    "board_side": "A",
+    "nature_spirits": false,
+    "final_round": null,
+    "end_reason": null,
+    "taken_group": 1,
+    "took_card": false,
+    "token_groups": [
+      [
+        "green",
+        "blue",
+        "blue"
+      ],
+      [],
+      [
+        "gray",
+        "blue",
+        "red"
+      ]
+    ],
+    "pending_tokens": [
+      "yellow",
+      "gray",
+      "gray"
+    ],
+    "bag_count": 111,
+    "deck_count": 29,
+    "market": [
+      {
+        "id": "h09",
+        "number": 9,
+        "spirit": false,
+        "points": [
+          5,
+          10,
+          17
+        ],
+        "pattern": [
+          {
+            "q": 0,
+            "r": 0,
+            "stack": [
+              "yellow"
+            ],
+            "animal": false
+          },
+          {
+            "q": 0,
+            "r": -1,
+            "stack": [
+              "base",
+              "red"
+            ],
+            "animal": true
+          },
+          {
+            "q": -1,
+            "r": -1,
+            "stack": [
+              "yellow"
+            ],
+            "animal": false
+          }
+        ],
+        "placed": 0,
+        "remaining": 3,
+        "complete": false,
+        "name": "Animal 09"
+      },
+      {
+        "id": "h17",
+        "number": 17,
+        "spirit": false,
+        "points": [
+          4,
+          8,
+          13
+        ],
+        "pattern": [
+          {
+            "q": 0,
+            "r": 0,
+            "stack": [
+              "base",
+              "red"
+            ],
+            "animal": false
+          },
+          {
+            "q": -1,
+            "r": 0,
+            "stack": [
+              "brown",
+              "green"
+            ],
+            "animal": true
+          }
+        ],
+        "placed": 0,
+        "remaining": 3,
+        "complete": false,
+        "name": "Animal 17"
+      },
+      {
+        "id": "h16",
+        "number": 16,
+        "spirit": false,
+        "points": [
+          4,
+          9,
+          14
+        ],
+        "pattern": [
+          {
+            "q": 0,
+            "r": 0,
+            "stack": [
+              "blue"
+            ],
+            "animal": false
+          },
+          {
+            "q": -1,
+            "r": 0,
+            "stack": [
+              "brown",
+              "green"
+            ],
+            "animal": true
+          },
+          {
+            "q": -1,
+            "r": 1,
+            "stack": [
+              "blue"
+            ],
+            "animal": false
+          }
+        ],
+        "placed": 0,
+        "remaining": 3,
+        "complete": false,
+        "name": "Animal 16"
+      }
+    ],
+    "players": [
+      {
+        "seat": 0,
+        "score": 0,
+        "turns": 0,
+        "score_breakdown": {
+          "trees": 0,
+          "mountains": 0,
+          "fields": 0,
+          "buildings": 0,
+          "water": 0,
+          "animals": 0,
+          "spirits": 0,
+          "total": 0
+        },
+        "empty_spaces": 23,
+        "active_cards": 0,
+        "cells": [
+          {
+            "id": 0,
+            "q": 0,
+            "r": 0,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 1,
+            "q": 0,
+            "r": 1,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 2,
+            "q": 0,
+            "r": 2,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 3,
+            "q": 0,
+            "r": 3,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 4,
+            "q": 0,
+            "r": 4,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 5,
+            "q": 1,
+            "r": 0,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 6,
+            "q": 1,
+            "r": 1,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 7,
+            "q": 1,
+            "r": 2,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 8,
+            "q": 1,
+            "r": 3,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 9,
+            "q": 2,
+            "r": -1,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 10,
+            "q": 2,
+            "r": 0,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 11,
+            "q": 2,
+            "r": 1,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 12,
+            "q": 2,
+            "r": 2,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 13,
+            "q": 2,
+            "r": 3,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 14,
+            "q": 3,
+            "r": -1,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 15,
+            "q": 3,
+            "r": 0,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 16,
+            "q": 3,
+            "r": 1,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 17,
+            "q": 3,
+            "r": 2,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 18,
+            "q": 4,
+            "r": -2,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 19,
+            "q": 4,
+            "r": -1,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 20,
+            "q": 4,
+            "r": 0,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 21,
+            "q": 4,
+            "r": 1,
+            "stack": [],
+            "cube": null
+          },
+          {
+            "id": 22,
+            "q": 4,
+            "r": 2,
+            "stack": [],
+            "cube": null
+          }
+        ],
+        "cards": [],
+        "spirit_choices": []
+      }
+    ],
+    "rules": {
+      "turn": "Take one token group and place every token, in any order. You may take one animal card and settle animals before, between, or after placements. End turn explicitly.",
+      "stacking": "Any color on empty. Gray on 1/2 gray; brown on 1 brown; green on 1/2 brown; red on exactly 1 red/brown/gray. No other stacking. Cubes lock their cell.",
+      "habitat": "Match exact stacks under one of six rotations, never reflection. Buildings require two tokens, with red on red/brown/gray. Only the marked target must be cube-free. Other habitat cells may be shared; cubes stay even if the supporting habitat changes.",
+      "cards": "At most 4 incomplete cards including your spirit; completed cards free a slot. Animal points are the highest uncovered value, not the sum. Unstarted cards score zero.",
+      "scoring": "Trees 1/3/7 by height; mountains 1/3/7 only beside another mountain; each yellow group size 2+ scores 5; each 2-high building beside 3+ distinct top colors scores 5. Bare brown and single red score zero.",
+      "water": "A: longest shortest path within water, counting endpoints: 0/2/5/8/11/15 for lengths 1–6, then +4 per extra token. B: 5 per connected non-water region, including empty cells.",
+      "end": "Trigger at turn end with 2 or fewer empty cells or insufficient bag tokens to refill. Finish the current round so all players have equal turns. Highest score, then most animal cubes (excluding spirits); remaining ties share victory.",
+      "solo": "Three token groups and three market cards. Discard the other six tokens at turn end and refill all groups. If no card was taken, optionally replace one market card at turn end."
+    },
+    "rankings": null,
+    "solo_suns": 3
+  },
+  "actions": [
+    {
+      "id": "harmonies-c2b094df00bf",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 0
+      }
+    },
+    {
+      "id": "harmonies-a0a7ef9d22ef",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 1
+      }
+    },
+    {
+      "id": "harmonies-0a924aaee7e9",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 2
+      }
+    },
+    {
+      "id": "harmonies-a4ff72efefaa",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 3
+      }
+    },
+    {
+      "id": "harmonies-6ec8b8a3fc89",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 4
+      }
+    },
+    {
+      "id": "harmonies-9092e3fa3eb0",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 5
+      }
+    },
+    {
+      "id": "harmonies-dc4c9f6b175c",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 6
+      }
+    },
+    {
+      "id": "harmonies-e2b6235e2625",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 7
+      }
+    },
+    {
+      "id": "harmonies-0855c1345206",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 8
+      }
+    },
+    {
+      "id": "harmonies-3d9ffa2f6292",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 9
+      }
+    },
+    {
+      "id": "harmonies-04092db36f20",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 10
+      }
+    },
+    {
+      "id": "harmonies-94fe9c0cbbff",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 11
+      }
+    },
+    {
+      "id": "harmonies-7c5a580130a2",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 12
+      }
+    },
+    {
+      "id": "harmonies-39ecd76cfa7a",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 13
+      }
+    },
+    {
+      "id": "harmonies-9b78387ae839",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 14
+      }
+    },
+    {
+      "id": "harmonies-7d24304fb15e",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 15
+      }
+    },
+    {
+      "id": "harmonies-7c9080c6ea0d",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 16
+      }
+    },
+    {
+      "id": "harmonies-dc9eb15a27d3",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 17
+      }
+    },
+    {
+      "id": "harmonies-168d762e1235",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 18
+      }
+    },
+    {
+      "id": "harmonies-46dfb30a1e58",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 19
+      }
+    },
+    {
+      "id": "harmonies-f541885f3ddb",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 20
+      }
+    },
+    {
+      "id": "harmonies-abafc81ecb2e",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 21
+      }
+    },
+    {
+      "id": "harmonies-12285f68bbb2",
+      "action": {
+        "type": "place_token",
+        "color": "gray",
+        "cell": 22
+      }
+    },
+    {
+      "id": "harmonies-143b266b851e",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 0
+      }
+    },
+    {
+      "id": "harmonies-b807030d54c2",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 1
+      }
+    },
+    {
+      "id": "harmonies-0e951073b52d",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 2
+      }
+    },
+    {
+      "id": "harmonies-4afc6fd30076",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 3
+      }
+    },
+    {
+      "id": "harmonies-0f3299b4d109",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 4
+      }
+    },
+    {
+      "id": "harmonies-948333a70413",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 5
+      }
+    },
+    {
+      "id": "harmonies-fd4e87146f16",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 6
+      }
+    },
+    {
+      "id": "harmonies-5355174d874c",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 7
+      }
+    },
+    {
+      "id": "harmonies-ee45f5ee9b36",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 8
+      }
+    },
+    {
+      "id": "harmonies-6b0095cc5ace",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 9
+      }
+    },
+    {
+      "id": "harmonies-88bfd65166ec",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 10
+      }
+    },
+    {
+      "id": "harmonies-b7ebcd9e7981",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 11
+      }
+    },
+    {
+      "id": "harmonies-5a5f72e588af",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 12
+      }
+    },
+    {
+      "id": "harmonies-0c4724dbf497",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 13
+      }
+    },
+    {
+      "id": "harmonies-f0a9812b023d",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 14
+      }
+    },
+    {
+      "id": "harmonies-d060784fc5be",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 15
+      }
+    },
+    {
+      "id": "harmonies-53f4b2ab0afb",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 16
+      }
+    },
+    {
+      "id": "harmonies-a2a0a1364f7e",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 17
+      }
+    },
+    {
+      "id": "harmonies-2dc14d886d24",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 18
+      }
+    },
+    {
+      "id": "harmonies-799bdeee997e",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 19
+      }
+    },
+    {
+      "id": "harmonies-9332759e132d",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 20
+      }
+    },
+    {
+      "id": "harmonies-ca8e6b31e3e4",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 21
+      }
+    },
+    {
+      "id": "harmonies-eb429a6d1be0",
+      "action": {
+        "type": "place_token",
+        "color": "yellow",
+        "cell": 22
+      }
+    },
+    {
+      "id": "harmonies-4f92bbf06278",
+      "action": {
+        "type": "take_animal",
+        "card_id": "h09"
+      }
+    },
+    {
+      "id": "harmonies-51f245f42fd2",
+      "action": {
+        "type": "take_animal",
+        "card_id": "h17"
+      }
+    },
+    {
+      "id": "harmonies-7b87d16b5d08",
+      "action": {
+        "type": "take_animal",
+        "card_id": "h16"
+      }
+    }
+  ]
+}

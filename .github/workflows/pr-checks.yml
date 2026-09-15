@@ -52,6 +52,13 @@ jobs:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -v
 
+      - name: Build and smoke-test installed wheel
+        run: |
+          python -m pip wheel . --no-deps --wheel-dir wheelhouse
+          python -m pip install --force-reinstall wheelhouse/agentbga-*.whl
+          cd "$(mktemp -d)"
+          env -u PYTHONPATH python -c "from agentbga.registry import get_game; assert get_game('ark_nova').describe()['runnable']"
+
   web-tests:
     name: web-tests
     runs-on: ubuntu-latest

@@ -7,6 +7,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import mimetypes
+import os
 from pathlib import Path
 import secrets
 import threading
@@ -15,9 +16,10 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from .agents import PlayerConfig
+from .public_projection import public_action_id
 from .registry import get_game, list_games
 from .runner import run_match
-from .store import Store
+from .store import MatchNotFound, Store
 
 
 class MatchHub:
@@ -33,9 +35,13 @@ class MatchHub:
             version, state, _ = store.load(match_id)
             game = store.game(match_id)
             players = store.players(match_id)
-            return {
+            views = [game.observe(state, seat) for seat in range(state["player_count"])]
+            snapshot = {
                 "match_id": match_id,
                 "game": game.game_id,
+                "rules_version": game.rules_version,
+                "content_pack_id": state.get("content_pack_id"),
+                "content_hash": state.get("content_hash"),
                 "game_description": game.describe(),
                 "version": version,
                 "status": state["status"],
@@ -44,8 +50,30 @@ class MatchHub:
                 "active_seat": state["active_seat"],
                 "phase": state["phase"],
                 "players": players,
-                "views": [game.observe(state, seat) for seat in range(state["player_count"])],
+                "views": views,
             }
+            if state["status"] == "finished":
+                # Final results come from the game itself, including when a
+                # browser reconnects before receiving any live runner events.
+                names = {row["seat"]: row for row in players}
+                snapshot["rankings"] = [
+                    {
+                        **row,
+                        "player": names.get(row["seat"], {}).get("name", f"Seat {row['seat'] + 1}"),
+                        "backend": names.get(row["seat"], {}).get("backend"),
+                    }
+                    for row in game.rankings(state)
+                ]
+            # Only the browser receives this agent-only observer projection. Match
+            # runners continue to call game.observe(state, seat) directly.
+            spectator_observe = getattr(game, "observe_spectator", None)
+            if spectator_observe is None:
+                spectator_observe = getattr(getattr(game, "module", None), "observe_spectator", None)
+            if spectator_observe is not None and all(
+                player["backend"] != "human" for player in players
+            ):
+                snapshot["spectator_view"] = spectator_observe(state)
+            return snapshot
         finally:
             store.close()
 
@@ -56,6 +84,8 @@ class MatchHub:
         )
         return {
             **snapshot,
+            "mode": record.get("mode", "live"),
+            "running": bool(record["running"]),
             "paused": bool(record["paused"]),
             "pause_pending": bool(
                 record["paused"] and record["running"] and not record["at_pause_gate"]
@@ -82,9 +112,16 @@ class MatchHub:
         lightweight = {
             "agent_stream", "harness_output", "harness_tool_call", "harness_tool_result",
         }
-        snapshot = None if event.get("type") in lightweight else self._snapshot(match_id)
+        snapshot = None
+        if event.get("type") not in lightweight:
+            try:
+                snapshot = self._snapshot(match_id)
+            except MatchNotFound:
+                event = {**event, "type": "match_failed", "error": event.get("error") or "match disappeared"}
         with self.condition:
-            record = self.matches[match_id]
+            record = self.matches.get(match_id)
+            if record is None:
+                return
             if event.get("type") in {"match_finished", "match_failed"}:
                 record["running"] = False
                 record["paused"] = False
@@ -98,7 +135,10 @@ class MatchHub:
         game_id = payload.get("game", "splendor")
         if not isinstance(game_id, str):
             raise ValueError("game must be a string")
-        game = get_game(game_id)
+        rules_version = payload.get("rules_version")
+        if rules_version is not None and not isinstance(rules_version, str):
+            raise ValueError("rules_version must be a string")
+        game = get_game(game_id, rules_version)
         game_description = game.describe()
         if not game_description.get("runnable", True):
             raise ValueError(
@@ -108,23 +148,9 @@ class MatchHub:
         player_range = game_description.get("players", {})
         minimum_players = int(player_range.get("minimum", 2))
         maximum_players = int(player_range.get("maximum", 4))
-        if not isinstance(raw_players, list) or not minimum_players <= len(raw_players) <= maximum_players:
-            raise ValueError(
-                f"players must contain {minimum_players} to {maximum_players} entries"
-            )
-        configs: list[PlayerConfig] = []
-        for seat, raw in enumerate(raw_players):
-            if not isinstance(raw, dict):
-                raise ValueError(f"player {seat} must be an object")
-            api_key = raw.get("api_key")
-            public = {key: value for key, value in raw.items() if key != "api_key"}
-            config = PlayerConfig.from_dict(public, seat)
-            subscription_auth = config.backend == "codex" and config.auth_mode == "subscription"
-            if game_description.get("runnable", True) and config.backend not in {"random", "human"} and not subscription_auth and (
-                not isinstance(api_key, str) or not api_key.strip()
-            ):
-                raise ValueError(f"player {seat} requires api_key")
-            configs.append(replace(config, api_key=api_key or None))
+        configs = self._player_configs(
+            raw_players, minimum=minimum_players, maximum=maximum_players,
+        )
         if len({config.name for config in configs}) != len(configs):
             raise ValueError("player names must be unique")
         seed = payload.get("seed")
@@ -140,7 +166,10 @@ class MatchHub:
             raise ValueError("game_config must be an object")
         store = Store(self.db_path)
         try:
-            match_id, _, _ = store.create(len(configs), seed, game_id, game_config)
+            match_id, _, _ = store.create(
+                len(configs), seed, game_id, game_config,
+                rules_version=rules_version,
+            )
             store.set_players(match_id, [config.public_dict() for config in configs])
         finally:
             store.close()
@@ -150,6 +179,7 @@ class MatchHub:
                 "events": [], "snapshot": snapshot, "running": bool(game_description.get("runnable", True)),
                 "paused": False, "at_pause_gate": False,
                 "human_pending": {}, "human_submissions": {},
+                "mode": "live", "configs": configs, "speed_ms": speed_ms,
             }
             record["snapshot"] = self._with_runtime(snapshot, record)
             self.matches[match_id] = record
@@ -162,23 +192,141 @@ class MatchHub:
             thread.start()
         return created_snapshot
 
-    def set_paused(self, match_id: str, paused: bool) -> dict[str, Any]:
+    @staticmethod
+    def _player_configs(
+        raw_players: Any, *, minimum: int, maximum: int,
+    ) -> list[PlayerConfig]:
+        if not isinstance(raw_players, list) or not minimum <= len(raw_players) <= maximum:
+            raise ValueError(f"players must contain {minimum} to {maximum} entries")
+        configs: list[PlayerConfig] = []
+        for seat, raw in enumerate(raw_players):
+            if not isinstance(raw, dict):
+                raise ValueError(f"player {seat} must be an object")
+            api_key = raw.get("api_key")
+            public = {key: value for key, value in raw.items() if key != "api_key"}
+            config = PlayerConfig.from_dict(public, seat)
+            subscription_auth = config.backend in {"codex", "grok"} and config.auth_mode == "subscription"
+            if config.backend == "grok" and subscription_auth and api_key:
+                raise ValueError(f"player {seat} grok subscription auth cannot use api_key")
+            if config.backend not in {"random", "human"} and not subscription_auth and (
+                not isinstance(api_key, str) or not api_key.strip()
+            ):
+                raise ValueError(f"player {seat} requires api_key")
+            configs.append(replace(config, api_key=api_key or None))
+        return configs
+
+    def set_paused(
+        self, match_id: str, paused: bool, resume_players: Any = None,
+    ) -> dict[str, Any]:
+        restart: tuple[list[PlayerConfig], int] | None = None
         with self.condition:
             if match_id not in self.matches:
                 raise KeyError(match_id)
             record = self.matches[match_id]
-            if not record["running"]:
+            if not paused and (record.get("mode") == "spectator" or not record["running"]):
+                snapshot = self._snapshot(match_id)
+                if snapshot["status"] != "active":
+                    raise ValueError("only an active persisted match can be resumed")
+                configs = record.get("configs") or self._resume_player_configs(
+                    match_id, resume_players,
+                )
+                speed_ms = int(record.get("speed_ms", 650))
+                record.update({
+                    "running": True, "paused": False, "at_pause_gate": False,
+                    "human_pending": {}, "human_submissions": {},
+                    "mode": "live", "configs": configs, "speed_ms": speed_ms,
+                })
+                decorated = self._with_runtime(snapshot, record)
+                self._append_locked(record, {
+                    "type": "match_resumed", "match_id": match_id,
+                    "recovered": True,
+                }, decorated)
+                restart = configs, speed_ms
+                self.condition.notify_all()
+            elif record.get("mode") == "spectator":
+                raise ValueError("spectator tables cannot be paused from this process")
+            elif not record["running"]:
                 raise ValueError("match is no longer running")
-            if record["paused"] == paused:
+            else:
+                if record["paused"] == paused:
+                    return dict(record["snapshot"])
+                record["paused"] = paused
+                if not paused:
+                    record["at_pause_gate"] = False
+                snapshot = self._with_runtime(record["snapshot"], record)
+                event_type = "pause_requested" if paused else "match_resumed"
+                self._append_locked(record, {"type": event_type, "match_id": match_id}, snapshot)
+                self.condition.notify_all()
                 return dict(record["snapshot"])
-            record["paused"] = paused
-            if not paused:
-                record["at_pause_gate"] = False
-            snapshot = self._with_runtime(record["snapshot"], record)
-            event_type = "pause_requested" if paused else "match_resumed"
-            self._append_locked(record, {"type": event_type, "match_id": match_id}, snapshot)
-            self.condition.notify_all()
-            return dict(record["snapshot"])
+        if restart is not None:
+            configs, speed_ms = restart
+            threading.Thread(
+                target=self._run, args=(match_id, configs, speed_ms), daemon=True,
+                name=f"agentbga-{match_id}-resumed",
+            ).start()
+        with self.lock:
+            return dict(self.matches[match_id]["snapshot"])
+
+    def _stored_player_configs(self, match_id: str) -> list[PlayerConfig]:
+        store = Store(self.db_path)
+        try:
+            rows = store.players(match_id)
+        finally:
+            store.close()
+        allowed = {
+            "name", "backend", "model", "base_url", "api_key_env", "auth_mode",
+            "wire_api", "reasoning_effort", "series_id", "participant_id",
+        }
+        return [
+            PlayerConfig.from_dict(
+                {key: value for key, value in row.items() if key in allowed and value is not None},
+                int(row["seat"]),
+            )
+            for row in rows
+        ]
+
+    @staticmethod
+    def _has_runtime_credentials(config: PlayerConfig) -> bool:
+        if config.backend in {"random", "human"}:
+            return True
+        if config.backend in {"codex", "grok"} and config.auth_mode == "subscription":
+            return True
+        return bool(config.api_key or os.environ.get(config.api_key_env or ""))
+
+    def _resume_player_configs(
+        self, match_id: str, raw_players: Any,
+    ) -> list[PlayerConfig]:
+        stored = self._stored_player_configs(match_id)
+        if not stored:
+            raise ValueError("persisted match has no player configuration")
+        if raw_players is None:
+            configs = stored
+        else:
+            configs = self._player_configs(
+                raw_players, minimum=len(stored), maximum=len(stored),
+            )
+            identity_fields = (
+                "name", "backend", "model", "base_url", "api_key_env",
+                "auth_mode", "wire_api", "reasoning_effort",
+            )
+            for seat, (config, expected) in enumerate(zip(configs, stored)):
+                if any(
+                    getattr(config, field) != getattr(expected, field)
+                    for field in identity_fields
+                ):
+                    raise ValueError(
+                        f"resume player {seat} does not match the persisted seat configuration"
+                    )
+        missing = [
+            seat for seat, config in enumerate(configs)
+            if not self._has_runtime_credentials(config)
+        ]
+        if missing:
+            raise ValueError(
+                "fresh ephemeral credentials are required to resume model seats: "
+                + ", ".join(str(seat) for seat in missing)
+            )
+        return configs
 
     def _wait_for_turn(self, match_id: str) -> None:
         with self.condition:
@@ -239,15 +387,19 @@ class MatchHub:
                 raise ValueError("human turn is stale or belongs to another seat")
             if pending["version"] != expected_version:
                 raise ValueError("human turn is stale or belongs to another seat")
-            legal_ids = {item["id"] for item in pending["legal_actions"]}
-            if action_id not in legal_ids:
+            legal_by_id = {item["id"]: item["action"] for item in pending["legal_actions"]}
+            if action_id not in legal_by_id:
                 raise ValueError("action_id is not legal for the current human turn")
             record["human_submissions"][seat] = action_id
             del record["human_pending"][seat]
             snapshot = self._with_runtime(record["snapshot"], record)
             self._append_locked(record, {
                 "type": "human_action_submitted", "match_id": match_id,
-                "seat": seat, "version": expected_version, "action_id": action_id,
+                "seat": seat, "version": expected_version,
+                "action_id": public_action_id(
+                    action_id, legal_by_id[action_id], match_id=match_id,
+                    version=expected_version, seat=seat,
+                ),
             }, snapshot)
             self.condition.notify_all()
             return dict(record["snapshot"])
@@ -276,11 +428,129 @@ class MatchHub:
 
     def get(self, match_id: str) -> dict[str, Any]:
         with self.lock:
-            if match_id not in self.matches:
-                raise KeyError(match_id)
-            return dict(self.matches[match_id]["snapshot"])
+            if match_id in self.matches:
+                return dict(self.matches[match_id]["snapshot"])
+        return self.watch(match_id)
+
+    def list_tables(self) -> list[dict[str, Any]]:
+        store = Store(self.db_path)
+        try:
+            tables = store.list_matches()
+        finally:
+            store.close()
+        with self.lock:
+            for table in tables:
+                record = self.matches.get(table["match_id"])
+                table["mode"] = record.get("mode", "store") if record else "store"
+                table["paused"] = bool(record["paused"]) if record else False
+        return tables
+
+    def watch(self, match_id: str) -> dict[str, Any]:
+        """Attach a spectator feed to a match that already exists in SQLite."""
+        with self.condition:
+            if match_id in self.matches:
+                return dict(self.matches[match_id]["snapshot"])
+        try:
+            snapshot = self._snapshot(match_id)
+        except MatchNotFound as error:
+            raise KeyError(match_id) from error
+        store = Store(self.db_path)
+        try:
+            players = {row["seat"]: row for row in store.players(match_id)}
+            rows = store.events(match_id)
+        finally:
+            store.close()
+        record = {
+            "events": [], "snapshot": snapshot, "running": snapshot["status"] == "active",
+            "paused": False, "at_pause_gate": False,
+            "human_pending": {}, "human_submissions": {},
+            "mode": "spectator", "finished_emitted": snapshot["status"] != "active",
+        }
+        record["snapshot"] = self._with_runtime(snapshot, record)
+        for index, row in enumerate(rows):
+            last = index == len(rows) - 1
+            self._append_locked(
+                record, self._ui_event_from_store(row, players),
+                record["snapshot"] if last else None,
+            )
+        if snapshot["status"] != "active":
+            self._append_locked(
+                record, self._finished_event(match_id, snapshot), record["snapshot"],
+            )
+        with self.condition:
+            if match_id in self.matches:
+                return dict(self.matches[match_id]["snapshot"])
+            self.matches[match_id] = record
+            created = dict(record["snapshot"])
+        if record["running"]:
+            thread = threading.Thread(
+                target=self._watch_store, args=(match_id,), daemon=True,
+                name=f"agentbga-watch-{match_id}",
+            )
+            thread.start()
+        return created
+
+    def _watch_store(self, match_id: str) -> None:
+        while True:
+            with self.condition:
+                record = self.matches.get(match_id)
+                if record is None or not record["running"]:
+                    return
+                after = record["events"][-1]["seq"] if record["events"] else -1
+            store = Store(self.db_path)
+            try:
+                snapshot = self._snapshot(match_id)
+                players = {row["seat"]: row for row in store.players(match_id)}
+                rows = store.events(match_id, after)
+            except MatchNotFound:
+                self._publish(match_id, {"type": "match_failed", "error": "match disappeared"})
+                return
+            finally:
+                store.close()
+            for row in rows:
+                self._publish(match_id, self._ui_event_from_store(row, players))
+            if snapshot["status"] != "active":
+                with self.condition:
+                    already = bool(self.matches.get(match_id, {}).get("finished_emitted"))
+                    if match_id in self.matches:
+                        self.matches[match_id]["finished_emitted"] = True
+                if not already:
+                    self._publish(match_id, self._finished_event(match_id, snapshot))
+                return
+            time.sleep(0.35)
+
+    @staticmethod
+    def _ui_event_from_store(row: dict[str, Any], players: dict[int, dict[str, Any]]) -> dict[str, Any]:
+        raw = dict(row["event"])
+        seat = row.get("seat") if row.get("seat") is not None else raw.get("seat")
+        identity = players.get(seat, {}) if isinstance(seat, int) else {}
+        if raw.get("type") == "action_accepted":
+            return {
+                "type": "turn", "seat": seat, "player": identity.get("name"),
+                "backend": identity.get("backend"), "model": identity.get("model"),
+                "action": raw.get("action"), "version": row.get("version"),
+            }
+        if identity:
+            raw.setdefault("player", identity.get("name"))
+            raw.setdefault("backend", identity.get("backend"))
+        if row.get("version") is not None:
+            raw.setdefault("version", row["version"])
+        if seat is not None:
+            raw.setdefault("seat", seat)
+        return raw
+
+    @staticmethod
+    def _finished_event(match_id: str, snapshot: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "type": "match_finished", "match_id": match_id, "game": snapshot.get("game"),
+            "version": snapshot.get("version"), "turns": snapshot.get("turn_count"),
+            "decisions": snapshot.get("decision_count", snapshot.get("turn_count")),
+            "players": snapshot.get("players") or [], "rankings": snapshot.get("rankings") or [],
+        }
 
     def events_after(self, match_id: str, after: int, wait: float = 15) -> tuple[list[dict[str, Any]], bool]:
+        if match_id not in self.matches:
+            self.watch(match_id)
         deadline = time.monotonic() + wait
         with self.condition:
             if match_id not in self.matches:
@@ -343,11 +613,21 @@ class WebHandler(BaseHTTPRequestHandler):
             except (ValueError, json.JSONDecodeError) as error:
                 self._json(HTTPStatus.CONFLICT, {"error": "invalid_human_action", "message": str(error)})
             return
-        control = re_match(r"^/api/matches/([a-f0-9]+)/(pause|resume)$", path)
+        control = re_match(r"^/api/matches/([a-f0-9]+)/(pause|resume|watch)$", path)
         if control:
             match_id, action = control
             try:
-                self._json(HTTPStatus.OK, self.hub.set_paused(match_id, action == "pause"))
+                if action == "watch":
+                    self._json(HTTPStatus.OK, self.hub.watch(match_id))
+                else:
+                    payload = self._read_json() if int(self.headers.get("Content-Length", "0")) else {}
+                    resume_players = payload.get("players") if action == "resume" else None
+                    self._json(
+                        HTTPStatus.OK,
+                        self.hub.set_paused(
+                            match_id, action == "pause", resume_players=resume_players,
+                        ),
+                    )
             except KeyError:
                 self._json(HTTPStatus.NOT_FOUND, {"error": "match_not_found"})
             except ValueError as error:
@@ -380,6 +660,9 @@ class WebHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.OK, {
                 "games": [game for game in list_games() if game.get("runnable", True)],
             })
+            return
+        if path == "/api/matches":
+            self._json(HTTPStatus.OK, {"matches": self.hub.list_tables()})
             return
         match = re_match(r"^/api/matches/([a-f0-9]+)(/events)?$", path)
         if match:

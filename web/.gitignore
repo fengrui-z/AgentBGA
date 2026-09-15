@@ -38,3 +38,7 @@ yarn-error.log*
 /.wrangler/
 /outputs/
 /work/
+
+# Local AgentBGA runtime state and incremental compiler cache
+/.agentbga/
+/tsconfig.tsbuildinfo

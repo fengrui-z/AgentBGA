@@ -11,6 +11,17 @@ import stat
 import time
 from typing import Any
 
+from .agent_context import (
+    CONTEXT_V1,
+    CONTEXT_V2,
+    inspect_card,
+    inspect_history,
+    inspect_map,
+    inspect_played_cards,
+    inspect_rules,
+    project_legal_actions,
+)
+
 
 def _atomic_open_flags() -> int:
     if not hasattr(os, "O_NOFOLLOW") or os.open not in os.supports_dir_fd:
@@ -153,7 +164,10 @@ def _create_text_at(root: Path, name: str, label: str, content: str) -> None:
 
 def _load(path: Path) -> dict[str, Any]:
     value = json.loads(_read_text_at(path.parent, path.name, "seat context"))
-    if not isinstance(value, dict) or value.get("schema_version") != "agentbga.seat-context.v1":
+    if (
+        not isinstance(value, dict)
+        or value.get("schema_version") not in {CONTEXT_V1, CONTEXT_V2}
+    ):
         raise ValueError("invalid seat context")
     return value
 
@@ -170,12 +184,24 @@ def call_tool(
     context_path: Path, tool: str, arguments: dict[str, Any] | None = None, *,
     notes_root: Path | None = None,
 ) -> Any:
-    arguments = arguments or {}
+    arguments = {} if arguments is None else arguments
+    if not isinstance(arguments, dict):
+        raise ValueError("tool arguments must be an object")
     context = _load(context_path)
     if tool == "observe":
         result = context["observation"]
     elif tool == "legal_actions":
-        result = context["legal_actions"]
+        result = project_legal_actions(context, arguments)
+    elif tool == "inspect_card":
+        result = inspect_card(context, arguments)
+    elif tool == "inspect_map":
+        result = inspect_map(context, arguments)
+    elif tool == "inspect_played_cards":
+        result = inspect_played_cards(context, arguments)
+    elif tool == "inspect_history":
+        result = inspect_history(context, arguments)
+    elif tool == "inspect_rules":
+        result = inspect_rules(context, arguments)
     elif tool == "submit_action":
         action_id = arguments.get("action_id")
         legal_ids = {item["id"] for item in context["legal_actions"]}
@@ -213,7 +239,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--context", required=True)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("observe")
-    commands.add_parser("legal-actions")
+    legal = commands.add_parser("legal-actions")
+    legal.add_argument("--filters", type=json.loads, default={})
+    legal.add_argument("--group")
+    legal.add_argument("--cursor", type=int)
+    legal.add_argument("--limit", type=int)
     submit = commands.add_parser("submit-action")
     submit.add_argument("--action-id", required=True)
     args = parser.parse_args(argv)
@@ -222,6 +252,11 @@ def main(argv: list[str] | None = None) -> int:
         tool, arguments = "observe", {}
     elif args.command == "legal-actions":
         tool, arguments = "legal_actions", {}
+        if args.filters:
+            arguments["filters"] = args.filters
+        for key in ("group", "cursor", "limit"):
+            if getattr(args, key) is not None:
+                arguments[key] = getattr(args, key)
     else:
         tool, arguments = "submit_action", {"action_id": args.action_id}
     result = call_tool(context_path, tool, arguments)

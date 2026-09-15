@@ -100,13 +100,14 @@ def normalize_token_usage(raw: Any, *, source: str) -> TokenUsageSample | None:
             return None
         return TokenUsageSample(input_tokens, cached, 0, output, reasoning, source)
 
-    # Anthropic separates cache reads/creation from ordinary input. Codex and
-    # Responses-style APIs instead include cached_input_tokens inside input_tokens.
+    # Anthropic and Grok Build separate cache reads/creation from ordinary
+    # input. Codex and Responses-style APIs include cached input inside
+    # input_tokens instead.
     if any(key in raw for key in ("input_tokens", "output_tokens")):
         ordinary_input = _count(raw.get("input_tokens"))
         cache_read = _count(raw.get("cache_read_input_tokens"))
         cache_write = _count(raw.get("cache_creation_input_tokens"))
-        if (cache_read or cache_write) and source.split(".", 1)[0] == "claude":
+        if (cache_read or cache_write) and source.split(".", 1)[0] in {"claude", "grok"}:
             input_tokens = ordinary_input + cache_read + cache_write
             cached = cache_read
         else:
@@ -120,7 +121,10 @@ def normalize_token_usage(raw: Any, *, source: str) -> TokenUsageSample | None:
                 _count(raw.get("cache_write_input_tokens")) or cache_write,
             )
         output = _count(raw.get("output_tokens"))
-        reasoning = min(output, _count(raw.get("reasoning_output_tokens")))
+        reasoning = min(
+            output,
+            _count(raw.get("reasoning_output_tokens")) or _count(raw.get("reasoning_tokens")),
+        )
         if source.split(".", 1)[0] == "qwen":
             # Qwen's aggregate total includes thinking tokens while
             # output_tokens contains candidates only.
@@ -169,6 +173,12 @@ def harness_usage_samples(backend: str, payload: Any) -> list[TokenUsageSample]:
         # contains the non-interactive run aggregate. Count only the latter.
         if event_type == "result":
             candidates.append((payload.get("usage"), "qwen.result"))
+    elif backend == "cursor":
+        if event_type == "result":
+            candidates.append((payload.get("usage"), "cursor.result"))
+    elif backend == "grok":
+        if event_type in {"end", "error"}:
+            candidates.append((payload.get("usage"), f"grok.{event_type}"))
 
     result = []
     for raw, source in candidates:

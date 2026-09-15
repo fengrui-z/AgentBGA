@@ -20,10 +20,17 @@ class AgentError(RuntimeError):
 
 
 HARNESS_BACKENDS = frozenset({
-    "claude", "pi", "qwen", "codex", "opencode", "dsh", "hermes", "minimal",
+    "claude", "pi", "qwen", "codex", "cursor", "grok", "opencode", "dsh", "hermes",
+    "minimal",
 })
+HARNESS_EXECUTABLES = {"cursor": "cursor-agent"}
 HARNESS_REASONING_EFFORT = "max"
 REASONING_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "max", "xhigh"})
+
+
+def harness_executable_name(backend: str) -> str:
+    """Return the installed command name for a harness backend."""
+    return HARNESS_EXECUTABLES.get(backend, backend)
 
 
 @dataclass(frozen=True)
@@ -59,22 +66,26 @@ class PlayerConfig:
         if not name:
             raise ValueError(f"player {seat} name cannot be empty")
         model = value.get("model")
+        if backend == "grok" and value.get("auth_mode") == "subscription" and not model:
+            model = "grok-4.6"
         if backend not in {"random", "human"} and not model:
             raise ValueError(f"player {seat} using {backend} requires model")
         auth_mode = value.get("auth_mode")
         if auth_mode is not None:
-            if backend != "codex":
-                raise ValueError(f"player {seat} auth_mode is only supported by the codex backend")
+            if backend not in {"codex", "grok"}:
+                raise ValueError(f"player {seat} auth_mode is only supported by the codex backend or grok backend")
             if not isinstance(auth_mode, str) or auth_mode.lower() not in {"api_key", "subscription"}:
                 raise ValueError(f"player {seat} auth_mode must be api_key or subscription")
             auth_mode = auth_mode.lower()
         elif backend == "codex":
             auth_mode = "api_key"
         if auth_mode == "subscription":
+            if backend == "grok" and value.get("wire_api"):
+                raise ValueError(f"player {seat} grok subscription auth cannot use wire_api")
             if value.get("base_url"):
-                raise ValueError(f"player {seat} codex subscription auth cannot use base_url")
+                raise ValueError(f"player {seat} {backend} subscription auth cannot use base_url")
             if value.get("api_key_env"):
-                raise ValueError(f"player {seat} codex subscription auth cannot use api_key_env")
+                raise ValueError(f"player {seat} {backend} subscription auth cannot use api_key_env")
         defaults = {
             "openai": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
             "anthropic": ("https://api.anthropic.com", "ANTHROPIC_API_KEY"),
@@ -83,6 +94,8 @@ class PlayerConfig:
             "pi": ("https://api.openai.com/v1", "AGENTBGA_API_KEY"),
             "qwen": ("https://coding.dashscope.aliyuncs.com/v1", "BAILIAN_CODING_PLAN_API_KEY"),
             "codex": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
+            "cursor": (None, "CURSOR_API_KEY"),
+            "grok": ("https://api.x.ai/v1", "XAI_API_KEY"),
             "opencode": (None, "DEEPSEEK_API_KEY"),
             "dsh": ("https://api.deepseek.com", "DEEPSEEK_API_KEY"),
             "hermes": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
@@ -134,7 +147,7 @@ class PlayerConfig:
                     f"player {seat} qwen reasoning_effort cannot be none; "
                     "Qwen Code does not expose a no-reasoning effort"
                 )
-        elif backend in HARNESS_BACKENDS:
+        elif backend in HARNESS_BACKENDS and not (backend == "grok" and auth_mode == "subscription"):
             reasoning_effort = HARNESS_REASONING_EFFORT
         series_id = value.get("series_id")
         if series_id is not None:
@@ -198,8 +211,10 @@ def load_players_config(path: str) -> list[PlayerConfig]:
     result = [PlayerConfig.from_dict(player, seat) for seat, player in enumerate(players) if isinstance(player, dict)]
     if len(result) != len(players):
         raise ValueError("every player entry must be an object")
-    if len(result) not in (2, 3, 4):
-        raise ValueError("players config requires 2, 3, or 4 players")
+    # Game plugins validate their own supported range when a match is created.
+    # Accept the platform-wide range here so one-player plugins remain usable.
+    if not 1 <= len(result) <= 7:
+        raise ValueError("players config requires 1 to 7 players")
     if len({player.name for player in result}) != len(result):
         raise ValueError("player names must be unique within a match")
     return result

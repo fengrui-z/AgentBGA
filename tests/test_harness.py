@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import tomllib
 import unittest
 from unittest import mock
 
@@ -85,6 +86,16 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual("AGENTBGA_API_KEY", pi.api_key_env)
         self.assertEqual("BAILIAN_CODING_PLAN_API_KEY", qwen.api_key_env)
         self.assertEqual("https://coding.dashscope.aliyuncs.com/v1", qwen.base_url)
+        cursor = PlayerConfig.from_dict({
+            "name": "Cursor CLI", "backend": "cursor", "model": "gpt-test",
+        }, 4)
+        grok = PlayerConfig.from_dict({
+            "name": "Grok Build", "backend": "grok", "model": "grok-4.6",
+        }, 4)
+        self.assertEqual("CURSOR_API_KEY", cursor.api_key_env)
+        self.assertIsNone(cursor.base_url)
+        self.assertEqual("XAI_API_KEY", grok.api_key_env)
+        self.assertEqual("https://api.x.ai/v1", grok.base_url)
         self.assertEqual("max", codex.reasoning_effort)
         self.assertEqual("max", opencode.reasoning_effort)
         dsh = PlayerConfig.from_dict({
@@ -175,7 +186,11 @@ class HarnessTests(unittest.TestCase):
                 call_tool(path, "submit_action", {"action_id": "a-good"})
 
     def test_mcp_exposes_only_seat_tools(self):
-        self.assertEqual({"observe", "legal_actions", "submit_action", "read_notes", "write_notes"}, {tool["name"] for tool in TOOLS})
+        self.assertEqual({
+            "observe", "legal_actions", "inspect_card", "inspect_rules", "inspect_map",
+            "inspect_played_cards", "inspect_history", "submit_action",
+            "read_notes", "write_notes",
+        }, {tool["name"] for tool in TOOLS})
 
     def test_notes_ignore_mutable_context_path_and_reject_symlink_escape(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -395,7 +410,7 @@ class HarnessTests(unittest.TestCase):
             )
             responses = [json.loads(line) for line in completed.stdout.splitlines()]
             self.assertEqual("agentbga-seat", responses[0]["result"]["serverInfo"]["name"])
-            self.assertEqual(5, len(responses[1]["result"]["tools"]))
+            self.assertEqual(10, len(responses[1]["result"]["tools"]))
 
     def test_harness_commands_resume_sessions(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", side_effect=lambda name: f"/bin/{name}"):
@@ -437,6 +452,11 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual(claude.session.session_id, command[command.index("--resume") + 1])
             self.assertIn("mcp__agentbga__observe", command)
             self.assertIn("mcp__agentbga__legal_actions", command)
+            self.assertIn("mcp__agentbga__inspect_card", command)
+            self.assertIn("mcp__agentbga__inspect_rules", command)
+            self.assertIn("mcp__agentbga__inspect_map", command)
+            self.assertIn("mcp__agentbga__inspect_played_cards", command)
+            self.assertIn("mcp__agentbga__inspect_history", command)
             self.assertIn("mcp__agentbga__submit_action", command)
             self.assertEqual("max", command[command.index("--effort") + 1])
             self.assertEqual(["--", "turn"], command[-2:])
@@ -469,6 +489,32 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("turn", command[command.index("--prompt") + 1])
             self.assertEqual("low", qwen._native_reasoning_effort())
 
+            cursor_config = PlayerConfig.from_dict({
+                "name": "Cursor CLI", "backend": "cursor", "model": "gpt-test",
+            }, 4)
+            cursor = HarnessAgent(cursor_config, "match", 4, runs_root=directory)
+            self.assertEqual("/bin/cursor-agent", cursor.binary)
+            cursor.session.session_id = "cursor-session"
+            command = cursor._command("turn")
+            self.assertEqual("stream-json", command[command.index("--output-format") + 1])
+            self.assertIn("--approve-mcps", command)
+            self.assertIn("--trust", command)
+            self.assertEqual("cursor-session", command[command.index("--resume") + 1])
+
+            grok_config = PlayerConfig.from_dict({
+                "name": "Grok Build", "backend": "grok", "model": "grok-4.6",
+                "reasoning_effort": "xhigh",
+            }, 4)
+            grok = HarnessAgent(grok_config, "match", 4, runs_root=directory)
+            grok.session.session_id = "grok-session"
+            command = grok._command("turn")
+            self.assertEqual("streaming-json", command[command.index("--output-format") + 1])
+            self.assertEqual("agentbga", command[command.index("--sandbox") + 1])
+            self.assertEqual("MCPTool(agentbga__*)", command[command.index("--allow") + 1])
+            self.assertEqual("xhigh", command[command.index("--effort") + 1])
+            self.assertEqual("grok-session", command[command.index("--resume") + 1])
+            self.assertEqual("turn", command[command.index("-p") + 1])
+
             dsh_config = PlayerConfig.from_dict({
                 "name": "DeepSeek Harness", "backend": "dsh", "model": "deepseek-v4-flash",
             }, 4)
@@ -497,7 +543,7 @@ class HarnessTests(unittest.TestCase):
             command = hermes._command("next turn")
             self.assertEqual("hermes-session", command[command.index("--resume") + 1])
 
-    def test_claude_pi_and_qwen_generate_seat_tool_configuration(self):
+    def test_harnesses_generate_seat_tool_configuration(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch("shutil.which", side_effect=lambda name: f"/bin/{name}"):
             for seat, backend, model in ((0, "claude", "claude-test"), (1, "pi", "model-test")):
                 config = PlayerConfig.from_dict({
@@ -558,6 +604,64 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("0", qwen_environment["QWEN_TELEMETRY_ENABLED"])
             self.assertIn("seat-0-qwen/.qwen-home", qwen_environment["QWEN_HOME"])
 
+            cursor = HarnessAgent(PlayerConfig.from_dict({
+                "name": "Cursor CLI", "backend": "cursor", "model": "gpt-test",
+                "api_key_env": "CURSOR_TEST_KEY",
+            }, 0), "match-cursor", 0, runs_root=directory)
+            cursor._prepare_turn({"state_version": 1}, LEGAL)
+            cursor_mcp = json.loads(
+                (cursor.session.workspace / ".cursor" / "mcp.json").read_text()
+            )
+            self.assertIn("agentbga", cursor_mcp["mcpServers"])
+            cursor_policy = json.loads(
+                (cursor.session.workspace / ".cursor" / "cli.json").read_text()
+            )
+            self.assertEqual(1, cursor_policy["version"])
+            self.assertIn("Shell(*)", cursor_policy["permissions"]["deny"])
+            cursor_global = json.loads(
+                (cursor.session.workspace / ".cursor-data" / "cli-config.json").read_text()
+            )
+            self.assertFalse(cursor_global["editor"]["vimMode"])
+            self.assertFalse(cursor_global["attribution"]["attributeCommitsToAgent"])
+            with mock.patch.dict(os.environ, {
+                "CURSOR_TEST_KEY": "cursor-secret", "OTHER_TOKEN": "hidden", "PATH": "/bin",
+            }, clear=True):
+                cursor_environment = cursor._environment()
+            self.assertEqual("cursor-secret", cursor_environment["CURSOR_API_KEY"])
+            self.assertNotIn("OTHER_TOKEN", cursor_environment)
+            self.assertIn("seat-0-cursor/.cursor-data", cursor_environment["CURSOR_DATA_DIR"])
+            self.assertEqual(
+                cursor_environment["CURSOR_DATA_DIR"], cursor_environment["CURSOR_CONFIG_DIR"],
+            )
+
+            grok = HarnessAgent(PlayerConfig.from_dict({
+                "name": "Grok Build", "backend": "grok", "model": "grok-4.6",
+                "api_key_env": "GROK_TEST_KEY",
+            }, 0), "match-grok", 0, runs_root=directory)
+            grok._prepare_turn({"state_version": 1}, LEGAL)
+            grok_home = grok.session.workspace / ".grok-home"
+            grok_toml = (grok_home / "config.toml").read_text()
+            self.assertIn("[mcp_servers.agentbga]", grok_toml)
+            self.assertIn("mcps = false", grok_toml)
+            grok_settings = tomllib.loads(grok_toml)
+            self.assertFalse(grok_settings["features"]["telemetry"])
+            self.assertTrue(grok_settings["mcp_servers"]["agentbga"]["enabled"])
+            grok_sandbox = (grok_home / "sandbox.toml").read_text()
+            self.assertIn("[profiles.agentbga]", grok_sandbox)
+            self.assertIn("extends = \"strict\"", grok_sandbox)
+            self.assertIn(str(grok.session.runtime), grok_sandbox)
+            sandbox_settings = tomllib.loads(grok_sandbox)["profiles"]["agentbga"]
+            self.assertEqual("strict", sandbox_settings["extends"])
+            self.assertIn(str(grok.session.runtime), sandbox_settings["read_write"])
+            with mock.patch.dict(os.environ, {
+                "GROK_TEST_KEY": "grok-secret", "OTHER_TOKEN": "hidden", "PATH": "/bin",
+            }, clear=True):
+                grok_environment = grok._environment()
+            self.assertEqual("grok-secret", grok_environment["XAI_API_KEY"])
+            self.assertNotIn("OTHER_TOKEN", grok_environment)
+            self.assertEqual("0", grok_environment["GROK_TELEMETRY_ENABLED"])
+            self.assertIn("seat-0-grok/.grok-home", grok_environment["GROK_HOME"])
+
             opencode = HarnessAgent(PlayerConfig.from_dict({
                 "name": "OpenCode", "backend": "opencode", "model": "custom-model",
                 "base_url": "https://proxy.example/v1", "api_key_env": "CUSTOM_KEY",
@@ -568,8 +672,27 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual("{env:CUSTOM_KEY}", configured["provider"]["agentbga"]["options"]["apiKey"])
             # Reasoning is controlled explicitly, not inferred from the endpoint URL.
             variant = configured["provider"]["agentbga"]["models"]["custom-model"]["variants"]["max"]
-            self.assertEqual("max", variant["reasoning_effort"])
-            self.assertIn("agentbga/custom-model", opencode._command("turn"))
+            self.assertEqual("max", variant["reasoningEffort"])
+            opencode_command = opencode._command("turn")
+            self.assertIn("agentbga/custom-model", opencode_command)
+            self.assertIn("--print-logs", opencode_command)
+            self.assertIn("--title=AgentBGA-seat-1", opencode_command)
+            self.assertNotIn("read", configured["permission"])
+            self.assertNotIn("edit", configured["permission"])
+            opencode_environment = opencode._environment()
+            self.assertEqual(
+                str(opencode.session.workspace / "opencode.json"),
+                opencode_environment["OPENCODE_CONFIG"],
+            )
+            self.assertEqual("1", opencode_environment["OPENCODE_DISABLE_PROJECT_CONFIG"])
+            self.assertEqual(
+                str(opencode.session.runtime / "turn-context.json"),
+                configured["mcp"]["agentbga"]["command"][4],
+            )
+            self.assertEqual(
+                str(opencode.session.workspace),
+                configured["mcp"]["agentbga"]["command"][6],
+            )
 
             proxied_deepseek = HarnessAgent(PlayerConfig.from_dict({
                 "name": "OpenCode", "backend": "opencode", "model": "deepseek-v4-flash",
@@ -591,7 +714,7 @@ class HarnessTests(unittest.TestCase):
             non_deepseek_url._prepare_turn({"state_version": 1}, LEGAL)
             non_deepseek_config = json.loads((non_deepseek_url.session.workspace / "opencode.json").read_text())
             non_deepseek_variant = non_deepseek_config["provider"]["agentbga"]["models"]["deepseek-v4-flash"]["variants"]["high"]
-            self.assertEqual("high", non_deepseek_variant["reasoning_effort"])
+            self.assertEqual("high", non_deepseek_variant["reasoningEffort"])
             self.assertNotIn("thinking", non_deepseek_variant)
             self.assertIn("--thinking", non_deepseek_url._command("turn"))
 
@@ -603,7 +726,7 @@ class HarnessTests(unittest.TestCase):
             glm._prepare_turn({"state_version": 1}, LEGAL)
             glm_config = json.loads((glm.session.workspace / "opencode.json").read_text())
             glm_variant = glm_config["provider"]["agentbga"]["models"]["glm-5.2"]["variants"]["high"]
-            self.assertEqual("high", glm_variant["reasoning_effort"])
+            self.assertEqual("high", glm_variant["reasoningEffort"])
             self.assertTrue(glm_variant["tool_stream"])
 
             kimi = HarnessAgent(PlayerConfig.from_dict({
@@ -824,6 +947,23 @@ class HarnessTests(unittest.TestCase):
         }
         self.assertEqual("qwen text", HarnessAgent._event_text(qwen_message))
         self.assertEqual("qwen-session", HarnessAgent._event_session_id(qwen_message))
+        self.assertEqual("cursor text", HarnessAgent._event_text({
+            "type": "assistant", "session_id": "cursor-session",
+            "message": {"content": [{"type": "text", "text": "cursor text"}]},
+        }))
+        self.assertEqual("grok text", HarnessAgent._event_text({
+            "type": "text", "data": "grok text",
+        }))
+        self.assertEqual("grok-session", HarnessAgent._event_session_id({
+            "type": "end", "sessionId": "grok-session",
+        }))
+        self.assertEqual("", HarnessAgent._event_text({
+            "type": "end", "text": "do not duplicate final text",
+        }))
+        self.assertEqual(("submit_action", {"action_id": "a-test"}), HarnessAgent._tool_details({
+            "type": "tool_call", "toolName": "submit_action",
+            "rawInput": {"action_id": "a-test"},
+        }))
         self.assertEqual(("submit_action", {"action_id": "a-test"}), HarnessAgent._tool_details({
             "type": "assistant",
             "message": {"content": [{

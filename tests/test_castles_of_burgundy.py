@@ -1,8 +1,12 @@
 import random
+from pathlib import Path
+import tempfile
 import unittest
 from collections import Counter, deque
 
 from agentbga import castles_of_burgundy as burgundy
+from agentbga.agent_context import prepare_seat_context
+from agentbga.seat_tool import call_tool
 
 
 class CastlesOfBurgundyTests(unittest.TestCase):
@@ -217,6 +221,72 @@ class CastlesOfBurgundyTests(unittest.TestCase):
         self.assertEqual("finished", state["status"])
         self.assertEqual(50, state["turn_count"])
         burgundy.validate_state(state)
+
+    def test_agent_observation_is_grouped_without_losing_board_information(self):
+        state = burgundy.new_game(2, 29)
+        seat = state["active_seat"]
+        observation = burgundy.observe(state, seat)
+        observation["state_version"] = 7
+        legal = burgundy.legal_actions(state, seat)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "turn-context.json"
+            prepare_seat_context(
+                path, match_id="burgundy-test", seat=seat, version=7,
+                observation=observation, legal=legal,
+            )
+            view = call_tool(path, "observe")
+
+        self.assertEqual("castles_of_burgundy", view["game"])
+        self.assertEqual(7, view["state_version"])
+        self.assertEqual(observation["remaining_dice"], view["dice"]["remaining_dice"])
+        self.assertEqual(observation["depots"], view["market"]["depots"])
+        self.assertEqual(
+            observation["players"][seat]["duchy"],
+            view["players"][seat]["tiles"]["duchy"],
+        )
+        self.assertNotIn("depots", view)
+        self.assertNotIn("round_dice", view)
+        self.assertEqual(
+            Counter(item["action"]["type"] for item in legal),
+            Counter({item["group"]: item["count"] for item in view["legal_action_groups"]}),
+        )
+
+    def test_agent_legal_actions_support_groups_filters_and_original_ids(self):
+        state = burgundy.new_game(2, 31)
+        seat = state["active_seat"]
+        state["players"][seat]["workers"] = 6
+        observation = burgundy.observe(state, seat)
+        observation["state_version"] = 9
+        legal = burgundy.legal_actions(state, seat)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "turn-context.json"
+            context = prepare_seat_context(
+                path, match_id="burgundy-test", seat=seat, version=9,
+                observation=observation, legal=legal,
+            )
+            target = next(
+                item for item in context["legal_actions"]
+                if item["type"] == "take_tile" and item["source"] == "die"
+            )
+            tile_color = burgundy.TILES[target["tile_id"]]["color"]
+            result = call_tool(path, "legal_actions", {"filters": {
+                "type": "take_tile",
+                "source": "die",
+                "die_index": target["die_index"],
+                "depot": target["depot"],
+                "tile_color": tile_color,
+                "max_workers": target["workers"],
+            }})
+            grouped = call_tool(path, "legal_actions", {"group": "take_tile"})
+            accepted = call_tool(path, "submit_action", {"action_id": target["id"]})
+
+        self.assertIn(target["id"], {item["id"] for item in result["actions"]})
+        self.assertTrue(all(item["type"] == "take_tile" for item in grouped["actions"]))
+        self.assertEqual(
+            {item["id"] for item in context["legal_actions"] if item["type"] == "take_tile"},
+            {item["id"] for item in grouped["actions"]},
+        )
+        self.assertTrue(accepted["accepted"])
 
 
 if __name__ == "__main__":

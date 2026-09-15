@@ -14,8 +14,10 @@ import sys
 import time
 from typing import Any, Callable
 
-from .agents import AgentError, PlayerConfig, StreamSink
+from .agent_context import CONTEXT_V2, prepare_seat_context
+from .agents import AgentError, PlayerConfig, StreamSink, harness_executable_name
 from .memory import memory_identity, stable_session_id
+from .legal_action_query import QUERY_DESCRIPTION, query_schema
 from .usage import (
     TokenUsageAccumulator,
     TokenUsageSample,
@@ -39,6 +41,11 @@ Play by using the agentbga MCP tools. Do not inspect the parent project, databas
 Hidden opponent information is unavailable by design.
 
 Call observe, then legal_actions, then commit exactly one choice with submit_action.
+If legal_actions returns groups or next_cursor, use its filters/group/cursor parameters to
+retrieve concrete action IDs. Keep the same filters when paging. Do not read output files.
+The default observation is compact. Use inspect_card, inspect_rules, inspect_map,
+inspect_played_cards, or inspect_history when those details are relevant. Never guess
+an action, building, income, reward, keyword, or card rule that those tools can answer.
 You must call submit_action exactly once for this decision step before finishing. A player turn may
 contain later decision steps with the same active seat. You may keep strategic notes inside this seat
 workspace for later decisions and turns. After submitting, briefly report completion.
@@ -57,14 +64,99 @@ async function audit(tool: string, args: object, result: unknown) {
   await appendFile(auditPath, JSON.stringify({ tool, arguments: args, result, created_at: Date.now() / 1000 }) + "\n");
 }
 function result(value: unknown) { return { content: [{ type: "text", text: JSON.stringify(value) }], details: value }; }
+/* LEGAL_QUERY_IMPLEMENTATION */
+function pageLegal(value: any, args: any) {
+  if (value.legal_action_query) return filteredLegal(value, args ?? {});
+  if (args?.filters !== undefined) throw new Error("legal action filters are not supported for this game");
+  const actions = value.legal_actions || [];
+  if (value.schema_version !== "agentbga.seat-context.v2") return actions;
+  const group = args?.group;
+  if (group === undefined && actions.length > 20) return {
+    state_version: value.version, mode: "groups", total: actions.length,
+    groups: value.legal_action_groups || [],
+    instruction: "Call legal_actions again with a group to list concrete action IDs."
+  };
+  const selected = actions.filter((item: any) => group === undefined || item._group === group);
+  const cursor = Number.isInteger(args?.cursor) && args.cursor >= 0 ? args.cursor : 0;
+  const limit = Math.max(1, Math.min(50, Number.isInteger(args?.limit) ? args.limit : 20));
+  const page = selected.slice(cursor, cursor + limit).map((item: any) => {
+    const { _group, ...visible } = item; return visible;
+  });
+  const next = cursor + page.length;
+  return { state_version: value.version, mode: "actions", group: group ?? null,
+    total: selected.length, cursor, next_cursor: next < selected.length ? next : null, actions: page };
+}
+function integerArg(value: unknown, fallback: number) {
+  return Number.isInteger(value) && Number(value) >= 0 ? Number(value) : fallback;
+}
+function rewardExplanation(effect: any) {
+  if (!effect) return null;
+  if (effect.type === "gain_money") return `Immediately gain ${effect.amount} money when covered.`;
+  if (effect.type === "gain_x_token") return `Immediately gain ${effect.amount} X-token(s) when covered.`;
+  if (effect.type === "gain_reputation") return `Immediately gain ${effect.amount} Reputation when covered.`;
+  if (effect.type === "take_card") return "Immediately take one card from the deck or from within Reputation range.";
+  if (effect.type === "clever") return "Clever: after the current action finishes, move any chosen Action card to slot 1. It does not execute that card.";
+  return null;
+}
 
 export default function (pi: any) {
   pi.registerTool({ name: "observe", label: "Observe", description: "Read your seat-scoped board-game observation.",
     promptSnippet: "Read the current seat-scoped board state", parameters: Type.Object({}, { additionalProperties: false }),
     async execute() { const value = (await context()).observation; await audit("observe", {}, value); return result(value); } });
-  pi.registerTool({ name: "legal_actions", label: "Legal actions", description: "List legal action IDs for this seat and state.",
-    promptSnippet: "List the current legal board-game actions", parameters: Type.Object({}, { additionalProperties: false }),
-    async execute() { const value = (await context()).legal_actions; await audit("legal_actions", {}, value); return result(value); } });
+  pi.registerTool({ name: "legal_actions", label: "Legal actions", description: __LEGAL_QUERY_DESCRIPTION__,
+    promptSnippet: "List/filter current legal actions; follow next_cursor with the same query",
+    parameters: Type.Unsafe(__LEGAL_QUERY_SCHEMA__),
+    async execute(_id: string, args: any) { const value = pageLegal(await context(), args); await audit("legal_actions", args, value); return result(value); } });
+  pi.registerTool({ name: "inspect_card", label: "Inspect card", description: "Read complete details for one visible card reference or bare card id.",
+    parameters: Type.Object({ card_ref: Type.String() }, { additionalProperties: false }),
+    async execute(_id: string, args: any) { const value = await context(); const reference = args.card_ref.startsWith("card:") ? args.card_ref : `card:${args.card_ref}`; const card = value.resources?.cards?.[reference];
+      if (!card) throw new Error("card_ref is unavailable in this seat-scoped observation");
+      await audit("inspect_card", args, card); return result(card); } });
+  pi.registerTool({ name: "inspect_rules", label: "Inspect rules", description: "Read an engine-aligned Ark Nova rules topic instead of guessing from action IDs.",
+    parameters: Type.Object({ topic: Type.Optional(Type.String()) }, { additionalProperties: false }),
+    async execute(_id: string, args: any) { const value = await context(); const catalog = value.resources?.rules;
+      if (!catalog) throw new Error("rules reference is unavailable for this game");
+      if (!args.topic) { const { details, ...index } = catalog; await audit("inspect_rules", args, index); return result(index); }
+      const topic = catalog.details?.[args.topic]; if (!topic) throw new Error(`unknown rules topic: ${args.topic}`);
+      const shown = { game: "ark_nova", topic: args.topic, ...topic };
+      await audit("inspect_rules", args, shown); return result(shown); } });
+  pi.registerTool({ name: "inspect_map", label: "Inspect map", description: "Read a public player map on demand.",
+    parameters: Type.Object({ seat: Type.Optional(Type.Integer({ minimum: 0 })),
+      sections: Type.Optional(Type.Array(Type.Union([Type.Literal("terrain"), Type.Literal("buildings"), Type.Literal("rewards"), Type.Literal("player_board")]), { uniqueItems: true }))
+    }, { additionalProperties: false }),
+    async execute(_id: string, args: any) { const value = await context(); const seat = args.seat ?? value.seat;
+      const resource = value.resources?.maps?.[`map:seat-${seat}`]; if (!resource) throw new Error("map is unavailable");
+      let shown: any = resource; if (args.sections?.length) { const map = resource.map || {}, display = resource.map_display || {}, buildings = map.buildings || [];
+        shown = { seat, map_id: map.id, placement_rules: {
+          current_connectivity_rule: buildings.length ? "Every new building must be adjacent to at least one existing building." : "This is the first building: it must cover at least one map-border hex.",
+          shape_and_occupancy: "The full fixed polyhex must be in bounds on legal unoccupied cells; Build-II cells require the Build card to be upgraded.", rules_topic: "build" } };
+        if (args.sections.includes("terrain")) shown.terrain = { coordinate_system: map.coordinate_system, cells: map.cells || [] };
+        if (args.sections.includes("buildings")) shown.buildings = buildings;
+        if (args.sections.includes("rewards")) { shown.placement_rewards = (display.placement_rewards || []).map((reward: any) => ({ ...reward, effect_explanation: rewardExplanation(reward.effect) })); shown.conservation_rewards = display.conservation_rewards || []; shown.coverage = display.coverage || {}; }
+        if (args.sections.includes("player_board")) shown.player_board = display.player_board || {};
+      } await audit("inspect_map", args, shown); return result(shown); } });
+  pi.registerTool({ name: "inspect_played_cards", label: "Inspect played cards", description: "List public played cards for one seat.",
+    parameters: Type.Object({ seat: Type.Optional(Type.Integer({ minimum: 0 })), kind: Type.Optional(Type.String()),
+      cursor: Type.Optional(Type.Integer({ minimum: 0 })), limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 50 }))
+    }, { additionalProperties: false }),
+    async execute(_id: string, args: any) { const value = await context(); const seat = args.seat ?? value.seat;
+      const zone = value.resources?.zones?.[`zone:seat-${seat}:played`]; if (!zone) throw new Error("played-card zone is unavailable");
+      const cards = (zone.cards || []).filter((card: any) => !args.kind || (card.card_type || card.kind) === args.kind);
+      const cursor = integerArg(args.cursor, 0), limit = Math.max(1, Math.min(50, integerArg(args.limit, 20)));
+      const page = cards.slice(cursor, cursor + limit).map((card: any) => ({ id: card.id, entry_id: card.entry_id,
+        title: card.display_title, type: card.card_type || card.kind, detail_ref: `card:${card.id || card.entry_id}` }));
+      const next = cursor + page.length; const shown = { seat, kind: args.kind ?? null, total: cards.length, cursor,
+        next_cursor: next < cards.length ? next : null, cards: page }; await audit("inspect_played_cards", args, shown); return result(shown); } });
+  pi.registerTool({ name: "inspect_history", label: "Inspect history", description: "Read seat-safe changes accumulated across observations.",
+    parameters: Type.Object({ since_version: Type.Optional(Type.Integer({ minimum: 0 })),
+      cursor: Type.Optional(Type.Integer({ minimum: 0 })), limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 50 }))
+    }, { additionalProperties: false }),
+    async execute(_id: string, args: any) { const value = await context(); let rows = value.history || [];
+      if (args.since_version !== undefined) rows = rows.filter((row: any) => Number(row.to_version ?? -1) > args.since_version);
+      const cursor = integerArg(args.cursor, 0), limit = Math.max(1, Math.min(50, integerArg(args.limit, 20)));
+      const page = rows.slice(cursor, cursor + limit), next = cursor + page.length;
+      const shown = { history_scope: "observed_state_changes", complete_from_version: rows[0]?.from_version ?? null, total: rows.length, cursor,
+        next_cursor: next < rows.length ? next : null, items: page }; await audit("inspect_history", args, shown); return result(shown); } });
   pi.registerTool({ name: "submit_action", label: "Submit action", description: "Commit exactly one current legal action ID.",
     promptSnippet: "Commit exactly one legal action ID", promptGuidelines: ["Call submit_action exactly once before finishing the turn."],
     parameters: Type.Object({ action_id: Type.String() }, { additionalProperties: false }),
@@ -79,6 +171,10 @@ export default function (pi: any) {
     } });
 }
 '''
+PI_EXTENSION = (PI_EXTENSION
+    .replace("/* LEGAL_QUERY_IMPLEMENTATION */", Path(__file__).with_name("legal_action_query.js").read_text(encoding="utf-8"))
+    .replace("__LEGAL_QUERY_SCHEMA__", json.dumps(query_schema()))
+    .replace("__LEGAL_QUERY_DESCRIPTION__", json.dumps(QUERY_DESCRIPTION)))
 
 
 @dataclass
@@ -129,9 +225,10 @@ class HarnessAgent:
         self._match_usage = TokenUsageAccumulator()
         self._turn_usage = TokenUsageAccumulator()
         self._qwen_usage_snapshot: TokenUsageSample | None = None
-        self.binary = shutil.which(config.backend)
+        executable = harness_executable_name(config.backend)
+        self.binary = shutil.which(executable)
         if not self.binary:
-            raise AgentError(f"harness executable not found: {config.backend}")
+            raise AgentError(f"harness executable not found: {executable}")
         self._load_harness_session_state()
 
     def _emit(self, event_type: str, **payload: Any) -> None:
@@ -141,8 +238,10 @@ class HarnessAgent:
                 "seat": self.session.seat, "player": self.config.name, **payload,
             })
 
-    def _native_reasoning_effort(self) -> str:
+    def _native_reasoning_effort(self) -> str | None:
         """Translate the benchmark effort label to a harness-native value."""
+        if self.config.backend == "grok" and self.config.auth_mode == "subscription" and self.config.reasoning_effort is None:
+            return None
         requested = self.config.reasoning_effort or "max"
         if self.config.backend in {"codex", "pi"} and requested == "max":
             return "xhigh"
@@ -176,6 +275,11 @@ class HarnessAgent:
             allowed_tools = [
                 "mcp__agentbga__observe",
                 "mcp__agentbga__legal_actions",
+                "mcp__agentbga__inspect_card",
+                "mcp__agentbga__inspect_rules",
+                "mcp__agentbga__inspect_map",
+                "mcp__agentbga__inspect_played_cards",
+                "mcp__agentbga__inspect_history",
                 "mcp__agentbga__submit_action",
             ]
             command = [self.binary, "--print", "--output-format", "stream-json", "--verbose",
@@ -232,10 +336,38 @@ class HarnessAgent:
                         "--skip-git-repo-check", "--ignore-user-config", "--ignore-rules",
                         *overrides, self.session.session_id, prompt]
             return [self.binary, "exec", *common, "--cd", ".", prompt]
+        if self.config.backend == "cursor":
+            command = [
+                self.binary, "--print", "--trust", "--force", "--approve-mcps",
+                "--output-format", "stream-json", "--model", model,
+            ]
+            if self.session.session_id:
+                command.extend(["--resume", self.session.session_id])
+            return [*command, prompt]
+        if self.config.backend == "grok":
+            command = [
+                self.binary, "--no-auto-update", "--no-alt-screen",
+                "--output-format", "streaming-json",
+                "--permission-mode", "dontAsk",
+                "--allow", "MCPTool(agentbga__*)",
+                "--sandbox", "agentbga",
+                "--tools", "",
+                "--no-plan", "--no-subagents", "--no-memory",
+                "--disable-web-search", "--model", model,
+            ]
+            if reasoning_effort is not None:
+                command.extend(["--effort", reasoning_effort])
+            if self.session.session_id:
+                command.extend(["--resume", self.session.session_id])
+            return [*command, "-p", prompt]
         if self.config.backend == "opencode":
             selected_model = model if "/" in model else f"agentbga/{model}"
-            command = [self.binary, "run", "--pure", "--format", "json", "--model", selected_model,
-                       "--variant", reasoning_effort, "--dir", "."]
+            command = [
+                self.binary, "run", "--pure", "--print-logs", "--log-level", "ERROR",
+                "--format", "json", "--model", selected_model,
+                "--variant", reasoning_effort, "--dir", ".",
+                f"--title=AgentBGA-seat-{self.session.seat + 1}",
+            ]
             # OpenCode's CLI flag controls whether reasoning blocks are shown;
             # provider-specific request options are configured separately below.
             if reasoning_enabled:
@@ -315,6 +447,28 @@ class HarnessAgent:
                     env[self.config.api_key_env or "OPENAI_API_KEY"] = key
                 if self.config.base_url:
                     env["OPENAI_BASE_URL"] = self.config.base_url
+        elif self.config.backend == "cursor":
+            cursor_data = self.session.workspace / ".cursor-data"
+            cursor_data.mkdir(mode=0o700, exist_ok=True)
+            env["CURSOR_DATA_DIR"] = str(cursor_data)
+            env["CURSOR_CONFIG_DIR"] = str(cursor_data)
+            if key:
+                env["CURSOR_API_KEY"] = key
+        elif self.config.backend == "grok":
+            if self.config.auth_mode == "subscription":
+                from .grok_harness import environment
+                if self.config.api_key or self.config.api_key_env or self.config.base_url:
+                    raise AgentError("Grok subscription mode cannot use API keys or endpoint overrides")
+                env = environment(self.session.workspace, source_env, env)
+            grok_home = self.session.workspace / ".grok-home"
+            grok_home.mkdir(mode=0o700, exist_ok=True)
+            env["GROK_HOME"] = str(grok_home)
+            env["GROK_TELEMETRY_ENABLED"] = "0"
+            env["GROK_TELEMETRY_TRACE_UPLOAD"] = "0"
+            env["GROK_TELEMETRY_MIXPANEL_ENABLED"] = "0"
+            env["GROK_FEEDBACK_ENABLED"] = "0"
+            if key:
+                env["XAI_API_KEY"] = key
         elif self.config.backend == "opencode":
             for variable, dirname in (
                 ("XDG_DATA_HOME", ".opencode-data"),
@@ -325,6 +479,13 @@ class HarnessAgent:
                 target = self.session.workspace / dirname
                 target.mkdir(exist_ok=True)
                 env[variable] = str(target)
+            # OpenCode resolves a session against the enclosing Git worktree.
+            # A seat workspace nested below that worktree is therefore not
+            # guaranteed to remain the active config directory after startup.
+            # Pin the generated seat config explicitly and prevent a project
+            # config from replacing its isolated provider/tool permissions.
+            env["OPENCODE_CONFIG"] = str(self.session.workspace / "opencode.json")
+            env["OPENCODE_DISABLE_PROJECT_CONFIG"] = "1"
             if key:
                 env[self.config.api_key_env or "DEEPSEEK_API_KEY"] = key
         elif self.config.backend == "claude":
@@ -400,16 +561,13 @@ class HarnessAgent:
         audit_path.unlink(missing_ok=True)
         self._dsh_metadata_path.unlink(missing_ok=True)
         self._dsh_turn_metadata = {}
-        context = {
-            "schema_version": "agentbga.seat-context.v1",
-            "match_id": self.session.match_id,
-            "seat": self.session.seat,
-            "version": observation.get("state_version", observation.get("turn_count")),
-            "observation": observation,
-            "legal_actions": [{"id": item["id"], **item["action"]} for item in legal],
-        }
-        context_path.write_text(
-            json.dumps(context, ensure_ascii=False, separators=(",", ":")), encoding="utf-8",
+        prepare_seat_context(
+            context_path,
+            match_id=self.session.match_id,
+            seat=self.session.seat,
+            version=observation.get("state_version", observation.get("turn_count")),
+            observation=observation,
+            legal=legal,
         )
         package_root = Path(__file__).resolve().parents[1]
         inherited = os.environ.get("PYTHONPATH")
@@ -419,6 +577,19 @@ class HarnessAgent:
             sys.executable, "-m", "agentbga.seat_mcp", "--context", relative_context,
             "--notes-root", ".",
         ]
+        if self.config.backend == "grok" and self.config.auth_mode == "subscription":
+            from .grok_harness import prepare
+            prepare(self.session.workspace, mcp_command, self._pythonpath,
+                    self.binary, self._environment())
+            return submission_path
+        # OpenCode associates sessions with the surrounding Git worktree, so
+        # its MCP child may run from the repository root instead of the nested
+        # seat workspace. Give that backend location-independent paths.
+        opencode_mcp_command = [
+            sys.executable, "-m", "agentbga.seat_mcp", "--context", str(context_path),
+            "--notes-root", str(self.session.workspace),
+        ]
+        escaped_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
         requested_effort = self.config.reasoning_effort or "max"
         reasoning_effort = self._native_reasoning_effort()
         reasoning_enabled = requested_effort != "none"
@@ -511,9 +682,81 @@ class HarnessAgent:
         (self.session.workspace / "qwen-mcp.json").write_text(
             json.dumps(qwen_mcp, ensure_ascii=False, indent=2), encoding="utf-8",
         )
+        cursor_dir = self.session.workspace / ".cursor"
+        cursor_dir.mkdir(exist_ok=True)
+        cursor_mcp = {"mcpServers": {"agentbga": {
+            "command": mcp_command[0],
+            "args": mcp_command[1:],
+            "env": {"PYTHONPATH": self._pythonpath},
+        }}}
+        (cursor_dir / "mcp.json").write_text(
+            json.dumps(cursor_mcp, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        cursor_permissions = {"version": 1, "permissions": {
+            "allow": [],
+            "deny": ["Shell(*)", "Read(**)", "Write(**)"],
+        }}
+        (cursor_dir / "cli.json").write_text(
+            json.dumps(cursor_permissions, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        cursor_data = self.session.workspace / ".cursor-data"
+        cursor_data.mkdir(mode=0o700, exist_ok=True)
+        cursor_global = {
+            **cursor_permissions,
+            "editor": {"vimMode": False},
+            "attribution": {
+                "attributeCommitsToAgent": False,
+                "attributePRsToAgent": False,
+            },
+        }
+        (cursor_data / "cli-config.json").write_text(
+            json.dumps(cursor_global, ensure_ascii=False, indent=2), encoding="utf-8",
+        )
+        grok_home = self.session.workspace / ".grok-home"
+        grok_home.mkdir(mode=0o700, exist_ok=True)
+        grok_config = (
+            "[cli]\n"
+            "auto_update = false\n"
+            "[features]\n"
+            "telemetry = false\n"
+            "feedback = false\n"
+            "lsp_tools = false\n"
+            "[memory]\n"
+            "enabled = false\n"
+            "[compat.claude]\n"
+            "skills = false\n"
+            "rules = false\n"
+            "agents = false\n"
+            "mcps = false\n"
+            "hooks = false\n"
+            "sessions = false\n"
+            "[compat.cursor]\n"
+            "skills = false\n"
+            "rules = false\n"
+            "agents = false\n"
+            "mcps = false\n"
+            "hooks = false\n"
+            "sessions = false\n"
+            "[mcp_servers.agentbga]\n"
+            f"command = {json.dumps(mcp_command[0])}\n"
+            f"args = [{escaped_args}]\n"
+            f"env = {{ PYTHONPATH = {json.dumps(self._pythonpath)} }}\n"
+            "enabled = true\n"
+            "startup_timeout_sec = 30\n"
+            f"tool_timeout_sec = {max(1, int(self.timeout))}\n"
+        )
+        (grok_home / "config.toml").write_text(grok_config, encoding="utf-8")
+        python_root = Path(sys.executable).resolve().parents[1]
+        readable_roots = list(dict.fromkeys((str(package_root), str(python_root))))
+        grok_sandbox = (
+            "[profiles.agentbga]\n"
+            "extends = \"strict\"\n"
+            f"read_only = {json.dumps(readable_roots)}\n"
+            f"read_write = [{json.dumps(str(self.session.runtime))}]\n"
+        )
+        (grok_home / "sandbox.toml").write_text(grok_sandbox, encoding="utf-8")
         codex_dir = self.session.workspace / ".codex"
         codex_dir.mkdir(exist_ok=True)
-        escaped_args = ", ".join(json.dumps(part) for part in mcp_command[1:])
         provider = ""
         provider_args: list[str] = []
         if self.config.auth_mode == "subscription":
@@ -592,10 +835,11 @@ class HarnessAgent:
             provider_id, model_id = "agentbga", provider_id
         opencode_config: dict[str, Any] = {
             "$schema": "https://opencode.ai/config.json",
-            "mcp": {"agentbga": {"type": "local", "command": mcp_command, "enabled": True}},
+            "mcp": {"agentbga": {
+                "type": "local", "command": opencode_mcp_command, "enabled": True,
+            }},
             "permission": {
-                "*": "deny", "read": "allow", "edit": "allow",
-                "agentbga_*": "allow",
+                "*": "deny", "agentbga_*": "allow",
             },
         }
         if provider_id and model_id:
@@ -603,16 +847,10 @@ class HarnessAgent:
             endpoint = (self.config.base_url or "").lower()
             deepseek_native = "deepseek" in endpoint
             if reasoning_enabled:
-                # The OpenAI SDK consumes camelCase options and serializes
-                # Responses fields. Generic OpenAI-compatible providers receive
-                # variant fields as raw request-body extensions, so use the
-                # snake_case spelling expected by DashScope and similar APIs.
-                effort_key = (
-                    "reasoningEffort"
-                    if self.config.wire_api == "responses" or deepseek_native
-                    else "reasoning_effort"
-                )
-                variant = {effort_key: requested_effort}
+                # OpenCode model settings use the AI SDK's camelCase option.
+                # Its OpenAI-compatible adapter serializes this as the
+                # ``reasoning_effort`` request field expected by DashScope.
+                variant = {"reasoningEffort": requested_effort}
                 if deepseek_native:
                     variant["thinking"] = {"type": "enabled"}
             elif deepseek_native:
@@ -934,6 +1172,8 @@ class HarnessAgent:
 
     @staticmethod
     def _event_text(payload: dict[str, Any]) -> str:
+        if payload.get("type") in {"result", "end"}:
+            return ""
         assistant_event = payload.get("assistantMessageEvent")
         if isinstance(assistant_event, dict) and assistant_event.get("type") in {
             "text_delta", "thinking_delta",
@@ -957,7 +1197,7 @@ class HarnessAgent:
         item = payload.get("item") or payload.get("part") or payload
         if not isinstance(item, dict):
             return ""
-        for key in ("text", "content", "output", "message"):
+        for key in ("text", "data", "content", "output", "message"):
             value = item.get(key)
             if isinstance(value, str):
                 return value
@@ -967,7 +1207,7 @@ class HarnessAgent:
     def _event_session_id(payload: dict[str, Any]) -> str | None:
         if payload.get("type") == "session" and isinstance(payload.get("id"), str):
             return payload["id"]
-        for key in ("thread_id", "session_id", "sessionID"):
+        for key in ("thread_id", "session_id", "sessionID", "sessionId"):
             value = payload.get(key)
             if isinstance(value, str) and value:
                 return value
@@ -980,8 +1220,18 @@ class HarnessAgent:
 
     @staticmethod
     def _tool_details(payload: dict[str, Any]) -> tuple[str, Any] | None:
+        if payload.get("type") == "tool_call_update":
+            return None  # Completion is not a second tool invocation.
         if payload.get("type") == "tool_execution_start":
             return str(payload.get("toolName") or "tool"), payload.get("args") or {}
+        cursor_call = payload.get("tool_call")
+        if isinstance(cursor_call, dict):
+            for kind, details in cursor_call.items():
+                if not isinstance(details, dict):
+                    continue
+                name = details.get("name") or details.get("toolName") or kind
+                arguments = details.get("arguments") or details.get("args") or {}
+                return str(name), arguments
         message = payload.get("message")
         if isinstance(message, dict) and isinstance(message.get("content"), list):
             for block in message["content"]:
@@ -998,8 +1248,14 @@ class HarnessAgent:
         item_type = str(item.get("type") or payload.get("type") or "")
         if "tool" not in item_type.lower() and not item.get("tool") and not item.get("name"):
             return None
-        name = item.get("tool") or item.get("name") or item.get("tool_name") or item_type
-        arguments = item.get("arguments") or item.get("input") or item.get("args") or {}
+        name = (
+            item.get("tool") or item.get("name") or item.get("tool_name")
+            or item.get("toolName") or item_type
+        )
+        arguments = (
+            item.get("arguments") or item.get("input") or item.get("args")
+            or item.get("rawInput") or {}
+        )
         return str(name), arguments
 
     def _run(self, command: list[str]) -> tuple[str, str, int]:
@@ -1059,8 +1315,14 @@ class HarnessAgent:
                     if text:
                         assistant_event = payload.get("assistantMessageEvent") or {}
                         stream_delta = ((payload.get("event") or {}).get("delta") or {})
+                        event_type = str(payload.get("type") or "").lower()
+                        event_channel = str(payload.get("channel") or "").lower()
                         channel = "reasoning" if (
-                            assistant_event.get("type") == "thinking_delta" or "thinking" in stream_delta
+                            assistant_event.get("type") == "thinking_delta"
+                            or "thinking" in stream_delta
+                            or "thinking" in event_type
+                            or "thought" in event_type
+                            or event_channel in {"reasoning", "thinking", "thought"}
                         ) else "content"
                         self._emit("harness_output", channel=channel, delta=text)
                         self._trace_steps.append({"role": "assistant", "channel": channel, "text": text})
@@ -1070,6 +1332,8 @@ class HarnessAgent:
             if process.poll() is None:
                 process.kill()
                 process.wait()
+            process.stdout.close()
+            process.stderr.close()
         return "\n".join(output), "\n".join(errors), returncode
 
     def _write_trace(
@@ -1084,7 +1348,17 @@ class HarnessAgent:
         audit_path = self.session.runtime / "tool-events.jsonl"
         submission_path = self.session.runtime / "submission.json"
         observation_snapshot = observation
-        legal_snapshot = [{"id": item["id"], **item["action"]} for item in legal]
+        legal_snapshot: Any = [{"id": item["id"], **item["action"]} for item in legal]
+        try:
+            prepared_context = json.loads(context_path.read_text(encoding="utf-8"))
+            if prepared_context.get("schema_version") == CONTEXT_V2:
+                observation_snapshot = prepared_context["observation"]
+                legal_snapshot = {
+                    "total": len(prepared_context.get("legal_actions", [])),
+                    "groups": prepared_context.get("legal_action_groups", []),
+                }
+        except (OSError, json.JSONDecodeError, KeyError):
+            pass
         executed: list[dict[str, Any]] = []
         if audit_path.is_file():
             for line in audit_path.read_text(encoding="utf-8").splitlines():

@@ -456,6 +456,26 @@ CASTLES_OF_BURGUNDY_PROFILE = GameProfile(
 
 # ── Registry ──
 
+HARMONIES_PROFILE = GameProfile(
+    game_id="harmonies", game_name="Harmonies", total_expected_turns=300,
+    endgame_score_threshold=100,
+    resource_categories={"pending_tokens": "landscape", "token_groups": "shared_draft"},
+    engine_component_name="landscapes and overlapping animal habitats",
+    scoring_dimensions=["trees", "mountains", "fields", "buildings", "water", "animals", "spirits"],
+    action_meta_types={"choose_spirit": META_SETUP, "take_tokens": META_ACQUIRE,
+                       "place_token": META_BUILD, "take_animal": META_ACQUIRE,
+                       "place_animal": META_SCORE, "end_turn": META_SETUP},
+    observation_schema={"players": "self_state", "market": "market", "token_groups": "shared_resources",
+                        "pending_tokens": "self_state", "rules": "meta", "rankings": "meta"},
+    turn_structure="multi_step", hidden_info_types=["spirit_choices", "bag_order", "deck_order"],
+    has_spatial=True, spatial_summary_method="grid", has_card_abilities=True, ability_summary_depth="full",
+    early_strategy="Choose compatible habitats. Build trees and connected mountains; preserve room for water and fields.",
+    mid_strategy="Settle animals between token placements before changing support heights. Reuse support cells and complete cards to free slots.",
+    late_strategy="Calculate landscape and habitat points. Two empty spaces trigger the final equal-turn round. Explicitly end your turn after optional settlements.",
+    capability_weights={CAP_RESOURCE: 3, CAP_PLANNING: 3, CAP_COMBO: 3, CAP_ENDGAME: 3, CAP_PERCEPTION: 3},
+)
+
+
 _PROFILES: dict[str, GameProfile] = {
     "splendor": SPLENDOR_PROFILE,
     "azul": AZUL_PROFILE,
@@ -463,6 +483,7 @@ _PROFILES: dict[str, GameProfile] = {
     "brass_birmingham": BRASS_PROFILE,
     "castles_of_burgundy": CASTLES_OF_BURGUNDY_PROFILE,
     "seven_wonders": SEVEN_WONDERS_PROFILE,
+    "harmonies": HARMONIES_PROFILE,
 }
 
 

@@ -11,8 +11,10 @@ cd ..
 ./agentbga web
 ```
 
-Open `http://127.0.0.1:8765`. During development, keep `./agentbga web`
-running and use `npm run dev`; `/api` is proxied to port 8765.
+Open `http://127.0.0.1:8765`. The setup page lists recent local matches so a
+CLI table can be watched without restarting it; `?match=MATCH_ID` opens a
+table directly. During development, keep `./agentbga web` running and use
+`npm run dev`; `/api` is proxied to port 8765.
 
 The production build uses `output: "export"` so the Python standard-library
 server can serve `dist/client` without a Node process. This UI deliberately has
@@ -34,3 +36,17 @@ python3 scripts/publish_frontier12_pages.py \
 Commit the updated JSON. `.github/workflows/pages.yml` rebuilds and publishes
 the static site after the change reaches `main`; no runtime credentials or
 machine-specific runtime metadata are included in the public snapshot.
+
+## Harmonies / 自然和弦
+
+The game selector includes a dedicated Harmonies table. Choose 1–4 seats, board
+A/B and optional Nature's Spirits. The Solo preset selects a human controller.
+The table renders all 23 hexes, stacked tokens, cube locks, card habitat diagrams,
+progress and score breakdowns. Select a pending color and a highlighted cell to
+place it; select a settleable animal card and a highlighted cell to place its
+cube. Card drafts and settlements can interleave with token placement. End turn
+explicitly; solo replacement is available in the end-turn menu.
+
+The renderer is `app/harmonies-table.tsx` with `app/harmonies-table.css`.
+It consumes the standard match observation and authoritative legal action IDs.
+Animal cards use stable numbers; no publisher artwork is required.

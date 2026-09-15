@@ -14,9 +14,10 @@ import tempfile
 from typing import Any
 
 from . import __version__
-from .agents import AgentError, HARNESS_BACKENDS, load_players_config
+from .agents import AgentError, HARNESS_BACKENDS, harness_executable_name, load_players_config
 from .game import GameRuleError
 from .experiment import load_experiment, run_experiment, schedule_experiment
+from .public_projection import public_game_event
 from .registry import game_ids, get_game, list_games
 from .runner import run_match
 from .store import ConflictError, MatchNotFound, Store
@@ -80,15 +81,23 @@ def build_parser() -> argparse.ArgumentParser:
     games_list.add_argument("--json", action="store_true", help=argparse.SUPPRESS)
     describe = games_sub.add_parser("describe")
     describe.add_argument("game", choices=game_ids())
+    describe.add_argument("--rules-version", help="select an exact registered rules version")
     describe.add_argument("--json", action="store_true", help=argparse.SUPPRESS)
 
     match = commands.add_parser("match", help="create, inspect, and mutate matches")
     match_sub = match.add_subparsers(dest="command", required=True)
     create = match_sub.add_parser("create")
     create.add_argument("--game", default="splendor", choices=game_ids())
-    create.add_argument("--players", type=int, required=True, choices=range(2, 8))
+    create.add_argument("--rules-version", help="select an exact registered rules version")
+    # The selected plugin performs the authoritative range validation.  The
+    # global parser must allow one seat so advertised solo modes are reachable.
+    create.add_argument("--players", type=int, required=True, choices=range(1, 8))
     create.add_argument("--seed", type=int)
     create.add_argument("--game-config", help="game-specific JSON object, or @path/to/config.json")
+    create.add_argument(
+        "--map", choices=("map-0", "map-a"),
+        help="Ark Nova zoo map for this match (default: map-0)",
+    )
     add_db(create)
 
     for name in ("observe", "legal-actions", "status", "verify", "replay", "harness-events"):
@@ -121,10 +130,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     run = commands.add_parser("run", help="create and run a complete match")
     run.add_argument("--game", choices=game_ids(), help="game for a new match (default: splendor)")
-    run.add_argument("--players", type=int, choices=range(2, 8))
+    run.add_argument("--rules-version", help="rules version for a new match")
+    # Individual game plugins enforce their own player ranges. Allow one here
+    # so official solo modes (including Ark Nova) are reachable from the CLI.
+    run.add_argument("--players", type=int, choices=range(1, 8))
     run.add_argument("--seed", type=int)
     run.add_argument("--match-id", help="resume an existing match instead of creating one")
     run.add_argument("--game-config", help="game-specific JSON object for a new match")
+    run.add_argument(
+        "--map", choices=("map-0", "map-a"),
+        help="Ark Nova zoo map for a new match (default: map-0)",
+    )
     run.add_argument(
         "--controllers",
         help="legacy comma-separated seats: random, openai, or human",
@@ -180,6 +196,21 @@ def _load_action(raw: str) -> dict[str, Any]:
     return value
 
 
+def _new_match_game_config(
+    raw: str | None, map_id: str | None, game_id: str,
+) -> dict[str, Any] | None:
+    """Merge convenient CLI flags into the plugin-specific setup object."""
+
+    config = _load_action(raw) if raw else {}
+    if map_id is not None:
+        if game_id != "ark_nova":
+            raise ValueError("--map is only available for Ark Nova matches")
+        if "map" in config and config["map"] != map_id:
+            raise ValueError("--map conflicts with game_config.map")
+        config["map"] = map_id
+    return config or None
+
+
 def execute(args: argparse.Namespace) -> int:
     if args.group == "experiment":
         manifest = load_experiment(args.config)
@@ -204,7 +235,8 @@ def execute(args: argparse.Namespace) -> int:
         return 0
 
     if args.group == "games":
-        data = list_games() if args.command == "list" else get_game(args.game).describe()
+        data = (list_games() if args.command == "list"
+                else get_game(args.game, args.rules_version).describe())
         emit(envelope(data))
         return 0
 
@@ -214,7 +246,7 @@ def execute(args: argparse.Namespace) -> int:
             players = load_players_config(args.players_config)
             player_checks = []
             for seat, player in enumerate(players):
-                subscription_auth = player.backend == "codex" and player.auth_mode == "subscription"
+                subscription_auth = player.backend in {"codex", "grok"} and player.auth_mode == "subscription"
                 key_required = player.backend not in {"random", "human"} and not subscription_auth
                 key_configured = not key_required or bool(os.environ.get(player.api_key_env or ""))
                 harness_required = player.backend in HARNESS_BACKENDS
@@ -223,15 +255,22 @@ def execute(args: argparse.Namespace) -> int:
                     harness_executable = True
                     executable = None
                 else:
-                    executable = shutil.which(player.backend) if harness_required else None
+                    executable = shutil.which(harness_executable_name(player.backend)) if harness_required else None
                     harness_executable = not harness_required or bool(executable)
                 auth_configured = key_configured
                 auth_status = None
                 if subscription_auth:
-                    auth_configured, auth_status = (
-                        _codex_subscription_status(executable) if executable
-                        else (False, "codex executable not found")
-                    )
+                    if player.backend == "grok":
+                        from .grok_harness import subscription_status
+                        auth_configured, auth_status = (
+                            subscription_status(dict(os.environ)) if executable
+                            else (False, "grok executable not found; install Grok Build and run grok login")
+                        )
+                    else:
+                        auth_configured, auth_status = (
+                            _codex_subscription_status(executable) if executable
+                            else (False, "codex executable not found")
+                        )
                 check = {
                     "seat": seat, **player.public_dict(),
                     "api_key_configured": None if subscription_auth else key_configured,
@@ -274,8 +313,13 @@ def execute(args: argparse.Namespace) -> int:
         if args.group == "match":
             if args.command == "create":
                 seed = args.seed if args.seed is not None else secrets.randbits(63)
-                game_config = _load_action(args.game_config) if args.game_config else None
-                match_id, version, state = store.create(args.players, seed, args.game, game_config)
+                game_config = _new_match_game_config(
+                    args.game_config, args.map, args.game,
+                )
+                match_id, version, state = store.create(
+                    args.players, seed, args.game, game_config,
+                    rules_version=args.rules_version,
+                )
                 emit(envelope({
                     "match_id": match_id, "game": args.game, "rules_version": state["rules_version"],
                     "version": version, "seed": seed, "players": args.players,
@@ -371,12 +415,7 @@ def execute(args: argparse.Namespace) -> int:
                 next_version, next_state, events = store.act(
                     args.match_id, args.seat, args.expected_version, action
                 )
-                if action.get("type") == "choose_initial_hand":
-                    events = [
-                        ({**event, "action": {"type": "choose_initial_hand", "kept_count": 4}}
-                         if event.get("type") == "action_accepted" else event)
-                        for event in events
-                    ]
+                events = [public_game_event(event) for event in events]
                 emit(envelope({
                     "events": events, "status": next_state["status"],
                     "active_seat": next_state["active_seat"], "phase": next_state["phase"],
@@ -399,11 +438,16 @@ def execute(args: argparse.Namespace) -> int:
                 controllers = [part.strip() for part in args.controllers.split(",") if part.strip()]
                 players_config = controllers
             if args.match_id:
+                if args.map is not None:
+                    raise ValueError("--map cannot change an existing match")
                 match_id = args.match_id
                 _, state, _ = store.load(match_id)
                 stored_game = store.game_id(match_id)
                 if args.game is not None and args.game != stored_game:
                     raise ValueError("--game differs from resumed match")
+                stored_rules_version = store.rules_version(match_id)
+                if args.rules_version is not None and args.rules_version != stored_rules_version:
+                    raise ValueError("--rules-version differs from resumed match")
                 if args.players is not None and args.players != state["player_count"]:
                     raise ValueError("--players differs from resumed match")
             else:
@@ -411,8 +455,14 @@ def execute(args: argparse.Namespace) -> int:
                 if players != len(players_config):
                     raise ValueError("--players must equal the number of configured players")
                 seed = args.seed if args.seed is not None else secrets.randbits(63)
-                game_config = _load_action(args.game_config) if args.game_config else None
-                match_id, _, _ = store.create(players, seed, args.game or "splendor", game_config)
+                selected_game = args.game or "splendor"
+                game_config = _new_match_game_config(
+                    args.game_config, args.map, selected_game,
+                )
+                match_id, _, _ = store.create(
+                    players, seed, selected_game, game_config,
+                    rules_version=args.rules_version,
+                )
             sink = emit if args.jsonl else None
             result = run_match(
                 store, match_id, players_config, model=args.model, base_url=args.base_url,
