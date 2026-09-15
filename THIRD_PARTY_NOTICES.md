@@ -39,3 +39,24 @@ Changes: renamed IDs and colors, converted directional chains into axial hex
 coordinates, reversed stacks to bottom-to-top, omitted prose descriptions.
 No source-engine code or publisher artwork is included. Harmonies is designed
 by Johan Benvenuto and published by Libellud; this implementation is unaffiliated.
+
+## Wingspan mechanical card catalog
+
+`src/agentbga/wingspan/birds.json` contains a transformed subset of
+`src/assets/data/master.json` from [Wingsearch](https://github.com/navarog/wingsearch),
+commit `43e5036de9e68fa9c4fabaf4c760412a887adf05` (2026-09-15 retrieval).
+Wingsearch credits TawnyFrogmouth for its underlying card dataset and distributes
+its project under GPL-3.0. The catalog's license is retained alongside the data in
+`src/agentbga/wingspan/CATALOG_LICENSE.txt`; the transformed catalog is distributed
+under that license. This source file contains the complete editable mechanical
+catalog used by AgentBGA, with no compiled or hidden data dependencies.
+
+Changes: selected 170 core birds without Swift-Start; renamed IDs and fields;
+converted numeric values, food alternatives, nest types, and bonus flags;
+replaced card prose with independently authored structured effect parameters;
+excluded expansion-only name criteria (e.g. “tuft” for Anatomist). No artwork,
+flavor text, card images, rulebook text, or Wingsearch application code is bundled.
+The independent AgentBGA engine and renderer remain under the repository's license.
+
+Wingspan is designed by Elizabeth Hargrave and published by Stonemaier Games.
+This research implementation is unaffiliated and has not been certified by the publisher.

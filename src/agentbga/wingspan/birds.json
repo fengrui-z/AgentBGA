@@ -1,0 +1,4434 @@
+[
+  {
+    "id": "ws-2",
+    "name": "Acorn Woodpecker",
+    "points": 5,
+    "nest": "cavity",
+    "egg_limit": 4,
+    "wingspan": 46,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "seed": 3
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "feeder",
+      "foods": [
+        "seed"
+      ],
+      "cache": true
+    }
+  },
+  {
+    "id": "ws-3",
+    "name": "American Avocet",
+    "points": 6,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 79,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 2,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "pink",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "eggs",
+      "nest": "ground",
+      "other": true,
+      "trigger": "lay_eggs"
+    }
+  },
+  {
+    "id": "ws-4",
+    "name": "American Bittern",
+    "points": 7,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 107,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fish": 1,
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "fewest",
+      "habitat": "wetland",
+      "reward": "draw"
+    }
+  },
+  {
+    "id": "ws-5",
+    "name": "American Coot",
+    "points": 3,
+    "nest": "platform",
+    "egg_limit": 5,
+    "wingspan": 61,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "seed": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "tuck",
+      "reward": "draw"
+    }
+  },
+  {
+    "id": "ws-6",
+    "name": "American Crow",
+    "points": 4,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 99,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "egg_trade",
+      "other": true,
+      "reward": "food",
+      "count": 1
+    }
+  },
+  {
+    "id": "ws-7",
+    "name": "American Goldfinch",
+    "points": 3,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 23,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "food",
+      "foods": [
+        "seed"
+      ],
+      "count": 3
+    }
+  },
+  {
+    "id": "ws-8",
+    "name": "American Kestrel",
+    "points": 5,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 56,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "rodent"
+    }
+  },
+  {
+    "id": "ws-9",
+    "name": "American Oystercatcher",
+    "points": 5,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 81,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 2
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "draft"
+    }
+  },
+  {
+    "id": "ws-11",
+    "name": "American Robin",
+    "points": 1,
+    "nest": "bowl",
+    "egg_limit": 4,
+    "wingspan": 43,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "tuck",
+      "reward": "draw"
+    }
+  },
+  {
+    "id": "ws-12",
+    "name": "American White Pelican",
+    "points": 5,
+    "nest": "ground",
+    "egg_limit": 1,
+    "wingspan": 274,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Cartographer",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "food_tuck",
+      "food": "fish"
+    }
+  },
+  {
+    "id": "ws-13",
+    "name": "American Woodcock",
+    "points": 9,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 46,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 2,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "none",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "none"
+    }
+  },
+  {
+    "id": "ws-14",
+    "name": "Anhinga",
+    "points": 6,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 114,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "fish"
+    }
+  },
+  {
+    "id": "ws-15",
+    "name": "Anna's Hummingbird",
+    "points": 4,
+    "nest": "bowl",
+    "egg_limit": 2,
+    "wingspan": 13,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "all_feeder"
+    }
+  },
+  {
+    "id": "ws-16",
+    "name": "Ash-Throated Flycatcher",
+    "points": 4,
+    "nest": "cavity",
+    "egg_limit": 4,
+    "wingspan": 30,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 2,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "nest_eggs",
+      "nest": "cavity"
+    }
+  },
+  {
+    "id": "ws-17",
+    "name": "Atlantic Puffin",
+    "points": 8,
+    "nest": "star",
+    "egg_limit": 1,
+    "wingspan": 53,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 3
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-19",
+    "name": "Baird's Sparrow",
+    "points": 3,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 23,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "eggs"
+    }
+  },
+  {
+    "id": "ws-20",
+    "name": "Bald Eagle",
+    "points": 9,
+    "nest": "platform",
+    "egg_limit": 1,
+    "wingspan": 203,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 2,
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "feeder_all",
+      "foods": [
+        "fish"
+      ]
+    }
+  },
+  {
+    "id": "ws-21",
+    "name": "Baltimore Oriole",
+    "points": 9,
+    "nest": "star",
+    "egg_limit": 2,
+    "wingspan": 30,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "all_food",
+      "food": "fruit"
+    }
+  },
+  {
+    "id": "ws-22",
+    "name": "Barn Owl",
+    "points": 5,
+    "nest": "cavity",
+    "egg_limit": 4,
+    "wingspan": 107,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "rodent": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "rodent"
+    }
+  },
+  {
+    "id": "ws-23",
+    "name": "Barn Swallow",
+    "points": 1,
+    "nest": "star",
+    "egg_limit": 3,
+    "wingspan": 38,
+    "habitats": [
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [],
+    "power": {
+      "kind": "tuck",
+      "reward": "draw"
+    }
+  },
+  {
+    "id": "ws-24",
+    "name": "Barred Owl",
+    "points": 3,
+    "nest": "cavity",
+    "egg_limit": 2,
+    "wingspan": 107,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "hunt_card",
+      "limit": 75
+    }
+  },
+  {
+    "id": "ws-25",
+    "name": "Barrow's Goldeneye",
+    "points": 5,
+    "nest": "cavity",
+    "egg_limit": 4,
+    "wingspan": 71,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fish": 1
+    },
+    "cost_choice": false,
+    "color": "pink",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Historian",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "eggs",
+      "nest": "cavity",
+      "other": true,
+      "trigger": "lay_eggs"
+    }
+  },
+  {
+    "id": "ws-26",
+    "name": "Bell's Vireo",
+    "points": 4,
+    "nest": "star",
+    "egg_limit": 2,
+    "wingspan": 18,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 2
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-27",
+    "name": "Belted Kingfisher",
+    "points": 4,
+    "nest": "star",
+    "egg_limit": 4,
+    "wingspan": 53,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "pink",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "food",
+      "foods": [
+        "fish"
+      ],
+      "trigger": "play_wetland"
+    }
+  },
+  {
+    "id": "ws-28",
+    "name": "Bewick's Wren",
+    "points": 4,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 18,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 2,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "move"
+    }
+  },
+  {
+    "id": "ws-30",
+    "name": "Black Skimmer",
+    "points": 6,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 112,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "fish"
+    }
+  },
+  {
+    "id": "ws-31",
+    "name": "Black Tern",
+    "points": 4,
+    "nest": "star",
+    "egg_limit": 2,
+    "wingspan": 61,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fish": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "draw_discard",
+      "count": 1
+    }
+  },
+  {
+    "id": "ws-32",
+    "name": "Black Vulture",
+    "points": 2,
+    "nest": "cavity",
+    "egg_limit": 1,
+    "wingspan": 150,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {},
+    "cost_choice": false,
+    "color": "pink",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "feeder",
+      "trigger": "predator"
+    }
+  },
+  {
+    "id": "ws-34",
+    "name": "Black-Bellied Whistling-Duck",
+    "points": 2,
+    "nest": "cavity",
+    "egg_limit": 5,
+    "wingspan": 76,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "food_tuck",
+      "food": "seed"
+    }
+  },
+  {
+    "id": "ws-35",
+    "name": "Black-Billed Magpie",
+    "points": 3,
+    "nest": "star",
+    "egg_limit": 3,
+    "wingspan": 64,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "wild": 2
+    },
+    "cost_choice": false,
+    "color": "pink",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "feeder",
+      "trigger": "predator"
+    }
+  },
+  {
+    "id": "ws-37",
+    "name": "Black-Crowned Night-Heron",
+    "points": 9,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 112,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fish": 1,
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "egg_trade",
+      "other": true,
+      "reward": "food",
+      "count": 1
+    }
+  },
+  {
+    "id": "ws-39",
+    "name": "Black-Necked Stilt",
+    "points": 4,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 74,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 2
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "draw",
+      "count": 2
+    }
+  },
+  {
+    "id": "ws-42",
+    "name": "Blue Grosbeak",
+    "points": 4,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 28,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "move"
+    }
+  },
+  {
+    "id": "ws-43",
+    "name": "Blue Jay",
+    "points": 3,
+    "nest": "bowl",
+    "egg_limit": 2,
+    "wingspan": 41,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "seed": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "feeder",
+      "foods": [
+        "seed"
+      ],
+      "cache": true
+    }
+  },
+  {
+    "id": "ws-44",
+    "name": "Blue-Gray Gnatcatcher",
+    "points": 1,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 15,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "food",
+      "foods": [
+        "invertebrate"
+      ]
+    }
+  },
+  {
+    "id": "ws-45",
+    "name": "Blue-Winged Warbler",
+    "points": 8,
+    "nest": "bowl",
+    "egg_limit": 2,
+    "wingspan": 20,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 2
+    },
+    "cost_choice": false,
+    "color": "none",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "none"
+    }
+  },
+  {
+    "id": "ws-47",
+    "name": "Bobolink",
+    "points": 4,
+    "nest": "ground",
+    "egg_limit": 3,
+    "wingspan": 30,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "nest_eggs",
+      "nest": "ground"
+    }
+  },
+  {
+    "id": "ws-50",
+    "name": "Brewer's Blackbird",
+    "points": 3,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 41,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "seed": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Historian",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "tuck",
+      "reward": "egg"
+    }
+  },
+  {
+    "id": "ws-52",
+    "name": "Bronzed Cowbird",
+    "points": 5,
+    "nest": "none",
+    "egg_limit": 0,
+    "wingspan": 36,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "pink",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "eggs",
+      "nest": "bowl",
+      "trigger": "lay_eggs"
+    }
+  },
+  {
+    "id": "ws-53",
+    "name": "Brown Pelican",
+    "points": 4,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 201,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 2
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "food",
+      "foods": [
+        "fish"
+      ],
+      "count": 3
+    }
+  },
+  {
+    "id": "ws-54",
+    "name": "Brown-Headed Cowbird",
+    "points": 3,
+    "nest": "none",
+    "egg_limit": 0,
+    "wingspan": 30,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "pink",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "eggs",
+      "nest": "bowl",
+      "trigger": "lay_eggs"
+    }
+  },
+  {
+    "id": "ws-56",
+    "name": "Burrowing Owl",
+    "points": 5,
+    "nest": "star",
+    "egg_limit": 4,
+    "wingspan": 53,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "rodent"
+    }
+  },
+  {
+    "id": "ws-57",
+    "name": "Bushtit",
+    "points": 2,
+    "nest": "star",
+    "egg_limit": 5,
+    "wingspan": 15,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [],
+    "power": {
+      "kind": "tuck",
+      "reward": "egg"
+    }
+  },
+  {
+    "id": "ws-58",
+    "name": "California Condor",
+    "points": 1,
+    "nest": "ground",
+    "egg_limit": 1,
+    "wingspan": 277,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {},
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-59",
+    "name": "California Quail",
+    "points": 3,
+    "nest": "ground",
+    "egg_limit": 6,
+    "wingspan": 36,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "eggs",
+      "self": true
+    }
+  },
+  {
+    "id": "ws-60",
+    "name": "Canada Goose",
+    "points": 3,
+    "nest": "ground",
+    "egg_limit": 3,
+    "wingspan": 132,
+    "habitats": [
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "food_tuck",
+      "food": "seed"
+    }
+  },
+  {
+    "id": "ws-62",
+    "name": "Carolina Chickadee",
+    "points": 2,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 20,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "cache",
+      "food": "seed"
+    }
+  },
+  {
+    "id": "ws-63",
+    "name": "Carolina Wren",
+    "points": 1,
+    "nest": "cavity",
+    "egg_limit": 5,
+    "wingspan": 20,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "draw",
+      "count": 2
+    }
+  },
+  {
+    "id": "ws-65",
+    "name": "Cassin's Finch",
+    "points": 4,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 30,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-66",
+    "name": "Cassin's Sparrow",
+    "points": 3,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 20,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "eggs"
+    }
+  },
+  {
+    "id": "ws-67",
+    "name": "Cedar Waxwing",
+    "points": 3,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 25,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "fruit": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Anatomist"
+    ],
+    "power": {
+      "kind": "tuck",
+      "reward": "food",
+      "foods": [
+        "fruit"
+      ]
+    }
+  },
+  {
+    "id": "ws-68",
+    "name": "Cerulean Warbler",
+    "points": 4,
+    "nest": "bowl",
+    "egg_limit": 2,
+    "wingspan": 20,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-70",
+    "name": "Chestnut-Collared Longspur",
+    "points": 5,
+    "nest": "ground",
+    "egg_limit": 4,
+    "wingspan": 25,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-71",
+    "name": "Chihuahuan Raven",
+    "points": 4,
+    "nest": "platform",
+    "egg_limit": 3,
+    "wingspan": 112,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "rodent": 1,
+      "wild": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "egg_trade",
+      "other": true,
+      "reward": "food",
+      "count": 2
+    }
+  },
+  {
+    "id": "ws-72",
+    "name": "Chimney Swift",
+    "points": 3,
+    "nest": "star",
+    "egg_limit": 2,
+    "wingspan": 36,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "move"
+    }
+  },
+  {
+    "id": "ws-73",
+    "name": "Chipping Sparrow",
+    "points": 1,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 23,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "eggs"
+    }
+  },
+  {
+    "id": "ws-74",
+    "name": "Clark's Grebe",
+    "points": 5,
+    "nest": "star",
+    "egg_limit": 2,
+    "wingspan": 61,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "draw_discard",
+      "count": 1
+    }
+  },
+  {
+    "id": "ws-75",
+    "name": "Clark's Nutcracker",
+    "points": 5,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 61,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "seed": 2,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "feeder",
+      "foods": [
+        "seed"
+      ],
+      "cache": true
+    }
+  },
+  {
+    "id": "ws-83",
+    "name": "Common Grackle",
+    "points": 3,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 43,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "seed": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [],
+    "power": {
+      "kind": "tuck",
+      "reward": "egg"
+    }
+  },
+  {
+    "id": "ws-86",
+    "name": "Common Loon",
+    "points": 6,
+    "nest": "ground",
+    "egg_limit": 1,
+    "wingspan": 117,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "fewest",
+      "habitat": "wetland",
+      "reward": "draw"
+    }
+  },
+  {
+    "id": "ws-87",
+    "name": "Common Merganser",
+    "points": 5,
+    "nest": "cavity",
+    "egg_limit": 4,
+    "wingspan": 86,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "fish"
+    }
+  },
+  {
+    "id": "ws-89",
+    "name": "Common Nighthawk",
+    "points": 3,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 56,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "move"
+    }
+  },
+  {
+    "id": "ws-91",
+    "name": "Common Raven",
+    "points": 5,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 135,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "rodent": 1,
+      "wild": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "egg_trade",
+      "other": true,
+      "reward": "food",
+      "count": 2
+    }
+  },
+  {
+    "id": "ws-94",
+    "name": "Common Yellowthroat",
+    "points": 1,
+    "nest": "bowl",
+    "egg_limit": 4,
+    "wingspan": 18,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "draw_discard",
+      "count": 2
+    }
+  },
+  {
+    "id": "ws-95",
+    "name": "Cooper's Hawk",
+    "points": 3,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 79,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "hunt_card",
+      "limit": 75
+    }
+  },
+  {
+    "id": "ws-97",
+    "name": "Dark-Eyed Junco",
+    "points": 3,
+    "nest": "ground",
+    "egg_limit": 3,
+    "wingspan": 23,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Anatomist"
+    ],
+    "power": {
+      "kind": "tuck",
+      "reward": "food",
+      "foods": [
+        "seed"
+      ]
+    }
+  },
+  {
+    "id": "ws-98",
+    "name": "Dickcissel",
+    "points": 4,
+    "nest": "ground",
+    "egg_limit": 3,
+    "wingspan": 25,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [],
+    "power": {
+      "kind": "tuck",
+      "reward": "egg"
+    }
+  },
+  {
+    "id": "ws-99",
+    "name": "Double-Crested Cormorant",
+    "points": 3,
+    "nest": "platform",
+    "egg_limit": 3,
+    "wingspan": 132,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Anatomist"
+    ],
+    "power": {
+      "kind": "food_tuck",
+      "food": "fish"
+    }
+  },
+  {
+    "id": "ws-100",
+    "name": "Downy Woodpecker",
+    "points": 3,
+    "nest": "cavity",
+    "egg_limit": 2,
+    "wingspan": 30,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "extra_bird",
+      "habitat": "forest"
+    }
+  },
+  {
+    "id": "ws-102",
+    "name": "Eastern Bluebird",
+    "points": 4,
+    "nest": "cavity",
+    "egg_limit": 5,
+    "wingspan": 33,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "extra_bird",
+      "habitat": "grassland"
+    }
+  },
+  {
+    "id": "ws-104",
+    "name": "Eastern Kingbird",
+    "points": 2,
+    "nest": "bowl",
+    "egg_limit": 2,
+    "wingspan": 38,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "pink",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "food",
+      "foods": [
+        "invertebrate"
+      ],
+      "trigger": "play_forest"
+    }
+  },
+  {
+    "id": "ws-105",
+    "name": "Eastern Phoebe",
+    "points": 3,
+    "nest": "star",
+    "egg_limit": 4,
+    "wingspan": 28,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "all_food",
+      "food": "invertebrate"
+    }
+  },
+  {
+    "id": "ws-106",
+    "name": "Eastern Screech-Owl",
+    "points": 4,
+    "nest": "cavity",
+    "egg_limit": 2,
+    "wingspan": 51,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "rodent": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "rodent"
+    }
+  },
+  {
+    "id": "ws-124",
+    "name": "Ferruginous Hawk",
+    "points": 6,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 142,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "rodent": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "rodent"
+    }
+  },
+  {
+    "id": "ws-125",
+    "name": "Fish Crow",
+    "points": 6,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 91,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "fish": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "egg_trade",
+      "other": true,
+      "reward": "food",
+      "count": 1
+    }
+  },
+  {
+    "id": "ws-126",
+    "name": "Forster's Tern",
+    "points": 4,
+    "nest": "star",
+    "egg_limit": 2,
+    "wingspan": 79,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fish": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "draw_discard",
+      "count": 1
+    }
+  },
+  {
+    "id": "ws-127",
+    "name": "Franklin's Gull",
+    "points": 3,
+    "nest": "star",
+    "egg_limit": 2,
+    "wingspan": 91,
+    "habitats": [
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "fish": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "egg_trade",
+      "reward": "draw",
+      "count": 2
+    }
+  },
+  {
+    "id": "ws-129",
+    "name": "Golden Eagle",
+    "points": 8,
+    "nest": "platform",
+    "egg_limit": 1,
+    "wingspan": 201,
+    "habitats": [
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "rodent": 3
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "hunt_card",
+      "limit": 100
+    }
+  },
+  {
+    "id": "ws-130",
+    "name": "Grasshopper Sparrow",
+    "points": 2,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 20,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "eggs"
+    }
+  },
+  {
+    "id": "ws-131",
+    "name": "Gray Catbird",
+    "points": 5,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 28,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "repeat"
+    }
+  },
+  {
+    "id": "ws-132",
+    "name": "Great Blue Heron",
+    "points": 5,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 183,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fish": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "extra_bird",
+      "habitat": "wetland"
+    }
+  },
+  {
+    "id": "ws-133",
+    "name": "Great Crested Flycatcher",
+    "points": 5,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 33,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist"
+    ],
+    "power": {
+      "kind": "feeder",
+      "foods": [
+        "invertebrate"
+      ]
+    }
+  },
+  {
+    "id": "ws-135",
+    "name": "Great Egret",
+    "points": 7,
+    "nest": "platform",
+    "egg_limit": 3,
+    "wingspan": 130,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 2,
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "extra_bird",
+      "habitat": "wetland"
+    }
+  },
+  {
+    "id": "ws-136",
+    "name": "Great Horned Owl",
+    "points": 8,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 112,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "rodent": 3
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "hunt_card",
+      "limit": 100
+    }
+  },
+  {
+    "id": "ws-139",
+    "name": "Greater Prairie-Chicken",
+    "points": 5,
+    "nest": "ground",
+    "egg_limit": 4,
+    "wingspan": 71,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-140",
+    "name": "Greater Roadrunner",
+    "points": 7,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 56,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "rodent": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "hunt_card",
+      "limit": 50
+    }
+  },
+  {
+    "id": "ws-141",
+    "name": "Green Heron",
+    "points": 4,
+    "nest": "platform",
+    "egg_limit": 3,
+    "wingspan": 66,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fish": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "trade"
+    }
+  },
+  {
+    "id": "ws-146",
+    "name": "Hermit Thrush",
+    "points": 7,
+    "nest": "star",
+    "egg_limit": 2,
+    "wingspan": 30,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "fewest",
+      "habitat": "forest",
+      "reward": "feeder"
+    }
+  },
+  {
+    "id": "ws-148",
+    "name": "Hooded Merganser",
+    "points": 5,
+    "nest": "cavity",
+    "egg_limit": 4,
+    "wingspan": 61,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fish": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "repeat",
+      "predator": true
+    }
+  },
+  {
+    "id": "ws-149",
+    "name": "Hooded Warbler",
+    "points": 7,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 18,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 2
+    },
+    "cost_choice": false,
+    "color": "none",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "none"
+    }
+  },
+  {
+    "id": "ws-150",
+    "name": "Horned Lark",
+    "points": 5,
+    "nest": "ground",
+    "egg_limit": 4,
+    "wingspan": 30,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "pink",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [],
+    "power": {
+      "kind": "tuck",
+      "trigger": "play_grassland"
+    }
+  },
+  {
+    "id": "ws-151",
+    "name": "House Finch",
+    "points": 3,
+    "nest": "bowl",
+    "egg_limit": 6,
+    "wingspan": 25,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [],
+    "power": {
+      "kind": "tuck",
+      "reward": "draw"
+    }
+  },
+  {
+    "id": "ws-153",
+    "name": "House Wren",
+    "points": 1,
+    "nest": "cavity",
+    "egg_limit": 5,
+    "wingspan": 15,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "extra_bird",
+      "habitat": "same"
+    }
+  },
+  {
+    "id": "ws-154",
+    "name": "Inca Dove",
+    "points": 2,
+    "nest": "platform",
+    "egg_limit": 4,
+    "wingspan": 28,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "nest_eggs",
+      "nest": "platform"
+    }
+  },
+  {
+    "id": "ws-155",
+    "name": "Indigo Bunting",
+    "points": 5,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 20,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "feeder",
+      "foods": [
+        "invertebrate",
+        "fruit"
+      ]
+    }
+  },
+  {
+    "id": "ws-156",
+    "name": "Juniper Titmouse",
+    "points": 4,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 23,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "cache",
+      "food": "seed"
+    }
+  },
+  {
+    "id": "ws-157",
+    "name": "Killdeer",
+    "points": 1,
+    "nest": "ground",
+    "egg_limit": 3,
+    "wingspan": 46,
+    "habitats": [
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "egg_trade",
+      "reward": "draw",
+      "count": 2
+    }
+  },
+  {
+    "id": "ws-158",
+    "name": "King Rail",
+    "points": 4,
+    "nest": "platform",
+    "egg_limit": 6,
+    "wingspan": 51,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fish": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-159",
+    "name": "Lazuli Bunting",
+    "points": 4,
+    "nest": "bowl",
+    "egg_limit": 4,
+    "wingspan": 23,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "all_eggs",
+      "nest": "bowl"
+    }
+  },
+  {
+    "id": "ws-161",
+    "name": "Lincoln's Sparrow",
+    "points": 3,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 20,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "move"
+    }
+  },
+  {
+    "id": "ws-164",
+    "name": "Loggerhead Shrike",
+    "points": 3,
+    "nest": "bowl",
+    "egg_limit": 4,
+    "wingspan": 30,
+    "habitats": [
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "pink",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist"
+    ],
+    "power": {
+      "kind": "cache",
+      "food": "rodent",
+      "trigger": "gain_rodent"
+    }
+  },
+  {
+    "id": "ws-166",
+    "name": "Mallard",
+    "points": 0,
+    "nest": "ground",
+    "egg_limit": 4,
+    "wingspan": 89,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "draw"
+    }
+  },
+  {
+    "id": "ws-167",
+    "name": "Mississippi Kite",
+    "points": 4,
+    "nest": "platform",
+    "egg_limit": 1,
+    "wingspan": 79,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "rodent": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "rodent"
+    }
+  },
+  {
+    "id": "ws-170",
+    "name": "Mountain Bluebird",
+    "points": 4,
+    "nest": "cavity",
+    "egg_limit": 5,
+    "wingspan": 36,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "extra_bird",
+      "habitat": "grassland"
+    }
+  },
+  {
+    "id": "ws-171",
+    "name": "Mountain Chickadee",
+    "points": 2,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 23,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "cache",
+      "food": "seed"
+    }
+  },
+  {
+    "id": "ws-172",
+    "name": "Mourning Dove",
+    "points": 0,
+    "nest": "platform",
+    "egg_limit": 5,
+    "wingspan": 46,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "eggs",
+      "self": true
+    }
+  },
+  {
+    "id": "ws-174",
+    "name": "Northern Bobwhite",
+    "points": 5,
+    "nest": "ground",
+    "egg_limit": 6,
+    "wingspan": 33,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "seed": 3
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "eggs",
+      "self": true
+    }
+  },
+  {
+    "id": "ws-175",
+    "name": "Northern Cardinal",
+    "points": 3,
+    "nest": "bowl",
+    "egg_limit": 5,
+    "wingspan": 30,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "food",
+      "foods": [
+        "fruit"
+      ]
+    }
+  },
+  {
+    "id": "ws-176",
+    "name": "Northern Flicker",
+    "points": 2,
+    "nest": "cavity",
+    "egg_limit": 4,
+    "wingspan": 51,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "feeder_all",
+      "foods": [
+        "invertebrate"
+      ]
+    }
+  },
+  {
+    "id": "ws-179",
+    "name": "Northern Harrier",
+    "points": 3,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 109,
+    "habitats": [
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "hunt_card",
+      "limit": 75
+    }
+  },
+  {
+    "id": "ws-180",
+    "name": "Northern Mockingbird",
+    "points": 2,
+    "nest": "bowl",
+    "egg_limit": 4,
+    "wingspan": 36,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "repeat"
+    }
+  },
+  {
+    "id": "ws-181",
+    "name": "Northern Shoveler",
+    "points": 7,
+    "nest": "ground",
+    "egg_limit": 4,
+    "wingspan": 76,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "all_draw"
+    }
+  },
+  {
+    "id": "ws-182",
+    "name": "Osprey",
+    "points": 5,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 160,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "all_food",
+      "food": "fish"
+    }
+  },
+  {
+    "id": "ws-183",
+    "name": "Painted Bunting",
+    "points": 5,
+    "nest": "bowl",
+    "egg_limit": 4,
+    "wingspan": 23,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-186",
+    "name": "Peregrine Falcon",
+    "points": 5,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 104,
+    "habitats": [
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "rodent": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "hunt_card",
+      "limit": 100
+    }
+  },
+  {
+    "id": "ws-187",
+    "name": "Pied-Billed Grebe",
+    "points": 0,
+    "nest": "platform",
+    "egg_limit": 4,
+    "wingspan": 41,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fish": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist"
+    ],
+    "power": {
+      "kind": "draw_discard",
+      "count": 2
+    }
+  },
+  {
+    "id": "ws-188",
+    "name": "Pileated Woodpecker",
+    "points": 4,
+    "nest": "cavity",
+    "egg_limit": 2,
+    "wingspan": 74,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "all_eggs",
+      "nest": "cavity"
+    }
+  },
+  {
+    "id": "ws-189",
+    "name": "Pine Siskin",
+    "points": 3,
+    "nest": "bowl",
+    "egg_limit": 2,
+    "wingspan": 23,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [],
+    "power": {
+      "kind": "tuck",
+      "reward": "food",
+      "foods": [
+        "seed"
+      ]
+    }
+  },
+  {
+    "id": "ws-190",
+    "name": "Prothonotary Warbler",
+    "points": 8,
+    "nest": "cavity",
+    "egg_limit": 4,
+    "wingspan": 23,
+    "habitats": [
+      "forest",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 2,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "none",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "none"
+    }
+  },
+  {
+    "id": "ws-191",
+    "name": "Purple Gallinule",
+    "points": 7,
+    "nest": "platform",
+    "egg_limit": 4,
+    "wingspan": 56,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "seed": 1,
+      "fruit": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "all_draw"
+    }
+  },
+  {
+    "id": "ws-192",
+    "name": "Purple Martin",
+    "points": 2,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 46,
+    "habitats": [
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "tuck",
+      "reward": "draw"
+    }
+  },
+  {
+    "id": "ws-193",
+    "name": "Pygmy Nuthatch",
+    "points": 2,
+    "nest": "cavity",
+    "egg_limit": 4,
+    "wingspan": 20,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [],
+    "power": {
+      "kind": "tuck",
+      "reward": "food",
+      "foods": [
+        "invertebrate",
+        "seed"
+      ]
+    }
+  },
+  {
+    "id": "ws-194",
+    "name": "Red Crossbill",
+    "points": 6,
+    "nest": "bowl",
+    "egg_limit": 2,
+    "wingspan": 28,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "seed": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "all_food",
+      "food": "seed"
+    }
+  },
+  {
+    "id": "ws-198",
+    "name": "Red-Bellied Woodpecker",
+    "points": 1,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 41,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "feeder",
+      "foods": [
+        "seed"
+      ],
+      "cache": true
+    }
+  },
+  {
+    "id": "ws-200",
+    "name": "Red-Breasted Nuthatch",
+    "points": 2,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 23,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "cache",
+      "food": "seed"
+    }
+  },
+  {
+    "id": "ws-201",
+    "name": "Red-Cockaded Woodpecker",
+    "points": 4,
+    "nest": "cavity",
+    "egg_limit": 2,
+    "wingspan": 36,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-202",
+    "name": "Red-Eyed Vireo",
+    "points": 3,
+    "nest": "star",
+    "egg_limit": 2,
+    "wingspan": 25,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "extra_bird",
+      "habitat": "forest"
+    }
+  },
+  {
+    "id": "ws-203",
+    "name": "Red-Headed Woodpecker",
+    "points": 4,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 43,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "feeder",
+      "foods": [
+        "seed"
+      ],
+      "cache": true
+    }
+  },
+  {
+    "id": "ws-205",
+    "name": "Red-Shouldered Hawk",
+    "points": 3,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 102,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "hunt_card",
+      "limit": 75
+    }
+  },
+  {
+    "id": "ws-206",
+    "name": "Red-Tailed Hawk",
+    "points": 5,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 124,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "rodent": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "hunt_card",
+      "limit": 75
+    }
+  },
+  {
+    "id": "ws-207",
+    "name": "Red-Winged Blackbird",
+    "points": 2,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 33,
+    "habitats": [
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "tuck",
+      "reward": "egg"
+    }
+  },
+  {
+    "id": "ws-208",
+    "name": "Ring-Billed Gull",
+    "points": 4,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 122,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "wild": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Anatomist"
+    ],
+    "power": {
+      "kind": "tuck",
+      "reward": "draw"
+    }
+  },
+  {
+    "id": "ws-209",
+    "name": "Rose-Breasted Grosbeak",
+    "points": 6,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 33,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "feeder",
+      "foods": [
+        "seed",
+        "fruit"
+      ]
+    }
+  },
+  {
+    "id": "ws-210",
+    "name": "Roseate Spoonbill",
+    "points": 6,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 127,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fish": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-211",
+    "name": "Ruby-Crowned Kinglet",
+    "points": 2,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 20,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "extra_bird",
+      "habitat": "forest"
+    }
+  },
+  {
+    "id": "ws-212",
+    "name": "Ruby-Throated Hummingbird",
+    "points": 4,
+    "nest": "bowl",
+    "egg_limit": 2,
+    "wingspan": 10,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "all_feeder"
+    }
+  },
+  {
+    "id": "ws-213",
+    "name": "Ruddy Duck",
+    "points": 0,
+    "nest": "platform",
+    "egg_limit": 5,
+    "wingspan": 48,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "draw_discard",
+      "count": 2
+    }
+  },
+  {
+    "id": "ws-215",
+    "name": "Sandhill Crane",
+    "points": 5,
+    "nest": "ground",
+    "egg_limit": 1,
+    "wingspan": 196,
+    "habitats": [
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "seed": 2,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "food_tuck",
+      "food": "seed"
+    }
+  },
+  {
+    "id": "ws-216",
+    "name": "Savannah Sparrow",
+    "points": 2,
+    "nest": "ground",
+    "egg_limit": 3,
+    "wingspan": 18,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": true,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "extra_bird",
+      "habitat": "grassland"
+    }
+  },
+  {
+    "id": "ws-218",
+    "name": "Say's Phoebe",
+    "points": 5,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 33,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 3
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "nest_eggs",
+      "nest": "bowl"
+    }
+  },
+  {
+    "id": "ws-220",
+    "name": "Scissor-Tailed Flycatcher",
+    "points": 8,
+    "nest": "bowl",
+    "egg_limit": 2,
+    "wingspan": 38,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 2,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist"
+    ],
+    "power": {
+      "kind": "all_food",
+      "food": "invertebrate"
+    }
+  },
+  {
+    "id": "ws-223",
+    "name": "Snowy Egret",
+    "points": 4,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 104,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fish": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "fish"
+    }
+  },
+  {
+    "id": "ws-225",
+    "name": "Song Sparrow",
+    "points": 0,
+    "nest": "bowl",
+    "egg_limit": 5,
+    "wingspan": 20,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "move"
+    }
+  },
+  {
+    "id": "ws-226",
+    "name": "Spotted Owl",
+    "points": 5,
+    "nest": "cavity",
+    "egg_limit": 1,
+    "wingspan": 102,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "rodent": 2
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-227",
+    "name": "Spotted Sandpiper",
+    "points": 5,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 38,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "all_draw"
+    }
+  },
+  {
+    "id": "ws-228",
+    "name": "Spotted Towhee",
+    "points": 0,
+    "nest": "ground",
+    "egg_limit": 4,
+    "wingspan": 28,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "food",
+      "foods": [
+        "seed"
+      ]
+    }
+  },
+  {
+    "id": "ws-229",
+    "name": "Sprague's Pipit",
+    "points": 3,
+    "nest": "ground",
+    "egg_limit": 3,
+    "wingspan": 25,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-231",
+    "name": "Steller's Jay",
+    "points": 5,
+    "nest": "bowl",
+    "egg_limit": 2,
+    "wingspan": 48,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "seed": 2,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "feeder",
+      "foods": [
+        "seed"
+      ],
+      "cache": true
+    }
+  },
+  {
+    "id": "ws-232",
+    "name": "Swainson's Hawk",
+    "points": 5,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 130,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "rodent": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "hunt_card",
+      "limit": 75
+    }
+  },
+  {
+    "id": "ws-234",
+    "name": "Tree Swallow",
+    "points": 3,
+    "nest": "cavity",
+    "egg_limit": 4,
+    "wingspan": 38,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [],
+    "power": {
+      "kind": "tuck",
+      "reward": "draw"
+    }
+  },
+  {
+    "id": "ws-235",
+    "name": "Trumpeter Swan",
+    "points": 9,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 203,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "seed": 2,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "none",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "none"
+    }
+  },
+  {
+    "id": "ws-236",
+    "name": "Tufted Titmouse",
+    "points": 2,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 25,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "extra_bird",
+      "habitat": "forest"
+    }
+  },
+  {
+    "id": "ws-237",
+    "name": "Turkey Vulture",
+    "points": 1,
+    "nest": "cavity",
+    "egg_limit": 1,
+    "wingspan": 170,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {},
+    "cost_choice": false,
+    "color": "pink",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "feeder",
+      "trigger": "predator"
+    }
+  },
+  {
+    "id": "ws-239",
+    "name": "Violet-Green Swallow",
+    "points": 3,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 36,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Photographer"
+    ],
+    "power": {
+      "kind": "tuck",
+      "reward": "draw"
+    }
+  },
+  {
+    "id": "ws-240",
+    "name": "Western Meadowlark",
+    "points": 2,
+    "nest": "ground",
+    "egg_limit": 4,
+    "wingspan": 38,
+    "habitats": [
+      "grassland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "all_eggs",
+      "nest": "ground"
+    }
+  },
+  {
+    "id": "ws-241",
+    "name": "Western Tanager",
+    "points": 6,
+    "nest": "bowl",
+    "egg_limit": 2,
+    "wingspan": 30,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 2,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Cartographer"
+    ],
+    "power": {
+      "kind": "feeder",
+      "foods": [
+        "invertebrate",
+        "fruit"
+      ]
+    }
+  },
+  {
+    "id": "ws-245",
+    "name": "White-Breasted Nuthatch",
+    "points": 2,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 28,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "cache",
+      "food": "seed"
+    }
+  },
+  {
+    "id": "ws-246",
+    "name": "White-Crowned Sparrow",
+    "points": 2,
+    "nest": "ground",
+    "egg_limit": 5,
+    "wingspan": 25,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "move"
+    }
+  },
+  {
+    "id": "ws-247",
+    "name": "White-Faced Ibis",
+    "points": 8,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 91,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 2,
+      "fish": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "fish"
+    }
+  },
+  {
+    "id": "ws-250",
+    "name": "Whooping Crane",
+    "points": 6,
+    "nest": "ground",
+    "egg_limit": 1,
+    "wingspan": 221,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "wild": 3
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-251",
+    "name": "Wild Turkey",
+    "points": 8,
+    "nest": "ground",
+    "egg_limit": 5,
+    "wingspan": 135,
+    "habitats": [
+      "forest",
+      "grassland"
+    ],
+    "cost": {
+      "seed": 2,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "none",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "none"
+    }
+  },
+  {
+    "id": "ws-252",
+    "name": "Willet",
+    "points": 4,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 66,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fish": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": true,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "hunt_dice",
+      "food": "fish"
+    }
+  },
+  {
+    "id": "ws-253",
+    "name": "Wilson's Snipe",
+    "points": 5,
+    "nest": "ground",
+    "egg_limit": 2,
+    "wingspan": 41,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Historian"
+    ],
+    "power": {
+      "kind": "all_draw"
+    }
+  },
+  {
+    "id": "ws-255",
+    "name": "Wood Duck",
+    "points": 4,
+    "nest": "cavity",
+    "egg_limit": 4,
+    "wingspan": 76,
+    "habitats": [
+      "forest",
+      "wetland"
+    ],
+    "cost": {
+      "seed": 2,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "draw_discard",
+      "count": 2
+    }
+  },
+  {
+    "id": "ws-256",
+    "name": "Wood Stork",
+    "points": 6,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 155,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "fish": 1,
+      "rodent": 1,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "white",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [],
+    "power": {
+      "kind": "bonus"
+    }
+  },
+  {
+    "id": "ws-257",
+    "name": "Yellow-Bellied Sapsucker",
+    "points": 3,
+    "nest": "cavity",
+    "egg_limit": 3,
+    "wingspan": 41,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "food",
+      "foods": [
+        "invertebrate"
+      ]
+    }
+  },
+  {
+    "id": "ws-258",
+    "name": "Yellow-Billed Cuckoo",
+    "points": 5,
+    "nest": "platform",
+    "egg_limit": 2,
+    "wingspan": 46,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 2,
+      "wild": 1
+    },
+    "cost_choice": false,
+    "color": "pink",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "eggs",
+      "nest": "bowl",
+      "trigger": "lay_eggs"
+    }
+  },
+  {
+    "id": "ws-259",
+    "name": "Yellow-Breasted Chat",
+    "points": 5,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 25,
+    "habitats": [
+      "forest",
+      "grassland",
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "fruit": 2
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": false,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "move"
+    }
+  },
+  {
+    "id": "ws-260",
+    "name": "Yellow-Headed Blackbird",
+    "points": 4,
+    "nest": "bowl",
+    "egg_limit": 3,
+    "wingspan": 38,
+    "habitats": [
+      "wetland"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1
+    },
+    "cost_choice": false,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "tuck",
+      "reward": "egg"
+    }
+  },
+  {
+    "id": "ws-261",
+    "name": "Yellow-Rumped Warbler",
+    "points": 1,
+    "nest": "bowl",
+    "egg_limit": 4,
+    "wingspan": 23,
+    "habitats": [
+      "forest"
+    ],
+    "cost": {
+      "invertebrate": 1,
+      "seed": 1,
+      "fruit": 1
+    },
+    "cost_choice": true,
+    "color": "brown",
+    "predator": false,
+    "flocking": true,
+    "name_bonuses": [
+      "Anatomist",
+      "Photographer"
+    ],
+    "power": {
+      "kind": "tuck",
+      "reward": "draw"
+    }
+  }
+]

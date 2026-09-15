@@ -16,6 +16,42 @@ from agentbga.web import MatchHub, WebHandler, serve
 
 
 class WebTests(unittest.TestCase):
+    def test_wingspan_human_match_completes_with_effect_choices_and_reopens(self):
+        import random
+        with tempfile.TemporaryDirectory() as directory:
+            db = Path(directory) / 'matches.sqlite3'
+            hub = MatchHub(db)
+            snapshot = hub.create({'game': 'wingspan', 'seed': 17, 'speed_ms': 0,
+                                   'game_config': {'goal_board': 'blue'},
+                                   'players': [{'name': f'Human {i}', 'backend': 'human'} for i in range(2)]})
+            match_id = snapshot['match_id']
+            rng = random.Random(43)
+            seen = set()
+            deadline = time.monotonic() + 30
+            try:
+                while time.monotonic() < deadline:
+                    snapshot = hub.get(match_id)
+                    if snapshot['status'] == 'finished':
+                        break
+                    turn = snapshot.get('human_turn')
+                    if turn:
+                        choice = rng.choice(turn['legal_actions'])
+                        seen.add(choice['action']['type'])
+                        hub.submit_human_action(match_id, turn['seat'], turn['version'], choice['id'])
+                    else:
+                        time.sleep(.002)
+                self.assertEqual('finished', snapshot['status'])
+                self.assertTrue({'keep_birds', 'choose_bonus', 'play_bird', 'take_food', 'draw_card', 'lay_egg', 'activate_power'} <= seen)
+                self.assertEqual([26, 26], [p['turns'] for p in snapshot['views'][0]['players']])
+                self.assertEqual('blue', snapshot['views'][0]['goal_board'])
+                restored = MatchHub(db).get(match_id)
+                self.assertEqual(snapshot['rankings'], restored['rankings'])
+                self.assertEqual(snapshot['views'], restored['views'])
+            finally:
+                with hub.condition:
+                    hub.matches[match_id]['running'] = False
+                    hub.condition.notify_all()
+
     def test_harmonies_human_match_finishes_and_reopens(self):
         with tempfile.TemporaryDirectory() as directory:
             db=Path(directory)/'matches.sqlite3'
@@ -134,7 +170,7 @@ class WebTests(unittest.TestCase):
             finally:
                 server.shutdown()
                 server.server_close()
-            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "century_spice_road", "seven_wonders", "harmonies"],
+            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "century_spice_road", "seven_wonders", "harmonies", "wingspan"],
                              [game["id"] for game in response["games"]])
 
     def test_seven_wonders_setup_snapshot_uses_game_renderer_contract(self):
