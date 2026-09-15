@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-from . import ark_nova, azul, brass_birmingham, century_spice_road, seven_wonders, splendor
+from . import ark_nova, azul, brass_birmingham, century_spice_road, harmonies, seven_wonders, splendor
 from . import ark_nova_legacy_v2
 from .game import GamePlugin
 from .ark_nova_official.plugin import ArkNovaOfficialPlugin
@@ -130,6 +130,7 @@ _REGISTRY = GameRegistry((
     _ModulePlugin(brass_birmingham, "brass_birmingham"),
     _ModulePlugin(century_spice_road, "century_spice_road"),
     _ModulePlugin(seven_wonders, "seven_wonders"),
+    _ModulePlugin(harmonies, "harmonies"),
     ArkNovaOfficialPlugin(),
 ))
 

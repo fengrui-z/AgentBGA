@@ -11,6 +11,18 @@ from agentbga.cli import main
 
 
 class CLITests(unittest.TestCase):
+    def test_harmonies_cli_solo_setup_options(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output=StringIO()
+            with redirect_stdout(output):
+                code=main(['match','create','--game','harmonies','--players','1',
+                           '--seed','17','--db',str(Path(directory)/'match.sqlite3'),
+                           '--game-config','{"board_side":"B","nature_spirits":true}'])
+            self.assertEqual(0,code)
+            created=json.loads(output.getvalue())['data']
+            self.assertEqual('harmonies',created['game'])
+            self.assertEqual(1,created['players'])
+
     def test_seven_wonders_cli_accepts_seven_players(self):
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "match.sqlite3"

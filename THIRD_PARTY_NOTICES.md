@@ -27,3 +27,15 @@ Copyright (c) 2021 Ivan Bravi, used under the MIT License:
 Splendor is a trademark of its respective owner. AgentBGA is an independent
 research project and is not affiliated with or endorsed by Space Cowboys,
 Asmodee, or Board Game Arena.
+
+## Harmonies mechanical card data
+
+`src/agentbga/data/harmonies-cards.json` converts the numeric scores and habitat
+patterns from `docs/cards_database.json` in
+[miles2542/harmonies-bot](https://github.com/miles2542/harmonies-bot), commit
+`a5ffa20f4d6206632eec2c83e93c39cff79283c8`, licensed under Apache-2.0.
+The license is retained in `licenses/harmonies-bot-APACHE-2.0.txt`.
+Changes: renamed IDs and colors, converted directional chains into axial hex
+coordinates, reversed stacks to bottom-to-top, omitted prose descriptions.
+No source-engine code or publisher artwork is included. Harmonies is designed
+by Johan Benvenuto and published by Libellud; this implementation is unaffiliated.

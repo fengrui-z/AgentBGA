@@ -9,6 +9,7 @@ A headless, deterministic board-game environment for evaluating LLM agents in lo
 ## Games
 
 - **Splendor** (2–4 players, fully playable)
+- **Harmonies / 自然和弦** (1–4 players, A/B boards, 32 animal cards, optional Nature’s Spirits; playable beta)
 - **Azul** (2–4 players, colored-wall base game, playable beta)
 - **Brass: Birmingham** (2–4 players, playable beta)
 - **Century: Spice Road** (2–5 players, fully playable)
@@ -52,6 +53,27 @@ The setup page lists recent SQLite matches, including tables created by
 `agentbga run` or `agentbga match create`. Click one, or open
 `http://127.0.0.1:8765/?match=MATCH_ID`, to spectate without taking over the
 runners. Pause still applies only to matches started from the web form.
+
+### Harmonies / 自然和弦
+
+```console
+./agentbga run --game harmonies --players 2 --controllers random,random --seed 42
+./agentbga run --game harmonies --players 1 --controllers random --seed 42 \
+  --game-config '{"board_side":"B","nature_spirits":true}'
+```
+
+In the Web setup choose **自然和弦 / Harmonies**, select A (river) or B (islands),
+and optionally enable Nature's Spirits. The **Solo** preset needs no API key.
+Take a token group, select a token and click a highlighted hex. Animal cards show
+exact stack heights and mark the cube target; click **Settle animal** and a
+highlighted target when available. Optional card/animal actions can interrupt
+placements. Click **End turn** after all three tokens are placed.
+
+Includes deterministic replay, cumulative animal scores, the equal-turn final
+round, solo market refresh and sun ratings. Cards use stable numbers and original
+SVG diagrams; the mechanical catalog is community-transcribed and the game is
+labelled playable beta. No publisher art or expansion cards are bundled. See the
+[implementation and validation plan](docs/harmonies-implementation-plan.md).
 
 ## Harness backends
 
