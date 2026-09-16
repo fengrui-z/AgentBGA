@@ -14,6 +14,7 @@ from . import (
     harmonies,
     seven_wonders,
     splendor,
+    wingspan,
 )
 from . import ark_nova_legacy_v2
 from .game import GamePlugin
@@ -141,6 +142,7 @@ _REGISTRY = GameRegistry((
     _ModulePlugin(century_spice_road, "century_spice_road"),
     _ModulePlugin(seven_wonders, "seven_wonders"),
     _ModulePlugin(harmonies, "harmonies"),
+    _ModulePlugin(wingspan, "wingspan"),
     ArkNovaOfficialPlugin(),
 ))
 

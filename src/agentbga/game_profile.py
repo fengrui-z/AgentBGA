@@ -476,6 +476,25 @@ HARMONIES_PROFILE = GameProfile(
 )
 
 
+WINGSPAN_PROFILE = GameProfile(
+    game_id="wingspan", game_name="Wingspan", total_expected_turns=700,
+    endgame_score_threshold=90, resource_categories={"food": "food", "eggs": "eggs"},
+    engine_component_name="three habitat rows and chained bird powers",
+    scoring_dimensions=["birds", "eggs", "cached_food", "tucked_cards", "round_goals", "bonus_cards"],
+    action_meta_types={"play_bird": META_BUILD, "gain_food": META_ACQUIRE, "lay_eggs": META_SCORE,
+                       "draw_cards": META_ACQUIRE, "activate_power": META_CONVERT,
+                       "take_food": META_ACQUIRE, "draw_card": META_ACQUIRE, "tuck_card": META_SCORE,
+                       "keep_birds": META_SETUP, "choose_bonus": META_SETUP},
+    observation_schema={"players": "self_state", "tray": "market", "feeder": "shared_resources",
+                        "pending": "self_state", "goals": "scoring_opportunities", "rules": "meta"},
+    turn_structure="multi_step", hidden_info_types=["hand", "bonuses", "deck_order", "rng"],
+    has_spatial=True, spatial_summary_method="grid", has_card_abilities=True, ability_summary_depth="full",
+    early_strategy="Keep affordable birds and matching food. Build forest and wetland engines early.",
+    mid_strategy="Resolve optional brown powers right to left. Weigh round goals against engine growth. Pink effects may require decisions during opponents' turns.",
+    late_strategy="Only 26 full actions per player. Compare bird, egg, tuck, cache and bonus points. Preserve eggs needed for bird placement.",
+    capability_weights={CAP_RESOURCE: 3, CAP_PLANNING: 3, CAP_COMBO: 3, CAP_ENDGAME: 3},
+)
+
 _PROFILES: dict[str, GameProfile] = {
     "splendor": SPLENDOR_PROFILE,
     "azul": AZUL_PROFILE,
@@ -484,6 +503,7 @@ _PROFILES: dict[str, GameProfile] = {
     "castles_of_burgundy": CASTLES_OF_BURGUNDY_PROFILE,
     "seven_wonders": SEVEN_WONDERS_PROFILE,
     "harmonies": HARMONIES_PROFILE,
+    "wingspan": WINGSPAN_PROFILE,
 }
 
 

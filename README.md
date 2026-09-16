@@ -9,6 +9,7 @@ A headless, deterministic board-game environment for evaluating LLM agents in lo
 ## Games
 
 - **Splendor** (2–4 players, fully playable)
+- **Wingspan / 展翅翱翔** (2–5 players, 170 base birds, 26 bonus cards, both goal boards; playable beta)
 - **Harmonies / 自然和弦** (1–4 players, A/B boards, 32 animal cards, optional Nature’s Spirits; playable beta)
 - **Azul** (2–4 players, colored-wall base game, playable beta)
 - **Brass: Birmingham** (2–4 players, playable beta)
@@ -75,6 +76,28 @@ round, solo market refresh and sun ratings. Cards use stable numbers and origina
 SVG diagrams; the mechanical catalog is community-transcribed and the game is
 labelled playable beta. No publisher art or expansion cards are bundled. See the
 [implementation and validation plan](docs/harmonies-implementation-plan.md).
+
+### Wingspan / 展翅翱翔
+
+```console
+./agentbga run --game wingspan --players 2 --controllers random,random --seed 42
+./agentbga run --game wingspan --players 5 --controllers random,random,random,random,random \
+  --seed 42 --game-config '{"goal_board":"blue"}'
+```
+
+In Web setup choose **展翅翱翔 / Wingspan**, 2–5 human/random/model seats,
+and green (competitive) or blue (individual) round goals. Select starting birds,
+discard one food per kept bird, and keep one bonus card. Click habitat actions or
+play a bird from your hand, then select payments and effect choices as prompted.
+Bird powers and bonus conditions have Chinese and English descriptions. Name-based
+bonuses use the English bird names printed in this catalog.
+
+Includes all 170 original base birds, 26 bonus cards, eight double-sided goal tiles,
+white/brown/pink powers, exact seeded replay and hidden-information observations.
+No Swift-Start birds, expansions, Automa solo mode, or publisher artwork. The
+community-transcribed mechanical catalog is labelled playable beta; see
+[implementation and validation](docs/wingspan-implementation-plan.md) and
+[third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Harness backends
 
