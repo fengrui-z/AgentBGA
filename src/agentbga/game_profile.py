@@ -400,6 +400,60 @@ SEVEN_WONDERS_PROFILE = GameProfile(
 )
 
 
+# ── The Castles of Burgundy profile ──
+
+CASTLES_OF_BURGUNDY_PROFILE = GameProfile(
+    game_id="castles_of_burgundy",
+    game_name="The Castles of Burgundy",
+    total_expected_turns=100,
+    endgame_score_threshold=180,
+    resource_categories={
+        "silver": "currency", "workers": "die_adjustment", "goods": "sets",
+        "hex_storage": "spatial_inventory",
+    },
+    engine_component_name="placed duchy tiles and monastery abilities",
+    scoring_dimensions=[
+        "completed_areas", "color_bonuses", "livestock", "sold_goods",
+        "watchtowers", "monasteries", "leftover_resources",
+    ],
+    action_meta_types={
+        "take_tile": META_ACQUIRE, "place_tile": META_BUILD,
+        "sell_goods": META_SCORE, "take_workers": META_ACQUIRE,
+        "buy_tile": META_ACQUIRE, "choose_tile": META_ACQUIRE,
+        "choose_goods": META_ACQUIRE, "sell_goods_effect": META_SCORE,
+        "place_tile_effect": META_BUILD, "skip_effect": META_SETUP,
+        "end_turn": META_SETUP,
+    },
+    observation_schema={
+        "players": "self_state", "depots": "market", "black_depot": "market",
+        "color_bonus_claims": "scoring_opportunities", "round_dice": "shared_resources",
+        "remaining_dice": "self_state", "turn_order": "meta",
+    },
+    turn_structure="multi_step",
+    hidden_info_types=[],
+    has_spatial=True,
+    spatial_summary_method="grid",
+    has_card_abilities=True,
+    ability_summary_depth="keyword",
+    early_strategy=(
+        "Use early-phase area bonuses aggressively, keep hex storage flexible, and value "
+        "ships and workers that make later dice reliable."
+    ),
+    mid_strategy=(
+        "Chain building effects, protect access to scarce colors, and balance region "
+        "completion with color-majority bonuses."
+    ),
+    late_strategy=(
+        "Finish high-value areas, convert goods and spare dice into points, and account "
+        "for monastery and leftover-resource scoring."
+    ),
+    capability_weights={
+        CAP_ENGINE: 3, CAP_RESOURCE: 3, CAP_OPPONENT: 2, CAP_PHASE: 3,
+        CAP_PLANNING: 3, CAP_PERCEPTION: 2, CAP_ENDGAME: 3, CAP_COMBO: 3,
+    },
+)
+
+
 # ── Registry ──
 
 HARMONIES_PROFILE = GameProfile(
@@ -446,6 +500,7 @@ _PROFILES: dict[str, GameProfile] = {
     "azul": AZUL_PROFILE,
     "ark_nova": ARK_NOVA_PROFILE,
     "brass_birmingham": BRASS_PROFILE,
+    "castles_of_burgundy": CASTLES_OF_BURGUNDY_PROFILE,
     "seven_wonders": SEVEN_WONDERS_PROFILE,
     "harmonies": HARMONIES_PROFILE,
     "wingspan": WINGSPAN_PROFILE,

@@ -1,5 +1,6 @@
 @import "./wingspan-table.css";
 @import "./harmonies-table.css";
+@import "./burgundy-table.css";
 @import "tailwindcss";
 
 :root { --ink:#171b18; --paper:#f2efe7; --cream:#fbfaf5; --green:#153f36; --mint:#c9e6d2; --line:#cbc8bd; --red:#c94d3f; --gold:#d7a72c; --px-border:#171b18; --px-shadow:#101310; }

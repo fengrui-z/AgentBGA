@@ -1,6 +1,6 @@
 # Legal action queries
 
-Splendor supports seat-local `legal_actions` filters through MCP, Minimal, Pi,
+Splendor and The Castles of Burgundy support seat-local `legal_actions` filters through MCP, Minimal, Pi,
 and the seat CLI. The engine still enumerates the complete legal action set;
 queries select from that set without changing IDs, payment alternatives, game
 rules, or submission validation. Other games retain their existing behavior.
@@ -21,6 +21,33 @@ Filters combine with AND:
 | `bonus` | Card bonus: white, blue, green, red, or black |
 | `noble_id` | Exact noble ID in a noble-choice decision |
 | `max_payment` | Maximum total tokens paid, including gold; only actions with a payment match |
+
+## The Castles of Burgundy
+
+The seat `observe` result is grouped into `turn`, `dice`, `market`, `players`,
+and `scoring` sections. It is a lossless re-grouping of the normal seat-safe
+game observation; `legal_action_groups` gives the current action-type counts.
+
+Actions can be selected by group or filtered with AND:
+
+```json
+{"filters":{"type":"take_tile","source":"die","die_index":0,"depot":4,"tile_color":"building","max_workers":1}}
+```
+
+| Filter | Meaning |
+|---|---|
+| `type` | Exact action type, such as `take_tile`, `place_tile`, `sell_goods`, or `buy_tile` |
+| `source` | `die`, `bonus`, `black`, or `depot` |
+| `die_index` | Die slot 0 or 1 |
+| `depot`, `adjacent_depot` | Exact numbered depot, 1–6 |
+| `tile_id`, `discard_tile_id`, `cell_id` | Exact tile, discarded storage tile, or duchy cell |
+| `tile_color` | building, livestock, monastery, castle, mine, or ship, inferred from the legal tile ID |
+| `goods_type` | Exact goods type, 1–6 |
+| `max_workers`, `max_silver` | Upper bounds on the costs already stated by the action |
+
+These queries only filter the engine-enumerated action snapshot. They do not
+change worker adjustment rules, merge payment alternatives, or create new
+placements, purchases, and building-effect choices.
 
 `group` selects an action type and is compatible with the existing grouped-action
 interface. For these filtered games, unknown groups, unsupported filter names,

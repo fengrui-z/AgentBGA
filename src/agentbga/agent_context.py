@@ -987,6 +987,76 @@ def _load_cache(path: Path) -> dict[str, Any]:
         return {}
 
 
+def compact_castles_of_burgundy_observation(
+    observation: Mapping[str, Any], legal: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Organize the complete Burgundy seat view into decision-oriented sections.
+
+    This is a lossless re-grouping of the game plugin's already seat-safe
+    observation.  It keeps the Web projection unchanged while making the agent
+    tool response easier to scan alongside a potentially large action space.
+    """
+    players = []
+    for player in observation.get("players", []):
+        players.append({
+            "seat": player["seat"],
+            "score": player["score"],
+            "position": {
+                "bridge": player["bridge"],
+                "bridge_priority": player["bridge_priority"],
+            },
+            "assets": {
+                "silver": player["silver"],
+                "workers": player["workers"],
+            },
+            "tiles": {
+                "storage": deepcopy(player["storage"]),
+                "duchy": deepcopy(player["duchy"]),
+                "completed_regions": deepcopy(player["completed_regions"]),
+            },
+            "goods": {
+                "stored": deepcopy(player["goods"]),
+                "sold": deepcopy(player["sold_goods"]),
+            },
+        })
+    action_counts = Counter(
+        item.get("action", {}).get("type", "other") for item in legal
+    )
+    return {
+        "game": observation["game"],
+        "rules_version": observation["rules_version"],
+        "implementation_status": observation.get("implementation_status"),
+        "viewer_seat": observation["viewer_seat"],
+        "state_version": observation.get("state_version"),
+        "turn": {
+            key: deepcopy(observation[key]) for key in (
+                "status", "phase", "phase_number", "round_number", "turn_count",
+                "active_seat", "turn_order", "round_order", "free_actions",
+                "pending_effect", "bought_this_turn",
+            )
+        },
+        "dice": {
+            key: deepcopy(observation[key]) for key in (
+                "white_die", "round_dice", "remaining_dice",
+            )
+        },
+        "market": {
+            key: deepcopy(observation[key]) for key in (
+                "depots", "black_depot", "tile_supply_counts", "black_supply_count",
+            )
+        },
+        "players": players,
+        "scoring": {
+            "color_bonus_claims": deepcopy(observation["color_bonus_claims"]),
+            "rankings": deepcopy(observation.get("rankings")),
+        },
+        "legal_action_groups": [
+            {"group": kind, "count": count}
+            for kind, count in sorted(action_counts.items())
+        ],
+    }
+
+
 def prepare_seat_context(
     context_path: Path, *, match_id: str, seat: int, version: Any,
     observation: dict[str, Any], legal: list[dict[str, Any]],
@@ -994,9 +1064,14 @@ def prepare_seat_context(
     """Create and persist the versioned context consumed by every harness."""
     flattened = _flatten_legal(legal)
     if observation.get("game") != "ark_nova":
+        projected_observation = (
+            compact_castles_of_burgundy_observation(observation, legal)
+            if observation.get("game") == "castles_of_burgundy"
+            else observation
+        )
         context = {
             "schema_version": CONTEXT_V1, "match_id": match_id, "seat": seat,
-            "version": version, "observation": observation,
+            "version": version, "observation": projected_observation,
             "legal_actions": flattened,
         }
         if observation.get("game") in GAME_FILTERS:

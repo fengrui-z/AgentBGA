@@ -13,6 +13,7 @@ A headless, deterministic board-game environment for evaluating LLM agents in lo
 - **Harmonies / 自然和弦** (1–4 players, A/B boards, 32 animal cards, optional Nature’s Spirits; playable beta)
 - **Azul** (2–4 players, colored-wall base game, playable beta)
 - **Brass: Birmingham** (2–4 players, playable beta)
+- **The Castles of Burgundy** (2–4 players, 2019 base game, playable beta)
 - **Century: Spice Road** (2–5 players, fully playable)
 - **Ark Nova** (1–4 players, released base-game Map 0 semantic rules plus an opt-in Map A preview; mechanics-only card data)
 - **7 Wonders** (3–7 players, complete Second Edition base rules, Day/Night Wonders)
@@ -297,6 +298,7 @@ and discard the token before storing the artifact.
 agentbga games list --json
 agentbga match create --game splendor --players 4 --seed 42 --json
 agentbga match create --game azul --players 2 --seed 42 --json
+agentbga match create --game castles_of_burgundy --players 2 --seed 42 --json
 agentbga match create --game seven_wonders --players 3 --seed 42 --json
 agentbga match observe MATCH_ID --seat 0 --json
 agentbga match legal-actions MATCH_ID --seat 0 --json

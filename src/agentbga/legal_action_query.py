@@ -22,6 +22,23 @@ GAME_FILTERS = {
         "noble_id": STRING,
         "max_payment": NONNEGATIVE,
     },
+    "castles_of_burgundy": {
+        "type": STRING,
+        "source": {"type": "string", "enum": ["die", "bonus", "black", "depot"]},
+        "die_index": {"type": "integer", "minimum": 0, "maximum": 1},
+        "depot": {"type": "integer", "minimum": 1, "maximum": 6},
+        "adjacent_depot": {"type": "integer", "minimum": 1, "maximum": 6},
+        "tile_id": STRING,
+        "tile_color": {
+            "type": "string",
+            "enum": ["building", "livestock", "monastery", "castle", "mine", "ship"],
+        },
+        "cell_id": STRING,
+        "goods_type": {"type": "integer", "minimum": 1, "maximum": 6},
+        "discard_tile_id": STRING,
+        "max_workers": NONNEGATIVE,
+        "max_silver": NONNEGATIVE,
+    },
 }
 
 
@@ -40,7 +57,8 @@ def query_schema() -> dict[str, Any]:
 QUERY_DESCRIPTION = (
     "List current legal action IDs. Small unfiltered lists are returned in full; large lists "
     "return groups. Select a group (action type), or combine exact-match filters with AND. "
-    "max_payment is an upper bound on the total payment. Check available_filters in a groups "
+    "max_payment, max_workers, and max_silver are upper bounds on stated action costs. "
+    "Check available_filters in a groups "
     "response for this game's fields. Follow next_cursor with the SAME group/filters to read "
     "all pages; cursors apply only to this decision. Never read output files to find actions."
 )
@@ -52,6 +70,21 @@ def filter_values(game: str, item: Mapping[str, Any]) -> dict[str, Any]:
         from .splendor import CARDS
         card = CARDS.get(item.get("card_id"), {})
         values.update({key: card[key] for key in ("tier", "bonus") if key in card})
+    elif game == "castles_of_burgundy":
+        tile_id = item.get("tile_id")
+        if isinstance(tile_id, str):
+            regular_id = tile_id.removeprefix("black-")
+            tile_color = next((
+                color for color in (
+                    "building", "livestock", "monastery", "castle", "mine", "ship",
+                ) if regular_id.startswith(f"{color}-")
+            ), None)
+            if tile_color is not None:
+                values["tile_color"] = tile_color
+        for resource in ("workers", "silver"):
+            amount = item.get(resource)
+            if isinstance(amount, int) and not isinstance(amount, bool):
+                values[f"max_{resource}"] = amount
     if isinstance(item.get("payment"), dict):
         values["max_payment"] = sum(item["payment"].values())
     return {key: values[key] for key in GAME_FILTERS[game] if key in values}

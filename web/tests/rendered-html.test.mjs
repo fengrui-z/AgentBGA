@@ -13,6 +13,7 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /方舟动物园/);
   assert.match(html, /花砖物语/);
   assert.match(html, /伯明翰/);
+  assert.match(html, /勃艮第城堡/);
   assert.match(html, /香料之路/);
   assert.match(html, /七大奇迹/);
   assert.match(html, /自然和弦/);
@@ -41,6 +42,8 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(html, /观战已有牌桌/);
   const source = await readFile(new URL("app/page.tsx", root), "utf8");
   const styles = await readFile(new URL("app/globals.css", root), "utf8");
+  const burgundySource = await readFile(new URL("app/burgundy-table.tsx", root), "utf8");
+  const burgundyStyles = await readFile(new URL("app/burgundy-table.css", root), "utf8");
   assert.match(source, /watchMatch/);
   assert.match(source, /live-tables/);
   assert.match(source, /\/api\/matches/);
@@ -77,6 +80,10 @@ test("static export contains the AgentBGA match setup", async () => {
   assert.match(source, /azul-player-board-row/);
   assert.match(source, /AZUL_FLOOR_PENALTIES = \[-1, -1, -2, -2, -2, -3, -3\]/);
   assert.match(source, /BrassBoard/);
+  assert.match(source, /BurgundyTable/);
+  assert.match(source, /castles_of_burgundy/);
+  assert.match(burgundySource, /BurgundyDuchy/);
+  assert.match(burgundyStyles, /\.burgundy-hex-map/);
   assert.match(source, /function BrassLiveMap/);
   assert.match(source, /BRASS_MAP_POINTS/);
   assert.match(source, /brass-route-layer/);
