@@ -361,6 +361,7 @@ test("static export presents AgentBGA and retains one public Pareto frontier", a
   assert.equal((source.match(/<figure/g) ?? []).length, 1);
   assert.doesNotMatch(source, /成本构成对比|计价表（RMB|分游戏 Elo × Token 构成|分游戏平均总 Token|综合排名/);
   assert.doesNotMatch(source, /[\u4e00-\u9fff]/);
+  assert.doesNotMatch(source, /Download public result JSON/);
   assert.match(styles, /\.scatter-stage/);
   assert.match(styles, /\.capability-grid/);
   assert.match(styles, /\.game-list/);

@@ -272,7 +272,7 @@ export default function ArenaPage() {
     <section className="closing-section">
       <span>BUILD · RUN · INSPECT · REPLAY</span>
       <h2>Turn long-horizon agent behavior into reproducible, comparable evidence.</h2>
-      <div><a href={REPOSITORY_URL} target="_blank" rel="noreferrer">Explore the repository ↗</a><a href={DATA_URL}>Download public result JSON ↓</a></div>
+      <div><a href={REPOSITORY_URL} target="_blank" rel="noreferrer">Explore the repository ↗</a></div>
     </section>
 
     <footer className="site-footer">
