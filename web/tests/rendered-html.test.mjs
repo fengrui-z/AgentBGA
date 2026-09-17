@@ -359,6 +359,8 @@ test("static export presents AgentBGA and retains one public Pareto frontier", a
   assert.match(source, /The Castles of Burgundy/);
   assert.match(source, /Grok Build/);
   assert.equal((source.match(/<figure/g) ?? []).length, 1);
+  assert.ok(source.indexOf("<ParetoFrontier data={data}/>") < source.indexOf('className="intro-hero"'));
+  assert.ok(source.indexOf("<ParetoFrontier data={data}/>") < source.indexOf('id="quickstart"'));
   assert.doesNotMatch(source, /成本构成对比|计价表（RMB|分游戏 Elo × Token 构成|分游戏平均总 Token|综合排名/);
   assert.doesNotMatch(source, /[\u4e00-\u9fff]/);
   assert.doesNotMatch(source, /Download public result JSON/);

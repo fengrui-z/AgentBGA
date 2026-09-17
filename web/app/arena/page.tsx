@@ -194,12 +194,15 @@ export default function ArenaPage() {
     <nav className="arena-nav">
       <Link href={`${BASE_PATH}/`}><span>ABGA</span> AgentBGA</Link>
       <div className="nav-links">
+        <a href="#frontier">Frontier</a>
         <a href="#capabilities">Capabilities</a>
         <a href="#games">Games</a>
-        <a href="#frontier">Frontier</a>
         <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">GitHub ↗</a>
       </div>
     </nav>
+
+    {data && <ParetoFrontier data={data}/>}
+    {!data && <section className="frontier-loading" id="frontier"><span>PUBLIC FRONTIER</span><h2>{error || "Loading the public 396-match result snapshot…"}</h2></section>}
 
     <header className="intro-hero">
       <div className="hero-copy">
@@ -265,9 +268,6 @@ export default function ArenaPage() {
       <div><span>QUICK START</span><h2>Start a reproducible match with one command.</h2><p>Python 3.11+, with no package install required. Run the local web table to play, configure agents, or spectate a match.</p></div>
       <pre><code><b># random baseline</b>{`\n`}./agentbga run --players 2 --controllers random,random --seed 42{`\n\n`}<b># local interactive table</b>{`\n`}cd web &amp;&amp; npm ci &amp;&amp; npm run build &amp;&amp; cd ..{`\n`}./agentbga web</code></pre>
     </section>
-
-    {data && <ParetoFrontier data={data}/>}
-    {!data && <section className="frontier-loading" id="frontier"><span>PUBLIC FRONTIER</span><h2>{error || "Loading the public 396-match result snapshot…"}</h2></section>}
 
     <section className="closing-section">
       <span>BUILD · RUN · INSPECT · REPLAY</span>
