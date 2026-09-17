@@ -301,10 +301,11 @@ test("static export presents AgentBGA and retains one public Pareto frontier", a
   const styles = await readFile(new URL("app/arena/arena.css", root), "utf8");
   const data = JSON.parse(await readFile(new URL("public/results/frontier12-2026-v2.json", root), "utf8"));
 
-  assert.match(html, /让 Agent 在真正的/);
+  assert.match(html, /Evaluate agents in long-horizon strategy games/);
   assert.match(html, /Euro-style board games/);
-  assert.match(html, /九款长程策略游戏/);
-  assert.match(html, /一个命令，启动可复现对局/);
+  assert.match(html, /Nine long-horizon strategy games/);
+  assert.match(html, /Start a reproducible match with one command/);
+  assert.match(html, /<main class="arena-page" lang="en">/);
   assert.equal(data.schema_version, "agentbga.frontier12-pages.v1");
   assert.equal(data.dataset_id, "frontier12-2026-v2-full");
   assert.equal(data.generated_at, "2026-09-02T00:12:09.742231Z");
@@ -350,7 +351,7 @@ test("static export presents AgentBGA and retains one public Pareto frontier", a
   assert.equal(qwenBrass.elo, 1546.3);
   assert.equal(qwenBrass.elo_rank, 4);
   assert.match(source, /ParetoFrontier/);
-  assert.match(source, /能力与成本的 Pareto frontier/);
+  assert.match(source, /Cost–performance Pareto frontier/);
   assert.match(source, /\[2100, 1800, 1500, 1200\]/);
   assert.match(source, /Overall/);
   assert.match(source, /DETERMINISTIC ENGINES/);
@@ -358,11 +359,16 @@ test("static export presents AgentBGA and retains one public Pareto frontier", a
   assert.match(source, /The Castles of Burgundy/);
   assert.match(source, /Grok Build/);
   assert.equal((source.match(/<figure/g) ?? []).length, 1);
+  assert.ok(source.indexOf("<ParetoFrontier data={data}/>") < source.indexOf('className="intro-hero"'));
+  assert.ok(source.indexOf("<ParetoFrontier data={data}/>") < source.indexOf('id="quickstart"'));
   assert.doesNotMatch(source, /成本构成对比|计价表（RMB|分游戏 Elo × Token 构成|分游戏平均总 Token|综合排名/);
+  assert.doesNotMatch(source, /[\u4e00-\u9fff]/);
+  assert.doesNotMatch(source, /Download public result JSON/);
   assert.match(styles, /\.scatter-stage/);
   assert.match(styles, /\.capability-grid/);
   assert.match(styles, /\.game-list/);
   assert.match(styles, /\.frontier-card/);
+  assert.doesNotMatch(styles, /Georgia|font-style:\s*italic|--blue|--clay|--purple/);
   assert.doesNotMatch(styles, /\.cost-bar-row|\.pricing-card|\.token-heatmap/);
   assert.equal("runtime" in data, false);
 });
