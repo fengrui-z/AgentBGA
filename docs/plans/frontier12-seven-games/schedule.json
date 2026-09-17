@@ -1,0 +1,3698 @@
+[
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290959,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 1
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290965,
+    "participants": [
+      "gpt56-sol-codex",
+      "glm52-opencode",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 2
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290931,
+    "participants": [
+      "glm52-opencode",
+      "gpt56-sol-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 3
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290953,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 4
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290921,
+    "participants": [
+      "qwen38-max-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 5
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290943,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen38-max-qwen",
+      "glm52-opencode"
+    ],
+    "ordinal": 6
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290964,
+    "participants": [
+      "gpt56-terra-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 7
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290922,
+    "participants": [
+      "qwen38-max-qwen",
+      "kimi-k27-code-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 8
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290923,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-sol-codex",
+      "glm52-opencode"
+    ],
+    "ordinal": 9
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290935,
+    "participants": [
+      "gpt56-terra-codex",
+      "gpt56-sol-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 10
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290945,
+    "participants": [
+      "gpt56-luna-codex",
+      "qwen37-plus-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 11
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290932,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "qwen37-plus-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 12
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290928,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 13
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290961,
+    "participants": [
+      "gpt56-sol-opencode",
+      "gpt56-luna-codex",
+      "glm52-opencode"
+    ],
+    "ordinal": 14
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290940,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "kimi-k27-code-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 15
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290943,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "glm52-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 16
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290939,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-opencode",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 17
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290937,
+    "participants": [
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 18
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290947,
+    "participants": [
+      "gpt56-sol-codex",
+      "gpt56-luna-codex",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 19
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290928,
+    "participants": [
+      "qwen37-plus-opencode",
+      "qwen38-max-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 20
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290938,
+    "participants": [
+      "gpt56-luna-codex",
+      "glm52-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 21
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290968,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "deepseek-v4-pro-0813-dsh",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 22
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290938,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "qwen37-plus-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 23
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290954,
+    "participants": [
+      "glm52-opencode",
+      "qwen38-max-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 24
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290943,
+    "participants": [
+      "gpt56-luna-codex",
+      "kimi-k27-code-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 25
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290936,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-luna-codex",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 26
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290933,
+    "participants": [
+      "gpt56-luna-codex",
+      "qwen38-max-qwen",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 27
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290968,
+    "participants": [
+      "glm52-opencode",
+      "gpt56-sol-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 28
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290927,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "glm52-opencode"
+    ],
+    "ordinal": 29
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290922,
+    "participants": [
+      "qwen38-max-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 30
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290947,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 31
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290924,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen38-max-qwen",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 32
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290925,
+    "participants": [
+      "gpt56-luna-codex",
+      "gpt56-terra-codex",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 33
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290944,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "glm52-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 34
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290938,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 35
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290943,
+    "participants": [
+      "gpt56-sol-codex",
+      "gpt56-sol-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 36
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290962,
+    "participants": [
+      "gpt56-terra-codex",
+      "kimi-k27-code-opencode",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 37
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290964,
+    "participants": [
+      "gpt56-terra-codex",
+      "deepseek-v4-pro-0813-dsh",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 38
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290922,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 39
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290954,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-sol-codex",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 40
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290950,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-terra-codex",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 41
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290962,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "qwen38-max-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 42
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290953,
+    "participants": [
+      "glm52-opencode",
+      "qwen37-plus-opencode",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 43
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290962,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "qwen38-max-qwen",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 44
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290926,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 45
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290947,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 46
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290927,
+    "participants": [
+      "qwen38-max-qwen",
+      "gpt56-sol-codex",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 47
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290952,
+    "participants": [
+      "gpt56-terra-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 48
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290952,
+    "participants": [
+      "gpt56-terra-codex",
+      "glm52-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 49
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290966,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 50
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290956,
+    "participants": [
+      "qwen38-max-qwen",
+      "deepseek-v4-pro-0813-dsh",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 51
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290963,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 52
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290952,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "kimi-k27-code-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 53
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290928,
+    "participants": [
+      "gpt56-terra-codex",
+      "glm52-opencode",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 54
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290932,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "qwen38-max-qwen",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 55
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290965,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "kimi-k27-code-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 56
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290944,
+    "participants": [
+      "gpt56-sol-codex",
+      "gpt56-luna-codex",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 57
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290937,
+    "participants": [
+      "qwen38-max-qwen",
+      "gpt56-terra-codex",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 58
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290932,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-terra-codex",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 59
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290961,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-luna-codex",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 60
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290940,
+    "participants": [
+      "qwen38-max-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 61
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290957,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-terra-codex",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 62
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290962,
+    "participants": [
+      "qwen38-max-qwen",
+      "gpt56-sol-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 63
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290923,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 64
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290959,
+    "participants": [
+      "gpt56-terra-codex",
+      "qwen37-plus-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 65
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290963,
+    "participants": [
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 66
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290925,
+    "participants": [
+      "qwen38-max-qwen",
+      "gpt56-luna-codex",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 67
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290942,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-qwen",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 68
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290921,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 69
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290952,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-qwen",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 70
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290957,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "gpt56-terra-codex",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 71
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290967,
+    "participants": [
+      "qwen38-max-opencode",
+      "qwen38-max-qwen",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 72
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290961,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 73
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290967,
+    "participants": [
+      "gpt56-terra-codex",
+      "qwen37-plus-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 74
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290944,
+    "participants": [
+      "gpt56-terra-codex",
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 75
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290928,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 76
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290929,
+    "participants": [
+      "gpt56-sol-codex",
+      "kimi-k27-code-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 77
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290924,
+    "participants": [
+      "gpt56-terra-codex",
+      "glm52-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 78
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290954,
+    "participants": [
+      "gpt56-sol-codex",
+      "glm52-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 79
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290922,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen38-max-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 80
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290938,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-codex",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 81
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290960,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "kimi-k27-code-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 82
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290955,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "qwen37-plus-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 83
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290949,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "qwen37-plus-opencode",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 84
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290925,
+    "participants": [
+      "gpt56-luna-codex",
+      "kimi-k27-code-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 85
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290933,
+    "participants": [
+      "qwen38-max-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 86
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290966,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 87
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290934,
+    "participants": [
+      "gpt56-sol-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 88
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290939,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 89
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290932,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-sol-opencode",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 90
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290956,
+    "participants": [
+      "gpt56-terra-codex",
+      "gpt56-luna-codex",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 91
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290933,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-sol-codex",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 92
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290946,
+    "participants": [
+      "qwen38-max-opencode",
+      "qwen38-max-qwen",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 93
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290956,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "qwen37-plus-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 94
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290931,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen37-plus-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 95
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290935,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "qwen37-plus-opencode",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 96
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290924,
+    "participants": [
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 97
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290951,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "kimi-k27-code-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 98
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290945,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "glm52-opencode"
+    ],
+    "ordinal": 99
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290928,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "kimi-k27-code-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 100
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290928,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "gpt56-terra-codex",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 101
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290965,
+    "participants": [
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 102
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290954,
+    "participants": [
+      "gpt56-sol-codex",
+      "qwen38-max-qwen",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 103
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290945,
+    "participants": [
+      "qwen37-plus-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 104
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290941,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "kimi-k27-code-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 105
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290955,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "qwen37-plus-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 106
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290923,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen38-max-qwen",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 107
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290941,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "qwen38-max-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 108
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290960,
+    "participants": [
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 109
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290951,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-terra-codex",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 110
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290939,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "glm52-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 111
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290947,
+    "participants": [
+      "gpt56-terra-codex",
+      "gpt56-sol-codex",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 112
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290929,
+    "participants": [
+      "gpt56-sol-codex",
+      "gpt56-sol-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 113
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290950,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "glm52-opencode"
+    ],
+    "ordinal": 114
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290944,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-luna-codex",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 115
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290921,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "qwen38-max-qwen",
+      "glm52-opencode"
+    ],
+    "ordinal": 116
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290946,
+    "participants": [
+      "glm52-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 117
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290955,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "glm52-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 118
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290931,
+    "participants": [
+      "gpt56-terra-codex",
+      "glm52-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 119
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290957,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-terra-codex",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 120
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290958,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen37-plus-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 121
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290936,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 122
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290966,
+    "participants": [
+      "glm52-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 123
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290930,
+    "participants": [
+      "qwen38-max-qwen",
+      "qwen37-plus-opencode",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 124
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290950,
+    "participants": [
+      "qwen38-max-qwen",
+      "qwen38-max-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 125
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290961,
+    "participants": [
+      "gpt56-sol-opencode",
+      "gpt56-terra-codex",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 126
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290941,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-terra-codex",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 127
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290924,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-sol-codex",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 128
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290929,
+    "participants": [
+      "qwen38-max-opencode",
+      "qwen38-max-qwen",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 129
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290949,
+    "participants": [
+      "qwen37-plus-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 130
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290946,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-luna-codex",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 131
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290936,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 132
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290941,
+    "participants": [
+      "glm52-opencode",
+      "qwen38-max-qwen",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 133
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290935,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen37-plus-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 134
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290924,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "glm52-opencode",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 135
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290951,
+    "participants": [
+      "qwen38-max-qwen",
+      "gpt56-luna-codex",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 136
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290948,
+    "participants": [
+      "gpt56-terra-codex",
+      "gpt56-luna-codex",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 137
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290957,
+    "participants": [
+      "glm52-opencode",
+      "qwen38-max-qwen",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 138
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290956,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-opencode",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 139
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290923,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 140
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290931,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "kimi-k27-code-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 141
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290958,
+    "participants": [
+      "glm52-opencode",
+      "qwen38-max-qwen",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 142
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290961,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-sol-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 143
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290940,
+    "participants": [
+      "gpt56-sol-opencode",
+      "glm52-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 144
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290945,
+    "participants": [
+      "gpt56-sol-codex",
+      "kimi-k27-code-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 145
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290960,
+    "participants": [
+      "glm52-opencode",
+      "kimi-k27-code-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 146
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290968,
+    "participants": [
+      "qwen38-max-qwen",
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 147
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290940,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 148
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290942,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 149
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290961,
+    "participants": [
+      "qwen37-plus-opencode",
+      "kimi-k27-code-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 150
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290965,
+    "participants": [
+      "gpt56-sol-opencode",
+      "glm52-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 151
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290942,
+    "participants": [
+      "glm52-opencode",
+      "qwen37-plus-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 152
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290935,
+    "participants": [
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 153
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290931,
+    "participants": [
+      "glm52-opencode",
+      "gpt56-sol-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 154
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290949,
+    "participants": [
+      "qwen37-plus-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 155
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290946,
+    "participants": [
+      "gpt56-sol-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 156
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290949,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-sol-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 157
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290958,
+    "participants": [
+      "glm52-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 158
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290949,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-sol-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 159
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290964,
+    "participants": [
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 160
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290950,
+    "participants": [
+      "qwen37-plus-opencode",
+      "kimi-k27-code-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 161
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290953,
+    "participants": [
+      "gpt56-sol-codex",
+      "glm52-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 162
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290930,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "qwen37-plus-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 163
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290962,
+    "participants": [
+      "qwen38-max-qwen",
+      "qwen38-max-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 164
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290955,
+    "participants": [
+      "qwen38-max-qwen",
+      "deepseek-v4-pro-0813-dsh",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 165
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290968,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "qwen37-plus-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 166
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290939,
+    "participants": [
+      "gpt56-luna-codex",
+      "glm52-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 167
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290932,
+    "participants": [
+      "glm52-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 168
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290966,
+    "participants": [
+      "qwen37-plus-opencode",
+      "glm52-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 169
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290955,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-luna-codex",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 170
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290929,
+    "participants": [
+      "gpt56-terra-codex",
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 171
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290931,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 172
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290925,
+    "participants": [
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 173
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290930,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-luna-codex",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 174
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290945,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen38-max-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 175
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290960,
+    "participants": [
+      "gpt56-terra-codex",
+      "kimi-k27-code-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 176
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290937,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "kimi-k27-code-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 177
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290963,
+    "participants": [
+      "qwen38-max-qwen",
+      "qwen37-plus-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 178
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290937,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "glm52-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 179
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290928,
+    "participants": [
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 180
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290937,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-codex",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 181
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290934,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "qwen38-max-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 182
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290923,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen38-max-opencode",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 183
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290952,
+    "participants": [
+      "qwen38-max-qwen",
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 184
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290962,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "qwen37-plus-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 185
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290950,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "gpt56-luna-codex",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 186
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290922,
+    "participants": [
+      "gpt56-luna-codex",
+      "qwen37-plus-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 187
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290966,
+    "participants": [
+      "qwen38-max-qwen",
+      "qwen38-max-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 188
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290953,
+    "participants": [
+      "glm52-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 189
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290947,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "kimi-k27-code-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 190
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290951,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "gpt56-sol-codex",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 191
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290926,
+    "participants": [
+      "gpt56-sol-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 192
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290947,
+    "participants": [
+      "qwen38-max-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 193
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290927,
+    "participants": [
+      "glm52-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 194
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290956,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-luna-codex",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 195
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290934,
+    "participants": [
+      "qwen38-max-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 196
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290930,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen38-max-qwen",
+      "glm52-opencode"
+    ],
+    "ordinal": 197
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290943,
+    "participants": [
+      "gpt56-terra-codex",
+      "qwen38-max-opencode",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 198
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290959,
+    "participants": [
+      "qwen38-max-qwen",
+      "qwen38-max-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 199
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290946,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-terra-codex",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 200
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290926,
+    "participants": [
+      "qwen38-max-qwen",
+      "qwen37-plus-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 201
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290930,
+    "participants": [
+      "qwen37-plus-opencode",
+      "kimi-k27-code-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 202
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290921,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "glm52-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 203
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290932,
+    "participants": [
+      "qwen37-plus-opencode",
+      "qwen38-max-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 204
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290930,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 205
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290934,
+    "participants": [
+      "qwen38-max-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 206
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290948,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "glm52-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 207
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290944,
+    "participants": [
+      "gpt56-luna-codex",
+      "gpt56-sol-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 208
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290938,
+    "participants": [
+      "qwen38-max-qwen",
+      "glm52-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 209
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290942,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 210
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290927,
+    "participants": [
+      "gpt56-sol-codex",
+      "gpt56-luna-codex",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 211
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290966,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-codex",
+      "glm52-opencode"
+    ],
+    "ordinal": 212
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290938,
+    "participants": [
+      "qwen38-max-qwen",
+      "gpt56-terra-codex",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 213
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290967,
+    "participants": [
+      "gpt56-luna-codex",
+      "gpt56-sol-codex",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 214
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290959,
+    "participants": [
+      "glm52-opencode",
+      "qwen38-max-qwen",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 215
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290921,
+    "participants": [
+      "gpt56-luna-codex",
+      "qwen38-max-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 216
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290930,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "kimi-k27-code-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 217
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290927,
+    "participants": [
+      "gpt56-terra-codex",
+      "deepseek-v4-pro-0813-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 218
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290960,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "kimi-k27-code-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 219
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290934,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 220
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290964,
+    "participants": [
+      "gpt56-terra-codex",
+      "qwen38-max-opencode",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 221
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290926,
+    "participants": [
+      "qwen38-max-qwen",
+      "gpt56-luna-codex",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 222
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290942,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "glm52-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 223
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290941,
+    "participants": [
+      "qwen38-max-qwen",
+      "gpt56-sol-codex",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 224
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290947,
+    "participants": [
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 225
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290968,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "gpt56-luna-codex",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 226
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290959,
+    "participants": [
+      "glm52-opencode",
+      "gpt56-terra-codex",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 227
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290940,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "qwen38-max-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 228
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290948,
+    "participants": [
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-dsh",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 229
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290935,
+    "participants": [
+      "qwen38-max-qwen",
+      "gpt56-luna-codex",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 230
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290955,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-terra-codex",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 231
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290933,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 232
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290954,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 233
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290963,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-terra-codex",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 234
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290958,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "gpt56-sol-codex",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 235
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290952,
+    "participants": [
+      "gpt56-luna-codex",
+      "qwen38-max-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 236
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290949,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-terra-codex",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 237
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290936,
+    "participants": [
+      "gpt56-terra-codex",
+      "gpt56-luna-codex",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 238
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290939,
+    "participants": [
+      "qwen37-plus-opencode",
+      "qwen38-max-qwen",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 239
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290948,
+    "participants": [
+      "gpt56-luna-codex",
+      "glm52-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 240
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290957,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-luna-codex",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 241
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290934,
+    "participants": [
+      "qwen38-max-qwen",
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 242
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290944,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-terra-codex",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 243
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290951,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-sol-codex",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 244
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290929,
+    "participants": [
+      "qwen38-max-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 245
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290924,
+    "participants": [
+      "gpt56-terra-codex",
+      "qwen38-max-qwen",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 246
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290963,
+    "participants": [
+      "gpt56-sol-codex",
+      "gpt56-luna-codex",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 247
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290966,
+    "participants": [
+      "glm52-opencode",
+      "qwen38-max-opencode",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 248
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290967,
+    "participants": [
+      "qwen38-max-qwen",
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 249
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290922,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "deepseek-v4-pro-0813-dsh",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 250
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290957,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 251
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290940,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 252
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290939,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 253
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290923,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-qwen",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 254
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290954,
+    "participants": [
+      "gpt56-terra-codex",
+      "deepseek-v4-pro-0813-dsh",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 255
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290946,
+    "participants": [
+      "gpt56-terra-codex",
+      "qwen38-max-qwen",
+      "glm52-opencode"
+    ],
+    "ordinal": 256
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290967,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-terra-codex",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 257
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290934,
+    "participants": [
+      "glm52-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 258
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290946,
+    "participants": [
+      "gpt56-sol-codex",
+      "gpt56-terra-codex",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 259
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290963,
+    "participants": [
+      "gpt56-terra-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 260
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290945,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen38-max-qwen",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 261
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290936,
+    "participants": [
+      "glm52-opencode",
+      "gpt56-terra-codex",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 262
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290964,
+    "participants": [
+      "qwen37-plus-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 263
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290949,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-terra-codex",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 264
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290926,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "glm52-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 265
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290945,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-flash-0731-dsh",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 266
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290952,
+    "participants": [
+      "gpt56-terra-codex",
+      "qwen38-max-opencode",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 267
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290950,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen38-max-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 268
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290965,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-luna-codex",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 269
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290944,
+    "participants": [
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 270
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290929,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "glm52-opencode",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 271
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290931,
+    "participants": [
+      "gpt56-sol-opencode",
+      "qwen38-max-qwen",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 272
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290943,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "gpt56-sol-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 273
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290954,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-luna-codex",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 274
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290941,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 275
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290935,
+    "participants": [
+      "gpt56-sol-codex",
+      "qwen38-max-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 276
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290965,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "gpt56-terra-codex",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 277
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290926,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-sol-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 278
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290959,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 279
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290933,
+    "participants": [
+      "qwen37-plus-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 280
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290932,
+    "participants": [
+      "deepseek-v4-pro-0813-opencode",
+      "glm52-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 281
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290953,
+    "participants": [
+      "qwen38-max-qwen",
+      "kimi-k27-code-opencode",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 282
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290923,
+    "participants": [
+      "qwen37-plus-opencode",
+      "kimi-k27-code-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 283
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290929,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "qwen38-max-qwen",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 284
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290926,
+    "participants": [
+      "gpt56-sol-codex",
+      "glm52-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 285
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290925,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-terra-codex",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 286
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290964,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 287
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290955,
+    "participants": [
+      "qwen38-max-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 288
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290933,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "qwen38-max-qwen",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 289
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290958,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-sol-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 290
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290951,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 291
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290963,
+    "participants": [
+      "glm52-opencode",
+      "kimi-k27-code-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 292
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290927,
+    "participants": [
+      "gpt56-luna-codex",
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 293
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290925,
+    "participants": [
+      "gpt56-sol-opencode",
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 294
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290957,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 295
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290958,
+    "participants": [
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-dsh",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 296
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290939,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-terra-codex",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 297
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290940,
+    "participants": [
+      "gpt56-sol-codex",
+      "gpt56-terra-codex",
+      "kimi-k27-code-opencode"
+    ],
+    "ordinal": 298
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290958,
+    "participants": [
+      "qwen38-max-opencode",
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 299
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290937,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-opencode",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 300
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290964,
+    "participants": [
+      "gpt56-luna-codex",
+      "deepseek-v4-pro-0813-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 301
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290951,
+    "participants": [
+      "glm52-opencode",
+      "gpt56-sol-codex",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 302
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290968,
+    "participants": [
+      "qwen37-plus-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 303
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290927,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "qwen37-plus-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 304
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290960,
+    "participants": [
+      "glm52-opencode",
+      "gpt56-luna-codex",
+      "deepseek-v4-pro-0813-opencode"
+    ],
+    "ordinal": 305
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290924,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "glm52-opencode",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 306
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290965,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-sol-codex",
+      "qwen38-max-opencode"
+    ],
+    "ordinal": 307
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290962,
+    "participants": [
+      "gpt56-sol-codex",
+      "qwen38-max-opencode",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 308
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290935,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "qwen38-max-qwen",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 309
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290960,
+    "participants": [
+      "glm52-opencode",
+      "gpt56-sol-codex",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 310
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290942,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "qwen37-plus-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 311
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290953,
+    "participants": [
+      "glm52-opencode",
+      "gpt56-sol-codex",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 312
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290921,
+    "participants": [
+      "qwen38-max-opencode",
+      "qwen37-plus-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 313
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290956,
+    "participants": [
+      "gpt56-sol-codex",
+      "qwen37-plus-opencode",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 314
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290956,
+    "participants": [
+      "qwen38-max-qwen",
+      "gpt56-luna-codex",
+      "gpt56-sol-codex"
+    ],
+    "ordinal": 315
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290948,
+    "participants": [
+      "gpt56-luna-codex",
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 316
+  },
+  {
+    "game": "azul",
+    "player_count": 3,
+    "seed": 21290938,
+    "participants": [
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 317
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290936,
+    "participants": [
+      "gpt56-terra-codex",
+      "gpt56-sol-codex",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 318
+  },
+  {
+    "game": "carcassonne",
+    "player_count": 3,
+    "seed": 27290950,
+    "participants": [
+      "gpt56-sol-opencode",
+      "deepseek-v4-pro-0813-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 319
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290943,
+    "participants": [
+      "kimi-k27-code-opencode",
+      "gpt56-sol-codex",
+      "gpt56-sol-opencode"
+    ],
+    "ordinal": 320
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290961,
+    "participants": [
+      "gpt56-sol-codex",
+      "qwen38-max-opencode",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 321
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290941,
+    "participants": [
+      "qwen37-plus-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "deepseek-v4-flash-0731-dsh"
+    ],
+    "ordinal": 322
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290968,
+    "participants": [
+      "gpt56-terra-codex",
+      "kimi-k27-code-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 323
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290959,
+    "participants": [
+      "gpt56-sol-codex",
+      "qwen37-plus-opencode",
+      "qwen38-max-qwen"
+    ],
+    "ordinal": 324
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290936,
+    "participants": [
+      "glm52-opencode",
+      "gpt56-luna-codex",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 325
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290948,
+    "participants": [
+      "qwen38-max-opencode",
+      "kimi-k27-code-opencode",
+      "glm52-opencode"
+    ],
+    "ordinal": 326
+  },
+  {
+    "game": "century_spice_road",
+    "player_count": 3,
+    "seed": 24290942,
+    "participants": [
+      "glm52-opencode",
+      "gpt56-luna-codex",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 327
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290937,
+    "participants": [
+      "qwen38-max-qwen",
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 328
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290967,
+    "participants": [
+      "deepseek-v4-pro-0813-dsh",
+      "gpt56-terra-codex",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 329
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290925,
+    "participants": [
+      "qwen38-max-opencode",
+      "deepseek-v4-flash-0731-dsh",
+      "glm52-opencode"
+    ],
+    "ordinal": 330
+  },
+  {
+    "game": "wingspan",
+    "player_count": 3,
+    "seed": 26290933,
+    "participants": [
+      "gpt56-luna-codex",
+      "qwen38-max-qwen",
+      "deepseek-v4-pro-0813-dsh"
+    ],
+    "ordinal": 331
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290922,
+    "participants": [
+      "qwen37-plus-opencode",
+      "qwen38-max-opencode",
+      "gpt56-terra-codex"
+    ],
+    "ordinal": 332
+  },
+  {
+    "game": "ark_nova",
+    "player_count": 3,
+    "seed": 22290967,
+    "participants": [
+      "qwen37-plus-opencode",
+      "gpt56-terra-codex",
+      "glm52-opencode"
+    ],
+    "ordinal": 333
+  },
+  {
+    "game": "harmonies",
+    "player_count": 3,
+    "seed": 25290948,
+    "participants": [
+      "deepseek-v4-flash-0731-dsh",
+      "gpt56-sol-codex",
+      "qwen37-plus-opencode"
+    ],
+    "ordinal": 334
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290953,
+    "participants": [
+      "qwen38-max-opencode",
+      "deepseek-v4-pro-0813-dsh",
+      "glm52-opencode"
+    ],
+    "ordinal": 335
+  },
+  {
+    "game": "castles_of_burgundy",
+    "player_count": 3,
+    "seed": 23290921,
+    "participants": [
+      "qwen38-max-qwen",
+      "qwen37-plus-opencode",
+      "gpt56-luna-codex"
+    ],
+    "ordinal": 336
+  }
+]

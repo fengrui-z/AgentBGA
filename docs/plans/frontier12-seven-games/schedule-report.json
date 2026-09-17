@@ -1,0 +1,149 @@
+{
+  "tournament_id": "frontier12-seven-games-20260917-b01",
+  "participants": 12,
+  "matches": 336,
+  "workers": 4,
+  "appearances_per_condition": 12,
+  "strata": {
+    "azul:3p": 48,
+    "wingspan:3p": 48,
+    "ark_nova:3p": 48,
+    "century_spice_road:3p": 48,
+    "harmonies:3p": 48,
+    "castles_of_burgundy:3p": 48,
+    "carcassonne:3p": 48
+  },
+  "participant_exposures": {
+    "minimum": 84,
+    "maximum": 84,
+    "by_participant": {
+      "gpt56-sol-codex": 84,
+      "gpt56-terra-codex": 84,
+      "gpt56-luna-codex": 84,
+      "gpt56-sol-opencode": 84,
+      "qwen38-max-qwen": 84,
+      "qwen38-max-opencode": 84,
+      "glm52-opencode": 84,
+      "deepseek-v4-pro-0813-dsh": 84,
+      "deepseek-v4-pro-0813-opencode": 84,
+      "deepseek-v4-flash-0731-dsh": 84,
+      "qwen37-plus-opencode": 84,
+      "kimi-k27-code-opencode": 84
+    }
+  },
+  "seat_exposures_per_stratum": {
+    "exact": true,
+    "expected_by_player_count": {
+      "3": 4
+    },
+    "minimum": 4,
+    "maximum": 4
+  },
+  "pair_exposures": {
+    "minimum": 15,
+    "maximum": 16,
+    "zero_pairs": 0
+  },
+  "schedule_digest": "6549009fb48f0ee693b1fb968a25666a4cfefd2e94d3f8f074b5bf1a6dd6a176",
+  "plan_only": true,
+  "per_game": {
+    "azul": {
+      "matches": 48,
+      "appearances_per_participant": 12,
+      "seat_exposures_per_participant": [
+        4,
+        4,
+        4
+      ],
+      "pair_minimum": 1,
+      "pair_maximum": 3,
+      "zero_pairs": 0,
+      "rules_version": "next-move-2018-base-colored-wall-1.0",
+      "content_sha256": null
+    },
+    "ark_nova": {
+      "matches": 48,
+      "appearances_per_participant": 12,
+      "seat_exposures_per_participant": [
+        4,
+        4,
+        4
+      ],
+      "pair_minimum": 1,
+      "pair_maximum": 4,
+      "zero_pairs": 0,
+      "rules_version": "base-1.2-faq-v2-map0.1",
+      "content_sha256": "bee6de5feb05b1c0b37e3dfe23489fab368302f5a0daa50a44f29bb74c4688c8"
+    },
+    "castles_of_burgundy": {
+      "matches": 48,
+      "appearances_per_participant": 12,
+      "seat_exposures_per_participant": [
+        4,
+        4,
+        4
+      ],
+      "pair_minimum": 1,
+      "pair_maximum": 3,
+      "zero_pairs": 0,
+      "rules_version": "ravensburger-2019-base-1.0",
+      "content_sha256": null
+    },
+    "century_spice_road": {
+      "matches": 48,
+      "appearances_per_participant": 12,
+      "seat_exposures_per_participant": [
+        4,
+        4,
+        4
+      ],
+      "pair_minimum": 1,
+      "pair_maximum": 3,
+      "zero_pairs": 0,
+      "rules_version": "plan-b-2017-base-1.0",
+      "content_sha256": null
+    },
+    "harmonies": {
+      "matches": 48,
+      "appearances_per_participant": 12,
+      "seat_exposures_per_participant": [
+        4,
+        4,
+        4
+      ],
+      "pair_minimum": 1,
+      "pair_maximum": 4,
+      "zero_pairs": 0,
+      "rules_version": "libellud-2024-base-1.0",
+      "content_sha256": null
+    },
+    "wingspan": {
+      "matches": 48,
+      "appearances_per_participant": 12,
+      "seat_exposures_per_participant": [
+        4,
+        4,
+        4
+      ],
+      "pair_minimum": 1,
+      "pair_maximum": 4,
+      "zero_pairs": 0,
+      "rules_version": "stonemaier-base-en-1.0",
+      "content_sha256": null
+    },
+    "carcassonne": {
+      "matches": 48,
+      "appearances_per_participant": 12,
+      "seat_exposures_per_participant": [
+        4,
+        4,
+        4
+      ],
+      "pair_minimum": 1,
+      "pair_maximum": 3,
+      "zero_pairs": 0,
+      "rules_version": "hig-base-farmers-1.0",
+      "content_sha256": null
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "status": "planning_only_not_execution_lock",
+  "plan_id": "frontier12-seven-games-20260917-b01",
+  "source_commit_at_planning": "0674740cb43dcd4163d0b1c59db81cce9df99128",
+  "config_digest": "a6ea595990a259307e98820157e288d7780974d9bd10fd43b6ae9c838630e17d",
+  "schedule_digest": "6549009fb48f0ee693b1fb968a25666a4cfefd2e94d3f8f074b5bf1a6dd6a176",
+  "roster_source": "web/public/results/frontier12-2026-v2.json",
+  "historical_pooling_allowed": false,
+  "execution_lock_required": [
+    "resolved model revisions and evidence (unknown must remain unknown)",
+    "actual normalized endpoints",
+    "harness versions and binary/package hashes",
+    "code commit and dirty source/content digest",
+    "game rules/content versions and defaults",
+    "reasoning, auth, wire API, prompt/tool policy, timeout, retries, fallback, concurrency",
+    "start/end UTC and machine runtime"
+  ],
+  "expansion_policy": {
+    "unit": "whole game, all 12 participants",
+    "appearances_per_batch": 12,
+    "matches_per_game_per_batch": 48,
+    "cumulative_appearance_checkpoints": [
+      12,
+      24,
+      36,
+      48
+    ],
+    "diagnostic": "per-participant match-level pairwise win score; whole-match percentile bootstrap",
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 20260917,
+    "interval_level": 0.95,
+    "target_full_width": 0.3,
+    "minimum_distinct_scores": 2,
+    "decision": "append 48 matches for a game if any participant exceeds target width or has a degenerate/unavailable interval; incomplete batches require recovery, not expansion",
+    "inference_scope": "exploratory precision diagnostic; no sequential coverage, rank significance, or power guarantee",
+    "max_total_matches_per_game": 192,
+    "max_additional_matches_all_seven_games": 1008,
+    "automatic_expansion_authorized": false,
+    "base_seed_stride": 10000000
+  },
+  "bridge_policy": {
+    "trigger": "model revision or execution setting changed or historical equivalence is unverified",
+    "games": [
+      "splendor",
+      "seven_wonders",
+      "brass_birmingham"
+    ],
+    "player_count": 3,
+    "participants": 12,
+    "appearances_per_participant_per_game": 12,
+    "matches": 144,
+    "included_in_336": false,
+    "permits_historical_pooling": false
+  },
+  "seed_selection": "First seed from 20260917 onward with no zero-exposure pair in any game; chosen using schedule only, before outcomes.",
+  "base_seed": 20260920
+}
