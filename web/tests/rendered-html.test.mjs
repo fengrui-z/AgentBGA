@@ -8,7 +8,7 @@ test("static export contains the AgentBGA match setup", async () => {
   const html = await readFile(new URL("dist/client/index.html", root), "utf8");
 
   assert.match(html, /<html lang="zh-CN">/);
-  assert.match(html, /<title>AgentBGA · Long-Horizon Game Arena<\/title>/);
+  assert.match(html, /<title>AgentBGA · Long-Horizon Board-Game Agents<\/title>/);
   assert.match(html, /创建一桌.*璀璨宝石/);
   assert.match(html, /方舟动物园/);
   assert.match(html, /花砖物语/);
@@ -295,15 +295,16 @@ test("static export has all assets needed by the Python server", async () => {
   await access(new URL("dist/client/index.rsc", root));
 });
 
-test("static export contains the Frontier12 results route and public data", async () => {
+test("static export presents AgentBGA and retains one public Pareto frontier", async () => {
   const html = await readFile(new URL("dist/client/arena.html", root), "utf8");
   const source = await readFile(new URL("app/arena/page.tsx", root), "utf8");
   const styles = await readFile(new URL("app/arena/arena.css", root), "utf8");
   const data = JSON.parse(await readFile(new URL("public/results/frontier12-2026-v2.json", root), "utf8"));
 
-  assert.match(html, /Brettspiel Agent Arena/);
+  assert.match(html, /让 Agent 在真正的/);
   assert.match(html, /Euro-style board games/);
-  assert.match(html, /综合排名/);
+  assert.match(html, /九款长程策略游戏/);
+  assert.match(html, /一个命令，启动可复现对局/);
   assert.equal(data.schema_version, "agentbga.frontier12-pages.v1");
   assert.equal(data.dataset_id, "frontier12-2026-v2-full");
   assert.equal(data.generated_at, "2026-09-02T00:12:09.742231Z");
@@ -348,24 +349,20 @@ test("static export contains the Frontier12 results route and public data", asyn
   const qwenBrass = data.token_efficiency.by_game.find(item => item.participant_id === "qwen38-max-qwen" && item.game === "brass_birmingham");
   assert.equal(qwenBrass.elo, 1546.3);
   assert.equal(qwenBrass.elo_rank, 4);
-  assert.match(source, /EfficiencyCharts/);
-  assert.match(source, /Elo × 估算 API 成本/);
+  assert.match(source, /ParetoFrontier/);
+  assert.match(source, /能力与成本的 Pareto frontier/);
   assert.match(source, /\[2100, 1800, 1500, 1200\]/);
   assert.match(source, /Overall/);
-  assert.match(source, /成本构成对比/);
-  assert.match(source, /计价表（RMB \/ 1M tokens）/);
-  assert.match(source, /Cached input/);
-  assert.match(source, /Output（含 reasoning）/);
-  assert.match(source, /分游戏 Elo × Token 构成/);
-  assert.match(source, /Input（非缓存）/);
-  assert.match(source, /分游戏平均总 Token/);
-  assert.match(source, /三款游戏，八个条件/);
-  assert.match(source, /通过累计快照恢复验证/);
+  assert.match(source, /DETERMINISTIC ENGINES/);
+  assert.match(source, /SEAT-SCOPED INTERFACE/);
+  assert.match(source, /The Castles of Burgundy/);
+  assert.match(source, /Grok Build/);
+  assert.equal((source.match(/<figure/g) ?? []).length, 1);
+  assert.doesNotMatch(source, /成本构成对比|计价表（RMB|分游戏 Elo × Token 构成|分游戏平均总 Token|综合排名/);
   assert.match(styles, /\.scatter-stage/);
-  assert.match(styles, /\.cost-bar-row/);
-  assert.match(styles, /\.pricing-card/);
-  assert.match(styles, /\.game-tabs/);
-  assert.match(styles, /\.token-stack/);
-  assert.match(styles, /\.token-heatmap/);
+  assert.match(styles, /\.capability-grid/);
+  assert.match(styles, /\.game-list/);
+  assert.match(styles, /\.frontier-card/);
+  assert.doesNotMatch(styles, /\.cost-bar-row|\.pricing-card|\.token-heatmap/);
   assert.equal("runtime" in data, false);
 });

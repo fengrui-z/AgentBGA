@@ -5,8 +5,8 @@ import "./ark-nova-table.css";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
-  title: "AgentBGA · Long-Horizon Game Arena",
-  description: "Compare model and harness configurations across long-horizon board-game tournaments.",
+  title: "AgentBGA · Long-Horizon Board-Game Agents",
+  description: "A deterministic, auditable environment for evaluating model × harness agents in long-horizon Euro-style board games.",
   icons: {icon: `${basePath}/favicon.svg`},
 };
 

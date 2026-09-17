@@ -1,81 +1,73 @@
 "use client";
 
-import {useEffect, useMemo, useState, type CSSProperties} from "react";
+import {useEffect, useState, type CSSProperties} from "react";
 import Link from "next/link";
 import "./arena.css";
 
 type LeaderboardEntry = {
-  average_rank: number; backend: string; completed: number; display_name: string;
-  elo: number; failed_exposures: number; first_place_equivalent: number; model: string;
-  participant_id: string; pairwise_comparisons: number; pws: number;
-  rating_rank: number; scheduled: number;
+  backend: string;
+  display_name: string;
+  elo: number;
+  participant_id: string;
 };
+
 type TokenEntry = {
-  participant_id: string; short_name: string; successful_sessions: number;
-  mean_total_tokens_m: number; median_total_tokens_m: number; efficiency_frontier: boolean;
-  mean_input_tokens_m: number; mean_cached_input_tokens_m: number; mean_output_tokens_m: number;
-  mean_reasoning_tokens_m?: number;
-  mean_input_cost_rmb: number; mean_cached_input_cost_rmb: number;
-  mean_output_cost_rmb: number; mean_cost_rmb: number;
+  participant_id: string;
+  short_name: string;
+  successful_sessions: number;
+  mean_cost_rmb: number;
 };
+
 type GameTokenEntry = {
-  participant_id: string; game: string; successful_sessions: number;
-  mean_total_tokens_m: number; median_total_tokens_m: number;
-  mean_input_tokens_m?: number; mean_cached_input_tokens_m?: number;
-  mean_output_tokens_m?: number; elo?: number; elo_rank?: number;
-  mean_reasoning_tokens_m?: number;
-  mean_input_cost_rmb?: number; mean_cached_input_cost_rmb?: number;
-  mean_output_cost_rmb?: number; mean_cost_rmb?: number;
+  participant_id: string;
+  game: string;
+  successful_sessions: number;
+  elo?: number;
+  mean_cost_rmb?: number;
 };
-type ModelPrice = {
-  input_rmb_per_m: number; cached_input_rmb_per_m: number; output_rmb_per_m: number;
-  source: string; source_url: string; price_note?: string; native_currency?: string;
-};
-type Pricing = {
-  as_of: string; currency: string; unit: string; usd_cny: number;
-  models: Record<string, ModelPrice>;
-  sources: {id: string; label: string; url: string}[]; assumptions: string[];
-};
+
 type TokenEfficiency = {
-  source_report: string; result_snapshot: string; telemetry_scope: "validated-subset";
-  successful_sessions: number; eligible_sessions: number; coverage_rate: number;
-  entries: TokenEntry[]; by_game: GameTokenEntry[]; pricing: Pricing;
+  successful_sessions: number;
+  eligible_sessions: number;
+  entries: TokenEntry[];
+  by_game: GameTokenEntry[];
+  pricing: {as_of: string};
 };
+
 type FrontierData = {
-  dataset_id: string; generated_at: string; leaderboard: LeaderboardEntry[];
-  rating: {centre: number; failed_matches: string; method: string};
-  results: {completed: number; failed: number; reported: number; scheduled: number};
-  schedule: {
-    appearances_per_condition: number; matches: number;
-    pair_exposures: {maximum: number; minimum: number; zero_pairs: number};
-    participants: number; seat_exposures_per_stratum: {exact: boolean};
-    strata: Record<string, number>;
-  };
+  dataset_id: string;
+  generated_at: string;
+  leaderboard: LeaderboardEntry[];
+  results: {completed: number; scheduled: number};
   token_efficiency?: TokenEfficiency;
-  tournament_id: string;
 };
-type SortKey = "elo" | "pws" | "average_rank";
+
 type GameId = "splendor" | "seven_wonders" | "brass_birmingham";
 type CostScope = "overall" | GameId;
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const DATA_URL = `${BASE_PATH}/results/frontier12-2026-v2.json`;
-const GAME_NAMES: Record<string, string> = {
-  brass_birmingham: "Brass: Birmingham",
-  seven_wonders: "7 Wonders",
+const REPOSITORY_URL = "https://github.com/fengrui-z/AgentBGA";
+const GAME_NAMES: Record<GameId, string> = {
   splendor: "Splendor",
+  seven_wonders: "7 Wonders",
+  brass_birmingham: "Brass: Birmingham",
 };
-const SORT_OPTIONS: [SortKey, string][] = [
-  ["elo", "Elo"], ["pws", "PWS"], ["average_rank", "平均名次"],
-];
-
-function percent(value: number) { return `${(value * 100).toFixed(1)}%`; }
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", timeZone: "UTC",
-  }).format(new Date(value));
-}
+const GAMES = [
+  ["Splendor", "2–4P · stable"],
+  ["Wingspan", "2–5P · beta"],
+  ["Harmonies", "1–4P · beta"],
+  ["Azul", "2–4P · beta"],
+  ["Brass: Birmingham", "2–4P · beta"],
+  ["The Castles of Burgundy", "2–4P · beta"],
+  ["Century: Spice Road", "2–5P · stable"],
+  ["Ark Nova", "1–4P · base game"],
+  ["7 Wonders", "3–7P · 2nd edition"],
+] as const;
+const BACKENDS = [
+  "OpenAI", "Anthropic", "Gemini", "OpenCode", "Codex", "DSh", "Hermes",
+  "Claude Code", "Pi", "Qwen Code", "Cursor", "Grok Build", "Minimal",
+] as const;
 
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
@@ -93,300 +85,205 @@ function rmb(value: number) {
   return `¥${value.toLocaleString("zh-CN", {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 }
 
-function EfficiencyCharts({data}: {data: FrontierData}) {
-  const [selectedGame, setSelectedGame] = useState<GameId>("splendor");
-  const [selectedCostScope, setSelectedCostScope] = useState<CostScope>("overall");
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("zh-CN", {
+    year: "numeric", month: "2-digit", day: "2-digit", timeZone: "UTC",
+  }).format(new Date(value));
+}
+
+function ParetoFrontier({data}: {data: FrontierData}) {
+  const [scope, setScope] = useState<CostScope>("overall");
   const token = data.token_efficiency;
   if (!token) return null;
-  const tokens = new Map(token.entries.map(item => [item.participant_id, item]));
-  const ordered = data.leaderboard.flatMap(item => {
-    const metric = tokens.get(item.participant_id);
-    return metric ? [{...metric, rating: item}] : [];
-  });
-  const priced = ordered.filter(item => [
-    item.mean_input_cost_rmb,
-    item.mean_cached_input_cost_rmb,
-    item.mean_output_cost_rmb,
-    item.mean_cost_rmb,
-  ].every(Number.isFinite));
-  const maximumMean = Math.max(...ordered.map(item => item.mean_total_tokens_m), 1);
-  const games: GameId[] = ["splendor", "seven_wonders", "brass_birmingham"];
-  const byGame = new Map(token.by_game.map(item => [`${item.participant_id}:${item.game}`, item]));
-  const heatRows = ordered.filter(item => games.every(game => byGame.has(`${item.participant_id}:${game}`)));
-  const costScopes: CostScope[] = ["overall", ...games];
-  const scopeLabel = selectedCostScope === "overall" ? "Overall" : GAME_NAMES[selectedCostScope];
-  const costComparison = (selectedCostScope === "overall"
-    ? priced.map(item => ({
-        participant_id: item.participant_id,
-        short_name: item.short_name,
-        successful_sessions: item.successful_sessions,
-        elo: item.rating.elo,
-        backend: item.rating.backend,
-        display_name: item.rating.display_name,
-        mean_input_cost_rmb: item.mean_input_cost_rmb,
-        mean_cached_input_cost_rmb: item.mean_cached_input_cost_rmb,
-        mean_output_cost_rmb: item.mean_output_cost_rmb,
-        mean_cost_rmb: item.mean_cost_rmb,
-      }))
-    : token.by_game
-        .filter(item => item.game === selectedCostScope && item.elo != null && item.mean_cost_rmb != null)
-        .flatMap(item => {
-          const rating = data.leaderboard.find(entry => entry.participant_id === item.participant_id);
-          const overall = tokens.get(item.participant_id);
-          return rating && overall ? [{
-            participant_id: item.participant_id,
-            short_name: overall.short_name,
-            successful_sessions: item.successful_sessions,
-            elo: item.elo!,
-            backend: rating.backend,
-            display_name: rating.display_name,
-            mean_input_cost_rmb: item.mean_input_cost_rmb!,
-            mean_cached_input_cost_rmb: item.mean_cached_input_cost_rmb!,
-            mean_output_cost_rmb: item.mean_output_cost_rmb!,
-            mean_cost_rmb: item.mean_cost_rmb!,
-          }] : [];
-        }));
-  const costFrontier = new Set(costComparison.filter(point => !costComparison.some(other =>
-    other.participant_id !== point.participant_id
-    && other.mean_cost_rmb <= point.mean_cost_rmb
-    && other.elo >= point.elo
-    && (other.mean_cost_rmb < point.mean_cost_rmb || other.elo > point.elo)
-  )).map(point => point.participant_id));
-  const maximumCost = niceCeiling(Math.max(...costComparison.map(item => item.mean_cost_rmb), 1));
-  const costBars = [...costComparison].sort((left, right) => left.mean_cost_rmb - right.mean_cost_rmb);
-  const gameComparison = token.by_game
-    .filter(item => item.game === selectedGame && item.elo != null && item.mean_input_tokens_m != null && item.mean_cached_input_tokens_m != null && item.mean_output_tokens_m != null)
-    .flatMap(item => {
-      const rating = data.leaderboard.find(entry => entry.participant_id === item.participant_id);
-      const overall = tokens.get(item.participant_id);
-      return rating && overall ? [{...item, rating, short_name: overall.short_name}] : [];
-    })
-    .sort((left, right) => (right.elo ?? 0) - (left.elo ?? 0));
-  const maximumGameTokens = Math.max(...gameComparison.map(item => item.mean_total_tokens_m), 1);
 
-  return <section className="analysis-section">
-    <header className="analysis-heading">
-      <div><span>EFFICIENCY ANALYSIS</span><h2>Elo 之外，模型要花多少上下文？</h2></div>
-      <p>综合 Elo 与战绩来自 {data.results.completed} 场完整快照；成本与 Token 使用 {token.successful_sessions} / {token.eligible_sessions} 个通过累计快照恢复验证的 session，不等同于供应商账单。分游戏 Elo 均基于完整结果独立拟合。</p>
+  const ratings = new Map(data.leaderboard.map(item => [item.participant_id, item]));
+  const overallTokens = new Map(token.entries.map(item => [item.participant_id, item]));
+  const scopes: CostScope[] = ["overall", "splendor", "seven_wonders", "brass_birmingham"];
+  const points = scope === "overall"
+    ? token.entries.flatMap(item => {
+        const rating = ratings.get(item.participant_id);
+        return rating && Number.isFinite(item.mean_cost_rmb) ? [{
+          participant_id: item.participant_id,
+          short_name: item.short_name,
+          successful_sessions: item.successful_sessions,
+          elo: rating.elo,
+          backend: rating.backend,
+          display_name: rating.display_name,
+          cost: item.mean_cost_rmb,
+        }] : [];
+      })
+    : token.by_game.flatMap(item => {
+        if (item.game !== scope || !Number.isFinite(item.elo) || !Number.isFinite(item.mean_cost_rmb)) return [];
+        const rating = ratings.get(item.participant_id);
+        const overall = overallTokens.get(item.participant_id);
+        return rating && overall ? [{
+          participant_id: item.participant_id,
+          short_name: overall.short_name,
+          successful_sessions: item.successful_sessions,
+          elo: item.elo!,
+          backend: rating.backend,
+          display_name: rating.display_name,
+          cost: item.mean_cost_rmb!,
+        }] : [];
+      });
+  const frontier = new Set(points.filter(point => !points.some(other =>
+    other.participant_id !== point.participant_id
+    && other.cost <= point.cost
+    && other.elo >= point.elo
+    && (other.cost < point.cost || other.elo > point.elo)
+  )).map(point => point.participant_id));
+  const maximumCost = niceCeiling(Math.max(...points.map(item => item.cost), 1));
+  const scopeLabel = scope === "overall" ? "Overall" : GAME_NAMES[scope];
+
+  return <section className="frontier-section" id="frontier">
+    <header className="section-heading frontier-heading">
+      <div><span>FRONTIER 12 · PUBLIC RESULT</span><h2>能力与成本的 Pareto frontier</h2></div>
+      <p>纵轴为 Bradley–Terry Elo，横轴为每个成功 session 的估算 API 成本。描边点在当前视图中不存在“更便宜且更强”的配置。</p>
     </header>
-    <div className="analysis-grid">
-      <figure className="chart-card scatter-card cost-scatter-card">
-        <figcaption className="chart-controls-caption">
-          <div><strong>Elo × 估算 API 成本 / session</strong><span>Elo 使用完整结果；成本使用可验证 telemetry 子集。横轴从 ¥0 开始，纵轴固定为 1200–2100；越靠左上越优。</span></div>
-          <div className="game-tabs cost-scope-tabs" role="tablist" aria-label="选择总体或分游戏成本与 Elo">
-            {costScopes.map(scope => <button type="button" role="tab" aria-selected={selectedCostScope === scope} className={selectedCostScope === scope ? "active" : ""} key={scope} onClick={() => setSelectedCostScope(scope)}>{scope === "overall" ? "Overall" : GAME_NAMES[scope]}</button>)}
-          </div>
-        </figcaption>
-        <div className="scatter-wrap">
-          <div className="scatter-y-label">Elo ↑</div>
-          <div className="scatter-stage" role="img" aria-label={`${scopeLabel} Elo 与人民币估算成本散点图`}>
-            {[2100, 1800, 1500, 1200].map(value => <span className="y-tick" key={value} style={{"--tick": `${(2100 - value) / 900 * 100}%`} as CSSProperties}>{value}</span>)}
-            {[0, .25, .5, .75, 1].map(ratio => <span className="x-tick" key={ratio} style={{"--tick": `${ratio * 100}%`} as CSSProperties}>{rmb(maximumCost * ratio)}</span>)}
-            {costComparison.map(item => {
-              const x = clamp(item.mean_cost_rmb / maximumCost * 100, 1, 99);
-              const y = clamp((2100 - item.elo) / 900 * 100, 1, 99);
-              const size = 11 + clamp((item.successful_sessions - 40) / 50, 0, 1) * 8;
-              const frontier = costFrontier.has(item.participant_id);
-              return <button type="button" key={item.participant_id} aria-label={`${item.display_name}: ${item.elo.toFixed(1)} Elo, ${rmb(item.mean_cost_rmb)} per successful session, ${item.successful_sessions} sessions`} className={`scatter-point backend-${item.backend} ${frontier ? "is-frontier" : ""}`} style={{"--x": `${x}%`, "--y": `${y}%`, "--size": `${size}px`} as CSSProperties}>
-                {frontier && <em>{item.short_name}</em>}
-                <b>{item.display_name}</b><small>{item.elo.toFixed(1)} Elo · {rmb(item.mean_cost_rmb)} / session · {item.successful_sessions} sessions</small>
-              </button>;
-            })}
-          </div>
-          <div className="scatter-x-label">估算 API 成本（RMB / 成功 session）→</div>
+    <figure className="frontier-card">
+      <figcaption>
+        <div><strong>{scopeLabel} · Elo × Cost</strong><span>越靠左上越优 · Elo 使用完整 396 场结果 · 成本使用可验证 provider telemetry 子集</span></div>
+        <div className="scope-tabs" role="tablist" aria-label="选择总体或分游戏 Pareto frontier">
+          {scopes.map(item => <button type="button" role="tab" aria-selected={scope === item} className={scope === item ? "active" : ""} key={item} onClick={() => setScope(item)}>{item === "overall" ? "Overall" : GAME_NAMES[item]}</button>)}
         </div>
-      </figure>
-      <figure className="chart-card cost-bars-card">
-        <figcaption><strong>{scopeLabel} 成本构成对比</strong><span>可验证 telemetry 子集按 Input（非缓存）、Cached input 与 Output 拆分；按总成本从低到高排列。</span></figcaption>
-        <div className="cost-bar-list">
-          {costBars.map(item => <div className="cost-bar-row" key={item.participant_id}>
-            <span>{item.short_name}</span>
-            <div className="cost-stack" role="img" aria-label={`${item.display_name}: input ${rmb(item.mean_input_cost_rmb)}, cached input ${rmb(item.mean_cached_input_cost_rmb)}, output ${rmb(item.mean_output_cost_rmb)}, total ${rmb(item.mean_cost_rmb)}`}>
-              <i className="cost-input" style={{width: `${item.mean_input_cost_rmb / maximumCost * 100}%`}} title={`Input ${rmb(item.mean_input_cost_rmb)}`}/>
-              <i className="cost-cached" style={{width: `${item.mean_cached_input_cost_rmb / maximumCost * 100}%`}} title={`Cached input ${rmb(item.mean_cached_input_cost_rmb)}`}/>
-              <i className="cost-output" style={{width: `${item.mean_output_cost_rmb / maximumCost * 100}%`}} title={`Output ${rmb(item.mean_output_cost_rmb)}`}/>
-            </div>
-            <strong>{rmb(item.mean_cost_rmb)}</strong>
-          </div>)}
-        </div>
-        <div className="game-token-legend cost-legend"><span><i className="cost-input"/>Input（非缓存）</span><span><i className="cost-cached"/>Cached input</span><span><i className="cost-output"/>Output（含 reasoning）</span><small>RMB / 成功 session</small></div>
-      </figure>
-      <figure className="chart-card pricing-card">
-        <figcaption><strong>计价表（RMB / 1M tokens）</strong><span>千问模型市场直接采用人民币价；GPT 使用 OpenAI 官方 API 美元价按 USD/CNY {token.pricing.usd_cny} 折算。</span></figcaption>
-        <div className="pricing-scroll"><table>
-          <thead><tr><th>Model</th><th>Input</th><th>Cached input</th><th>Output</th><th>口径</th></tr></thead>
-          <tbody>{Object.entries(token.pricing.models).map(([model, price]) => <tr key={model}>
-            <th><a href={price.source_url} target="_blank" rel="noreferrer">{model}</a></th><td>{rmb(price.input_rmb_per_m)}</td><td>{rmb(price.cached_input_rmb_per_m)}</td><td>{rmb(price.output_rmb_per_m)}</td><td>{price.source === "openai" ? "OpenAI · FX 折算" : "千问 AI"}{price.price_note ? <small>{price.price_note}</small> : null}</td>
-          </tr>)}</tbody>
-        </table></div>
-        <div className="pricing-notes">
-          <p><b>估算公式</b> uncached input M × input price + cached input M × cached price + output（含 reasoning）M × output price。</p>
-          <ul>{token.pricing.assumptions.map(note => <li key={note}>{note}</li>)}</ul>
-          <p className="pricing-sources">价格日期 {token.pricing.as_of} · {token.pricing.sources.map((source, index) => <span key={source.id}>{index > 0 && " · "}<a href={source.url} target="_blank" rel="noreferrer">{source.label}</a></span>)}</p>
-        </div>
-      </figure>
-      <figure className="chart-card bars-card">
-        <figcaption><strong>平均值 vs 中位数</strong><span>长条为均值，短线为中位数；差距越大，长局尾部影响越明显。</span></figcaption>
-        <div className="token-bars">
-          {ordered.map(item => <div className="token-bar-row" key={item.participant_id}>
-            <span>{item.short_name}</span>
-            <div><b style={{width: `${item.mean_total_tokens_m / maximumMean * 100}%`}}/><i style={{left: `${item.median_total_tokens_m / maximumMean * 100}%`}}/></div>
-            <strong>{item.mean_total_tokens_m.toFixed(1)}M</strong>
-          </div>)}
-        </div>
-        <div className="bar-legend"><span><i/>平均</span><span><i/>中位数</span></div>
-      </figure>
-      <figure className="chart-card game-compare-card">
-        <figcaption>
-          <div><strong>分游戏 Elo × Token 构成</strong><span>游戏内 Elo 独立拟合并以 1500 为中心；Token 为每个成功 session 的平均值。</span></div>
-          <div className="game-tabs" role="tablist" aria-label="选择要比较的游戏">
-            {games.map(game => <button type="button" role="tab" aria-selected={selectedGame === game} className={selectedGame === game ? "active" : ""} key={game} onClick={() => setSelectedGame(game)}>{GAME_NAMES[game]}</button>)}
-          </div>
-        </figcaption>
-        <div className="game-compare-head"><span>配置</span><span>游戏 Elo（中心 1500）</span><span>平均 Token / session</span></div>
-        <div className="game-compare-list" role="tabpanel" aria-label={`${GAME_NAMES[selectedGame]} Elo 与 Token 构成`}>
-          {gameComparison.map(item => {
-            const elo = item.elo ?? 1500;
-            const eloDelta = elo - 1500;
-            const eloWidth = Math.min(Math.abs(eloDelta) / 600 * 50, 50);
-            const input = item.mean_input_tokens_m ?? 0;
-            const cached = item.mean_cached_input_tokens_m ?? 0;
-            const output = item.mean_output_tokens_m ?? 0;
-            return <article key={item.participant_id}>
-              <div className="game-competitor"><b>{item.elo_rank}</b><span><strong>{item.short_name}</strong><small>{item.successful_sessions} sessions</small></span></div>
-              <div className="game-elo">
-                <div aria-hidden="true"><i className={eloDelta >= 0 ? "positive" : "negative"} style={{"--elo-width": `${eloWidth}%`} as CSSProperties}/></div>
-                <strong>{elo.toFixed(1)}</strong>
-              </div>
-              <div className="game-token">
-                <div className="token-stack" role="img" aria-label={`${item.rating.display_name}: total ${item.mean_total_tokens_m.toFixed(3)}M tokens; input ${input.toFixed(3)}M; cached input ${cached.toFixed(3)}M; output ${output.toFixed(3)}M`}>
-                  <i className="token-input" style={{width: `${input / maximumGameTokens * 100}%`}} title={`Input（非缓存） ${input.toFixed(3)}M`}/>
-                  <i className="token-cached" style={{width: `${cached / maximumGameTokens * 100}%`}} title={`Cached input ${cached.toFixed(3)}M`}/>
-                  <i className="token-output" style={{width: `${output / maximumGameTokens * 100}%`}} title={`Output ${output.toFixed(3)}M`}/>
-                </div>
-                <strong>{item.mean_total_tokens_m.toFixed(2)}M</strong>
-              </div>
-            </article>;
+      </figcaption>
+      <div className="scatter-wrap">
+        <div className="scatter-y-label">Elo ↑</div>
+        <div className="scatter-stage" role="img" aria-label={`${scopeLabel} Elo 与人民币估算成本 Pareto frontier`}>
+          {[2100, 1800, 1500, 1200].map(value => <span className="y-tick" key={value} style={{"--tick": `${(2100 - value) / 900 * 100}%`} as CSSProperties}>{value}</span>)}
+          {[0, .25, .5, .75, 1].map(ratio => <span className="x-tick" key={ratio} style={{"--tick": `${ratio * 100}%`} as CSSProperties}>{rmb(maximumCost * ratio)}</span>)}
+          {points.map(item => {
+            const x = clamp(item.cost / maximumCost * 100, 1, 99);
+            const y = clamp((2100 - item.elo) / 900 * 100, 1, 99);
+            const size = 12 + clamp((item.successful_sessions - 20) / 70, 0, 1) * 8;
+            const isFrontier = frontier.has(item.participant_id);
+            return <button type="button" key={item.participant_id} aria-label={`${item.display_name}: ${item.elo.toFixed(1)} Elo, ${rmb(item.cost)} per successful session`} className={`scatter-point backend-${item.backend} ${isFrontier ? "is-frontier" : ""}`} style={{"--x": `${x}%`, "--y": `${y}%`, "--size": `${size}px`} as CSSProperties}>
+              {isFrontier && <em>{item.short_name}</em>}
+              <b>{item.display_name}</b><small>{item.elo.toFixed(1)} Elo · {rmb(item.cost)} / session</small>
+            </button>;
           })}
         </div>
-        <div className="game-token-legend"><span><i className="token-input"/>Input（非缓存）</span><span><i className="token-cached"/>Cached input</span><span><i className="token-output"/>Output（含 reasoning）</span><small>条长按当前游戏最高总量统一缩放</small></div>
-      </figure>
-      <figure className="chart-card heatmap-card">
-        <figcaption><strong>分游戏平均总 Token / session</strong><span>同一配置在不同流程长度下的上下文消耗；深色代表更高 Token。</span></figcaption>
-        <div className="heatmap-scroll">
-          <div className="token-heatmap">
-            <div/><b>Splendor</b><b>7 Wonders</b><b>Brass</b>
-            {heatRows.map(item => <div className="heat-row" key={item.participant_id}>
-              <strong>{item.short_name}</strong>
-              {games.map(game => {
-                const cell = byGame.get(`${item.participant_id}:${game}`)!;
-                const intensity = Math.sqrt(cell.mean_total_tokens_m / 112);
-                const lightness = 96 - intensity * 62;
-                return <span key={game} title={`${item.rating.display_name} · ${GAME_NAMES[game]}: ${cell.mean_total_tokens_m.toFixed(2)}M`} style={{background: `hsl(143 36% ${lightness}%)`, color: lightness < 58 ? "#fff" : "#172019"}}>{cell.mean_total_tokens_m.toFixed(1)}M<small>{cell.successful_sessions} sessions</small></span>;
-              })}
-            </div>)}
-          </div>
-        </div>
-        <div className="heat-note">仅展示三款游戏均有可验证 telemetry 的 {heatRows.length} 个配置 · Token 数据源 {token.source_report} · Elo 快照 {token.result_snapshot}</div>
-      </figure>
-    </div>
+        <div className="scatter-x-label">估算 API 成本（RMB / 成功 session）→</div>
+      </div>
+      <footer>
+        <span><i className="legend-frontier"/>Pareto frontier</span>
+        <span><i className="legend-codex"/>Codex</span>
+        <span><i className="legend-opencode"/>OpenCode</span>
+        <span><i className="legend-dsh"/>DSh</span>
+        <span><i className="legend-qwen"/>Qwen Code</span>
+        <small>{token.successful_sessions}/{token.eligible_sessions} sessions 有可验证 telemetry · 价格日期 {token.pricing.as_of}</small>
+      </footer>
+    </figure>
   </section>;
 }
 
 export default function ArenaPage() {
   const [data, setData] = useState<FrontierData | null>(null);
   const [error, setError] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("elo");
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(DATA_URL, {signal: controller.signal})
+    fetch(DATA_URL, {signal: controller.signal, cache: "no-store"})
       .then(response => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json() as Promise<FrontierData>;
       })
       .then(setData)
       .catch(caught => {
-        if ((caught as Error).name !== "AbortError") setError("结果数据暂时无法载入，请稍后刷新。");
+        if ((caught as Error).name !== "AbortError") setError("公开实验数据暂时无法载入。");
       });
     return () => controller.abort();
   }, []);
 
-  const entries = useMemo(() => [...(data?.leaderboard ?? [])].sort((left, right) =>
-    sortKey === "average_rank" ? left.average_rank - right.average_rank : right[sortKey] - left[sortKey]
-  ), [data, sortKey]);
-  const games = useMemo(() => {
-    const totals = new Map<string, number>();
-    Object.entries(data?.schedule.strata ?? {}).forEach(([stratum, matches]) => {
-      const game = stratum.split(":", 1)[0];
-      totals.set(game, (totals.get(game) ?? 0) + matches);
-    });
-    return [...totals.entries()];
-  }, [data]);
-  const completion = data ? data.results.completed / data.results.scheduled : 0;
-  const successfulSessions = data?.leaderboard.reduce((total, item) => total + item.completed, 0);
-
   return <main className="arena-page">
     <nav className="arena-nav">
-      <Link href={`${BASE_PATH}/`}><span>ABGA</span> AgentBGA home</Link>
-      <div><i/> Frontier 12 · 2026</div>
-    </nav>
-    <header className="arena-hero">
-      <div>
-        <span className="arena-kicker">AGENTBGA / MODEL × HARNESS TOURNAMENT</span>
-        <h1>Brettspiel Agent Arena<br/><span>Model × Harness</span></h1>
-        <p>面向 Euro-style board games（欧式桌游）的 Agent 竞技场。在 Splendor、Brass: Birmingham 与 7 Wonders 中进行座位配平的多人对局，用批量成对 Bradley–Terry 评分比较模型与 Harness 的组合表现。</p>
-        <div className="arena-meta"><b>{data?.tournament_id ?? "frontier12-model-harness-2026"}</b><span>UTC {data ? formatDate(data.generated_at) : "—"}</span></div>
+      <Link href={`${BASE_PATH}/`}><span>ABGA</span> AgentBGA</Link>
+      <div className="nav-links">
+        <a href="#capabilities">Capabilities</a>
+        <a href="#games">Games</a>
+        <a href="#frontier">Frontier</a>
+        <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">GitHub ↗</a>
       </div>
-      <section className="arena-stats">
-        <article><span>COMPLETED</span><strong>{data?.results.completed ?? "—"}<small> / {data?.results.scheduled ?? "—"}</small></strong></article>
-        <article><span>SUCCESSFUL AGENT SESSIONS</span><strong>{successfulSessions ?? "—"}</strong></article>
-        <article><span>TOKEN COVERAGE</span><strong>{data?.token_efficiency ? percent(data.token_efficiency.coverage_rate) : data ? percent(completion) : "—"}</strong></article>
-      </section>
-    </header>
-    {data && <EfficiencyCharts data={data}/>}
-    <section className="arena-grid">
-      <section className="leaderboard-card">
-        <header>
-          <div><span>PUBLIC RESULT SNAPSHOT</span><h2>综合排名</h2></div>
-          <div className="sort-tabs" role="group" aria-label="榜单排序方式">
-            {SORT_OPTIONS.map(([key, label]) => <button key={key} className={sortKey === key ? "active" : ""} onClick={() => setSortKey(key)}>{label}</button>)}
-          </div>
-        </header>
-        <div className="rating-method"><b>{data?.rating.method ?? "batch-pairwise-bradley-terry"}</b><span>中心分 {data?.rating.centre ?? 1500} · {data?.results.failed === 0 ? `${data.results.completed} 场全部完成 · 0 failed exposures` : "失败对局不计分但计为 failed exposure"}</span></div>
-        <div className="ladder-head"><span>#</span><span>模型 × Harness</span><span>Elo / PWS</span><span>完成 / 表现</span></div>
-        <div className="ladder-list" aria-live="polite">
-          {!data && !error && <div className="arena-empty">正在载入实验结果…</div>}
-          {error && <div className="arena-empty arena-error">{error}</div>}
-          {entries.map((entry, index) => <article key={entry.participant_id}>
-            <b className={`place place-${index + 1}`}>{String(index + 1).padStart(2, "0")}</b>
-            <div className="competitor"><strong>{entry.display_name}</strong><span>{entry.model} · {entry.backend}</span><code>{entry.participant_id}</code></div>
-            <div className="rating"><strong>{entry.elo.toFixed(1)}</strong><span>ELO</span><small>{percent(entry.pws)} PWS</small></div>
-            <div className="record"><strong>{entry.completed}<span> / {entry.scheduled}</span></strong><progress max={entry.scheduled} value={entry.completed}/><small>{entry.first_place_equivalent.toFixed(1)} first-place eq. · avg #{entry.average_rank.toFixed(2)}</small></div>
-          </article>)}
+    </nav>
+
+    <header className="intro-hero">
+      <div className="hero-copy">
+        <span className="arena-kicker">OPEN-SOURCE · DETERMINISTIC · AUDITABLE</span>
+        <h1>让 Agent 在真正的<br/><em>长程决策</em>中交手。</h1>
+        <p>AgentBGA 是面向 Euro-style board games 的无头、确定性评测环境。它把模型与 harness 放进相同规则、相同工具边界和配平座次中，评估规划、记忆、工具使用与对手建模，而不只是一次回答的正确率。</p>
+        <div className="hero-actions">
+          <a className="primary-action" href={REPOSITORY_URL} target="_blank" rel="noreferrer">View on GitHub <span>↗</span></a>
+          <a className="secondary-action" href="#quickstart">Quick start ↓</a>
         </div>
-      </section>
-      <aside className="arena-side">
-        <section className="coverage-card">
-          <span>TOURNAMENT COVERAGE</span><h2>三款游戏，八个条件</h2>
-          <div>{games.map(([game, matches]) => <article key={game}><div><strong>{GAME_NAMES[game] ?? game}</strong><span>{matches} scheduled</span></div><b style={{"--share": `${matches / (data?.schedule.matches ?? 1) * 100}%`} as CSSProperties}/></article>)}</div>
-        </section>
-        <section className="method-card">
-          <span>FAIRNESS CHECKS</span><h2>配平设计</h2>
-          <dl>
-            <div><dt>每种游戏人数条件</dt><dd>{data?.schedule.appearances_per_condition ?? "—"} 次 / 配置</dd></div>
-            <div><dt>选手两两相遇</dt><dd>{data ? `${data.schedule.pair_exposures.minimum}–${data.schedule.pair_exposures.maximum}` : "—"} 次</dd></div>
-            <div><dt>零相遇组合</dt><dd>{data?.schedule.pair_exposures.zero_pairs ?? "—"}</dd></div>
-            <div><dt>座位曝光</dt><dd>{data?.schedule.seat_exposures_per_stratum.exact ? "精确配平" : "近似配平"}</dd></div>
-          </dl>
-        </section>
-        <section className="data-card">
-          <span>REPRODUCIBLE DATA</span><h2>随仓库更新</h2>
-          <p>该页面读取仓库中的脱敏完整结果快照；Token 与成本只采用通过累计用量恢复验证的子集。结果文件合入 <code>main</code> 后，GitHub Actions 会自动重新构建并发布。</p>
-          <a href={DATA_URL}>下载当前 JSON →</a>
-        </section>
+      </div>
+      <aside className="hero-console" aria-label="AgentBGA quick command example">
+        <header><i/><i/><i/><span>agentbga / tournament</span></header>
+        <pre><code><b>$</b>{[
+          " ./agentbga run \\",
+          "  --game splendor \\",
+          "  --players 2 \\",
+          "  --controllers codex,opencode \\",
+          "  --seed 42 --jsonl",
+        ].join("\n")}</code></pre>
+        <div><span>deterministic seed</span><strong>42</strong></div>
+        <div><span>seat-scoped tools</span><strong>isolated</strong></div>
+        <div><span>trace &amp; replay</span><strong>enabled</strong></div>
       </aside>
+      <div className="hero-metrics">
+        <article><strong>9</strong><span>BOARD-GAME ENGINES</span></article>
+        <article><strong>13</strong><span>MODEL / HARNESS BACKENDS</span></article>
+        <article><strong>{data?.results.completed ?? "396"}</strong><span>PUBLIC FRONTIER MATCHES</span></article>
+      </div>
+    </header>
+
+    <section className="intro-section" id="capabilities">
+      <header className="section-heading">
+        <div><span>WHY AGENTBGA</span><h2>从游戏规则到评测证据，保持同一条可复现链路。</h2></div>
+        <p>AgentBGA 不替 agent 做决策。每个座位只获得自身可见状态和严格限定的游戏工具，所有动作、会话恢复与 token telemetry 都进入结构化审计轨迹。</p>
+      </header>
+      <div className="capability-grid">
+        <article><b>01</b><span>DETERMINISTIC ENGINES</span><h3>相同 seed，精确重放</h3><p>确定性状态机、版本化动作与完整 replay，让失败可以重现，让模型比较有共同基线。</p></article>
+        <article><b>02</b><span>SEAT-SCOPED INTERFACE</span><h3>隐藏信息不会泄漏</h3><p>observe、legal actions、inspect 与 submit 工具都绑定座位；并发选择经过冻结观察与 reveal barrier。</p></article>
+        <article><b>03</b><span>HARNESS × MODEL</span><h3>评估完整 agent stack</h3><p>同一模型可以搭配 Codex、OpenCode、Qwen Code 等不同 harness，分离模型能力与运行时设计的影响。</p></article>
+        <article><b>04</b><span>TRACE &amp; METRICS</span><h3>每一步都能审计</h3><p>保存 prompt、推理、工具调用、最终动作、延迟、缓存与 token 使用，支持 tournament、duel 与 learning series。</p></article>
+      </div>
     </section>
-    <footer>Frontier12 public snapshot · {data?.dataset_id ?? "frontier12-2026-v2"} · failures are reported, not silently dropped</footer>
+
+    <section className="ecosystem-section" id="games">
+      <div className="games-panel">
+        <header><span>GAME ENGINES</span><h2>九款长程策略游戏</h2><p>从紧凑的资源竞赛到隐藏信息、空间布局和多轮经济网络。</p></header>
+        <div className="game-list">{GAMES.map(([name, status], index) => <article key={name}><b>{String(index + 1).padStart(2, "0")}</b><strong>{name}</strong><span>{status}</span></article>)}</div>
+      </div>
+      <div className="backends-panel">
+        <header><span>AGENT RUNTIMES</span><h2>一个座位接口，多种 agent stack</h2><p>Direct APIs、CLI harnesses、最小 Python agent，以及 human/random 基线共享相同的可见性与动作边界。</p></header>
+        <div className="backend-cloud">{BACKENDS.map(backend => <span key={backend}>{backend}</span>)}</div>
+        <div className="pipeline">
+          <article><b>01</b><span>Engine state</span></article><i>→</i>
+          <article><b>02</b><span>Seat tools</span></article><i>→</i>
+          <article><b>03</b><span>Agent session</span></article><i>→</i>
+          <article><b>04</b><span>Trace + result</span></article>
+        </div>
+      </div>
+    </section>
+
+    <section className="quickstart-section" id="quickstart">
+      <div><span>QUICK START</span><h2>一个命令，启动可复现对局。</h2><p>Python 3.11+，无需安装包。也可以启动本地 Web table，让人类与 agent 在同一桌游戏或观战。</p></div>
+      <pre><code><b># random baseline</b>{`\n`}./agentbga run --players 2 --controllers random,random --seed 42{`\n\n`}<b># local interactive table</b>{`\n`}cd web &amp;&amp; npm ci &amp;&amp; npm run build &amp;&amp; cd ..{`\n`}./agentbga web</code></pre>
+    </section>
+
+    {data && <ParetoFrontier data={data}/>}
+    {!data && <section className="frontier-loading" id="frontier"><span>PUBLIC FRONTIER</span><h2>{error || "正在载入 396 场公开实验结果…"}</h2></section>}
+
+    <section className="closing-section">
+      <span>BUILD · RUN · INSPECT · REPLAY</span>
+      <h2>把 agent 的长期决策能力，变成可以复现和比较的实验。</h2>
+      <div><a href={REPOSITORY_URL} target="_blank" rel="noreferrer">Explore the repository ↗</a><a href={DATA_URL}>Download public result JSON ↓</a></div>
+    </section>
+
+    <footer className="site-footer">
+      <b>AgentBGA</b>
+      <span>Open-source long-horizon board-game environment</span>
+      <small>{data ? `${data.dataset_id} · ${formatDate(data.generated_at)}` : "Deterministic by design"}</small>
+    </footer>
   </main>;
 }
