@@ -1,0 +1,7 @@
+{
+  "schema_version": "agentbga.players.v1",
+  "players": [
+    {"name": "Red", "backend": "random"},
+    {"name": "Blue", "backend": "random"}
+  ]
+}

@@ -1,5 +1,15 @@
 # Third-party notices
 
+## Carcassonne mechanical tile catalog
+
+`src/agentbga/carcassonne/catalog.py` is an original mechanical transcription of
+the 24 base tile types (72 physical tiles) from the publisher's
+[English Big Box rulebook](https://cdn.svc.asmodee.net/production-zman/uploads/2024/10/Carcassonne-Big-Box-Rulebook.pdf),
+page 22. Only terrain connectivity, quantities, and scoring symbols are encoded.
+The implementation and SVG tile diagrams are original; no publisher artwork or
+rulebook text is bundled. Carcassonne is designed by Klaus-Jürgen Wrede and
+published by Hans im Glück / Z-Man Games. This implementation is unaffiliated.
+
 ## Rinascimento Framework game data
 
 The development-card costs and noble requirements in `src/agentbga/splendor.py`

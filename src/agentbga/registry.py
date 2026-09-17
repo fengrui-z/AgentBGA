@@ -9,6 +9,7 @@ from . import (
     ark_nova,
     azul,
     brass_birmingham,
+    carcassonne,
     castles_of_burgundy,
     century_spice_road,
     harmonies,
@@ -143,6 +144,7 @@ _REGISTRY = GameRegistry((
     _ModulePlugin(seven_wonders, "seven_wonders"),
     _ModulePlugin(harmonies, "harmonies"),
     _ModulePlugin(wingspan, "wingspan"),
+    _ModulePlugin(carcassonne, "carcassonne"),
     ArkNovaOfficialPlugin(),
 ))
 
