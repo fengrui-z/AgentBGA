@@ -17,6 +17,7 @@ A headless, deterministic board-game environment for evaluating LLM agents in lo
 - **Century: Spice Road** (2–5 players, fully playable)
 - **Ark Nova** (1–4 players, released base-game Map 0 semantic rules plus an opt-in Map A preview; mechanics-only card data)
 - **7 Wonders** (3–7 players, complete Second Edition base rules, Day/Night Wonders)
+- **Carcassonne / 卡卡颂** (2–5 players, 72 base tiles with farmers; playable beta)
 
 ## Quick start
 
@@ -98,6 +99,21 @@ No Swift-Start birds, expansions, Automa solo mode, or publisher artwork. The
 community-transcribed mechanical catalog is labelled playable beta; see
 [implementation and validation](docs/wingspan-implementation-plan.md) and
 [third-party notices](THIRD_PARTY_NOTICES.md).
+
+### Carcassonne / 卡卡颂
+
+```console
+./agentbga run --game carcassonne --players 2 --controllers random,random --seed 42
+./agentbga run --game carcassonne --players-config examples/carcassonne-random-match.json --seed 42
+```
+
+In Web setup choose **卡卡颂 / Carcassonne** and 2–5 human/random/model seats.
+Rotate the drawn tile, click a highlighted space, then place one follower or skip.
+Click any tile to inspect its connected features; scroll or zoom the shared board.
+Includes all 72 base tiles, roads, cities, shields, monasteries, farmers, majority
+ties, final scoring, and deterministic persisted replay. Future draw order stays
+hidden. Uses original SVG graphics; excludes River, Abbot, and other expansions.
+See [rules, protocol, and validation](docs/carcassonne.md).
 
 ## Harness backends
 

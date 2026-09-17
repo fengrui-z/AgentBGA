@@ -170,7 +170,7 @@ class WebTests(unittest.TestCase):
             finally:
                 server.shutdown()
                 server.server_close()
-            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "castles_of_burgundy", "century_spice_road", "seven_wonders", "harmonies", "wingspan"],
+            self.assertEqual(["splendor", "azul", "ark_nova", "brass_birmingham", "castles_of_burgundy", "century_spice_road", "seven_wonders", "harmonies", "wingspan", "carcassonne"],
                              [game["id"] for game in response["games"]])
 
     def test_seven_wonders_setup_snapshot_uses_game_renderer_contract(self):

@@ -495,6 +495,23 @@ WINGSPAN_PROFILE = GameProfile(
     capability_weights={CAP_RESOURCE: 3, CAP_PLANNING: 3, CAP_COMBO: 3, CAP_ENDGAME: 3},
 )
 
+CARCASSONNE_PROFILE = GameProfile(
+    game_id="carcassonne", game_name="Carcassonne", total_expected_turns=142,
+    endgame_score_threshold=80, resource_categories={"meeples_available": "followers"},
+    engine_component_name="connected cities, roads, monasteries, and fields",
+    scoring_dimensions=["city", "road", "monastery", "field"],
+    action_meta_types={"place_tile": META_BUILD, "place_meeple": META_SCORE, "skip_meeple": META_SETUP},
+    observation_schema={"board": "spatial", "features": "scoring_opportunities",
+                        "current_tile": "shared_resources", "players": "self_state",
+                        "meeples": "spatial", "deck_count": "meta", "rules": "meta"},
+    turn_structure="multi_step", hidden_info_types=["deck_order"], has_spatial=True,
+    spatial_summary_method="grid", has_card_abilities=False, ability_summary_depth="none",
+    early_strategy="Complete small features to recycle followers. Keep several followers available; farmers remain committed until game end.",
+    mid_strategy="Use feature connectivity and majority counts to merge into valuable features. Each new tile must match every neighboring edge.",
+    late_strategy="Count distinct completed cities per field. Unfinished cities score half; followers placed on the last tile still score. Ties share full points.",
+    capability_weights={CAP_RESOURCE: 3, CAP_OPPONENT: 3, CAP_PLANNING: 3, CAP_ENDGAME: 3, CAP_PERCEPTION: 3},
+)
+
 _PROFILES: dict[str, GameProfile] = {
     "splendor": SPLENDOR_PROFILE,
     "azul": AZUL_PROFILE,
@@ -504,6 +521,7 @@ _PROFILES: dict[str, GameProfile] = {
     "seven_wonders": SEVEN_WONDERS_PROFILE,
     "harmonies": HARMONIES_PROFILE,
     "wingspan": WINGSPAN_PROFILE,
+    "carcassonne": CARCASSONNE_PROFILE,
 }
 
 

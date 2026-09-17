@@ -14,6 +14,13 @@ MAX_PAGE_SIZE = 50
 STRING = {"type": "string", "minLength": 1}
 NONNEGATIVE = {"type": "integer", "minimum": 0}
 GAME_FILTERS = {
+    "carcassonne": {
+        "type": STRING,
+        "x": {"type": "integer", "minimum": -72, "maximum": 72},
+        "y": {"type": "integer", "minimum": -72, "maximum": 72},
+        "rotation": {"type": "integer", "minimum": 0, "maximum": 3},
+        "feature": STRING,
+    },
     "splendor": {
         "type": STRING,
         "card_id": STRING,

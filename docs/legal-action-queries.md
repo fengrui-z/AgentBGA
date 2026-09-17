@@ -1,6 +1,6 @@
 # Legal action queries
 
-Splendor and The Castles of Burgundy support seat-local `legal_actions` filters through MCP, Minimal, Pi,
+Splendor, The Castles of Burgundy, and Carcassonne support seat-local `legal_actions` filters through MCP, Minimal, Pi,
 and the seat CLI. The engine still enumerates the complete legal action set;
 queries select from that set without changing IDs, payment alternatives, game
 rules, or submission validation. Other games retain their existing behavior.
@@ -53,6 +53,24 @@ placements, purchases, and building-effect choices.
 interface. For these filtered games, unknown groups, unsupported filter names,
 invalid values, and conflicting `group`/`filters.type` fail explicitly. A valid
 filter with no legal matches returns an empty page, not another seat's actions.
+
+## Carcassonne
+
+```json
+{"filters":{"type":"place_tile","x":-1,"rotation":2}}
+```
+
+| Filter | Meaning |
+|---|---|
+| `type` | `place_tile`, `place_meeple`, or `skip_meeple` |
+| `x`, `y` | Signed board coordinates; east increases x, south increases y |
+| `rotation` | Clockwise quarter-turns, 0–3 |
+| `feature` | Local feature ID on the tile just placed, e.g. `c0`, `r0`, `f0`, `m0` |
+
+Tile and follower placement are separate decisions. The current observation
+includes terrain connectivity and public feature summaries; future draws remain
+hidden. All four rotations retain their original action IDs, including visually
+equivalent rotations.
 
 ## When paging is necessary
 
