@@ -256,6 +256,12 @@ Trace files live under `.agentbga/runs/_traces/MATCH_ID/seat-N/turn-XXXX.json` a
 
 ## Experiments and result artifacts
 
+For paired OpenCode/Qwen Code studies of Qwen3.8 Flash/Max (optional GLM 5.2),
+see the [RQ2 experiment protocol](docs/rq2-harness-experiments.zh-CN.md).
+`python -m agentbga.rq2 plan` freezes a balanced pilot without model calls;
+the runner supports bounded execution, first-attempt accounting, and verified
+checkpoint continuations with a seat-visible history intervention.
+
 An experiment manifest schedules one of three reproducible evaluation modes:
 
 - `duel`: two competitors, paired seeds, and both seat orders; no cross-match memory.

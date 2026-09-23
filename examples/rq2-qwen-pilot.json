@@ -1,0 +1,47 @@
+{
+  "schema_version": "agentbga.rq2.v1",
+  "study_id": "rq2-qwen-pilot",
+  "stage": "pilot",
+  "models": [
+    {
+      "model": "qwen3.8-flash",
+      "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "api_key_env": "DASHSCOPE_API_KEY",
+      "reasoning_effort": "max",
+      "snapshot": "unresolved"
+    },
+    {
+      "model": "qwen3.8-max",
+      "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "api_key_env": "DASHSCOPE_API_KEY",
+      "reasoning_effort": "max",
+      "snapshot": "unresolved"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "anchor-flash-opencode",
+      "backend": "opencode",
+      "model": "qwen3.8-flash",
+      "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "api_key_env": "DASHSCOPE_API_KEY",
+      "reasoning_effort": "max"
+    },
+    {
+      "name": "anchor-max-opencode",
+      "backend": "opencode",
+      "model": "qwen3.8-max",
+      "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "api_key_env": "DASHSCOPE_API_KEY",
+      "reasoning_effort": "max"
+    }
+  ],
+  "games": ["splendor", "seven_wonders"],
+  "schedule": {
+    "seeds": [2026092301, 2026092302, 2026092303, 2026092304, 2026092305, 2026092306],
+    "order_seed": 20260923
+  },
+  "budget": {"decision_timeout_seconds": 180, "max_turns": 500, "retries": 0},
+  "conditions": ["native"],
+  "history_window": 6
+}

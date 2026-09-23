@@ -194,8 +194,9 @@ class HarnessAgent:
 
     def __init__(self, config: PlayerConfig, match_id: str, seat: int, *,
                  event_sink: HarnessEventSink | None = None, timeout: float = 600,
-                 runs_root: str | Path | None = None):
+                 runs_root: str | Path | None = None, turn_context: str = ""):
         self.config = config
+        self.turn_context = turn_context
         self.timeout = timeout
         self.event_sink = event_sink
         root = Path(runs_root) if runs_root else Path.cwd() / ".agentbga" / "runs"
@@ -1464,6 +1465,8 @@ class HarnessAgent:
             version=observation.get("state_version", observation.get("turn_count")),
             game=observation.get("game", "board-game"),
         )
+        if self.turn_context:
+            prompt += "\n\n" + self.turn_context
         version = observation.get("state_version", observation.get("turn_count"))
         started = time.monotonic()
         started_wall = time.time()
