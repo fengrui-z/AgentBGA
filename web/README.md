@@ -1,11 +1,16 @@
 # AgentBGA live table
 
-Static React frontend for the local multi-game AgentBGA server. It renders dedicated
-tables for Splendor, Azul, Ark Nova, Brass: Birmingham, Century: Spice Road,
-and 7 Wonders.
+Static React frontend for the local AgentBGA server, with dedicated tables for all
+ten [supported games](../README.md#supported-games).
+
+For installation and human play, start with the [English README](../README.md) or
+[中文 README](../README.zh-CN.md). This page covers frontend development and static
+results publishing. It requires Python 3.11+ and Node.js 22.13+ with npm.
+
+From the repository's `web/` directory:
 
 ```console
-npm install
+npm ci
 npm run build
 cd ..
 ./agentbga web
