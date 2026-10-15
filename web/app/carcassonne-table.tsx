@@ -109,9 +109,9 @@ export function CarcassonnePlayerPanel({player, identity, active, lang}: {
     <div className="carc-scores">{Object.entries(player.score_breakdown).map(([kind, score]) => <span key={kind}>{NAMES[kind][lang === "zh" ? 0 : 1]} <b>{score}</b></span>)}</div>
   </section>;
 }
-export function CarcassonneTable({view, lang, identities, actions = [], onChoose, disabled}: {
+export function CarcassonneTable({view, lang, identities, actions = [], onChoose, disabled, onReset}: {
   view?: CarcassonneView; lang: Lang; identities: {seat: number; name: string}[];
-  actions?: Action[]; onChoose: (a: Action) => void; disabled?: boolean;
+  actions?: Action[]; onChoose: (a: Action) => void; disabled?: boolean; onReset?:()=>void;
 }) {
   const [rotationChoice, setRotationChoice] = useState<{tileId: string | null; rotation: number}>({tileId: null, rotation: 0});
   const [zoom, setZoom] = useState(76);
@@ -136,7 +136,7 @@ export function CarcassonneTable({view, lang, identities, actions = [], onChoose
       {preview && <div className="carc-preview"><CarcassonneTile tile={preview} lang={lang} options={!placing ? followers : []} onChoose={onChoose} disabled={disabled}/><small>{preview.code} · {preview.rotation * 90}°</small></div>}
       <div><span className="carc-step">{placing ? "01 / LANDSCAPE" : "02 / FOLLOWER"}</span><h3>{placing ? (zh ? "旋转地形，选择拼接位置" : "Rotate your tile, choose a space") : (zh ? "派遣一名随从，或跳过" : "Place one follower, or skip")}</h3>
         <p>{placing ? (zh ? "高亮空格均匹配当前方向。上、右、下、左对应北、东、南、西。" : "Highlighted spaces match this orientation. North is up; x goes east, y goes south.") : (zh ? "只能放在刚拼上的地形中，且相连区域内不能已有随从。农夫留到终局。" : "Choose an unoccupied feature on the tile just placed. Farmers stay until game end.")}</p>
-        {placing && <div className="carc-controls">{[0, 1, 2, 3].map(r => <button type="button" key={r} aria-pressed={r === rotation} disabled={disabled} onClick={() => setRotationChoice({tileId: view.current_tile?.tile_id || null, rotation: r})}>{r * 90}°</button>)}{actions.length > 0 && <small>{positions.length} {zh ? "处可放置" : "legal spaces"}</small>}</div>}
+        {placing && <div className="carc-controls">{[0, 1, 2, 3].map(r => <button type="button" key={r} aria-pressed={r === rotation} disabled={disabled} onClick={() => {setRotationChoice({tileId: view.current_tile?.tile_id || null, rotation: r}); onReset?.();}}>{r * 90}°</button>)}{actions.length > 0 && <small>{positions.length} {zh ? "处可放置" : "legal spaces"}</small>}</div>}
         {!placing && actions.length > 0 && <div className="carc-controls">{followers.map(a => <button type="button" key={a.id} disabled={disabled} onClick={() => onChoose(a)}>{NAMES[last?.features.find(f => f.id === a.action.feature)?.kind || "field"][zh ? 0 : 1]} · {String(a.action.feature)}</button>)}{skip && <button type="button" className="carc-skip" disabled={disabled} onClick={() => onChoose(skip)}>{zh ? "跳过随从 →" : "Skip follower →"}</button>}</div>}
         {actions.length === 0 && <small>{zh ? "正在观看对局" : "Spectating this turn"}</small>}
       </div>

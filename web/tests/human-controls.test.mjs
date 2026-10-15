@@ -1,0 +1,42 @@
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {createRequire} from "node:module";
+import vm from "node:vm";
+import test from "node:test";
+import React from "react";
+import {renderToStaticMarkup} from "react-dom/server";
+import ts from "typescript";
+const code=ts.transpileModule(readFileSync(new URL("../app/human-controls.tsx",import.meta.url),"utf8"),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const output={exports:{}};
+vm.runInNewContext("(function(require,module,exports){"+code+"\n})")(createRequire(import.meta.url),output,output.exports);
+const {ActionChoices,HumanConfirmation,readableMove}=output.exports;
+const action={id:"engine-owned-1",action:{type:"play_merchant",times:2,payment:{yellow:1}}};
+const render=(component,props)=>renderToStaticMarkup(React.createElement(component,props));
+test("confirmation requires a selection and respects pause/submission disabling",()=>{
+ const props={label:"Trade twice",selected:null,lang:"en",busy:false,disabled:false,onClear(){},onConfirm(){}};
+ const empty=render(HumanConfirmation,props);
+ assert.equal((empty.match(/disabled=""/g)||[]).length,2);
+ assert.match(empty,/Choose an action on the table/);
+ const ready=render(HumanConfirmation,{...props,selected:action});
+ assert.doesNotMatch(ready,/disabled=""/);
+ assert.match(ready,/Trade twice/);
+ assert.equal((render(HumanConfirmation,{...props,selected:action,disabled:true}).match(/disabled=""/g)||[]).length,2);
+ assert.match(render(HumanConfirmation,{...props,issue:"This turn has changed"}),/role="alert">This turn has changed/);
+});
+test("variant picker retains every exact engine ID and labels the operation",()=>{
+ const actions=[action,{id:"engine-owned-2",action:{type:"play_merchant",times:3,payment:{yellow:2}}}];
+ const props={actions,label:"Play merchant",describe:a=>`Trade ${a.action.times} times`,lang:"en",onChoose(){}};
+ const html=render(ActionChoices,props);
+ for(const a of actions) assert.ok(html.includes(`value="${a.id}"`));
+ assert.match(html,/Trade 2 times/);assert.match(html,/Trade 3 times/);
+ const single=render(ActionChoices,{...props,actions:[action]});
+ assert.doesNotMatch(single,/<select/);assert.match(single,/Play merchant<small>Trade 2 times/);
+ assert.equal(render(ActionChoices,{...props,actions:[]}),"");
+});
+test("move descriptions use only visible card names and explain food and setup decisions",()=>{
+ const view={game:"wingspan",players:[{hand:[{id:"bird1",name:"Visible bird"},{id:"secret",name:"Hidden bird",hidden:true}]}]};
+ assert.equal(readableMove({type:"keep_birds",card_ids:["bird1"]},view,"en","fallback"),"Keep starting birds: Visible bird");
+ assert.equal(readableMove({type:"pay_food",food:["seed","fish"]},view,"zh","fallback"),"支付食物: 种子 + 鱼");
+ assert.equal(readableMove({type:"unknown"},view,"en","secret"),"secret");
+ assert.equal(readableMove({type:"play_bird",card_id:"bird1",habitat:"forest"},view,"zh","fallback"),"打出 Visible bird → 森林");
+});

@@ -104,20 +104,20 @@ export function HarmoniesPlayerPanel({player, identity, active, lang}: {
   return <section className={`player-panel harmony-player-panel ${active ? "active-player" : ""}`}>
     <header><div><span className="seat-label">SEAT {identity.seat + 1}</span><h3>{identity.name}</h3></div><strong>{player.score}<small> {lang === "zh" ? "分" : "pts"}</small></strong></header>
     <div className="harmony-player-facts"><span>{lang === "zh" ? "空格" : "Empty"} <b>{player.empty_spaces}</b></span><span>{lang === "zh" ? "在建栖息地" : "Active habitats"} <b>{player.active_cards}/4</b></span></div>
-    <HexBoard player={player} lang={lang}/>
+    <details className="harmony-mini-board"><summary>{lang === "zh" ? "查看景观" : "View landscape"}</summary><HexBoard player={player} lang={lang}/></details>
     <div className="harmony-score-grid">{Object.entries(SCORE_NAMES).map(([key, names]) => <span key={key}>{names[lang === "zh" ? 0 : 1]}<b>{player.score_breakdown[key]}</b></span>)}</div>
   </section>;
 }
-export function HarmoniesTable({view, lang, identities, actions = [], disabled, onChoose}: {
+export function HarmoniesTable({view, lang, identities, actions = [], disabled, onChoose, onReset}: {
   view?: HarmoniesView; lang: Lang; identities: {seat: number; name: string}[];
-  actions?: Action[]; disabled?: boolean; onChoose: (action: Action) => void;
+  actions?: Action[]; disabled?: boolean; onChoose: (action: Action) => void; onReset?:()=>void;
 }) {
   const [color, setColor] = useState("");
   const [animal, setAnimal] = useState("");
   const [boardSeat, setBoardSeat] = useState<number | null>(null);
   if (!view) return null;
-  const zh = lang === "zh", own = view.players[view.active_seat];
-  const seat = boardSeat ?? view.active_seat, player = view.players[seat];
+  const zh = lang === "zh", own = view.players[view.viewer_seat];
+  const seat = boardSeat ?? view.viewer_seat, player = view.players[seat];
   const interactive = actions.length > 0 && seat === view.active_seat;
   const placements = actions.filter(a => a.action.type === "place_token");
   const selectedColor = view.pending_tokens.includes(color) ? color : String(placements[0]?.action.color || "");
@@ -137,14 +137,15 @@ export function HarmoniesTable({view, lang, identities, actions = [], disabled, 
     })}</div></section>
     <section className="harmony-workspace"><div className="harmony-board-heading"><h3>{zh ? "你的自然景观" : "Personal landscapes"}</h3><div>{identities.map(p => <button type="button" key={p.seat} aria-pressed={seat === p.seat} onClick={() => setBoardSeat(p.seat)}>{p.name}</button>)}</div></div>
       {actions.length > 0 && <p className="harmony-step" aria-live="polite">{interactive ? (selectedAnimal ? `${zh ? "点击高亮格安置" : "Select a highlighted hex for"} ${selectedAnimal}` : step) : (zh ? "正在查看其他玩家的景观" : "Viewing another player's landscape")}</p>}
+      {interactive && view.pending_tokens.length > 0 && <div className="harmony-pending"><b>{zh ? "待放置" : "To place"}</b>{view.pending_tokens.map((c, i) => <button type="button" key={i} disabled={disabled} aria-label={`${zh ? "选择" : "Select"} ${COLORS[c][lang]}`} aria-pressed={!selectedAnimal && selectedColor === c} onClick={() => {setAnimal(""); setColor(c); onReset?.();}}><Token color={c} lang={lang}/></button>)}</div>}
       <div className="harmony-landscape"><HexBoard player={player} lang={lang} targets={targets} onCell={interactive ? move : undefined} disabled={disabled}/><aside><span className="harmony-kicker">{zh ? "当前得分" : "CURRENT SCORE"}</span><strong className="harmony-total">{player.score}</strong><div className="harmony-score-grid">{Object.entries(SCORE_NAMES).map(([key, names]) => <span key={key}>{names[zh ? 0 : 1]}<b>{player.score_breakdown[key]}</b></span>)}</div><p>{zh ? `剩余 ${player.empty_spaces} 格空地。回合结束时 ≤2 格触发终局。` : `${player.empty_spaces} empty hexes. At most 2 at turn end triggers the final round.`}</p></aside></div>
-      {interactive && view.pending_tokens.length > 0 && <div className="harmony-pending"><b>{zh ? "待放置" : "To place"}</b>{view.pending_tokens.map((c, i) => <button type="button" key={i} disabled={disabled} aria-label={`${zh ? "选择" : "Select"} ${COLORS[c][lang]}`} aria-pressed={!selectedAnimal && selectedColor === c} onClick={() => {setAnimal(""); setColor(c);}}><Token color={c} lang={lang}/></button>)}</div>}
-      {interactive && selectedAnimal && <button type="button" className="harmony-cancel" onClick={() => setAnimal("")}>{zh ? "返回地形放置" : "Back to landscape placement"}</button>}
+
+      {interactive && selectedAnimal && <button type="button" className="harmony-cancel" onClick={() => {setAnimal(""); onReset?.();}}>{zh ? "返回地形放置" : "Back to landscape placement"}</button>}
       {endActions.length > 0 && <div className="harmony-end"><button type="button" disabled={disabled} onClick={() => onChoose(endActions[0])}>{zh ? "结束回合 →" : "End turn →"}</button>{endActions.length > 1 && <details><summary>{zh ? "单人：换一张市场牌并结束" : "Solo: replace a market card and end turn"}</summary>{endActions.slice(1).map(a => <button type="button" key={a.id} disabled={disabled} onClick={() => onChoose(a)}>{zh ? "换掉" : "Replace"} {String(a.action.discard_card).toUpperCase()}</button>)}</details>}</div>}
     </section>
     {own.spirit_choices.length > 0 && <section className="harmony-card-section"><header><h3>{zh ? "选择自然之灵" : "Choose a spirit"}</h3></header><div className="harmony-cards">{own.spirit_choices.map(c => <AnimalCard key={c.id} card={c} lang={lang} action={actions.find(a => a.action.type === "choose_spirit" && a.action.card_id === c.id)} onChoose={onChoose} disabled={disabled}/>)}</div></section>}
-    <section className="harmony-card-section"><header><h3>{zh ? "正在营造的栖息地" : "Your habitats"}</h3><small>{player.active_cards}/4 {zh ? "使用中" : "active"}</small></header><div className="harmony-cards">{player.cards.map(c => <AnimalCard key={c.id} card={c} lang={lang} selected={selectedAnimal === c.id && interactive} onSelect={interactive && actions.some(a => a.action.type === "place_animal" && a.action.card_id === c.id) ? () => setAnimal(c.id) : undefined} disabled={disabled}/>)}{player.cards.length === 0 && <p className="harmony-empty">{zh ? "从下方选择动物牌，为它们营造栖息地。" : "Choose an animal card below and build its habitat."}</p>}</div></section>
-    <section className="harmony-card-section"><header><h3>{zh ? "动物牌市场" : "Animal market"}</h3><small>{zh ? `牌堆 ${view.deck_count} · 每回合最多拿一张` : `${view.deck_count} in deck · take at most one per turn`}</small></header><div className="harmony-cards">{view.market.map(c => <AnimalCard key={c.id} card={c} lang={lang} action={actions.find(a => a.action.type === "take_animal" && a.action.card_id === c.id)} onChoose={onChoose} disabled={disabled}/>)}</div></section>
+    <section className="harmony-card-section harmony-owned"><header><h3>{zh ? "正在营造的栖息地" : "Your habitats"}</h3><small>{player.active_cards}/4 {zh ? "使用中" : "active"}</small></header><div className="harmony-cards">{player.cards.map(c => <AnimalCard key={c.id} card={c} lang={lang} selected={selectedAnimal === c.id && interactive} onSelect={interactive && actions.some(a => a.action.type === "place_animal" && a.action.card_id === c.id) ? () => {setAnimal(c.id); onReset?.();} : undefined} disabled={disabled}/>)}{player.cards.length === 0 && <p className="harmony-empty">{zh ? "从下方选择动物牌，为它们营造栖息地。" : "Choose an animal card below and build its habitat."}</p>}</div></section>
+    <section className="harmony-card-section harmony-animal-market"><header><h3>{zh ? "动物牌市场" : "Animal market"}</h3><small>{zh ? `牌堆 ${view.deck_count} · 每回合最多拿一张` : `${view.deck_count} in deck · take at most one per turn`}</small></header><div className="harmony-cards">{view.market.map(c => <AnimalCard key={c.id} card={c} lang={lang} action={actions.find(a => a.action.type === "take_animal" && a.action.card_id === c.id)} onChoose={onChoose} disabled={disabled}/>)}</div></section>
     <div className="harmony-legend">{Object.keys(COLORS).filter(c => c !== "base").map(c => <span key={c}><Token color={c} lang={lang}/>{COLORS[c][lang]}</span>)}</div>
     <details className="harmony-rules"><summary>{zh ? "玩法与计分速查" : "Rules & scoring reference"}</summary>{zh ? <ul><li>每回合拿一组地形并全部放置；可以穿插拿一张动物牌和多次安置动物，最后点击结束回合。</li><li>树木 1/3/7 分；相连山脉每格按高度 1/3/7 分；每组至少两格田野 5 分。</li><li>红色建筑只允许两层；周围至少三种顶层颜色得 5 分。树干和单层红色不得地形分。</li><li>A 面河流按最长的最短连通路径计分：1–6 格为 0/2/5/8/11/15 分，此后每格 +4。B 面每个非水域连通岛屿 5 分，空格也属陆地。</li><li>栖息地图案只能旋转，不能镜像，且必须精确匹配高度；动物方块锁定所在格。图案其余格可重复使用。</li><li>动物牌累计得分取最高已揭示数字，不相加；完成牌不占四张上限。自然之灵需安置后才生效。</li><li>袋子不足补充或只剩 ≤2 空格触发最后一轮；总分相同则比较动物方块数。</li><li>单人每回合弃掉未拿的两组地形并重补市场；没拿动物牌时可换一张。</li></ul> : <ul>{Object.entries(view.rules).map(([key, value]) => <li key={key}>{value}</li>)}</ul>}<small>{zh ? "32 张基础动物牌以编号展示；原创地形图形。社区转录牌库，可玩测试版。" : "32 numbered base animal cards; original landscape graphics. Community-transcribed catalog, playable beta."}</small></details>
   </div>;

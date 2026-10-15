@@ -1,0 +1,244 @@
+/* Shared human table: compact state, one primary board, optional diagnostics. */
+.human-play .table-grid { grid-template-columns:260px minmax(0,1fr); }
+.human-play .board { min-width:0; padding:12px; overflow:visible; }
+.human-play .players-column { min-width:0; padding:10px; gap:10px; }
+.human-play .player-panel { min-width:0; padding:10px; font-size:12px; line-height:1.4; }
+.human-play .player-panel.active-player { transform:none; }
+.human-play .player-panel h3 { font-size:17px; }
+.human-play .model-line { flex-wrap:wrap; gap:4px; margin:6px 0; overflow-wrap:anywhere; }
+.human-play .timeline { display:none; grid-column:1/-1; position:static; max-height:480px; }
+.human-play.match-log-open .timeline { display:flex; }
+.human-play .human-turn { margin:0 0 10px; padding:8px 12px; border:1px solid #b6a671; background:#f4e5b6; }
+.human-play .human-turn header { margin:0; padding:0; gap:8px; border:0; background:none; }
+.human-play .human-turn h2 { font-size:15px; margin:2px 0; }
+.human-play .human-turn header>div>span,.human-play .human-turn header>b { font-size:10px; }
+.human-play .table-header { min-height:62px; height:auto; padding:8px 12px; gap:8px; }
+.human-play .table-header strong { font-size:17px; }
+.human-play .table-header button { padding:8px; white-space:nowrap; }
+.human-play .table-actions { flex-shrink:0; }
+.human-play :is(button,select,input,summary):focus-visible { outline:3px solid #be861e; outline-offset:2px; }
+.human-play button:disabled { cursor:default; }
+.human-play .board :is(select,button) { max-width:100%; }
+.human-play .board select { min-width:0; }
+.human-play .human-choices { display:flex; flex-direction:column; gap:5px; min-width:0; font-size:12px; }
+.human-choices label { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.human-choices label>span { font-size:11px; }
+.human-choices select { width:100%; padding:7px; background:#fffdf7; border:1px solid #a8b09c; }
+.human-choices button { padding:7px; min-height:34px; border:1px solid #819a83; background:#edf2e7; color:#244530; text-align:left; cursor:pointer; overflow-wrap:anywhere; }
+.human-choices button:disabled { opacity:.45; }
+.human-confirmation { position:sticky; bottom:8px; z-index:20; display:flex; align-items:center; gap:8px; padding:10px; margin-top:12px; border:2px solid #a9802f; background:#fffdf5; box-shadow:0 3px 16px #20332124; font-size:13px; }
+.human-confirmation>div { flex:1; min-width:0; overflow-wrap:anywhere; }
+.human-confirmation strong,.human-confirmation small { display:block; }
+.human-confirmation small { margin-top:4px; color:#63705f; font-size:11px; }
+.human-confirmation button { flex-shrink:0; min-height:36px; padding:7px 12px; background:#f5f0e3; border:1px solid #ada286; cursor:pointer; }
+.human-confirmation .human-confirm-submit { background:#254b37; color:white; border-color:#254b37; }
+.human-confirmation button:disabled { opacity:.45; }
+.human-confirmation>p { flex-basis:100%; color:#9d352c; }
+.human-play :is(.century-status,.azul-status,.brass-status,.burgundy-status,.seven-status) { padding:10px 12px; gap:10px; margin-bottom:10px; }
+.human-play :is(.century-status,.azul-status,.brass-status,.burgundy-status,.seven-status) h2 { font-size:19px; margin:0; }
+.human-play :is(.century-status,.azul-status,.brass-status,.burgundy-status,.seven-status)>code { display:none; }
+.human-play :is(.century-status,.azul-status,.seven-status) p { margin:4px 0; font-size:12px; }
+/* Carcassonne: current tile beside the shared landscape. */
+.human-play .carc-table { grid-template-columns:minmax(0,1fr) 260px; gap:10px; }
+.human-play .carc-heading { grid-column:1/-1; padding:10px 14px; }
+.human-play .carc-heading h2 { font-size:20px; margin:4px 0; }
+.human-play .carc-heading p { font-size:12px; }
+.human-play .carc-deck strong { font-size:27px; }
+.human-play .carc-turn { grid-column:2; grid-row:2; padding:10px; flex-direction:column; align-items:stretch; gap:8px; }
+.human-play .carc-preview { width:108px; flex-basis:auto; align-self:center; }
+.human-play .carc-turn h3 { font-size:15px; }
+.human-play .carc-turn p { font-size:12px; margin:5px 0; }
+.human-play .carc-map-section { grid-column:1; grid-row:2; }
+.human-play .carc-map-scroll { max-height:55vh; min-height:260px; }
+.human-play .carc-features,.human-play .carc-rules { grid-column:1/-1; }
+.human-play .carc-features>div { gap:6px; padding:0 10px 8px; }
+.human-play .carc-features article { padding:7px; gap:3px; }
+.human-play .carc-features article strong { font-size:16px; }
+/* Harmonies: one primary board with pending terrain immediately above it. */
+.human-play .harmony-table { grid-template-columns:minmax(0,1.2fr) minmax(260px,1fr); gap:10px; }
+.human-play .harmony-table>header,.human-play .harmony-market,.human-play .harmony-animal-market,.human-play .harmony-legend,.human-play .harmony-rules,.human-play .harmony-final { grid-column:1/-1; }
+.human-play .harmony-heading { padding:10px 14px; }
+.human-play .harmony-heading h2 { font-size:20px; margin:4px 0; }
+.human-play .harmony-supply b { font-size:25px; }
+.human-play :is(.harmony-market,.harmony-workspace,.harmony-card-section) { padding:10px; border-radius:6px; }
+.human-play .harmony-market>header,.human-play .harmony-card-section>header,.human-play .harmony-board-heading { margin-bottom:8px; }
+.human-play .harmony-groups { grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
+.human-play .harmony-groups>button { padding:7px; gap:4px; }
+.human-play .harmony-landscape { grid-template-columns:minmax(0,1fr); gap:6px; }
+.human-play .harmony-landscape>aside { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.human-play .harmony-landscape>aside>p { font-size:11px; margin:0; }
+.human-play .harmony-total { font-size:22px; }
+.human-play .harmony-landscape .harmony-score-grid { display:flex; gap:8px; flex-wrap:wrap; margin:0; }
+.human-play .harmony-hex-board { max-height:310px; }
+.human-play .harmony-pending { margin:6px 0; padding:6px; }
+.human-play .harmony-owned .harmony-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.human-play .harmony-animal-market .harmony-cards { grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+.human-play .harmony-mini-board { margin:6px 0; }
+/* Wingspan: setup selection includes the full mechanics, without a repeated hand. */
+.human-play .ws-table { padding:10px; border-radius:6px; display:flex; flex-direction:column; gap:10px; }
+.human-play .ws-heading { padding:0; }
+.human-play .ws-heading h2 { font-size:21px; margin:4px 0; }
+.human-play .ws-heading p { margin:3px 0; }
+.human-play .ws-round-number { font-size:28px; }
+.human-play .ws-goals { margin:0; gap:5px; }
+.human-play .ws-goals article { padding:7px; min-height:0; gap:5px; }
+.human-play .ws-table>section { margin:0; }
+.human-play .ws-decision { order:-1; padding:10px; }
+.human-play .ws-setup-picks { display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:8px; margin:8px 0; }
+.human-play .ws-setup-card { min-width:0; border:2px solid transparent; }
+.human-play .ws-setup-card.selected { border-color:#496a36; background:#e0ebd5; }
+.human-play .ws-setup-picks label { padding:7px; font-size:12px; }
+.human-play .ws-bird { padding:8px; }
+.human-play .ws-bird-mark { display:none; }
+.human-play .ws-bird h4 { font-size:15px; min-height:0; margin:5px 0; }
+.human-play .ws-bird-facts { padding:5px 0; }
+.human-play .ws-power-text { min-height:0; margin:6px 0; padding:6px; font-size:11px; }
+.human-play .ws-cards { grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:8px; }
+.human-play .ws-habitat { padding:8px; margin:6px 0; gap:8px; }
+.human-play .ws-empty-slot { min-height:80px; }
+.human-play .ws-habitat-cards .ws-bird { flex-basis:170px; }
+.human-play .ws-die { min-height:42px; min-width:54px; padding:5px; }
+.human-play .ws-mini-habitats { margin:6px 0; }
+.human-play .ws-mini-habitats>div { padding:3px; }
+/* Azul: actual source colors and destination rows, with overflow estimates. */
+.azul-play-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,1fr); gap:12px; }
+.human-play .azul-factories>div { grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; }
+.human-play .azul-factories article { width:auto; min-height:0; padding:9px; border-radius:8px; }
+.azul-source-colors { display:flex; gap:5px; justify-content:center; flex-wrap:wrap; }
+.azul-source-colors button { display:flex; flex-direction:column; align-items:center; gap:5px; padding:5px; border:1px solid #b6bda7; background:#fffdf5; font-size:11px; cursor:pointer; }
+.azul-source-colors button[aria-pressed=true] { outline:3px solid #967414; background:#f4d999; }
+.azul-source-colors button:disabled { opacity:.6; }
+.azul-destinations { padding:10px; background:#f7f2e6; border:1px solid #b9b5a2; }
+.azul-destinations h3 { margin:0 0 8px; font-size:15px; }
+.azul-destinations>p { font-size:12px; }
+.azul-target-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+.azul-target-row>button { display:flex; align-items:center; flex-wrap:wrap; gap:5px; flex:1; min-width:0; padding:7px; border:1px solid #7e9c82; background:#edf1df; cursor:pointer; }
+.azul-target-row>button:disabled { background:#eeeade; border-color:#cfccbf; color:#696b61; }
+.azul-target-row small { flex-basis:100%; text-align:left; font-size:10px; }
+.azul-target-row .azul-tile,.azul-target-row .azul-wall-cell { width:19px; height:19px; }
+.azul-target-row .azul-pattern-line { margin-left:auto; }
+.azul-floor-target { width:100%; padding:8px; margin:8px 0; background:#f1dfcb; border:1px solid #a78b6a; font-size:12px; }
+/* Burgundy: clickable dice, depots and placement targets. */
+.burgundy-play-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,1fr); gap:10px; }
+.human-play .burgundy-depots>div { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.human-play .burgundy-depots article { padding:7px; }
+.burgundy-tile-button { display:inline-flex; flex-direction:column; align-items:center; gap:4px; padding:5px; background:#fcf9ee; border:1px solid #a9a78b; font-size:10px; cursor:pointer; }
+.burgundy-tile-button[aria-pressed=true] { outline:3px solid #ae771c; }
+.burgundy-tile-button:disabled { opacity:.6; }
+.burgundy-storage-play { margin-top:10px; padding:10px; background:#eee6d2; }
+.burgundy-storage-play>div { display:flex; flex-wrap:wrap; gap:6px; }
+.burgundy-storage-play h3 { margin:0 0 8px; font-size:13px; }
+.human-play .burgundy-duchy { min-width:0; }
+.human-play .burgundy-hex-map { min-width:290px; max-width:100%; }
+.human-play .burgundy-hex { border:1px solid #a5a18c; cursor:default; }
+.human-play .burgundy-hex.is-legal { cursor:pointer; outline:3px solid #507e36; outline-offset:-3px; }
+.burgundy-target-choices { padding:10px; border:1px solid #b09c61; background:#fff9e7; margin-top:8px; }
+.burgundy-target-choices h3 { margin:0 0 7px; font-size:14px; }
+.burgundy-other-actions,.brass-command-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; margin:10px 0; }
+.human-play .burgundy-dice button { padding:6px 9px; background:#fbf7e9; border:1px solid #bab399; cursor:pointer; }
+.human-play .burgundy-dice button[aria-pressed=true] { background:#e4cc8f; }
+/* Century and Seven Wonders: options belong to the physical card. */
+.human-play .century-point-market>div { grid-template-columns:repeat(5,minmax(0,1fr)); }
+.human-play .century-merchant-market>div { grid-template-columns:repeat(6,minmax(0,1fr)); }
+.human-play .century-board :is(.century-merchant-card,.century-point-card) { min-height:130px; }
+.century-play-hand { margin-top:12px; }
+.century-play-hand>header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.century-play-hand h3 { font-size:15px; margin:0; }
+.century-play-hand>div { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; }
+.century-play-hand article { min-width:0; }
+.century-used-cards { display:flex; flex-wrap:wrap; gap:6px; }
+
+.human-play .seven-action-picker { max-height:none; overflow:visible; padding:0; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; }
+.human-play .seven-action-card { display:flex; flex-direction:column; min-width:0; padding:7px; }
+.human-play .seven-action-card>.seven-card { min-height:185px; }
+.human-play .seven-action-card>.seven-card footer { font-size:10px; }
+.human-play .seven-action-card .human-choices { margin-top:5px; }
+.human-play .seven-action-card .human-choices button { font-size:11px; }
+.seven-neighbor-resources { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+.seven-neighbor-resources>article { flex:1; min-width:160px; padding:8px; background:#f1ead9; border:1px solid #beb6a1; }
+.seven-neighbor-resources b { font-size:12px; }
+.human-play .seven-cities { margin-top:12px; }
+/* Ark Nova: decision-driven workspaces; full tracks remain available. */
+.ark-workspace-tabs { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+.ark-workspace-tabs button { padding:9px 12px; border:1px solid #aab69c; background:#f5f4e8; cursor:pointer; font-size:12px; }
+.ark-workspace-tabs button[aria-pressed=true] { color:#fff; background:#355d43; }
+.human-play .ark-match-banner { padding:10px; }
+.human-play .ark-match-banner h1 { font-size:22px; margin:4px 0; }
+.human-play .ark-match-banner>p,.human-play .ark-match-banner>code { display:none; }
+.human-play .ark-surface { padding:10px; }
+.human-play .ark-surface-header { margin-bottom:8px; }
+.human-play .ark-surface-header h2 { font-size:18px; }
+.human-play .ark-game-board-canvas { min-width:0; width:100%; }
+.human-play .ark-public-tracks>summary { padding:10px; cursor:pointer; font-size:12px; background:#e8eddf; }
+.human-play .ark-public-tracks>summary small { display:block; margin-top:4px; }
+.human-play .ark-public-tracks[open] { overflow-x:auto; }
+.human-play .ark-zoo-layout { grid-template-columns:minmax(0,1fr) 230px; }
+.human-play .ark-player-cards>div { grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); }
+.human-play .brass-live-map { margin-top:10px; }
+.human-play .brass-status>div>strong { font-size:15px; }
+.human-play .brass-hand { max-height:120px; overflow:auto; }
+@media(max-width:1100px) {
+  .human-play .table-grid { grid-template-columns:210px minmax(0,1fr); }
+  .human-play .match-meta>span:first-child { display:none; }
+  .human-play .carc-table { grid-template-columns:minmax(0,1fr) 210px; }
+  .azul-play-layout,.burgundy-play-layout { grid-template-columns:1fr; }
+  .human-play .harmony-table { grid-template-columns:1fr; }
+  .human-play .harmony-table>* { grid-column:1!important; }
+  .human-play .harmony-landscape { grid-template-columns:minmax(200px,1fr) 160px; }
+  .human-play .century-merchant-market>div { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .human-play .ark-zoo-layout { grid-template-columns:1fr; }
+}
+@media(max-width:850px) {
+  .human-play .table-grid { display:block; }
+  .human-play .players-column { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); padding:8px; }
+  .human-play .table-header { flex-wrap:wrap; }
+  .human-play .table-header .brand-mark { display:none; }
+  .human-play .table-actions { margin-left:auto; }
+  .human-play .board { padding:8px; }
+  .human-play .carc-table { grid-template-columns:1fr; }
+  .human-play .carc-table>* { grid-column:1; grid-row:auto; }
+  .human-play .carc-turn { flex-direction:row; align-items:center; }
+  .human-play .carc-preview { flex:0 0 90px; }
+  .human-play .harmony-animal-market .harmony-cards { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media(max-width:500px) {
+  .human-play .table-actions { width:100%; justify-content:flex-end; }
+  .human-play .human-turn header { align-items:flex-start; }
+  .human-play .human-turn header>b { display:none; }
+  .human-play .players-column .player-panel { padding:7px; }
+  .human-play .model-line { font-size:9px; }
+  .human-confirmation { flex-wrap:wrap; bottom:4px; padding:8px; }
+  .human-confirmation>div { flex-basis:100%; }
+  .human-confirmation>button:first-of-type { margin-left:auto; }
+  .human-play .carc-turn { align-items:flex-start; }
+  .human-play .carc-preview { flex-basis:76px; }
+  .human-play .harmony-groups { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .human-play .harmony-landscape { grid-template-columns:1fr; }
+  .human-play .harmony-animal-market .harmony-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .human-play .century-point-market>div,.human-play .century-merchant-market>div { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .human-play .seven-action-picker { grid-template-columns:1fr; }
+  .human-play .ark-player-cards>div { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .azul-target-row { gap:4px; }
+  .azul-target-row .azul-tile,.azul-target-row .azul-wall-cell { width:16px; height:16px; }
+}
+
+.human-choices button small {display:block; font-size:11px; font-weight:400; margin-top:3px;}
+
+/* Older game styles used a desktop-only 650px floor. Keep it inside the viewport. */
+.human-play :is(.azul-board,.brass-board,.century-board,.seven-board,.burgundy-board) {min-width:0;}
+.human-play .burgundy-board {display:flex; flex-direction:column; gap:10px;}
+.human-play .burgundy-play-layout,.human-play .burgundy-play-layout>div {min-width:0;}
+.human-play .burgundy-status {grid-template-columns:1fr auto;}
+.human-play .burgundy-dice {grid-column:1/-1; justify-content:flex-start;}
+.human-play .brass-map-layout {min-width:0;}
+@media(max-width:500px) {
+  .human-play :is(.azul-status,.seven-status,.century-status,.brass-status) {display:flex; flex-wrap:wrap;}
+  .human-play .table-actions {flex-wrap:wrap;}
+  .human-play .brass-economy-board {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .human-play .brass-deck {grid-column:1/-1;}
+  .human-play .seven-cities>header {flex-wrap:wrap; gap:8px;}
+  .human-play .seven-pass-routes {min-width:0; width:100%;}
+  .human-play .seven-resource-options {min-width:0; flex-wrap:wrap;}
+  .human-play .seven-benefit {flex-wrap:wrap;}
+  .human-play .ark-counter-row {grid-template-columns:repeat(3,minmax(0,1fr));}
+}
