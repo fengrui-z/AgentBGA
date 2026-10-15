@@ -37,7 +37,7 @@ cd ..
 
 实时牌桌**仅监听 localhost**，没有多用户身份认证，适合在可信设备上使用。
 Node.js 用于构建前端，构建完成后由 Python 提供页面。
-公开的 GitHub Pages 页面只展示项目与静态实验结果，不提供在线比赛服务。
+公开的 GitHub Pages 页面只展示项目介绍和游戏界面，不提供在线比赛服务。实验结果暂不公开。
 
 <details>
 <summary><strong>只想用终端？仅需 Python 即可跑一局。</strong></summary>
@@ -172,7 +172,7 @@ Trace 文件位于 `.agentbga/runs/_traces/MATCH_ID/seat-N/`。
 | 配置 harness、游戏变体、trace 或 CLI 行动 | [使用指南](docs/usage.zh-CN.md) |
 | 高效查询大量合法行动 | [合法行动查询（英文）](docs/legal-action-queries.md) |
 | 理解引擎和评测设计 | [架构设计笔记（英文）](docs/architecture.md) |
-| 开发浏览器牌桌或发布静态结果 | [Web 开发说明（英文）](web/README.md) |
+| 开发浏览器牌桌或维护项目介绍页 | [Web 开发说明（英文）](web/README.md) |
 | 在服务器运行 Frontier12 批量实验 | [服务器运行手册](docs/frontier12-server-run.zh-CN.md) |
 | 查看人类游玩改动及测试覆盖 | [易用性审计](docs/human-usability-audit-2026-10-16.md) |
 

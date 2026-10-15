@@ -333,51 +333,8 @@ test("static introduction includes playable games, real screenshots, and working
   }
 });
 
-test("archived Frontier12 snapshot retains its original data and telemetry scope", async () => {
-  const data = JSON.parse(await readFile(new URL("public/results/frontier12-2026-v2.json", root), "utf8"));
-  assert.equal(data.schema_version, "agentbga.frontier12-pages.v1");
-  assert.equal(data.dataset_id, "frontier12-2026-v2-full");
-  assert.equal(data.generated_at, "2026-09-02T00:12:09.742231Z");
-  assert.deepEqual(data.results, {completed: 396, failed: 0, reported: 396, scheduled: 396});
-  assert.equal(data.leaderboard.length, 12);
-  assert.equal(data.leaderboard[0].participant_id, "gpt56-sol-codex");
-  assert.equal(data.leaderboard[0].display_name, "GPT-5.6 Sol · Codex");
-  assert.equal(data.leaderboard[0].elo, 1688.4);
-  assert.equal(data.leaderboard.at(-1).participant_id, "qwen37-plus-opencode");
-  assert.equal(data.leaderboard.at(-1).elo, 1315.9);
-  assert.ok(data.leaderboard.every(item => item.completed === 96 && item.scheduled === 96 && item.failed_exposures === 0));
-  assert.equal(data.token_efficiency.successful_sessions, 937);
-  assert.equal(data.token_efficiency.eligible_sessions, 1152);
-  assert.equal(data.token_efficiency.coverage_rate, 0.813368);
-  assert.equal(data.token_efficiency.telemetry_scope, "validated-subset");
-  assert.equal(data.token_efficiency.result_snapshot, "frontier12-2026-v2-full");
-  assert.equal(data.token_efficiency.entries.length, 12);
-  assert.equal(data.token_efficiency.by_game.length, 35);
-  assert.equal(data.token_efficiency.pricing.currency, "CNY");
-  assert.equal(data.token_efficiency.pricing.usd_cny, 6.7811);
-  assert.equal(data.token_efficiency.pricing.models["deepseek-v4-pro-0813"].cached_input_rmb_per_m, 0.9);
-  assert.equal(data.token_efficiency.pricing.models["gpt-5.6-sol"].output_rmb_per_m, 135.622);
-  assert.equal(data.token_efficiency.entries[0].mean_cost_rmb, 119.2838);
-  assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_output_tokens_m, 0.182);
-  assert.equal(data.token_efficiency.entries.find(item => item.participant_id === "qwen38-max-qwen").mean_cost_rmb, 190.8315);
-  assert.ok(data.token_efficiency.entries.every(item => [
-    item.mean_input_cost_rmb,
-    item.mean_cached_input_cost_rmb,
-    item.mean_output_cost_rmb,
-    item.mean_cost_rmb,
-  ].every(Number.isFinite)), "every overall token entry must have a complete cost breakdown");
-  assert.equal(
-    Number((data.token_efficiency.entries[0].mean_input_cost_rmb + data.token_efficiency.entries[0].mean_cached_input_cost_rmb + data.token_efficiency.entries[0].mean_output_cost_rmb).toFixed(4)),
-    data.token_efficiency.entries[0].mean_cost_rmb,
-  );
-  const solSplendor = data.token_efficiency.by_game.find(item => item.participant_id === "gpt56-sol-codex" && item.game === "splendor");
-  assert.equal(solSplendor.elo, 1553.5);
-  assert.equal(solSplendor.elo_rank, 5);
-  assert.equal(solSplendor.mean_input_tokens_m, 0.292);
-  assert.equal(solSplendor.mean_cached_input_tokens_m, 7.731);
-  assert.equal(solSplendor.mean_output_tokens_m, 0.025);
-  const qwenBrass = data.token_efficiency.by_game.find(item => item.participant_id === "qwen38-max-qwen" && item.game === "brass_birmingham");
-  assert.equal(qwenBrass.elo, 1546.3);
-  assert.equal(qwenBrass.elo_rank, 4);
-  assert.equal("runtime" in data, false);
+test("benchmark results are absent from public sources and the deployment artifact", async () => {
+  for (const path of ["public/results", "dist/client/results"]) {
+    await assert.rejects(access(new URL(path, root)), { code: "ENOENT" });
+  }
 });

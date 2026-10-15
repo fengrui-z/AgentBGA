@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create the public Frontier12 data file consumed by the GitHub Pages UI."""
+"""Export Frontier12 summaries for local review; the site withholds benchmarks."""
 
 from __future__ import annotations
 
@@ -485,7 +485,7 @@ def build_public_data(source: Path, report: Path | None = None) -> dict[str, Any
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path, help="Frontier12 result directory")
-    parser.add_argument("output", type=Path, help="Public JSON destination")
+    parser.add_argument("output", type=Path, help="Local JSON destination; keep outside web/public")
     parser.add_argument("--report", type=Path, help="HTML analysis report with recovered token telemetry")
     args = parser.parse_args()
 

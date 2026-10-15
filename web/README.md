@@ -43,9 +43,9 @@ NEXT_PUBLIC_BASE_PATH=/AgentBGA NEXT_PUBLIC_PAGES_RESULTS=true npm run build
 ```
 
 See [project-page maintenance](../docs/project-page.md) for screenshot provenance
-and the benchmark-data criteria. The historical sanitized snapshot in
-`public/results/frontier12-2026-v2.json` and its publishing script remain available
-for reproducibility, but the introduction does not load or chart that dataset.
+and the benchmark-data criteria. Benchmark snapshots are withheld from the
+current source tree and site. Keep local exports outside `web/public`; the build
+rejects `public/results` because unlinked files are still copied into the site.
 
 ## Harmonies / 自然和弦
 

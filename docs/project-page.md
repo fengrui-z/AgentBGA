@@ -53,26 +53,20 @@ clicking the active board opens the full-size capture. No automatic rotation is
 used, and reduced-motion preferences disable the slide animation. The separate
 Wingspan/Brass/Carcassonne detail gallery remains available below the hero.
 
-## Why there is no benchmark chart
+## Benchmark publication
 
-The requested chart scope is **ten games, three-player matches, twelve agent
-configurations**, with separate comparisons by game. No locally inspected
-summary satisfied that scope as of 2026-10-16:
+Benchmark results are withheld from the current source tree and website. The
+introduction displays implemented functionality and real game interfaces. Keep
+experiment summaries, raw traces, and local analysis reports outside
+`web/public`; removing a chart or link does not prevent static assets from being
+published. The build rejects `web/public/results`, and the Pages workflow checks
+that the deployment artifact has no `results` directory.
 
-- The archived public `frontier12-2026-v2.json` snapshot has twelve configurations
-  and 396 completed matches, but only three games and mixed player counts.
-- A local analysis candidate, `pareto_ten_game.csv` (analysis snapshot
-  `expanded_suite_20260921`), has 119 of the expected 120 game/configuration
-  entries. Brass is missing one configuration's cost data; the historical three
-  games mix player counts, and the seven newer games contain interim results.
-- That analysis snapshot reports 341 of 480 planned three-player matches.
-  Participant exposure in the seven newer games is uneven. Raw match/session
-  records and the Elo fit were not independently validated in this review.
-
-The introduction therefore displays implemented functionality instead of an
-incomplete Pareto comparison. The historical public JSON and publishing script
-remain unchanged for reproducibility; the page does not fetch them. Local
-analysis files are not included in the website.
+The result-export script remains available for local analysis. Store its output
+in an ignored local directory such as `.agentbga/analysis/`. A future benchmark
+release should explicitly review both the dataset and its presentation before
+changing these checks. Deleting files from the current tree does not erase prior
+Git commits or previously published copies.
 
 Before adding a chart, verify the underlying match population, all ten game ×
 twelve configuration entries, three-player filtering for both Elo and cost,

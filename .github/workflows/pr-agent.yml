@@ -8,22 +8,43 @@ on:
   pull_request:
     types: [opened, reopened, ready_for_review, synchronize]
   issue_comment:
-    types: [created, edited]
+    types: [created]
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
-  issues: write
 
 jobs:
   pr_agent_job:
     runs-on: ubuntu-latest
-    # Prevent bot-triggered loops.
-    if: ${{ github.event.sender.type != 'Bot' }}
+    timeout-minutes: 15
+    # Automatic runs are limited to trusted, same-repository PRs. A trusted
+    # maintainer can explicitly review a fork with one of the exact commands
+    # below. Ordinary comments and edits must not trigger paid model calls.
+    if: >-
+      github.event.sender.type != 'Bot' && (
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
+        ) || (
+          github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) &&
+          contains(fromJSON('["/review", "/describe", "/improve"]'), github.event.comment.body)
+        )
+      )
+    # Scope concurrency to the eligible job so ignored public comments cannot
+    # cancel an authorized review at workflow level.
+    concurrency:
+      group: pr-agent-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
     steps:
       - name: PR Agent action step
         id: pragent
-        uses: the-pr-agent/pr-agent@main
+        # Official 0.47.0-github_action image. Pin the runtime itself: the
+        # upstream action wrapper otherwise pulls a rolling Docker tag.
+        uses: docker://pragent/pr-agent@sha256:31b9aac6ab067bada9a0c1b001d30ebc500ea4487e00a93c18c59b9ef5fa66db
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # DashScope (coding endpoint) via OpenAI-compatible API.
