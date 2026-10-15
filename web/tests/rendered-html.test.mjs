@@ -314,6 +314,7 @@ test("static introduction includes playable games, real screenshots, and working
   assert.equal((html.match(/data-position="active"/g) ?? []).length, 1);
   assert.equal((html.match(/aria-label="Show /g) ?? []).length, 10);
   assert.match(html, /aria-label="Choose a game screenshot"/);
+  assert.match(html, /aria-label="切换为中文"/);
   assert.match(html, /aria-pressed="true"/);
   assert.match(html, /src="\/showcase\/splendor.jpg"/);
   assert.match(html, /src="\/showcase\/wingspan.jpg"/);
@@ -321,6 +322,10 @@ test("static introduction includes playable games, real screenshots, and working
     const jpeg = await readFile(new URL(`dist/client/showcase/${name}.jpg`, root));
     assert.equal(jpeg.subarray(0, 3).toString("hex"), "ffd8ff");
     assert.ok(jpeg.length > 10000, `missing screenshot content: ${name}`);
+    const chinese = await readFile(new URL(`dist/client/showcase/zh/${name}.jpg`, root));
+    assert.equal(chinese.subarray(0, 3).toString("hex"), "ffd8ff");
+    assert.ok(chinese.length > 10000, `missing Chinese screenshot content: ${name}`);
+    assert.ok(!chinese.equals(jpeg), `Chinese screenshot must be a separate capture: ${name}`);
   }
   for (const path of ["README.md#play-locally", "README.md#supported-games", "README.zh-CN.md", "docs/architecture.md", "docs/usage.md#agents", "docs/usage.md#traces"]) {
     assert.ok(html.includes(`https://github.com/fengrui-z/AgentBGA/blob/main/${path}`), `missing documentation link: ${path}`);

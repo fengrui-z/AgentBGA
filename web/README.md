@@ -29,8 +29,9 @@ no hosted API: it accepts model credentials and therefore stays localhost-only.
 
 The `/arena` route introduces the project with a ten-game cover-flow carousel of
 actual board interfaces, four core modules, the game library, and links to the
-bilingual quick start. GitHub
-Pages serves this introduction at `/AgentBGA/`; it does not run matches or ask for
+bilingual quick start. The language switch translates the introduction and swaps
+all ten screenshots to real Chinese interface captures. Share `?lang=zh` or
+`?lang=en`; the switch remembers the browser preference. GitHub Pages serves this introduction at `/AgentBGA/`; it does not run matches or ask for
 credentials. The local server continues to open the live-table setup at `/`.
 
 `.github/workflows/pages.yml` builds with `NEXT_PUBLIC_BASE_PATH=/AgentBGA` and

@@ -23,6 +23,9 @@
 .arena-nav > div > a:hover { color: var(--intro-green); }
 .arena-nav > div > .nav-github { padding: 9px 15px; border: 1px solid #bcc8bd; color: var(--intro-ink); }
 .nav-github span { margin-left: 10px; }
+.intro-language { padding: 8px 12px; border: 1px solid #bcc8bd; border-radius: 4px; background: transparent; color: var(--intro-green); font: inherit; font-size: 13px; font-weight: 600; line-height: 1.5; cursor: pointer; white-space: nowrap; }
+.intro-language:hover { background: #e9eee3; }
+.arena-page[lang="zh-CN"] h1, .arena-page[lang="zh-CN"] h2 { line-height: 1.25; letter-spacing: -.025em; }
 .intro-shell { max-width: 1560px; margin: 0 auto; padding: 0 48px; }
 .intro-hero { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.15fr); align-items: center; gap: 54px; padding: 78px 0 64px; }
 .arena-page .eyebrow { display: block; color: var(--intro-green); font: 650 10px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; }
@@ -194,6 +197,8 @@
   .site-footer > div { width: 100%; }
 }
 @media (max-width: 390px) {
+  .arena-nav > div > .nav-github { display: none; }
+  .arena-page[lang="zh-CN"] .hero-copy h1 { font-size: clamp(32px, 9vw, 35px); }
   .hero-actions a { flex: 1; gap: 8px; padding: 11px 12px; font-size: 11px; }
   .module-grid { grid-template-columns: 1fr; }
   .module-grid article { border-right: 0; border-bottom: 1px solid var(--intro-line); }
