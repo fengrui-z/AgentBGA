@@ -296,17 +296,34 @@ test("static export has all assets needed by the Python server", async () => {
   await access(new URL("dist/client/index.rsc", root));
 });
 
-test("static export presents AgentBGA and retains one public Pareto frontier", async () => {
+test("static introduction includes playable games, real screenshots, and working documentation links", async () => {
   const html = await readFile(new URL("dist/client/arena.html", root), "utf8");
-  const source = await readFile(new URL("app/arena/page.tsx", root), "utf8");
-  const styles = await readFile(new URL("app/arena/arena.css", root), "utf8");
-  const data = JSON.parse(await readFile(new URL("public/results/frontier12-2026-v2.json", root), "utf8"));
-
-  assert.match(html, /Evaluate agents in long-horizon strategy games/);
-  assert.match(html, /Euro-style board games/);
-  assert.match(html, /Nine long-horizon strategy games/);
-  assert.match(html, /Start a reproducible match with one command/);
   assert.match(html, /<main class="arena-page" lang="en">/);
+  assert.match(html, /Long games\./);
+  assert.match(html, /Inspectable agents\./);
+  assert.match(html, /GitHub Pages does not host a live game service/);
+  assert.match(html, /--controllers random,random/);
+  assert.doesNotMatch(html, /Pareto frontier|Loading results|396 completed/);
+  for (const game of ["Splendor", "Wingspan", "Harmonies", "Azul", "Brass: Birmingham", "The Castles of Burgundy", "Century: Spice Road", "Ark Nova", "7 Wonders", "Carcassonne"]) {
+    assert.ok(html.includes(game), `missing game: ${game}`);
+  }
+  assert.match(html, /aria-label="Choose a game screenshot"/);
+  assert.match(html, /aria-pressed="true"/);
+  assert.match(html, /src="\/showcase\/splendor.jpg"/);
+  assert.match(html, /src="\/showcase\/wingspan.jpg"/);
+  for (const name of ["splendor", "wingspan", "brass-birmingham", "carcassonne"]) {
+    const jpeg = await readFile(new URL(`dist/client/showcase/${name}.jpg`, root));
+    assert.equal(jpeg.subarray(0, 3).toString("hex"), "ffd8ff");
+    assert.ok(jpeg.length > 10000, `missing screenshot content: ${name}`);
+  }
+  for (const path of ["README.md#play-locally", "README.md#supported-games", "README.zh-CN.md", "docs/architecture.md", "docs/usage.md#agents", "docs/usage.md#traces"]) {
+    assert.ok(html.includes(`https://github.com/fengrui-z/AgentBGA/blob/main/${path}`), `missing documentation link: ${path}`);
+    await access(new URL(`../${path.split("#")[0]}`, root));
+  }
+});
+
+test("archived Frontier12 snapshot retains its original data and telemetry scope", async () => {
+  const data = JSON.parse(await readFile(new URL("public/results/frontier12-2026-v2.json", root), "utf8"));
   assert.equal(data.schema_version, "agentbga.frontier12-pages.v1");
   assert.equal(data.dataset_id, "frontier12-2026-v2-full");
   assert.equal(data.generated_at, "2026-09-02T00:12:09.742231Z");
@@ -351,25 +368,5 @@ test("static export presents AgentBGA and retains one public Pareto frontier", a
   const qwenBrass = data.token_efficiency.by_game.find(item => item.participant_id === "qwen38-max-qwen" && item.game === "brass_birmingham");
   assert.equal(qwenBrass.elo, 1546.3);
   assert.equal(qwenBrass.elo_rank, 4);
-  assert.match(source, /ParetoFrontier/);
-  assert.match(source, /Cost–performance Pareto frontier/);
-  assert.match(source, /\[2100, 1800, 1500, 1200\]/);
-  assert.match(source, /Overall/);
-  assert.match(source, /DETERMINISTIC ENGINES/);
-  assert.match(source, /SEAT-SCOPED INTERFACE/);
-  assert.match(source, /The Castles of Burgundy/);
-  assert.match(source, /Grok Build/);
-  assert.equal((source.match(/<figure/g) ?? []).length, 1);
-  assert.ok(source.indexOf("<ParetoFrontier data={data}/>") < source.indexOf('className="intro-hero"'));
-  assert.ok(source.indexOf("<ParetoFrontier data={data}/>") < source.indexOf('id="quickstart"'));
-  assert.doesNotMatch(source, /成本构成对比|计价表（RMB|分游戏 Elo × Token 构成|分游戏平均总 Token|综合排名/);
-  assert.doesNotMatch(source, /[\u4e00-\u9fff]/);
-  assert.doesNotMatch(source, /Download public result JSON/);
-  assert.match(styles, /\.scatter-stage/);
-  assert.match(styles, /\.capability-grid/);
-  assert.match(styles, /\.game-list/);
-  assert.match(styles, /\.frontier-card/);
-  assert.doesNotMatch(styles, /Georgia|font-style:\s*italic|--blue|--clay|--purple/);
-  assert.doesNotMatch(styles, /\.cost-bar-row|\.pricing-card|\.token-heatmap/);
   assert.equal("runtime" in data, false);
 });

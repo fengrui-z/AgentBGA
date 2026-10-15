@@ -1765,7 +1765,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
 
   if (!snapshot) return <main className="setup-shell">
     <section className="hero">
-      <Link className="arena-link" href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/arena`}>Frontier 12 results →</Link>
+      <Link className="arena-link" href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/arena`}>About AgentBGA →</Link>
       <button className="lang-toggle" onClick={toggleLang} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
       <div className="eyebrow">{t("hero_eyebrow")} / {GAME_COPY[game].eyebrow}</div>
       <h1>{t("hero_title_a")}<br/><i>{t("hero_title_b")}</i>{t("hero_title_c")}</h1>
