@@ -7,9 +7,10 @@ the bilingual documentation. It does not host matches. The page lives in
 
 ## Screenshots
 
-The four JPEGs in `web/public/showcase/` were captured from the actual local web
+The ten JPEGs in `web/public/showcase/` were captured from the actual local web
 application on 2026-10-16, after the ten-game human-usability update. They use an
-isolated demonstration database, seed 42, a human seat, and a random baseline.
+isolated demonstration database, seed 42, a human seat, and random opponents (three players for 7 Wonders; two for the
+other games).
 No model service or paid API was used, and the images are not benchmark evidence.
 
 | Image | What it shows | Capture size |
@@ -18,12 +19,24 @@ No model service or paid API was used, and the images are not benchmark evidence
 | `wingspan.jpg` | Habitat actions, a played bird, food resources, and confirmation | 1280 × 720 |
 | `brass-birmingham.jpg` | Focus-map view with industries and transport connections | 1280 × 720 |
 | `carcassonne.jpg` | Landscape, legal spaces, tile rotation, and connected features | 1280 × 720 |
+| `harmonies.jpg` | Hex landscape, stacked tokens, token market, and animal habitats | 1280 × 720 |
+| `azul.jpg` | Factory and center tiles, pattern lines, and a selected move preview | 1280 × 720 |
+| `castles-of-burgundy.jpg` | Dice, tile depots, resources, and the duchy board | 1280 × 720 |
+| `century-spice-road.jpg` | Order cards, merchant market, spice costs, and acquisition options | 1280 × 720 |
+| `ark-nova.jpg` | Zoo map, enclosures, association workers, partner zoos, and universities | 1280 × 720 |
+| `seven-wonders.jpg` | Three-player drafting, Wonders, resources, hand cards, and build options | 1280 × 720 |
 
 To refresh an image, run an isolated local match, use generic player names, and
 capture the real interface through the browser. Keep credentials, private logs,
 and personal identifiers out of the viewport. Retain the capture dimensions or
-update the corresponding image attributes. The hero shows Splendor; the other
-three images share a selectable gallery without an inner scrollbar.
+update the corresponding image attributes. The hero cycles through all ten games
+in a cover-flow carousel, starting with Splendor. Previous/next buttons wrap at
+both ends; the ten labeled dots jump directly to a game. The arrow buttons also
+accept Left/Right keys, and horizontal pointer drags or touch swipes change slides.
+Vertical touch scrolling remains available. Dragging does not open an image;
+clicking the active board opens the full-size capture. No automatic rotation is
+used, and reduced-motion preferences disable the slide animation. The separate
+Wingspan/Brass/Carcassonne detail gallery remains available below the hero.
 
 ## Why there is no benchmark chart
 
@@ -63,7 +76,9 @@ NEXT_PUBLIC_BASE_PATH=/AgentBGA NEXT_PUBLIC_PAGES_RESULTS=true npm run build
 ```
 
 Serve `dist/client` under `/AgentBGA/` when previewing this build. Check desktop,
-wide-screen, and mobile layouts; switch all gallery images; open a full-size
-screenshot; and verify the documentation links. All site assets must resolve
+wide-screen, and mobile layouts; navigate all ten hero slides in both directions,
+including wraparound and direct selection; check keyboard navigation, horizontal
+dragging versus vertical scrolling, and full-size image links; switch the detail
+gallery; and verify the documentation links. All site assets must resolve
 under the repository base path. The existing Pages workflow deploys the site
 after these files reach `main`.

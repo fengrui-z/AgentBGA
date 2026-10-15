@@ -1,6 +1,7 @@
 "use client";
 
 import {useState} from "react";
+import {BoardCarousel} from "./board-carousel";
 import "./arena.css";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -9,16 +10,16 @@ const DOCS_URL = `${REPOSITORY_URL}/blob/main/README.md`;
 const asset = (name: string) => `${BASE_PATH}/showcase/${name}.jpg`;
 
 const GAMES = [
-  {name: "Splendor", players: "2–4", scope: "Base game", status: "Playable"},
-  {name: "Wingspan", players: "2–5", scope: "170 birds · both goal boards", status: "Playable beta"},
-  {name: "Harmonies", players: "1–4", scope: "A/B boards · Nature’s Spirits", status: "Playable beta"},
-  {name: "Azul", players: "2–4", scope: "Colored-wall base game", status: "Playable beta"},
-  {name: "Brass: Birmingham", players: "2–4", scope: "Canal & Rail eras", status: "Playable beta"},
-  {name: "The Castles of Burgundy", players: "2–4", scope: "2019 base · no. 1 duchy", status: "Playable beta"},
-  {name: "Century: Spice Road", players: "2–5", scope: "Base game", status: "Playable"},
-  {name: "Ark Nova", players: "1–4", scope: "Map 0 · Map A preview", status: "Released Map 0"},
-  {name: "7 Wonders", players: "3–7", scope: "Second Edition · Day/Night", status: "Playable"},
-  {name: "Carcassonne", players: "2–5", scope: "72 base tiles · farmers", status: "Playable beta"},
+  {id: "splendor", name: "Splendor", alt: "Actual Splendor table. Gem bank, nobles, card tiers, player resources, and action confirmation.", players: "2–4", scope: "Base game", status: "Playable"},
+  {id: "wingspan", name: "Wingspan", alt: "Actual Wingspan table. Habitat actions, a bird in the grassland, food resources, and move confirmation.", players: "2–5", scope: "170 birds · both goal boards", status: "Playable beta"},
+  {id: "harmonies", name: "Harmonies", alt: "Actual Harmonies table. Hex landscape with stacked tokens, the token market, and animal habitat cards.", players: "1–4", scope: "A/B boards · Nature’s Spirits", status: "Playable beta"},
+  {id: "azul", name: "Azul", alt: "Actual Azul table. Factory and center tiles, a selected red tile group, pattern lines, and move confirmation.", players: "2–4", scope: "Colored-wall base game", status: "Playable beta"},
+  {id: "brass-birmingham", name: "Brass: Birmingham", alt: "Actual Brass: Birmingham table. Industry and transport map with cities, industries, and network connections.", players: "2–4", scope: "Canal & Rail eras", status: "Playable beta"},
+  {id: "castles-of-burgundy", name: "The Castles of Burgundy", alt: "Actual The Castles of Burgundy table. Dice, tile depots, player resources, and the hexagonal duchy board.", players: "2–4", scope: "2019 base · no. 1 duchy", status: "Playable beta"},
+  {id: "century-spice-road", name: "Century: Spice Road", alt: "Actual Century: Spice Road table. Order cards, the merchant market, spice costs, and acquisition options.", players: "2–5", scope: "Base game", status: "Playable"},
+  {id: "ark-nova", name: "Ark Nova", alt: "Actual Ark Nova table. Zoo map with terrain and enclosures, association workers, partner zoos, and universities.", players: "1–4", scope: "Map 0 · Map A preview", status: "Released Map 0"},
+  {id: "seven-wonders", name: "7 Wonders", alt: "Actual 7 Wonders table. Three-player drafting table with Wonders, resource production, hand cards, and build options.", players: "3–7", scope: "Second Edition · Day/Night", status: "Playable"},
+  {id: "carcassonne", name: "Carcassonne", alt: "Actual Carcassonne table. Landscape tiles, legal placement highlights, tile rotation, and connected features.", players: "2–5", scope: "72 base tiles · farmers", status: "Playable beta"},
 ] as const;
 
 const BACKENDS = [
@@ -94,11 +95,7 @@ export default function ArenaPage() {
           <div className="hero-actions"><a className="primary-action" href={`${DOCS_URL}#play-locally`}>Run it locally <span aria-hidden="true">↗</span></a><a className="secondary-action" href="#tables">Explore the tables <span aria-hidden="true">↓</span></a></div>
           <p className="hero-note">Human vs. agent · Agent vs. agent · Seeded replay</p>
         </div>
-        <figure className="hero-table">
-          <div className="screenshot-bar"><span><i/><i/><i/></span><b>Splendor / live table</b><span>LOCAL</span></div>
-          <a href={asset("splendor")} target="_blank" rel="noreferrer" aria-label="Open the full Splendor screenshot"><img src={asset("splendor")} width="1280" height="720" alt="Actual Splendor table with the gem bank, nobles, three card tiers, player resources, and move confirmation." fetchPriority="high"/></a>
-          <figcaption><span>Choose. Review. Confirm.</span><small>Actual application screenshot <span aria-hidden="true">↗</span></small></figcaption>
-        </figure>
+        <BoardCarousel boards={GAMES} basePath={BASE_PATH}/>
       </header>
 
       <div className="project-facts" aria-label="Implemented project capabilities">

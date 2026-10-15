@@ -307,11 +307,17 @@ test("static introduction includes playable games, real screenshots, and working
   for (const game of ["Splendor", "Wingspan", "Harmonies", "Azul", "Brass: Birmingham", "The Castles of Burgundy", "Century: Spice Road", "Ark Nova", "7 Wonders", "Carcassonne"]) {
     assert.ok(html.includes(game), `missing game: ${game}`);
   }
+  assert.match(html, /aria-roledescription="carousel"/);
+  assert.match(html, /aria-label="Previous game"/);
+  assert.match(html, /aria-label="Next game"/);
+  assert.equal((html.match(/aria-roledescription="slide"/g) ?? []).length, 10);
+  assert.equal((html.match(/data-position="active"/g) ?? []).length, 1);
+  assert.equal((html.match(/aria-label="Show /g) ?? []).length, 10);
   assert.match(html, /aria-label="Choose a game screenshot"/);
   assert.match(html, /aria-pressed="true"/);
   assert.match(html, /src="\/showcase\/splendor.jpg"/);
   assert.match(html, /src="\/showcase\/wingspan.jpg"/);
-  for (const name of ["splendor", "wingspan", "brass-birmingham", "carcassonne"]) {
+  for (const name of ["splendor", "wingspan", "harmonies", "azul", "brass-birmingham", "castles-of-burgundy", "century-spice-road", "ark-nova", "seven-wonders", "carcassonne"]) {
     const jpeg = await readFile(new URL(`dist/client/showcase/${name}.jpg`, root));
     assert.equal(jpeg.subarray(0, 3).toString("hex"), "ffd8ff");
     assert.ok(jpeg.length > 10000, `missing screenshot content: ${name}`);

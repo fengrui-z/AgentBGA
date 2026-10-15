@@ -27,8 +27,9 @@ no hosted API: it accepts model credentials and therefore stays localhost-only.
 
 ## GitHub Pages project introduction
 
-The `/arena` route introduces the project with actual game screenshots, four core
-modules, the ten-game library, and links to the bilingual quick start. GitHub
+The `/arena` route introduces the project with a ten-game cover-flow carousel of
+actual board interfaces, four core modules, the game library, and links to the
+bilingual quick start. GitHub
 Pages serves this introduction at `/AgentBGA/`; it does not run matches or ask for
 credentials. The local server continues to open the live-table setup at `/`.
 
