@@ -1438,6 +1438,8 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const t = makeT(lang); const zh = lang === "zh";
   const [game, setGame] = useState<GameId>("splendor");
   const [showMatchLog, setShowMatchLog] = useState(false);
+  const [agentOutputCollapsed, setAgentOutputCollapsed] = useState(false);
+  const [actionLogCollapsed, setActionLogCollapsed] = useState(false);
   const [players, setPlayers] = useState<PlayerForm[]>([
     deepseekHarnessPlayer(1, "opencode"),
     codexHarnessPlayer(2),
@@ -1898,16 +1900,16 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
           : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction) || snapshot.paused} onChoose={stageHumanAction}/>}
         {snapshot.human_turn && snapshot.game !== "splendor" && <HumanConfirmation label={selectedHumanAction ? readableMove(selectedHumanAction.action, viewer, lang, snapshot.game === "castles_of_burgundy" ? burgundyActionLabel(selectedHumanAction, lang) : humanItemText(selectedHumanAction, lang, brassView)) : ""} selected={selectedHumanAction} requirement={currentHumanActionState?.requirement} issue={currentHumanActionState?.issue} busy={Boolean(submittingAction)} disabled={Boolean(submittingAction) || snapshot.paused} lang={lang} onClear={() => stageHumanAction(null)} onConfirm={() => selectedHumanAction && void submitHumanAction(selectedHumanAction)}/>}
       </section>
-      <aside className="timeline" id="match-log">
-        <header><div><span>{t("model_stream")}</span><h2>{t("chat_h")}</h2></div><i className={snapshot.status === "active" && (!snapshot.paused || snapshot.pause_pending) ? "pulse" : ""}/></header>
-        <div className="chat-list">{chat.length === 0 && <p className="waiting">{snapshot.game_description.runnable ? t("waiting_model") : t("waiting_note")}</p>}{chat.map(turn => <article className={`chat-turn chat-${turn.status}`} key={turn.key}>
+      <aside className={`timeline ${agentOutputCollapsed ? "agent-output-collapsed" : ""} ${actionLogCollapsed ? "action-log-collapsed" : ""}`} id="match-log">
+        <header><div><span>{t("model_stream")}</span><h2>{t("chat_h")}</h2></div><div className="log-panel-tools"><i className={snapshot.status === "active" && (!snapshot.paused || snapshot.pause_pending) ? "pulse" : ""}/><button type="button" className="log-panel-toggle" aria-expanded={!agentOutputCollapsed} aria-controls="agent-output-content" aria-label={zh ? `${agentOutputCollapsed ? "展开" : "收起"} Agent 输出` : `${agentOutputCollapsed ? "Expand" : "Collapse"} Agent output`} onClick={() => setAgentOutputCollapsed(value => !value)}>{agentOutputCollapsed ? (zh ? "展开" : "Expand") : (zh ? "收起" : "Collapse")} <span aria-hidden="true">{agentOutputCollapsed ? "▸" : "▾"}</span></button></div></header>
+        <div className="chat-list" id="agent-output-content" hidden={agentOutputCollapsed}>{chat.length === 0 && <p className="waiting">{snapshot.game_description.runnable ? t("waiting_model") : t("waiting_note")}</p>}{chat.map(turn => <article className={`chat-turn chat-${turn.status}`} key={turn.key}>
           <header><strong>{turn.player}</strong><span>{turn.backend} · {t("attempt")} {turn.attempt}{turn.status === "thinking" ? ` · ${t("generating")}` : turn.processLatencyMs !== undefined ? ` · ${lang === "zh" ? "行动" : "action"} ${((turn.actionLatencyMs ?? turn.processLatencyMs) / 1000).toFixed(1)}s · ${lang === "zh" ? "进程" : "process"} ${(turn.processLatencyMs / 1000).toFixed(1)}s` : ""}</span></header>
           {turn.reasoning && <details open><summary>{t("thinking")}{turn.status === "done" ? ` · ${t("collapsible")}` : ""}</summary><pre>{turn.reasoning}</pre></details>}
           {turn.content && <div className="model-answer"><b>{t("answer")}</b><pre>{turn.content}</pre></div>}
           {turn.status === "thinking" && <div className="typing"><i/><i/><i/></div>}
         </article>)}</div>
-        <section className="action-drawer"><header><span>{t("actions")}</span><strong>{t("decision_log")}</strong><b>{timeline.filter(item => ["decision", "turn"].includes(item.event.type)).length}</b></header>
-          <div>{[...timeline].reverse().filter(item => !["agent_started", "agent_finished"].includes(item.event.type)).slice(0, 40).map(item => <article key={item.seq} className={`event event-${item.event.type}`}>
+        <section className="action-drawer"><header><span>{t("actions")}</span><strong>{t("decision_log")}</strong><b>{timeline.filter(item => ["decision", "turn"].includes(item.event.type)).length}</b><button type="button" className="log-panel-toggle" aria-expanded={!actionLogCollapsed} aria-controls="action-log-content" aria-label={zh ? `${actionLogCollapsed ? "展开" : "收起"} Action 记录` : `${actionLogCollapsed ? "Expand" : "Collapse"} Action log`} onClick={() => setActionLogCollapsed(value => !value)}>{actionLogCollapsed ? (zh ? "展开" : "Expand") : (zh ? "收起" : "Collapse")} <span aria-hidden="true">{actionLogCollapsed ? "▸" : "▾"}</span></button></header>
+          <div id="action-log-content" hidden={actionLogCollapsed}>{[...timeline].reverse().filter(item => !["agent_started", "agent_finished"].includes(item.event.type)).slice(0, 40).map(item => <article key={item.seq} className={`event event-${item.event.type}`}>
             <span>{String(item.seq + 1).padStart(3,"0")}</span><div><p>{describeAction(item, names, lang)}</p>{item.event.backend && <small>{item.event.backend}{item.event.agent?.process_latency_ms !== undefined ? ` · ${lang === "zh" ? "行动" : "action"} ${item.event.agent.action_latency_ms ?? "—"}ms · ${lang === "zh" ? "进程" : "process"} ${item.event.agent.process_latency_ms}ms` : item.event.agent?.latency_ms ? ` · ${item.event.agent.latency_ms}ms` : ""}</small>}
               {item.event.tool && (item.event.arguments !== undefined || item.event.result !== undefined) && <details className="tool-payload"><summary>{t("view_tool")}</summary><pre>{JSON.stringify(item.event.result ?? item.event.arguments, null, 2)}</pre></details>}
             </div>

@@ -6,8 +6,17 @@
 .human-play .player-panel.active-player { transform:none; }
 .human-play .player-panel h3 { font-size:17px; }
 .human-play .model-line { flex-wrap:wrap; gap:4px; margin:6px 0; overflow-wrap:anywhere; }
-.human-play .timeline { display:none; grid-column:1/-1; position:static; max-height:480px; }
+.human-play .timeline { display:none; grid-column:1/-1; position:static; max-height:480px; align-self:start; }
 .human-play.match-log-open .timeline { display:flex; }
+.human-play .timeline [hidden] { display:none; }
+.human-play .timeline .chat-list { min-height:0; }
+.human-play .timeline .action-drawer { flex:0 0 auto; min-height:0; max-height:180px; }
+.human-play .timeline .action-drawer>div { min-height:0; }
+.human-play .timeline.agent-output-collapsed .action-drawer { flex:1 1 auto; max-height:none; }
+.human-play .timeline.action-log-collapsed .action-drawer { flex:0 0 auto; }
+.log-panel-tools { display:flex; align-items:center; gap:10px; }
+.log-panel-toggle { flex-shrink:0; min-height:30px; padding:4px 8px; border:1px solid #b4b4a5; background:#fffdf5; color:#344a3c; font:12px system-ui,sans-serif; cursor:pointer; }
+.timeline .log-panel-toggle>span { color:inherit; font:inherit; letter-spacing:0; }
 .human-play .human-turn { margin:0 0 10px; padding:8px 12px; border:1px solid #b6a671; background:#f4e5b6; }
 .human-play .human-turn header { margin:0; padding:0; gap:8px; border:0; background:none; }
 .human-play .human-turn h2 { font-size:15px; margin:2px 0; }
