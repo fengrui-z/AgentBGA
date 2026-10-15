@@ -88,7 +88,7 @@ export default function ArenaPage() {
     <div className="intro-shell">
       <header className="intro-hero">
         <div className="hero-copy">
-          <span className="eyebrow"><i aria-hidden="true"/> OPEN-SOURCE BOARD-GAME ARENA</span>
+          <span className="eyebrow"><i aria-hidden="true"/> Open-source Agentic Board Game Arena</span>
           <h1>Long games.<br/>Real decisions.<br/><span>Inspectable agents.</span></h1>
           <p>Put humans and AI agents at the same table. AgentBGA connects playable strategy games, agent runtimes, and decision traces in one reproducible environment.</p>
           <div className="hero-actions"><a className="primary-action" href={`${DOCS_URL}#play-locally`}>Run it locally <span aria-hidden="true">↗</span></a><a className="secondary-action" href="#tables">Explore the tables <span aria-hidden="true">↓</span></a></div>
