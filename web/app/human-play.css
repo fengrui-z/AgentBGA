@@ -242,3 +242,39 @@
   .human-play .seven-benefit {flex-wrap:wrap;}
   .human-play .ark-counter-row {grid-template-columns:repeat(3,minmax(0,1fr));}
 }
+
+/* Wide monitors use neighboring work areas instead of stretching maps vertically. */
+@media(min-width:1600px) {
+  .human-play .table-grid {max-width:2200px; margin-inline:auto;}
+  .human-play.game-splendor .table-grid {max-width:1800px;}
+  .human-play :is(.human-confirmation,.sp-confirm) {width:min(100%,980px); margin-inline:auto;}
+  .human-play .brass-board {display:grid; grid-template-columns:minmax(0,1fr) 300px; align-items:start; gap:12px;}
+  .human-play .brass-status {grid-column:1/-1; margin:0;}
+  .human-play .brass-economy-board {grid-column:2; grid-row:2; grid-template-columns:1fr;}
+  .human-play .brass-command-bar {grid-column:2; grid-row:3; grid-template-columns:1fr; margin:0;}
+  .human-play .brass-live-map:not(.is-expanded) {grid-column:1; grid-row:2/span 3; margin:0; min-width:0;}
+  .human-play .brass-live-map:not(.is-expanded) .brass-map-viewport {max-width:clamp(820px,calc(108vh - 320px),1060px); margin-inline:auto;}
+  .human-play .brass-live-map:not(.is-expanded) .brass-map-viewport {width:100%;}
+
+  .human-play .ws-table:not(.is-setup) {display:grid; grid-template-columns:minmax(0,1.4fr) minmax(420px,1fr); align-items:start;}
+  .human-play .ws-table:not(.is-setup)>* {grid-column:1/-1; min-width:0;}
+  .human-play .ws-table:not(.is-setup)>.ws-heading {grid-row:1;}
+  .human-play .ws-table:not(.is-setup)>.ws-goals {grid-row:2;}
+  .human-play .ws-table:not(.is-setup)>.ws-decision {grid-row:3;}
+  .human-play .ws-table:not(.is-setup)>.ws-preserve {grid-column:1; grid-row:4/span 3;}
+  .human-play .ws-table:not(.is-setup)>.ws-market {grid-column:2; grid-row:4;}
+  .human-play .ws-table:not(.is-setup)>.ws-hand {grid-column:2; grid-row:5;}
+  .human-play .ws-table:not(.is-setup)>.ws-tray {grid-column:2; grid-row:6;}
+  .human-play .ws-table:not(.is-setup)>.ws-rules {grid-row:7;}
+
+  .human-play .ark-zoo-workspace {display:grid; grid-template-columns:minmax(300px,.85fr) minmax(0,1.6fr); gap:8px; align-items:start;}
+  .human-play .ark-zoo-workspace>header,.human-play .ark-zoo-workspace>nav,.human-play .ark-zoo-workspace>.ark-action-rack,.human-play .ark-zoo-workspace>.ark-played-card-area {grid-column:1/-1;}
+  .human-play .ark-zoo-workspace>.ark-surface-header {padding:8px; margin:0;}
+  .human-play .ark-zoo-workspace>.ark-player-cards {grid-column:1; grid-row:4; min-width:0;}
+  .human-play .ark-zoo-workspace>.ark-final-scoring-cards {grid-row:5;}
+  .human-play .ark-zoo-layout {grid-column:2; grid-row:4/span 3; grid-template-columns:minmax(456px,1.1fr) minmax(320px,1fr); align-items:start;}
+  .human-play .ark-zoo-inspector {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; align-content:start;}
+  .human-play .ark-zoo-inspector>section {margin:0; min-width:0;}
+  .human-play .ark-interactive-map {min-width:0; margin-inline:auto;}
+  .human-play .ark-zoo-workspace .ark-final-scoring-cards>div {flex-wrap:wrap;}
+}

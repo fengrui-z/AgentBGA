@@ -118,7 +118,7 @@ export function WingspanTable({view, lang, identities, actions = [], disabled, o
   const keepAction=actions.find(a=>a.action.type==="keep_birds" && JSON.stringify([...(a.action.card_ids as string[])].sort())===JSON.stringify([...kept].sort()));
   const cardActions=(c:WingspanCard)=>actions.filter(a=>["play_bird","lay_egg","pay_egg","activate_power"].includes(String(a.action.type)) && (a.action.card_id===c.id || a.action.bird_id===c.id));
   const otherActions=actions.filter(a=>!["keep_birds","play_bird","lay_egg","pay_egg","activate_power","choose_bonus"].includes(String(a.action.type)));
-  return <div className="ws-table">
+  return <div className={`ws-table ${setup ? "is-setup" : ""}`}>
     <header className="ws-heading"><div><span>WINGSPAN / FIELD NOTES</span><h2>{zh?"展翅翱翔":"A sanctuary takes flight"}</h2><p>{zh?`第 ${view.round} / 4 轮`:`Round ${view.round} of 4`} · {view.goal_board==="green" ? (zh?"竞争目标":"Competitive goals") : (zh?"独立目标":"Individual goals")}</p></div><div className="ws-round-number">{String(view.round).padStart(2,"0")}<small>/ 04</small></div></header>
     <div className="ws-goals">{view.goals.map((g,i)=><article key={g} className={i+1===view.round?"current":""}><span>{zh?"第":"ROUND "}{i+1}{zh?"轮":""}</span><b>{goalName(g,lang)}</b><small>{view.goal_history[i] ? view.goal_history[i].points.map((p,j)=>`${identities[j]?.name}: ${p}`).join(" · ") : view.goal_board==="blue" ? "0–5" : `${4+i} / ${1+i} / ${i}`}</small></article>)}</div>
     {view.status==="finished" && <div className="ws-step" role="status">{zh?"对局结束 · 奖励卡与最终得分已公开":"Game complete · bonus cards and final scores revealed"}</div>}
