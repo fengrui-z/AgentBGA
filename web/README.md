@@ -5,7 +5,7 @@ ten [supported games](../README.md#supported-games).
 
 For installation and human play, start with the [English README](../README.md) or
 [中文 README](../README.zh-CN.md). This page covers frontend development and static
-results publishing. It requires Python 3.11+ and Node.js 22.13+ with npm.
+project-page publishing. It requires Python 3.11+ and Node.js 22.13+ with npm.
 
 From the repository's `web/` directory:
 
@@ -25,22 +25,27 @@ The production build uses `output: "export"` so the Python standard-library
 server can serve `dist/client` without a Node process. This UI deliberately has
 no hosted API: it accepts model credentials and therefore stays localhost-only.
 
-## GitHub Pages results
+## GitHub Pages project introduction
 
-The public `/arena` route reads a sanitized Frontier12 snapshot from
-`public/results/frontier12-2026-v2.json`. From the repository root, refresh it
-from a tournament output:
+The `/arena` route introduces the project with a ten-game cover-flow carousel of
+actual board interfaces, four core modules, the game library, and links to the
+bilingual quick start. The language switch translates the introduction and swaps
+all ten screenshots to real Chinese interface captures. Share `?lang=zh` or
+`?lang=en`; the switch remembers the browser preference. GitHub Pages serves this introduction at `/AgentBGA/`; it does not run matches or ask for
+credentials. The local server continues to open the live-table setup at `/`.
+
+`.github/workflows/pages.yml` builds with `NEXT_PUBLIC_BASE_PATH=/AgentBGA` and
+`NEXT_PUBLIC_PAGES_RESULTS=true` (the existing Pages-mode flag), then publishes
+`dist/client` when changes reach `main`. To reproduce that build from `web/`:
 
 ```console
-python3 scripts/publish_frontier12_pages.py \
-  /path/to/frontier12-2026-v2 \
-  web/public/results/frontier12-2026-v2.json \
-  --report /path/to/tournament_report.html
+NEXT_PUBLIC_BASE_PATH=/AgentBGA NEXT_PUBLIC_PAGES_RESULTS=true npm run build
 ```
 
-Commit the updated JSON. `.github/workflows/pages.yml` rebuilds and publishes
-the static site after the change reaches `main`; no runtime credentials or
-machine-specific runtime metadata are included in the public snapshot.
+See [project-page maintenance](../docs/project-page.md) for screenshot provenance
+and the benchmark-data criteria. The historical sanitized snapshot in
+`public/results/frontier12-2026-v2.json` and its publishing script remain available
+for reproducibility, but the introduction does not load or chart that dataset.
 
 ## Harmonies / 自然和弦
 
