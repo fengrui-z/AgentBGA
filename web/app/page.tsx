@@ -6,12 +6,15 @@ import ArenaPage from "./arena/page";
 import { CarcassonneTable, CarcassonnePlayerPanel, type CarcassonneView, type CarcassonnePlayer } from "./carcassonne-table";
 import { WingspanTable, WingspanPlayerPanel, type WingspanView, type WingspanPlayer } from "./wingspan-table";
 import { HarmoniesTable, HarmoniesPlayerPanel, type HarmoniesView, type HarmoniesPlayer } from "./harmonies-table";
-import { BurgundyTable, BurgundyPlayerPanel, type BurgundyView, type BurgundyPlayer } from "./burgundy-table";
+import { BurgundyTable, BurgundyPlayerPanel, burgundyActionLabel, type BurgundyView, type BurgundyPlayer } from "./burgundy-table";
 import {
   ArkNovaPlayerSummary, ArkNovaTable,
   type ArkPlayerView, type ArkView,
 } from "./ark-nova-table";
-import { canAddToken, counts, reservationChoices, resolveSelection, selectionCandidates, tokenTotal } from "./splendor-selection";
+import { canAddToken, counts, resolveSelection, selectionCandidates, tokenTotal } from "./splendor-selection";
+import "./splendor-table.css";
+import "./human-play.css";
+import {ActionChoices, HumanConfirmation, readableMove} from "./human-controls";
 
 // ── i18n ─────────────────────────────────────────────────────────────
 type Lang = "zh" | "en";
@@ -423,7 +426,7 @@ function humanPlayer(seed: number): PlayerForm {
 
 function api(path: string) { return path; }
 
-function Gem({color, value, compact = false}: {color: string; value: number; compact?: boolean}) {
+function Gem({color, value, compact = false}: {color: string; value: number | string; compact?: boolean}) {
   const lang = useLang();
   const meta = GEM_META[color];
   return <span className={`gem gem-${color} ${compact ? "gem-compact" : ""}`} title={meta?.label[lang]}>
@@ -449,14 +452,14 @@ function PlayerPanel({player: p, identity, active}: {player: PlayerView; identit
   return <section className={`player-panel ${active ? "active-player" : ""}`}>
     <header>
       <div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `Agent ${p.seat + 1}`}</h3></div>
-      <div className="score"><strong>{p.score}</strong><span>{lang === "zh" ? "声望" : "pts"}</span></div>
+      <div className="score"><strong>{p.score}</strong><span>/15 {lang === "zh" ? "分" : "pts"}</span></div>
     </header>
     <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{lang === "zh" ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>
-    <div className="asset-row"><span className="asset-title">{t("tokens")}</span><div>{GEM_ORDER.map(c => <Gem key={c} color={c} value={p.tokens[c]} compact />)}</div></div>
-    <div className="asset-row"><span className="asset-title">{t("engine")}</span><div>{BONUS_ORDER.map(c => <Gem key={c} color={c} value={p.bonuses[c]} compact />)}</div></div>
-    <div className="owned-head"><span>{lang === "zh" ? "已购发展牌" : "Purchased cards"}</span><b>{p.purchased_count}</b></div>
+    <div className="asset-row"><span className="asset-title">{t("tokens")} {tokenTotal(p.tokens)}/10</span><div>{GEM_ORDER.map(c => <Gem key={c} color={c} value={p.tokens[c]} compact />)}</div></div>
+    <div className="asset-row"><span className="asset-title">{lang === "zh" ? "永久折扣" : "Discounts"}</span><div>{BONUS_ORDER.map(c => <Gem key={c} color={c} value={p.bonuses[c]} compact />)}</div></div>
+    <details className="sp-player-details"><summary>{lang === "zh" ? "已购发展牌" : "Purchased cards"} · {p.purchased_count}</summary>
     <div className="owned-cards">{p.purchased.length ? p.purchased.map(card => <DevCard key={card.id} card={card} small />) : <em>{lang === "zh" ? "尚未建立引擎" : "No engine yet"}</em>}</div>
-    <div className="reserve-row"><span>{t("reserved")} {p.reserved_count}/3</span><div>{p.reserved.map((card, i) => "hidden" in card ? <i className="reserved-hidden" key={i}>?</i> : <DevCard key={card.id} card={card} reserved />)}</div></div>
+    </details><details className="reserve-row"><summary>{t("reserved")} {p.reserved_count}/3</summary><div>{p.reserved.map((card, i) => "hidden" in card ? <i className="reserved-hidden" key={i}>?</i> : <DevCard key={card.id} card={card} reserved />)}</div></details>
     {p.nobles.length > 0 && <div className="noble-owned">{t("nobles_owned")} × {p.nobles.length}</div>}
   </section>;
 }
@@ -502,19 +505,22 @@ function CenturyPlayerPanel({player: p, identity, active}: {player: CenturyPlaye
     <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{lang === "zh" ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>
     <div className="century-caravan"><header><span>{t("caravan_spice")}</span><b>{caravanTotal}/10</b></header><Spices pool={p.spices}/></div>
     <div className="century-assets"><span>{t("gold_coin")} <b>{p.coins.gold}</b></span><span>{t("silver_coin")} <b>{p.coins.silver}</b></span><span>{t("orders")} <b>{p.point_cards.length}</b></span></div>
-    <div className="century-hand-head"><span>{t("avail_merchant")}</span><b>{p.hand.length}</b><small>{t("played")} {p.played.length}</small></div>
-    <div className="century-hand">{p.hand.map(card => <CenturyMerchantCard key={card.id} card={card} small/>)}{p.hand.length === 0 && <em>{t("need_rest")}</em>}</div>
+    <details className="century-player-cards"><summary>{lang === "zh" ? "商人牌" : "Merchant cards"} · {p.hand.length} / {p.played.length}</summary><div className="century-hand-head"><span>{t("avail_merchant")}</span><b>{p.hand.length}</b><small>{t("played")} {p.played.length}</small></div>
+    <div className="century-hand">{p.hand.map(card => <CenturyMerchantCard key={card.id} card={card} small/>)}{p.hand.length === 0 && <em>{t("need_rest")}</em>}</div><div className="century-used-cards">{p.played.map(card => <CenturyMerchantCard key={card.id} card={card} small/>)}</div></details>
   </section>;
 }
 
-function CenturyBoard({view}: {view?: CenturyView}) {
-  const lang = useLang(); const t = makeT(lang);
+function CenturyBoard({view, seat, actions = [], disabled, onChoose}: {view?: CenturyView; seat:number; actions?: LegalAction[]; disabled?: boolean; onChoose: (item: LegalAction) => void}) {
+  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
   if (!view) return null;
+  const own = view.players[seat];
+  const options = (items: LegalAction[], label: string) => <ActionChoices actions={items} label={label} describe={item => readableMove(item.action, view, lang, humanItemText(item, lang))} lang={lang} disabled={disabled} onChoose={onChoose}/>;
   return <div className="century-board">
-    <section className="century-status"><div><span>CENTURY · SPICE ROAD</span><h2>{t("century_status")}</h2></div><p>{t("century_note")} {view.caravan_limit} {t("caravan_unit")}</p><code>{view.rules_version}</code></section>
-    <section className="century-point-market"><header><div><span>{t("point_cards")}</span><h3>{t("order_market")}</h3></div><b>{t("deck_label")} {view.point_deck_count}</b></header><div>{view.point_market.map((card, index) => <div className="century-point-slot" key={card.id}>{index === 0 && view.coins.gold > 0 && <span className="century-coin coin-gold">{t("gold_coin")} × {view.coins.gold}</span>}{index === view.coins.silver_position && view.coins.silver > 0 && <span className="century-coin coin-silver">{t("silver_coin")} × {view.coins.silver}</span>}<CenturyPointCard card={card}/></div>)}</div></section>
-    <section className="century-merchant-market"><header><div><span>{t("merchant_cards")}</span><h3>{t("trade_market")}</h3></div><b>{t("deck_label")} {view.merchant_deck_count}</b></header><div>{view.merchant_market.map((slot, index) => <div className="century-merchant-slot" key={slot.card.id}><span className="century-market-index">0{index + 1}</span><CenturyMerchantCard card={slot.card}/><div className="century-card-spices"><span>{t("card_spice")}</span><Spices pool={slot.spices} compact/></div></div>)}</div></section>
-    <section className="century-legend"><span><i className="spice spice-turmeric"/>{SPICE_META.turmeric.label[lang]} · 1</span><span><i className="spice spice-saffron"/>{SPICE_META.saffron.label[lang]} · 2</span><span><i className="spice spice-cardamom"/>{SPICE_META.cardamom.label[lang]} · 3</span><span><i className="spice spice-cinnamon"/>{SPICE_META.cinnamon.label[lang]} · 4</span><small>{t("century_legend_note")}</small></section>
+    <section className="century-status"><div><h2>{t("century_status")}</h2><p>{t("century_note")} {view.caravan_limit} {t("caravan_unit")}</p></div>{options(actions.filter(a=>a.action.type === "rest"),zh ? "休息" : "Rest")}</section>
+    <section className="century-point-market"><header><h3>{t("order_market")}</h3><b>{t("deck_label")} {view.point_deck_count}</b></header><div>{view.point_market.map((card,index)=><div className="century-point-slot" key={card.id}>{index===0&&view.coins.gold>0&&<span className="century-coin coin-gold">{t("gold_coin")} × {view.coins.gold}</span>}{index===view.coins.silver_position&&view.coins.silver>0&&<span className="century-coin coin-silver">{t("silver_coin")} × {view.coins.silver}</span>}<CenturyPointCard card={card}/>{options(actions.filter(a=>a.action.type==="claim_point" && Number(a.action.position)===index),zh?`完成订单 ${index+1}`:`Claim order ${index+1}`)}</div>)}</div></section>
+    <section className="century-merchant-market"><header><h3>{t("trade_market")}</h3><b>{t("deck_label")} {view.merchant_deck_count}</b></header><div>{view.merchant_market.map((slot,index)=><div className="century-merchant-slot" key={slot.card.id}><span className="century-market-index">{index+1}</span><CenturyMerchantCard card={slot.card}/><div className="century-card-spices"><span>{t("card_spice")}</span><Spices pool={slot.spices} compact/></div>{options(actions.filter(a=>a.action.type==="acquire_merchant"&&Number(a.action.position)===index),zh?`获取商人 ${index+1}`:`Acquire merchant ${index+1}`)}</div>)}</div></section>
+    <section className="century-play-hand"><header><h3>{zh?"你的商人牌":"Your merchants"}</h3><Spices pool={own.spices} compact/></header><div>{own.hand.map((card,index)=><article key={card.id}><CenturyMerchantCard card={card}/>{options(actions.filter(a=>a.action.type==="play_merchant"&&a.action.card_id===card.id),zh?`打出商人 ${index+1}`:`Play merchant ${index+1}`)}</article>)}</div><details><summary>{zh?`已使用 ${own.played.length} 张 · 休息后收回`:`${own.played.length} used · recover by resting`}</summary><div className="century-used-cards">{own.played.map(card=><CenturyMerchantCard key={card.id} card={card} small/>)}</div></details></section>
+    <section className="century-legend">{SPICE_ORDER.map((color,i)=><span key={color}><i className={`spice spice-${color}`}/>{SPICE_META[color].label[lang]} · {i+1}</span>)}</section>
   </div>;
 }
 
@@ -734,22 +740,11 @@ function sevenPaymentSummary(action: Record<string, unknown>, lang: Lang, names?
   return parts.length ? parts.join(zh ? "；" : "; ") : (zh ? "使用自己的生产能力" : "Use your own production");
 }
 
-function SevenActionPicker({actions, view, names, disabled, submitting, selectedId, onChoose}: {actions: LegalAction[]; view?: SevenView; names: Record<number, string>; disabled: boolean; submitting: string; selectedId: string; onChoose: (item: LegalAction) => void}) {
-  const lang = useLang(); const zh = lang === "zh";
-  const viewer = view?.players.find(player => player.seat === view.viewer_seat);
-  const cards = viewer?.hand.filter((card): card is SevenCard => !("hidden" in card)) || [];
-  const cardIds = new Set(cards.map(card => card.id));
-  const remaining = actions.filter(item => !cardIds.has(String(item.action.card_id || "")));
-  return <div className="seven-action-picker">{cards.map(card => {
-    const options = actions.filter(item => item.action.card_id === card.id);
-    return <section key={card.id} className="seven-action-card"><SevenCardTile card={card}/><div>{options.map(item => {
-      const kind = String(item.action.type); const payment = sevenPaymentSummary(item.action, lang, names);
-      const label = kind === "sell_card" ? (zh ? "出售这张牌 · 获得 💰3" : "Sell this card · gain 💰3")
-        : kind === "build_wonder" ? (zh ? `用于建造奇迹第 ${item.action.stage} 阶段 · ${payment}` : `Use for Wonder stage ${item.action.stage} · ${payment}`)
-        : (zh ? `建造这张牌 · ${payment}` : `Build this card · ${payment}`);
-      return <button key={item.id} className={`seven-action-option option-${kind} ${selectedId === item.id ? "selected" : ""}`} disabled={disabled} title={item.id} aria-pressed={selectedId === item.id} onClick={() => onChoose(item)}><b>{kind === "sell_card" ? "💰" : kind === "build_wonder" ? "◆" : "🏛️"}</b><span>{label}</span>{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>;
-    })}</div></section>;
-  })}{remaining.length > 0 && <section className="seven-extra-actions">{remaining.map(item => <button key={item.id} className={selectedId === item.id ? "selected" : ""} aria-pressed={selectedId === item.id} disabled={disabled} onClick={() => onChoose(item)}>{humanActionText(item.action, lang)}</button>)}</section>}</div>;
+function SevenActionPicker({actions, view, names, disabled, onChoose}: {actions: LegalAction[]; view?: SevenView; names: Record<number,string>; disabled: boolean; onChoose: (item: LegalAction)=>void; onReset?:()=>void}) {
+  const lang=useLang(); const zh=lang==="zh";
+  const cards=view?.players.find(p=>p.seat===view.viewer_seat)?.hand.filter((c):c is SevenCard=>!("hidden" in c)) || [];
+  const ids=new Set(cards.map(c=>c.id));
+  return <div className="seven-action-picker">{cards.map(card=><section key={card.id} className="seven-action-card"><SevenCardTile card={card}/><div>{["build_card","build_wonder","sell_card"].map(kind=><ActionChoices key={kind} actions={actions.filter(a=>a.action.card_id===card.id&&a.action.type===kind)} label={`${card.name} · ${kind==="sell_card"?(zh?"出售 +3 金币":"Sell +3 coins"):kind==="build_wonder"?(zh?"建造奇迹":"Build Wonder"):(zh?"建造":"Build")}`} describe={a=>kind==="sell_card"?(zh?"出售 +3 金币":"Sell +3 coins"):`${kind==="build_wonder"?`${zh?"阶段":"Stage"} ${a.action.stage} · `:""}${sevenPaymentSummary(a.action,lang,names)}`} lang={lang} disabled={disabled} onChoose={onChoose}/>)}</div></section>)}{actions.filter(a=>!ids.has(String(a.action.card_id))).map(a=><button key={a.id} disabled={disabled} onClick={()=>onChoose(a)}>{humanActionText(a.action,lang)}</button>)}</div>;
 }
 
 function SevenCityCardGroups({cards}: {cards: SevenCard[]}) {
@@ -792,7 +787,7 @@ function SevenPassRoutes({playerCount, currentAge, identities}: {playerCount: nu
   })}</div>;
 }
 
-function SevenBoard({view, spectatorViews, identities = []}: {view?: SevenView; spectatorViews?: SevenView[]; identities?: Snapshot["players"]}) {
+function SevenBoard({view, spectatorViews, identities = [], actions = [], disabled, onChoose}: {view?: SevenView; spectatorViews?: SevenView[]; identities?: Snapshot["players"]; actions?: LegalAction[]; disabled: boolean; onChoose: (item: LegalAction)=>void; onReset?:()=>void}) {
   const lang = useLang(); const zh = lang === "zh";
   if (!view) return null;
   const viewer = view.players.find(player => player.seat === view.viewer_seat) ?? view.players[0];
@@ -800,7 +795,8 @@ function SevenBoard({view, spectatorViews, identities = []}: {view?: SevenView; 
   return <div className="seven-board">
     <section className="seven-status"><div><span>7 WONDERS · BASE GAME</span><h2>{zh ? `时代 ${view.age} · 第 ${view.pick} 轮选牌` : `Age ${view.age} · Pick ${view.pick}`}</h2></div><p>{zh ? `手牌向${view.pass_direction === "left" ? "左" : "右"}传递；选择在所有座位提交前保持密封。资源是每轮可重复使用的生产能力。` : `Hands pass ${view.pass_direction}; choices remain sealed until all seats submit. Resources are reusable production, not inventory.`}</p><code>{view.rules_version}</code></section>
     <section className="seven-draft-track"><div>{[1,2,3].map(age => <span key={age} className={age === view.age ? "active" : age < view.age ? "done" : ""}>AGE {age}</span>)}</div><b>{zh ? `弃牌 ${view.discard_count}` : `Discard ${view.discard_count}`}</b><small>{zh ? `已提交 ${view.pending_choice_seats.length}/${view.players.length}` : `Sealed ${view.pending_choice_seats.length}/${view.players.length}`}</small></section>
-    {spectatorViews ? <SevenSpectatorHands views={spectatorViews} identities={identities}/> : <section className="seven-hand"><header><div><span>DRAFT HAND</span><h3>{zh ? `座位 ${viewer.seat + 1} 的当前手牌` : `Seat ${viewer.seat + 1} current hand`}</h3></div><b>{visibleHand.length || viewer.hand_count} {zh ? "张" : "cards"}</b></header><div>{visibleHand.map(card => <SevenCardTile key={card.id} card={card}/>)}{!visibleHand.length && <em>{zh ? "该手牌对当前观察者隐藏" : "This hand is hidden from the current viewer"}</em>}</div></section>}
+    <div className="seven-neighbor-resources">{view.players.map(p=><article key={p.seat}><b>{identities.find(i=>i.seat===p.seat)?.name} · {p.wonder_name}</b><SevenResourceProduction units={p.resource_units} compact/></article>)}</div>
+    {actions.length > 0 ? <SevenActionPicker actions={actions} view={view} names={Object.fromEntries(identities.map(p=>[p.seat,p.name]))} disabled={disabled} onChoose={onChoose}/> : spectatorViews ? <SevenSpectatorHands views={spectatorViews} identities={identities}/> : <section className="seven-hand"><header><div><span>DRAFT HAND</span><h3>{zh ? `座位 ${viewer.seat + 1} 的当前手牌` : `Seat ${viewer.seat + 1} current hand`}</h3></div><b>{visibleHand.length || viewer.hand_count} {zh ? "张" : "cards"}</b></header><div>{visibleHand.map(card => <SevenCardTile key={card.id} card={card}/>)}{!visibleHand.length && <em>{zh ? "该手牌对当前观察者隐藏" : "This hand is hidden from the current viewer"}</em>}</div></section>}
     <section className="seven-cities"><header><div><span>CITY TABLEAUS</span><h3>{zh ? "公开城市与生产能力" : "Public cities and production"}</h3></div><SevenPassRoutes playerCount={view.players.length} currentAge={view.age} identities={identities}/></header><div>{view.players.map(player => <article key={player.seat}><header><strong>{player.wonder_name} · {player.wonder_side.toUpperCase()}</strong><b title={zh ? `${player.score} 胜利点` : `${player.score} victory points`}>{player.score} 🏆</b></header><SevenResourceProduction units={player.resource_units}/><SevenScienceStats player={player}/><SevenCivilianScores player={player}/><SevenGuildScores player={player}/><SevenMilitaryTokens player={player}/><SevenCityCardGroups cards={player.city}/></article>)}</div></section>
   </div>;
 }
@@ -815,7 +811,7 @@ function AzulPlayerPanel({player: p, identity, active, holdsStartMarker = false}
   return <section className={`player-panel azul-player-panel ${active ? "active-player" : ""}`}>
     <header><div><span className="seat-label">{t("seat_label")} {p.seat + 1}</span><h3>{identity?.name || `${t("player_label")} ${p.seat + 1}`}</h3></div><div className="azul-score"><strong>{p.score}</strong><span>{zh ? "分" : "pts"}</span></div></header>
     <div className="model-line"><span>{identity?.backend}</span>{identity?.model && <code>{identity.model}</code>}{identity?.reasoning_effort && <b>{zh ? `思考：${identity.reasoning_effort}` : `reasoning: ${identity.reasoning_effort}`}</b>}</div>
-    <div className="azul-player-board">{p.pattern_lines.map((line, row) => <div className="azul-player-board-row" key={line.line}>
+    <details><summary>{zh?"查看图案线、墙面与地板":"View patterns, wall and floor"}</summary><div className="azul-player-board">{p.pattern_lines.map((line, row) => <div className="azul-player-board-row" key={line.line}>
       <span className="azul-line-number">{line.line}</span>
       <div className="azul-pattern-line" aria-label={`${zh ? "图案线" : "Pattern line"} ${line.line}`}>{Array.from({length: line.capacity}, (_, index) => line.color && index >= line.capacity - line.count ? <AzulTile key={index} color={line.color}/> : <i key={index} className="azul-tile empty"/>)}</div>
       <i className="azul-row-divider" aria-hidden="true"/>
@@ -831,27 +827,33 @@ function AzulPlayerPanel({player: p, identity, active, holdsStartMarker = false}
         </span>;
       })}</div>
       {holdsStartMarker && <div className="azul-marker-overflow"><i className="azul-marker">1</i><span>{zh ? "地板已满；仍持有起始玩家标记，不追加罚分" : "Floor full; holds start marker with no extra penalty"}</span></div>}
-    </div>
+    </div></details>
   </section>;
 }
 
-function AzulOffer({counts, expanded = false}: {counts: AzulCounts; expanded?: boolean}) {
-  const tiles = expanded
-    ? AZUL_COLORS.flatMap(color => Array.from({length: counts[color]}, (_, index) => ({color, key: `${color}-${index}`})))
-    : AZUL_COLORS.filter(color => counts[color] > 0).map(color => ({color, key: color}));
-  return <div className={`azul-offer ${expanded ? "azul-offer-expanded" : ""}`}>{tiles.map(tile =>
-    <AzulTile key={tile.key} color={tile.color} count={expanded ? undefined : counts[tile.color]}/>
-  )}</div>;
-}
-
-function AzulBoard({view}: {view?: AzulView}) {
-  const lang = useLang(); const zh = lang === "zh";
+function AzulBoard({view, seat, actions = [], disabled, onChoose, onReset}: {view?: AzulView; seat:number; actions?: LegalAction[]; disabled: boolean; onChoose: (item: LegalAction)=>void; onReset?:()=>void}) {
+  const lang=useLang(); const zh=lang==="zh";
+  const [pick,setPick]=useState<{source:string; color:AzulColor}|null>(null);
   if (!view) return null;
+  const own=view.players[seat];
+  const choices=pick ? actions.filter(a=>a.action.source===pick.source && a.action.color===pick.color) : [];
+  const supply=pick?.source==="center" ? view.center : view.factories.find(f=>f.id===pick?.source)?.tiles;
+  const count=pick ? supply?.[pick.color] || 0 : 0;
+  const marker=pick?.source==="center" && view.center_has_start_marker ? 1 : 0;
+  const describe=(destination:string) => {
+    const line=own.pattern_lines.find(l=>`pattern-line-${l.line}`===destination);
+    const placed=line ? Math.min(count,line.capacity-line.count) : 0;
+    const overflow=count-placed;
+    const penalty=AZUL_FLOOR_PENALTIES.slice(own.floor.length,own.floor.length+overflow+marker).reduce((a,b)=>a+b,0);
+    return zh ? `放入 ${placed} · 溢出 ${overflow}${marker?" + 起始标记":""} · 新增罚分 ${penalty}` : `Place ${placed} · overflow ${overflow}${marker?" + start marker":""} · extra penalty ${penalty}`;
+  };
+  const offer=(source:string,tiles:AzulCounts)=><div className="azul-source-colors">{AZUL_COLORS.filter(c=>tiles[c]>0).map(color=><button type="button" key={color} aria-label={`${source==="center"?(zh?"中央区":"Center"):`${zh?"工厂":"Factory"} ${source.replace("factory-","")}`} · ${AZUL_META[color][lang]} × ${tiles[color]}`} aria-pressed={pick?.source===source&&pick.color===color} disabled={disabled || !actions.some(a=>a.action.source===source&&a.action.color===color)} onClick={()=>{setPick({source,color}); onReset?.();}}><AzulTile color={color} count={tiles[color]}/><span>{AZUL_META[color][lang]}</span></button>)}</div>;
   return <div className="azul-board">
-    <section className="azul-status"><div><span>AZUL · COLORED WALL</span><h2>{zh ? `第 ${view.round} 轮 · 工厂展示阶段` : `Round ${view.round} · Factory offer`}</h2></div><p>{zh ? "选择一个来源中的一种颜色；工厂余砖自动移入中央区。" : "Choose one color from one source; factory remainders move to the center."}</p><code>{view.rules_version}</code></section>
-    <section className="azul-factories"><header><div><span>FACTORY DISPLAYS</span><h3>{zh ? "工厂展示区" : "Factories"}</h3></div><b>{zh ? `袋中 ${view.bag_count} · 盒盖 ${view.lid_count}` : `Bag ${view.bag_count} · Lid ${view.lid_count}`}</b></header><div>{view.factories.map((factory, index) => <article key={factory.id}><span>0{index + 1}</span><AzulOffer counts={factory.tiles} expanded/></article>)}</div></section>
-    <section className="azul-center"><header><span>CENTER</span><h3>{zh ? "中央区" : "Center"}</h3></header>{view.center_has_start_marker && <i className="azul-marker">1</i>}<AzulOffer counts={view.center}/>{view.start_marker_holder_seat !== null && <small>{zh ? `起始标记：座位 ${view.start_marker_holder_seat + 1}` : `Start marker: seat ${view.start_marker_holder_seat + 1}`}</small>}</section>
-    <section className="azul-legend">{AZUL_COLORS.map(color => <span key={color}><AzulTile color={color}/>{AZUL_META[color][lang]}</span>)}<small>{zh ? "原创 CSS 花砖，不包含出版商美术。" : "Original CSS tiles; no publisher artwork."}</small></section>
+    <section className="azul-status"><h2>{zh?`第 ${view.round} 轮`:`Round ${view.round}`}</h2><p>{zh?"1 · 点选工厂或中央区的颜色　2 · 点选目标行　3 · 确认":"1 · Choose a source color　2 · Choose a row　3 · Confirm"}</p></section>
+    <div className="azul-play-layout"><div><section className="azul-factories"><header><h3>{zh?"工厂展示区":"Factories"}</h3><small>{zh?`袋中 ${view.bag_count} · 盒盖 ${view.lid_count}`:`Bag ${view.bag_count} · Lid ${view.lid_count}`}</small></header><div>{view.factories.map((f,i)=><article key={f.id}><b>{i+1}</b>{offer(f.id,f.tiles)}</article>)}</div></section>
+    <section className="azul-center"><header><h3>{zh?"中央区":"Center"}</h3></header>{view.center_has_start_marker&&<i className="azul-marker">1</i>}{offer("center",view.center)}</section></div>
+    <section className="azul-destinations"><h3>{zh?"你的图案线与墙面":"Your pattern lines and wall"}</h3><p role="status">{pick?`${AZUL_META[pick.color][lang]} × ${count}`:(zh?"先点选一种颜色":"Choose a source color first")}</p>{own.pattern_lines.map((line,row)=>{const a=choices.find(a=>a.action.destination===`pattern-line-${line.line}`);return <div className="azul-target-row" key={line.line}><button type="button" disabled={disabled||!a} onClick={()=>a&&onChoose(a)} aria-label={`${zh?"图案线":"Pattern line"} ${line.line} · ${describe(`pattern-line-${line.line}`)}`}><b>{line.line}</b><span className="azul-pattern-line">{Array.from({length:line.capacity},(_,i)=>line.color&&i<line.count?<AzulTile key={i} color={line.color}/>:<i className="azul-tile empty" key={i}/>)}</span><small>{pick?describe(`pattern-line-${line.line}`):`${line.count}/${line.capacity}`}</small></button><span className="azul-wall-row">{own.wall[row].map((cell,i)=><i key={i} className={`azul-wall-cell azul-${cell.color} ${cell.occupied?"occupied":""}`}><span/></i>)}</span></div>;})}
+    <button className="azul-floor-target" type="button" disabled={disabled||!choices.some(a=>a.action.destination==="floor")} onClick={()=>{const a=choices.find(a=>a.action.destination==="floor");if(a)onChoose(a);}}>{zh?"全部放到地板线":"All to floor"} · {describe("floor")}</button><div className="azul-floor-track">{AZUL_FLOOR_PENALTIES.map((n,i)=><span key={i} className={`azul-floor-slot ${own.floor[i]?"occupied":""}`}><small>{n}</small>{own.floor[i]==="start-player-marker"?<i className="azul-marker">1</i>:own.floor[i]?<AzulTile color={own.floor[i] as AzulColor}/>:<i className="azul-floor-empty"/>}</span>)}</div></section></div>
   </div>;
 }
 
@@ -926,7 +928,7 @@ function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?
   }
   if (action.type === "play_merchant") {
     const details = action.repetitions !== undefined ? (zh ? `，交易 ${action.repetitions} 次` : `, trade × ${action.repetitions}`)
-      : Array.isArray(action.upgrades) ? (zh ? `，升级 ${(action.upgrades as string[]).map(value => SPICE_META[value as SpiceName]?.label[lang] || value).join(" → ") || "0 级"}` : `, upgrade ${(action.upgrades as string[]).map(value => SPICE_META[value as SpiceName]?.label[lang] || value).join(" → ")}`) : "";
+      : Array.isArray(action.upgrades) ? (zh ? `，升级 ${(action.upgrades as SpiceName[]).map(value => `${SPICE_META[value]?.label[lang] || value} → ${SPICE_META[SPICE_ORDER[SPICE_ORDER.indexOf(value)+1]]?.label[lang] || "?"}`).join("；") || "0 级"}` : `, upgrade ${(action.upgrades as SpiceName[]).map(value => `${SPICE_META[value]?.label[lang] || value} → ${SPICE_META[SPICE_ORDER[SPICE_ORDER.indexOf(value)+1]]?.label[lang] || "?"}`).join("；")}`) : "";
     const discarded = spiceText((action.discard ?? {}) as Record<string, unknown>, lang);
     return zh ? `打出 ${action.card_id}${details}${discarded ? `；丢弃 ${discarded}` : ""}` : `Play ${action.card_id}${details}${discarded ? `; discard ${discarded}` : ""}`;
   }
@@ -1032,6 +1034,15 @@ function humanActionText(action: Record<string, unknown>, lang: Lang, brassView?
   return action.type === "pass" ? (zh ? "跳过本回合" : "Pass turn") : String(action.type);
 }
 
+function humanItemText(item: LegalAction, lang: Lang, brassView?: BrassView) {
+  const text = humanActionText(item.action, lang, brassView);
+  if (item.action.type === "advance_sponsors_break" && item.label) {
+    const amounts = item.label.match(/Advance Break (\d+) and gain (\d+) money/);
+    if (amounts) return lang === "zh" ? `推进休息 ${amounts[1]} 格，获得 ${amounts[2]} 金币` : item.label;
+  }
+  return text === String(item.action.type) ? item.label || text.replaceAll("_", " ") : text;
+}
+
 const ACTION_GROUPS: Record<Lang, Record<string, string>> = {
   zh: {
     buy_visible: "购买公开牌", buy_reserved: "购买预留牌", take_tokens: "拿取宝石",
@@ -1087,8 +1098,6 @@ function groupActions(actions: LegalAction[]) {
   return Object.fromEntries(Object.entries(groups).sort(([a], [b]) => (priority[a] ?? 10) - (priority[b] ?? 10)));
 }
 
-const CARD_ACTION_TYPES = new Set(["buy_visible", "buy_reserved", "reserve_visible"]);
-const CENTURY_ACTION_TYPES = new Set(["play_merchant", "acquire_merchant", "claim_point", "rest"]);
 const ARK_TABLE_ACTION_TYPES = new Set([
   "choose_initial_hand", "select_action", "start_action", "take_x_token", "take_x_token_action", "cancel_action", "draw_cards", "snap_card", "discard_card",
   "place_building", "play_animal", "finish_action", "association_task", "make_donation",
@@ -1099,7 +1108,9 @@ const ARK_TABLE_ACTION_TYPES = new Set([
   "resolve_semantic_choice",
   "choose_conservation_bonus", "upgrade_action_card", "keep_final_card", "take_map_card",
   "take_build_reward_card",
-  "clever_action_card",
+  "clever_action_card", "begin_cards_draw", "draw_cards_action_card", "snap_cards_action_card", "discard_cards_action_card",
+  "begin_animals_action", "select_animal_card", "play_selected_animal", "play_sponsor_card", "advance_sponsors_break",
+  "finish_sponsors_action", "finish_animals_action", "finish_build_action",
 ]);
 
 function findActionCard(action: Record<string, unknown>, view?: View) {
@@ -1112,126 +1123,103 @@ function findActionCard(action: Record<string, unknown>, view?: View) {
   );
 }
 
-function HumanActionChoice({item, view, brassView, disabled, submitting, selected, onChoose}: {
-  item: LegalAction; view?: View; brassView?: BrassView; disabled: boolean; submitting: boolean; selected: boolean; onChoose: () => void;
-}) {
-  const lang = useLang(); const zh = lang === "zh";
-  const kind = String(item.action.type);
-  if (kind === "take_tokens") {
-    const take = (item.action.take ?? {}) as Record<string, number>;
-    const returned = (item.action.return ?? {}) as Record<string, number>;
-    const returnColors = GEM_ORDER.filter(color => (returned[color] ?? 0) > 0);
-    return <button className={`token-action-choice ${selected ? "selected" : ""}`} disabled={disabled} onClick={onChoose} aria-pressed={selected} aria-label={humanActionText(item.action, lang)} title={`${humanActionText(item.action, lang)} · ${item.id}`}>
-      <span className="token-choice-gems">{GEM_ORDER.filter(color => (take[color] ?? 0) > 0).map(color => <Gem key={color} color={color} value={take[color]}/>)}</span>
-      {returnColors.length > 0 && <span className="token-choice-return"><b>{zh ? "归还" : "Return"}</b>{returnColors.map(color => <Gem key={color} color={color} value={returned[color]} compact/>)}</span>}
-      {submitting && <i>{zh ? "提交中…" : "Submitting…"}</i>}
-    </button>;
-  }
-  if (CENTURY_ACTION_TYPES.has(kind)) return <button className={`century-action-choice century-action-${kind} ${selected ? "selected" : ""}`} disabled={disabled} aria-pressed={selected} onClick={onChoose} title={item.id}>
-    <span>{ACTION_GROUPS[lang][kind]}</span><strong>{humanActionText(item.action, lang)}</strong>{submitting && <i>{zh ? "提交中…" : "Submitting…"}</i>}
-  </button>;
-  const card = CARD_ACTION_TYPES.has(kind) ? findActionCard(item.action, view) : undefined;
-  if (!card) return <button className={selected ? "selected" : ""} aria-pressed={selected} disabled={disabled} onClick={onChoose}><strong>{humanActionText(item.action, lang, brassView)}</strong><small>{item.id}{submitting ? (zh ? " · 提交中…" : " · submitting…") : ""}</small></button>;
-  const payment = tokenText((item.action.payment ?? item.action.return ?? {}) as Record<string, number>, lang);
-  return <button className={`card-action-choice card-${card.bonus} ${selected ? "selected" : ""}`} disabled={disabled} onClick={onChoose} aria-pressed={selected} aria-label={humanActionText(item.action, lang)}>
-    <span className="card-action-label">{kind === "reserve_visible" ? (zh ? "预留" : "Reserve") : (zh ? "购买" : "Buy")}</span>
-    <span className="card-action-top"><strong>{card.points || "·"}</strong><b>{GEM_META[card.bonus]?.mark}</b></span>
-    <Cost cost={card.cost}/>
-    {payment && <small>{kind === "reserve_visible" ? (zh ? "归还" : "Return") : (zh ? "支付" : "Pay")}{zh ? "：" : ": "}{payment}</small>}
-    {submitting && <i>{zh ? "提交中…" : "Submitting…"}</i>}
-  </button>;
-}
-
-function SplendorActionPicker({actions, view, disabled, selectedId, onSelect}: {
-  actions: LegalAction[]; view: View; disabled: boolean; selectedId: string;
-  onSelect: (item: LegalAction | null, requirement?: string) => void;
+function SplendorTable({actions, view, seat, disabled, selected, issue, onSelect, onSubmit, activeName, lastMove}: {
+  actions: LegalAction[]; view: View; seat: number; disabled: boolean; selected: LegalAction | null; issue?: string;
+  onSelect: (item: LegalAction | null, requirement?: string) => void; onSubmit: (item: LegalAction) => void;
+  activeName: string; lastMove: string;
 }) {
   const lang = useLang(); const zh = lang === "zh";
   const [selection, setSelection] = useState<"take" | LegalAction | null>(null);
   const [take, setTake] = useState<Record<string, number>>({});
   const [returned, setReturned] = useState<Record<string, number>>({});
+  const p = view.players[seat];
   const takeActions = actions.filter(item => item.action.type === "take_tokens");
   const candidates = selection ? selectionCandidates(actions, selection, take) : [];
   const returnRequired = tokenTotal(counts(candidates[0]?.action.return));
   const remaining = returnRequired - tokenTotal(returned);
-  const playerTokens = view.players[view.active_seat].tokens;
-  const gained = selection === "take" ? take : selection ? {gold: view.bank.gold > 0 ? 1 : 0} : {};
-  const afterTake = Object.fromEntries(GEM_ORDER.map(color => [color, (playerTokens[color] ?? 0) + (gained[color] ?? 0)]));
-  const takeHint = zh ? "请选择 3 种不同颜色，或同色 2 颗（库存至少 4 颗）；不足 3 种时取所有可用颜色。" : "Choose 3 different colors, or 2 of one color with at least 4 in supply. If fewer than 3 colors remain, take one of each.";
+  const reservation = selection !== null && selection !== "take" && String(selection.action.type).startsWith("reserve_");
+  const gained = selection === "take" ? take : reservation ? {gold: view.bank.gold > 0 ? 1 : 0} : {};
+  const afterTake = Object.fromEntries(GEM_ORDER.map(color => [color, (p.tokens[color] ?? 0) + (gained[color] ?? 0)]));
+  const yourTurn = actions.length > 0;
+  const takeHint = zh ? "取 3 种各 1 颗，或同色 2 颗（库存 ≥4）；选好后确认。" : "Take 3 different colors, or 2 of one color (supply ≥4), then confirm.";
+  const paymentChoices = selection && selection !== "take" && String(selection.action.type).startsWith("buy_")
+    ? actions.filter(item => item.action.type === selection.action.type && item.action.card_id === selection.action.card_id) : [];
 
+  function clear() { setSelection(null); setTake({}); setReturned({}); onSelect(null); }
   function updateSelection(nextSelection: "take" | LegalAction, nextTake: Record<string, number>, nextReturn: Record<string, number>) {
     setSelection(nextSelection); setTake(nextTake); setReturned(nextReturn);
     const choices = selectionCandidates(actions, nextSelection, nextTake);
-    const needed = tokenTotal(counts(choices[0]?.action.return)) - tokenTotal(nextReturn);
-    onSelect(resolveSelection(choices, nextReturn), choices.length === 0 ? takeHint : zh ? `请再选择退回 ${needed} 颗宝石。` : `Choose ${needed} more gems to return.`);
+    onSelect(resolveSelection(choices, nextReturn));
   }
-
   function chooseAction(item: LegalAction) {
-    if (item.action.type === "reserve_visible" || item.action.type === "reserve_deck") {
-      updateSelection(item, {}, {});
-    } else {
-      setSelection(null); setTake({}); setReturned({}); onSelect(item);
-    }
+    if (String(item.action.type).startsWith("reserve_")) updateSelection(item, {}, {});
+    else { setSelection(item); setTake({}); setReturned({}); onSelect(item); }
+  }
+  function cardName(card: Card) { return zh ? `${card.tier}阶${GEM_META[card.bonus].label[lang]}牌 · ${card.points}分` : `Tier ${card.tier} ${GEM_META[card.bonus].label[lang]} · ${card.points} pts`; }
+  function preview(item: LegalAction) {
+    const kind = String(item.action.type);
+    const card = findActionCard(item.action, view);
+    if (card) return `${kind.startsWith("buy_") ? (zh ? "购买" : "Buy ") : (zh ? "预留" : "Reserve ")}${cardName(card)}`;
+    if (kind === "reserve_deck") return zh ? `从 ${item.action.tier} 阶牌堆预留` : `Reserve from tier ${item.action.tier}`;
+    if (kind === "choose_noble") return zh ? "邀请所选贵族 · +3 分" : "Invite selected noble · +3 pts";
+    return humanActionText(item.action, lang);
+  }
+  function renderCard(card: Card, index: number, reserved = false) {
+    const buys = actions.filter(item => item.action.type === (reserved ? "buy_reserved" : "buy_visible") && item.action.card_id === card.id);
+    const buy = [...buys].sort((a, b) => (counts(a.action.payment).gold ?? 0) - (counts(b.action.payment).gold ?? 0))[0];
+    const reserve = actions.find(item => item.action.type === "reserve_visible" && item.action.card_id === card.id);
+    const missing = Object.fromEntries(BONUS_ORDER.map(c => [c, Math.max(0, (card.cost[c] ?? 0) - (p.bonuses[c] ?? 0) - (p.tokens[c] ?? 0))]));
+    const shortfall = Math.max(0, tokenTotal(missing) - (p.tokens.gold ?? 0));
+    const label = `${cardName(card)} (${index + 1})`;
+    const picked = selection !== "take" && selection?.action.card_id === card.id;
+    return <article key={card.id} className={`sp-card card-${card.bonus} ${picked ? "is-selected" : ""} ${shortfall === 0 ? "is-affordable" : ""}`} aria-label={label}>
+      <header><strong>{card.points}<small>{zh ? "分" : "pts"}</small></strong><span title={zh ? `永久${GEM_META[card.bonus].label[lang]}折扣 +1` : `Permanent ${GEM_META[card.bonus].label[lang]} discount +1`}>{GEM_META[card.bonus].mark}<small>+1</small></span></header>
+      <div className="sp-cost" aria-label={zh ? "原价" : "Printed cost"}><Cost cost={card.cost}/></div>
+      <small className="sp-affordability" title={zh ? `已计入永久折扣及黄金；缺少颜色：${tokenText(missing, lang) || "无"}` : `After discounts and gold; missing colors: ${tokenText(missing, lang) || "none"}`}>
+        {shortfall ? (zh ? `还差 ${shortfall} 颗` : `${shortfall} gems short`) : (zh ? "可以购买" : "Affordable")}
+      </small>
+      {yourTurn && <div className="sp-card-actions">
+        <button type="button" disabled={disabled || !buy} aria-label={`${zh ? "购买" : "Buy "}${label}`} aria-pressed={picked && String(selection?.action.type).startsWith("buy_")} onClick={() => chooseAction(buy)}>{zh ? "购买" : "Buy"}</button>
+        {!reserved && <button type="button" disabled={disabled || !reserve} title={p.reserved_count >= 3 ? (zh ? "预留已达上限 3 张" : "Reserve limit: 3") : (zh ? "预留并获得 1 黄金（有库存时）" : "Reserve and gain 1 gold if available")} aria-label={`${zh ? "预留" : "Reserve "}${label}`} aria-pressed={picked && reservation} onClick={() => chooseAction(reserve!)}>{zh ? "预留" : "Reserve"}</button>}
+      </div>}
+    </article>;
   }
 
-  const otherGroups = groupActions(actions.filter(item => item.action.type !== "take_tokens"));
-  return <div className="splendor-action-picker">
-    {takeActions.length > 0 && <section className="splendor-gem-picker">
-      <header><h3>{zh ? "拿取宝石" : "Take gems"}</h3><button type="button" disabled={disabled || (selection !== "take" && tokenTotal(take) === 0)} onClick={() => updateSelection("take", {}, {})}>{zh ? "清空选择" : "Clear selection"}</button></header>
-      <p>{takeHint}</p>
-      <div className="splendor-gem-controls">{BONUS_ORDER.map(color => {
-        const selected = selection === "take" ? take[color] ?? 0 : 0;
-        const canAdd = canAddToken(takeActions, "take", selection === "take" ? take : {}, color);
+  return <div className="sp-table">
+    <div className={`sp-turn-status ${yourTurn ? "is-your-turn" : ""}`} role="status"><strong>{yourTurn ? (zh ? "轮到你了" : "Your turn") : view.status === "finished" ? (zh ? "对局结束" : "Game over") : (zh ? `${activeName} 行动中` : `${activeName}'s turn`)}</strong><span>{zh ? "目标 15 分 · 宝石上限 10" : "Target 15 pts · Gem limit 10"}</span>
+      <details className="sp-rules"><summary>{zh ? "玩法" : "Rules"}</summary><p>{zh ? "每回合选择拿宝石、购买或预留一张牌。牌右上角是永久折扣；左上角是分数；底部色块是原价。黄金可替代任意颜色，预留上限 3 张。只有 1–2 种颜色有库存时可各拿 1 颗。贵族只检查永久折扣，满足条件得 3 分。有人达到 15 分后，完成该轮；同分时购牌较少者胜。" : "Take gems, buy or reserve one card per turn. Top right: permanent discount; top left: points; bottom: printed cost. Gold is wild; reserve up to 3 cards. If only 1–2 colors remain, take one of each. Nobles require permanent discounts and award 3 points. At 15 points, finish the round; fewer purchased cards break ties."}</p></details>
+    </div>
+    <section className="sp-bank" aria-label={zh ? "宝石银行" : "Gem bank"}>
+      <header><h2>{zh ? "宝石银行" : "Gem bank"}</h2><small>{yourTurn ? takeHint : (zh ? "色块数字为剩余库存" : "Numbers show remaining supply")}</small></header>
+      <div className="sp-bank-gems">{GEM_ORDER.map(color => {
+        const amount = selection === "take" ? take[color] ?? 0 : 0;
         const label = GEM_META[color].label[lang];
-        return <div key={color} className={`splendor-gem-control ${selected ? "is-selected" : ""}`}>
-          <button type="button" className="splendor-gem-add" disabled={disabled || !canAdd} onClick={() => updateSelection("take", {...(selection === "take" ? take : {}), [color]: selected + 1}, {})} aria-label={zh ? `拿取${label}，已选 ${selected} 颗` : `Take ${label}, ${selected} selected`}>
-            <Gem color={color} value={view.bank[color]}/><strong>{label}</strong><small>{zh ? "库存" : "Supply"} {view.bank[color]}</small>
-          </button>
-          <div className="splendor-gem-adjust"><button type="button" disabled={disabled || selected === 0} aria-label={zh ? `少取一颗${label}` : `Remove one ${label}`} onClick={() => updateSelection("take", {...take, [color]: selected - 1}, {})}>−</button><span>{zh ? "已选" : "Selected"} <b>{selected}</b></span></div>
+        return <div className={`sp-bank-gem ${amount ? "is-selected" : ""}`} key={color}>
+          <button type="button" disabled={disabled || !canAddToken(takeActions, "take", selection === "take" ? take : {}, color)} aria-label={zh ? `拿取${label}，已选 ${amount} 颗` : `Take ${label}, ${amount} selected`} onClick={() => updateSelection("take", {...(selection === "take" ? take : {}), [color]: amount + 1}, {})}><Gem color={color} value={view.bank[color]}/><span>{label}</span></button>
+          {yourTurn && color !== "gold" ? <div><button type="button" disabled={disabled || !amount} aria-label={zh ? `少取一颗${label}` : `Remove one ${label}`} onClick={() => updateSelection("take", {...take, [color]: amount - 1}, {})}>−</button><span>{zh ? "选" : "Pick"} <b>{amount}</b></span></div> : <small>{color === "gold" ? (zh ? "预留时获得" : "Via reserve") : ""}</small>}
         </div>;
       })}</div>
-      {selection === "take" && <p className="splendor-selection-summary">{zh ? `已选 ${tokenTotal(take)} 颗` : `${tokenTotal(take)} gems selected`}{candidates.length > 0 ? (zh ? ` · 拿取后共 ${tokenTotal(afterTake)} 颗 / 上限 10 颗` : ` · ${tokenTotal(afterTake)} held after taking / limit 10`) : (zh ? " · 请继续选择" : " · Keep selecting")}</p>}
-    </section>}
-    {returnRequired > 0 && <section className="splendor-return-picker">
-      <h3>{zh ? `退回宝石 · 还需 ${remaining} 颗` : `Return gems · ${remaining} remaining`}</h3>
-      <p>{zh ? `持有上限为 10 颗，本次需退回 ${returnRequired} 颗。点击要退回的宝石，也可以退回刚拿到的宝石或黄金。` : `The limit is 10 gems. Return ${returnRequired}; you may return gems just taken or gold.`}</p>
-      {selection && selection !== "take" && <p>{humanActionText({...selection.action, return: {}}, lang)}{view.bank.gold > 0 ? (zh ? " · 获得 1 颗黄金" : " · Gain 1 gold") : ""}</p>}
-      <div className="splendor-gem-controls">{GEM_ORDER.filter(color => afterTake[color] > 0).map(color => {
-        const amount = returned[color] ?? 0;
-        const label = GEM_META[color].label[lang];
-        return <div key={color} className={`splendor-gem-control ${amount ? "is-selected" : ""}`}>
-          <button type="button" className="splendor-gem-add" disabled={disabled || !canAddToken(candidates, "return", returned, color)} onClick={() => updateSelection(selection!, take, {...returned, [color]: amount + 1})} aria-label={zh ? `退回${label}，已选 ${amount} 颗` : `Return ${label}, ${amount} selected`}>
-            <Gem color={color} value={afterTake[color] - amount}/><strong>{label}</strong><small>{zh ? "保留" : "Keep"} {afterTake[color] - amount}</small>
-          </button>
-          <div className="splendor-gem-adjust"><button type="button" disabled={disabled || amount === 0} aria-label={zh ? `少退一颗${label}` : `Return one fewer ${label}`} onClick={() => updateSelection(selection!, take, {...returned, [color]: amount - 1})}>−</button><span>{zh ? "退回" : "Return"} <b>{amount}</b></span></div>
-        </div>;
+    </section>
+    <section className="sp-nobles" aria-label={zh ? "贵族与折扣进度" : "Nobles and discount progress"}>
+      <h2>{zh ? "贵族" : "Nobles"}<small>{zh ? "永久折扣 / 要求" : "Discounts / required"}</small></h2>
+      <div>{view.available_nobles.map((n, index) => {
+        const choice = actions.find(item => item.action.type === "choose_noble" && item.action.noble_id === n.id);
+        return <article key={n.id} className={selected?.action.noble_id === n.id ? "is-selected" : ""}><strong>3<small>{zh ? "分" : "pts"}</small></strong><div>{BONUS_ORDER.filter(c => n.required[c]).map(c => <span key={c} className={`sp-noble-requirement ${(p.bonuses[c] ?? 0) >= n.required[c] ? "met" : ""}`} title={GEM_META[c].label[lang]}><Gem color={c} value={`${Math.min(p.bonuses[c] ?? 0, n.required[c])}/${n.required[c]}`} compact/></span>)}</div>{choice && <button disabled={disabled} onClick={() => chooseAction(choice)}>{zh ? `选择贵族 ${index + 1}` : `Choose noble ${index + 1}`}</button>}</article>;
       })}</div>
-      <p className="splendor-selection-summary">{zh ? `退回后保留 ${tokenTotal(afterTake) - tokenTotal(returned)} 颗 / 上限 10 颗` : `Keep ${tokenTotal(afterTake) - tokenTotal(returned)} gems / limit 10`}</p>
+    </section>
+    <section className="sp-market" aria-label={zh ? "发展牌市场" : "Development market"}>{[3,2,1].map(tier => {
+      const reserveDeck = actions.find(item => item.action.type === "reserve_deck" && Number(item.action.tier) === tier);
+      return <div className="sp-tier" key={tier}><div className="sp-tier-label"><strong>{zh ? `${tier} 阶` : `Tier ${tier}`}</strong><span>{view.deck_counts[String(tier)]} {zh ? "张" : "left"}</span>{yourTurn && <button disabled={disabled || !reserveDeck} aria-pressed={selection !== "take" && selection?.action.type === "reserve_deck" && Number(selection.action.tier) === tier} onClick={() => chooseAction(reserveDeck!)}>{zh ? "盲抽预留" : "Reserve deck"}</button>}</div><div className="sp-market-cards">{view.market[String(tier)].map((card, i) => renderCard(card, i))}</div></div>;
+    })}</section>
+    {p.reserved_count > 0 && <section className="sp-reserved"><h2>{zh ? "你的预留" : "Your reserves"} <small>{p.reserved_count}/3</small></h2><div>{p.reserved.map((card, i) => "hidden" in card ? <span key={i}>?</span> : renderCard(card, i, true))}</div></section>}
+    {yourTurn && <section className="sp-confirm" aria-label={zh ? "行动预览与确认" : "Action preview and confirmation"}>
+      {returnRequired > 0 && <div className="sp-return"><strong>{zh ? `退回宝石 · 还需 ${remaining} 颗` : `Return gems · ${remaining} remaining`}</strong><span>{zh ? `拿取后 ${tokenTotal(afterTake)} / 上限 10，可退回刚拿到的宝石或黄金。` : `${tokenTotal(afterTake)} held / limit 10. You may return new gems or gold.`}</span><div>{GEM_ORDER.filter(c => afterTake[c] > 0).map(color => <div key={color}><button disabled={disabled || !canAddToken(candidates, "return", returned, color)} aria-label={zh ? `退回${GEM_META[color].label[lang]}，已选 ${returned[color] ?? 0} 颗` : `Return ${GEM_META[color].label[lang]}, ${returned[color] ?? 0} selected`} onClick={() => updateSelection(selection!, take, {...returned, [color]: (returned[color] ?? 0) + 1})}><Gem color={color} value={afterTake[color] - (returned[color] ?? 0)} compact/><span>−{returned[color] ?? 0}</span></button><button disabled={disabled || !returned[color]} aria-label={zh ? `少退一颗${GEM_META[color].label[lang]}` : `Return one fewer ${GEM_META[color].label[lang]}`} onClick={() => updateSelection(selection!, take, {...returned, [color]: returned[color] - 1})}>↶</button></div>)}</div></div>}
+      {paymentChoices.length > 1 && <label className="sp-payment">{zh ? "支付方式" : "Payment"}<select disabled={disabled} value={selected?.id || ""} onChange={e => { const choice = paymentChoices.find(item => item.id === e.target.value); if (choice) chooseAction(choice); }}>{paymentChoices.map(item => <option key={item.id} value={item.id}>{tokenText(counts(item.action.payment), lang) || (zh ? "免费" : "Free")}</option>)}</select></label>}
+      <div className="sp-confirm-row"><div role="status"><strong>{selected ? preview(selected) : reservation ? preview(selection!) : selection === "take" ? (zh ? `已选 ${tokenTotal(take)} 颗 · 继续选择` : `${tokenTotal(take)} selected · keep choosing`) : (zh ? "点击银行拿宝石，或在牌上购买 / 预留" : "Choose gems from the bank, or buy / reserve a card")}</strong><small>{selected?.action.payment ? `${zh ? "支付：" : "Pay: "}${tokenText(counts(selected.action.payment), lang) || (zh ? "免费" : "Free")}` : reservation ? (view.bank.gold ? (zh ? "获得 1 颗黄金" : "Gain 1 gold") : (zh ? "黄金已用尽，本次无黄金" : "No gold left in the bank")) : (zh ? "确认前可修改选择" : "You can change your selection before confirming")}{selected && tokenTotal(counts(selected.action.return)) > 0 ? ` · ${zh ? "退回：" : "Return: "}${tokenText(counts(selected.action.return), lang)}` : ""}</small></div><button className="sp-clear" disabled={disabled || !selection} onClick={clear}>{zh ? "清空" : "Clear"}</button><button className="sp-submit" disabled={disabled || !selected} onClick={() => selected && onSubmit(selected)}>{disabled ? (zh ? "等待中…" : "Waiting…") : (zh ? "确认行动" : "Confirm move")}</button></div>
+      {actions.filter(item => item.action.type === "pass").map(item => <button key={item.id} disabled={disabled} onClick={() => chooseAction(item)}>{zh ? "无可用行动，跳过" : "No moves available · pass"}</button>)}
+      {issue && <p role="alert">{issue}</p>}
     </section>}
-    <div className="human-action-groups">{Object.entries(otherGroups).map(([kind, items]) => {
-      const isReservation = kind === "reserve_visible" || kind === "reserve_deck";
-      const choices = isReservation ? reservationChoices(items) : items;
-      return <section key={kind}><h3>{ACTION_GROUPS[lang][kind] || kind}<span>{choices.length}</span></h3>
-        <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : undefined}>{choices.map(item => <HumanActionChoice key={item.id} item={isReservation ? {...item, action: {...item.action, return: {}}} : item} view={view} disabled={disabled} submitting={false} selected={isReservation ? selection !== "take" && selection?.id === item.id : selectedId === item.id} onChoose={() => chooseAction(item)}/>)}</div>
-      </section>;
-    })}</div>
-  </div>;
-}
-
-function AzulActionPicker({actions, disabled, submitting, selectedId, onSelect}: {actions: LegalAction[]; disabled: boolean; submitting: string; selectedId: string; onSelect: (item: LegalAction | null, requirement?: string) => void}) {
-  const lang = useLang(); const zh = lang === "zh";
-  const t = makeT(lang);
-  const sources = useMemo(() => [...new Set(actions.map(item => String(item.action.source)))], [actions]);
-  const [selectedSource, setSelectedSource] = useState("");
-  const source = sources.includes(selectedSource) ? selectedSource : "";
-  const colors = source ? AZUL_COLORS.filter(color => actions.some(item => item.action.source === source && item.action.color === color)) : [];
-  const [selectedColor, setSelectedColor] = useState<AzulColor | "">("");
-  const color = colors.includes(selectedColor as AzulColor) ? selectedColor : "";
-  const choices = color ? actions.filter(item => item.action.source === source && item.action.color === color) : [];
-  return <div className="azul-action-picker">
-    <div><span>1 · {zh ? "来源" : "Source"}</span>{sources.map(value => <button key={value} className={source === value ? "selected" : ""} aria-pressed={source === value} onClick={() => {setSelectedSource(value); setSelectedColor(""); onSelect(null, t("azul_color_required"));}} disabled={disabled}>{value === "center" ? (zh ? "中央区" : "Center") : `${zh ? "工厂" : "Factory"} ${value.replace("factory-", "")}`}</button>)}</div>
-    <div><span>2 · {zh ? "颜色" : "Color"}</span>{colors.length ? colors.map(value => <button key={value} className={color === value ? "selected" : ""} aria-pressed={color === value} onClick={() => {setSelectedColor(value); onSelect(null, t("azul_destination_required"));}} disabled={disabled}><AzulTile color={value}/>{AZUL_META[value][lang]}</button>) : <em>{t("azul_source_required")}</em>}</div>
-    <div><span>3 · {zh ? "放置位置" : "Destination"}</span>{choices.length ? choices.map(item => <button key={item.id} className={selectedId === item.id ? "selected" : ""} aria-pressed={selectedId === item.id} onClick={() => onSelect(item)} disabled={disabled}>{item.action.destination === "floor" ? (zh ? "地板线" : "Floor") : `${zh ? "图案线" : "Pattern line"} ${String(item.action.destination).replace("pattern-line-", "")}`}{submitting === item.id && <i>{zh ? "提交中…" : "Submitting…"}</i>}</button>) : <em>{source ? t("azul_color_required") : t("azul_source_required")}</em>}</div>
+    {lastMove && <p className="sp-last-move"><b>{zh ? "最近行动" : "Last move"}</b> {lastMove}</p>}
   </div>;
 }
 
@@ -1396,7 +1384,7 @@ function BrassLiveMap({view, players, humanActions = [], disabled, submitting, s
         })}
       </div>
     </div>
-    {currentChoice && <div className="brass-map-choice"><header><div><span>{zh ? "地图目标" : "Map target"}</span><b>{currentChoice.label}</b></div><button onClick={() => setChoiceTarget(null)}>×</button></header><div>{currentChoice.actions.map(item => <button key={item.id} className={selectedActionId === item.id ? "selected" : ""} aria-pressed={selectedActionId === item.id} disabled={disabled} onClick={() => onChoose?.(item)}><strong>{humanActionText(item.action, lang, view)}</strong><small>{submitting === item.id ? (zh ? "提交中…" : "Submitting…") : item.id}</small></button>)}</div></div>}
+    {currentChoice && <div className="brass-map-choice"><header><div><span>{zh ? "地图目标" : "Map target"}</span><b>{currentChoice.label}</b></div><button onClick={() => setChoiceTarget(null)}>×</button></header><div>{currentChoice.actions.map(item => <button key={item.id} className={selectedActionId === item.id ? "selected" : ""} aria-pressed={selectedActionId === item.id} disabled={disabled} onClick={() => onChoose?.(item)}><strong>{humanActionText(item.action, lang, view)}</strong>{submitting === item.id && <small>{zh ? "提交中…" : "Submitting…"}</small>}</button>)}</div></div>}
   </section>;
 }
 
@@ -1404,23 +1392,13 @@ function BrassBoard({view, players, humanActions, disabled, submitting, selected
   const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
   if (!view) return null;
   return <div className="brass-board">
-    <section className="brass-status"><div><span>BRASS · BIRMINGHAM</span><h2>{view.era === "canal" ? t("brass_canal") : t("brass_rail")} · {zh ? `第 ${view.round} 轮` : `Round ${view.round}`}</h2></div><div><small>CURRENT DECISION</small><strong>{view.turn.decision.replaceAll("_", " ")}</strong><b>{view.turn.actions_remaining}/{view.turn.actions_total} {t("brass_actions")}</b></div><code>{view.rules_version}</code></section>
+    <section className="brass-status"><div><span>BRASS · BIRMINGHAM</span><h2>{view.era === "canal" ? t("brass_canal") : t("brass_rail")} · {zh ? `第 ${view.round} 轮` : `Round ${view.round}`}</h2></div><div><small>CURRENT DECISION</small><strong>{zh ? ({choose_action:"选择行动",choose_discard:"选择弃牌",build:"选择产业位置",network:"铺设网络",develop:"研发",sell:"出售产业",resource:"选择资源来源"} as Record<string,string>)[view.turn.decision] || view.turn.decision.replaceAll("_", " ") : view.turn.decision.replaceAll("_", " ")}</strong><b>{view.turn.actions_remaining}/{view.turn.actions_total} {t("brass_actions")}</b></div><code>{view.rules_version}</code></section>
     <section className="brass-economy-board"><BrassMarket label={t("coal_market")} market={view.markets.coal} resource="coal"/><BrassMarket label={t("iron_market")} market={view.markets.iron} resource="iron"/><div className="brass-deck"><span>{t("deck_label")}</span><strong>{view.deck_count}</strong><small>{t("turn_order")} · {view.turn_order.map(seat => players[seat]?.name || seat + 1).join(" → ")}</small></div></section>
+    {Boolean(humanActions?.length) && <section className="brass-command-bar" aria-label={zh?"当前行动选项":"Current action options"}>{Object.entries(groupActions(humanActions || [])).map(([kind,items])=><ActionChoices key={kind} actions={items} label={ACTION_GROUPS[lang][kind] || kind} describe={a=>humanActionText(a.action,lang,view)} lang={lang} disabled={disabled} onChoose={a=>onChoose?.(a)}/>)}</section>}
     <BrassLiveMap view={view} players={players} humanActions={humanActions} disabled={Boolean(disabled)} submitting={submitting || ""} selectedActionId={selectedActionId || ""} onChoose={onChoose}/>
   </div>;
 }
 
-function SplendorBoard({view}: {view?: View}) {
-  const lang = useLang(); const t = makeT(lang); const zh = lang === "zh";
-  return <>
-    <div className="bank-bar"><div><small>{t("supply")}</small><strong>{t("gem_bank")}</strong></div>{view && GEM_ORDER.map(c => <Gem key={c} color={c} value={view.bank[c]}/>)}</div>
-    <section className="nobles"><header><span>{t("nobles")}</span><b>{view?.available_nobles.length || 0} {t("available")}</b></header><div>{view?.available_nobles.map(n => <article key={n.id}><strong>3</strong><Cost cost={n.required}/></article>)}</div></section>
-    <section className="market">{[3,2,1].map(tier => <div className="tier" key={tier}>
-      <div className="tier-label"><span>{t("tier")}</span><strong>0{tier}</strong><small>{view?.deck_counts[String(tier)]} {zh ? "张" : t("cards_unit")}</small></div>
-      <div className="market-cards">{view?.market[String(tier)].map(card => <DevCard key={card.id} card={card}/>)}</div>
-    </div>)}</section>
-  </>;
-}
 
 function ArkNovaBoard({view, players, legalActions, submitting, selectedActionId, onChoose}: {
   view?: ArkView; players: Snapshot["players"]; legalActions: LegalAction[]; submitting: string;
@@ -1459,6 +1437,9 @@ function LocalHome() {
 function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const t = makeT(lang); const zh = lang === "zh";
   const [game, setGame] = useState<GameId>("splendor");
+  const [showMatchLog, setShowMatchLog] = useState(false);
+  const [agentOutputCollapsed, setAgentOutputCollapsed] = useState(false);
+  const [actionLogCollapsed, setActionLogCollapsed] = useState(false);
   const [players, setPlayers] = useState<PlayerForm[]>([
     deepseekHarnessPlayer(1, "opencode"),
     codexHarnessPlayer(2),
@@ -1502,7 +1483,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
   const sevenSpectatorViews = snapshot?.game === "seven_wonders" && !snapshot.players.some(player => player.backend === "human")
     ? snapshot.views as SevenView[] : undefined;
   const isArkTableAction = (item: LegalAction) => ARK_TABLE_ACTION_TYPES.has(String(item.action.type));
-  const arkMapInteraction = snapshot?.game === "ark_nova" && Boolean(snapshot.human_turn?.legal_actions.some(isArkTableAction));
+  const arkFallbackActions = snapshot?.game === "ark_nova" ? (snapshot.human_turn?.legal_actions || []).filter(item => !isArkTableAction(item)) : [];
   const maxPlayers = game === "seven_wonders" ? 7 : ["century_spice_road", "wingspan", "carcassonne"].includes(game) ? 5 : 4;
   const minPlayers = ["ark_nova", "harmonies"].includes(game) ? 1 : game === "seven_wonders" ? 3 : 2;
   const names = useMemo(() => Object.fromEntries((snapshot?.players || []).map(p => [p.seat, p.name])), [snapshot]);
@@ -1779,7 +1760,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     if (!humanTurnKey) return;
     setError("");
     setHumanActionState({turnKey: humanTurnKey, selected: item, requirement, issue: ""});
-    if (item) void submitHumanAction(item);
+
   }
 
   if (!snapshot) return <main className="setup-shell">
@@ -1858,13 +1839,14 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     </section>
   </main>;
 
- return <main className={`table-shell ${snapshot.game === "harmonies" ? "game-harmonies" : snapshot.game === "wingspan" ? "game-wingspan" : ""}`}>
+ return <main className={`table-shell human-play game-${snapshot.game} ${showMatchLog ? "match-log-open" : ""} ${snapshot.game === "splendor" ? `game-splendor ${showMatchLog ? "sp-log-open" : ""}` : ""} ${snapshot.game === "harmonies" ? "game-harmonies" : snapshot.game === "wingspan" ? "game-wingspan" : ""}`}>
     <header className="table-header">
       <div><span className="brand-mark">ABGA</span><strong>{snapshot.game === "harmonies" ? GAME_COPY.harmonies.name[lang] : snapshot.game_description.name} {snapshot.game === "harmonies" ? "" : snapshot.game === "splendor" ? t("live_table") : snapshot.game === "century_spice_road" ? t("trade_arena") : t("controlled_arena")}</strong></div>
       <div className="match-meta"><span>{t("match")} <a className="match-reconnect-link" href={`?match=${snapshot.match_id}`} title={lang === "zh" ? "此对局的恢复链接" : "Reconnect link for this match"}><code>{snapshot.match_id}</code></a></span><span>{t("turn")} <b>{snapshot.game === "harmonies" ? harmoniesView?.round : snapshot.game === "wingspan" ? wingspanView?.round : snapshot.turn_count}</b>{["harmonies", "wingspan"].includes(snapshot.game) && <> · {t("decision")} <b>{snapshot.turn_count}</b></>}{snapshot.game === "ark_nova" && <> · {t("decision")} <b>{snapshot.decision_count ?? arkView?.decision_count}</b></>}</span>{spectator && <span className="status status-setup">{t("spectator")}</span>}<span className={`status ${snapshot.paused ? "status-paused" : `status-${snapshot.status}`}`}>{snapshot.status !== "active" ? t("s_finished") : snapshot.paused ? (snapshot.pause_pending ? t("s_wait_pause") : t("s_paused")) : t("s_active")}</span></div>
       <div className="table-actions">
         <button className="lang-toggle" onClick={toggleLang} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
         {(!spectator || snapshot.status === "active") && <button className={`pause-button ${(snapshot.paused || spectator || snapshot.running === false) ? "is-paused" : ""}`} disabled={snapshot.status !== "active" || controlling} aria-pressed={snapshot.paused} onClick={togglePause}>{controlling ? t("processing") : (snapshot.paused || spectator || snapshot.running === false) ? t("resume") : t("pause")}</button>}
+        {<button aria-expanded={showMatchLog} aria-controls="match-log" onClick={() => setShowMatchLog(value => !value)}>{zh ? "对局记录" : "Match log"}</button>}
         <button onClick={leaveMatch}>{t("new_match")}</button>
       </div>
     </header>
@@ -1874,7 +1856,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       <div><button className="view-final-board" onClick={viewFinalBoard}>{t("view_final_board")}</button><button onClick={leaveMatch}>{t("play_again")}</button></div>
     </section>}
     <div className="table-grid">
-      <aside className="players-column">{snapshot.players.map(identity => {
+      <aside className="players-column">{[...snapshot.players].sort((a,b) => Number(b.seat === humanSeat) - Number(a.seat === humanSeat)).map(identity => {
         // Ark Nova agent-only matches use a dedicated omniscient Web projection;
         // player/agent observations remain seat-isolated in the runner.
         const visiblePlayer = snapshot.game === "ark_nova"
@@ -1901,34 +1883,33 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       })}</aside>
       <section className={`board ${snapshot.human_turn ? "has-human-action" : ""}`} ref={finalBoardRef}>
         {snapshot.paused && <div className={`pause-notice ${snapshot.pause_pending ? "pending" : ""}`}><strong>{snapshot.pause_pending ? t("pause_pending") : t("paused")}</strong><span>{snapshot.pause_pending ? t("pause_pending_desc") : t("paused_desc")}</span></div>}
-        {snapshot.human_turn && <section className="human-turn" aria-live="polite">
+        {snapshot.human_turn && snapshot.game !== "splendor" && <section className="human-turn" aria-live="polite">
           <header><div><span>YOUR TURN · SEAT {snapshot.human_turn.seat + 1}</span><h2>{snapshot.human_turn.player}{t("pick_action")}</h2></div><b>{snapshot.human_turn.legal_actions.length} {t("legal_opts")}</b></header>
-          {snapshot.game === "carcassonne" ? <p>{zh ? "在下方棋盘旋转、放置地形并派遣随从。" : "Rotate and place tiles, then deploy followers on the board below."}</p> : ["harmonies", "wingspan"].includes(snapshot.game) ? <p>{zh ? "在下方市场、棋盘和动物牌上直接操作。" : "Act directly on the market, board and animal cards below."}</p> : snapshot.game === "splendor" && splendorView ? <SplendorActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} view={splendorView} disabled={Boolean(submittingAction)} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "azul" ? <AzulActionPicker key={humanTurnKey} actions={snapshot.human_turn.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onSelect={stageHumanAction}/> : snapshot.game === "seven_wonders" ? <SevenActionPicker actions={snapshot.human_turn.legal_actions} view={sevenView} names={names} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedId={selectedHumanAction?.id || ""} onChoose={item => stageHumanAction(item)}/> : arkMapInteraction ? <div className="ark-map-action-notice"><div><b>{lang === "zh" ? "请在对应板块直接操作" : "Act directly on the matching board"}</b><span>{lang === "zh" ? "行动牌、手牌和地图位于玩家板；展示牌与抽牌位于整体游戏板；协会事务位于协会板。" : "Action cards, hand, and map are on the player board; display and draw actions are on the main board; association tasks are on the association board."}</span></div>{snapshot.human_turn.legal_actions.filter(item => !isArkTableAction(item)).map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div> : <div className="human-action-groups">{Object.entries(groupActions(snapshot.human_turn.legal_actions)).map(([kind, actions]) => <section key={kind}>
-            <h3>{ACTION_GROUPS[lang][kind] || kind}<span>{actions.length}</span></h3>
-            <div className={CARD_ACTION_TYPES.has(kind) ? "card-action-grid" : kind === "take_tokens" ? "token-action-grid" : undefined}>{actions.map(item => <HumanActionChoice key={item.id} item={item} view={splendorView} brassView={brassView} disabled={Boolean(submittingAction)} submitting={submittingAction === item.id} selected={selectedHumanAction?.id === item.id} onChoose={() => stageHumanAction(item)}/>)}</div>
-          </section>)}</div>}
+          {snapshot.game === "ark_nova" && arkFallbackActions.length > 0 && <div className="human-action-groups">{Object.entries(groupActions(arkFallbackActions)).map(([kind, actions]) => <ActionChoices key={kind} actions={actions} label={ACTION_GROUPS[lang][kind] || kind} describe={item => humanItemText(item, lang)} lang={lang} disabled={Boolean(submittingAction) || snapshot.paused} onChoose={stageHumanAction}/>)}</div>}
+
         </section>}
-        {snapshot.game === "splendor" ? <SplendorBoard view={splendorView}/>
-          : snapshot.game === "carcassonne" ? <CarcassonneTable key={snapshot.match_id} view={carcassonneView} lang={lang} identities={snapshot.players} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} onChoose={item => stageHumanAction(item)}/>
-          : snapshot.game === "wingspan" ? <WingspanTable key={wingspanView?.turn_count} view={wingspanView} lang={lang} identities={snapshot.players} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} onChoose={item => stageHumanAction(item)}/>
-          : snapshot.game === "harmonies" ? <HarmoniesTable key={harmoniesView?.turn_count} view={harmoniesView} lang={lang} identities={snapshot.players} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} onChoose={item => stageHumanAction(item)}/>
-          : snapshot.game === "azul" ? <AzulBoard view={azulView}/>
+        {snapshot.game === "splendor" ? <>{splendorView && <SplendorTable key={humanTurnKey || snapshot.match_id} view={splendorView} seat={humanSeat} actions={snapshot.human_turn?.legal_actions || []} disabled={Boolean(submittingAction) || snapshot.paused} selected={selectedHumanAction} issue={currentHumanActionState?.issue} onSelect={stageHumanAction} onSubmit={item => void submitHumanAction(item)} activeName={names[snapshot.active_seat] || "Agent"} lastMove={(() => {const last = timeline.filter(item => ["decision", "turn"].includes(item.event.type)).at(-1); return last ? describeAction(last, names, lang) : "";})()}/>}</>
+          : snapshot.game === "carcassonne" ? <CarcassonneTable key={snapshot.match_id} view={carcassonneView} lang={lang} identities={snapshot.players} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction) || snapshot.paused} onChoose={item => stageHumanAction(item)} onReset={() => stageHumanAction(null)}/>
+          : snapshot.game === "wingspan" ? <WingspanTable key={wingspanView?.turn_count} view={wingspanView} lang={lang} identities={snapshot.players} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction) || snapshot.paused} onChoose={item => stageHumanAction(item)} onReset={() => stageHumanAction(null)}/>
+          : snapshot.game === "harmonies" ? <HarmoniesTable key={harmoniesView?.turn_count} view={harmoniesView} lang={lang} identities={snapshot.players} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction) || snapshot.paused} onChoose={item => stageHumanAction(item)} onReset={() => stageHumanAction(null)}/>
+          : snapshot.game === "azul" ? <AzulBoard key={humanTurnKey || snapshot.match_id} view={azulView} seat={humanSeat} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction) || snapshot.paused} onChoose={stageHumanAction} onReset={() => stageHumanAction(null)}/>
           : snapshot.game === "ark_nova" ? <ArkNovaBoard view={arkView} players={snapshot.players} legalActions={snapshot.human_turn?.legal_actions || []} submitting={submittingAction} selectedActionId={selectedHumanAction?.id || submittingAction} onChoose={item => stageHumanAction(item)}/>
-          : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction)} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/>
-          : snapshot.game === "castles_of_burgundy" ? <BurgundyTable view={burgundyView} lang={lang}/>
-          : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView}/>
-          : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players}/>}
+          : snapshot.game === "brass_birmingham" ? <BrassBoard view={brassView} players={snapshot.players} humanActions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction) || snapshot.paused} submitting={submittingAction} selectedActionId={selectedHumanAction?.id} onChoose={item => stageHumanAction(item)}/>
+          : snapshot.game === "castles_of_burgundy" ? <BurgundyTable key={humanTurnKey || snapshot.match_id} view={burgundyView} lang={lang} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction) || snapshot.paused} onChoose={stageHumanAction} onReset={() => stageHumanAction(null)}/>
+          : snapshot.game === "century_spice_road" ? <CenturyBoard view={centuryView} seat={humanSeat} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction) || snapshot.paused} onChoose={stageHumanAction}/>
+          : <SevenBoard view={sevenView} spectatorViews={sevenSpectatorViews} identities={snapshot.players} actions={snapshot.human_turn?.legal_actions} disabled={Boolean(submittingAction) || snapshot.paused} onChoose={stageHumanAction}/>}
+        {snapshot.human_turn && snapshot.game !== "splendor" && <HumanConfirmation label={selectedHumanAction ? readableMove(selectedHumanAction.action, viewer, lang, snapshot.game === "castles_of_burgundy" ? burgundyActionLabel(selectedHumanAction, lang) : humanItemText(selectedHumanAction, lang, brassView)) : ""} selected={selectedHumanAction} requirement={currentHumanActionState?.requirement} issue={currentHumanActionState?.issue} busy={Boolean(submittingAction)} disabled={Boolean(submittingAction) || snapshot.paused} lang={lang} onClear={() => stageHumanAction(null)} onConfirm={() => selectedHumanAction && void submitHumanAction(selectedHumanAction)}/>}
       </section>
-      <aside className="timeline">
-        <header><div><span>{t("model_stream")}</span><h2>{t("chat_h")}</h2></div><i className={snapshot.status === "active" && (!snapshot.paused || snapshot.pause_pending) ? "pulse" : ""}/></header>
-        <div className="chat-list">{chat.length === 0 && <p className="waiting">{snapshot.game_description.runnable ? t("waiting_model") : t("waiting_note")}</p>}{chat.map(turn => <article className={`chat-turn chat-${turn.status}`} key={turn.key}>
+      <aside className={`timeline ${agentOutputCollapsed ? "agent-output-collapsed" : ""} ${actionLogCollapsed ? "action-log-collapsed" : ""}`} id="match-log">
+        <header><div><span>{t("model_stream")}</span><h2>{t("chat_h")}</h2></div><div className="log-panel-tools"><i className={snapshot.status === "active" && (!snapshot.paused || snapshot.pause_pending) ? "pulse" : ""}/><button type="button" className="log-panel-toggle" aria-expanded={!agentOutputCollapsed} aria-controls="agent-output-content" aria-label={zh ? `${agentOutputCollapsed ? "展开" : "收起"} Agent 输出` : `${agentOutputCollapsed ? "Expand" : "Collapse"} Agent output`} onClick={() => setAgentOutputCollapsed(value => !value)}>{agentOutputCollapsed ? (zh ? "展开" : "Expand") : (zh ? "收起" : "Collapse")} <span aria-hidden="true">{agentOutputCollapsed ? "▸" : "▾"}</span></button></div></header>
+        <div className="chat-list" id="agent-output-content" hidden={agentOutputCollapsed}>{chat.length === 0 && <p className="waiting">{snapshot.game_description.runnable ? t("waiting_model") : t("waiting_note")}</p>}{chat.map(turn => <article className={`chat-turn chat-${turn.status}`} key={turn.key}>
           <header><strong>{turn.player}</strong><span>{turn.backend} · {t("attempt")} {turn.attempt}{turn.status === "thinking" ? ` · ${t("generating")}` : turn.processLatencyMs !== undefined ? ` · ${lang === "zh" ? "行动" : "action"} ${((turn.actionLatencyMs ?? turn.processLatencyMs) / 1000).toFixed(1)}s · ${lang === "zh" ? "进程" : "process"} ${(turn.processLatencyMs / 1000).toFixed(1)}s` : ""}</span></header>
           {turn.reasoning && <details open><summary>{t("thinking")}{turn.status === "done" ? ` · ${t("collapsible")}` : ""}</summary><pre>{turn.reasoning}</pre></details>}
           {turn.content && <div className="model-answer"><b>{t("answer")}</b><pre>{turn.content}</pre></div>}
           {turn.status === "thinking" && <div className="typing"><i/><i/><i/></div>}
         </article>)}</div>
-        <section className="action-drawer"><header><span>{t("actions")}</span><strong>{t("decision_log")}</strong><b>{timeline.filter(item => ["decision", "turn"].includes(item.event.type)).length}</b></header>
-          <div>{[...timeline].reverse().filter(item => !["agent_started", "agent_finished"].includes(item.event.type)).slice(0, 40).map(item => <article key={item.seq} className={`event event-${item.event.type}`}>
+        <section className="action-drawer"><header><span>{t("actions")}</span><strong>{t("decision_log")}</strong><b>{timeline.filter(item => ["decision", "turn"].includes(item.event.type)).length}</b><button type="button" className="log-panel-toggle" aria-expanded={!actionLogCollapsed} aria-controls="action-log-content" aria-label={zh ? `${actionLogCollapsed ? "展开" : "收起"} Action 记录` : `${actionLogCollapsed ? "Expand" : "Collapse"} Action log`} onClick={() => setActionLogCollapsed(value => !value)}>{actionLogCollapsed ? (zh ? "展开" : "Expand") : (zh ? "收起" : "Collapse")} <span aria-hidden="true">{actionLogCollapsed ? "▸" : "▾"}</span></button></header>
+          <div id="action-log-content" hidden={actionLogCollapsed}>{[...timeline].reverse().filter(item => !["agent_started", "agent_finished"].includes(item.event.type)).slice(0, 40).map(item => <article key={item.seq} className={`event event-${item.event.type}`}>
             <span>{String(item.seq + 1).padStart(3,"0")}</span><div><p>{describeAction(item, names, lang)}</p>{item.event.backend && <small>{item.event.backend}{item.event.agent?.process_latency_ms !== undefined ? ` · ${lang === "zh" ? "行动" : "action"} ${item.event.agent.action_latency_ms ?? "—"}ms · ${lang === "zh" ? "进程" : "process"} ${item.event.agent.process_latency_ms}ms` : item.event.agent?.latency_ms ? ` · ${item.event.agent.latency_ms}ms` : ""}</small>}
               {item.event.tool && (item.event.arguments !== undefined || item.event.result !== undefined) && <details className="tool-payload"><summary>{t("view_tool")}</summary><pre>{JSON.stringify(item.event.result ?? item.event.arguments, null, 2)}</pre></details>}
             </div>

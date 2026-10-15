@@ -721,13 +721,13 @@ function GameBoard({view, identities, lang, legalActions, submitting, onChoose, 
   return <section className="ark-surface ark-game-board">
     <header className="ark-surface-header"><div><span>GAME BOARD</span><h2>{copy(lang, "整体游戏板", "Main game board")}</h2></div><div className="ark-turn-stamp"><span>{copy(lang, "当前决策", "CURRENT DECISION")}</span><b>{view.turn.decision.replaceAll("_", " ")}</b></div></header>
     <div className="ark-game-board-scroll"><div className="ark-game-board-canvas">
-      <div className="ark-public-tracks">
+      <details className="ark-public-tracks"><summary>{copy(lang,"进度轨道","Tracks")} · {view.players.map(p=>`${playerName(identities,p.seat,lang)}: ${p.appeal} / ${p.conservation} / ${p.reputation}`).join(" · ")} <small>{copy(lang,"吸引力 / 保育 / 声望 · 展开查看全部奖励","Appeal / conservation / reputation · expand rewards")}</small></summary>
         {!view.solo_board && <TrackLane label={copy(lang, "休息", "BREAK")} tone="break" max={view.public_tracks?.break.maximum ?? view.break_track.limit ?? Math.max(9, view.break_track.position + 3)} values={breakValues} rewards={view.public_tracks?.break.rewards} lang={lang}/>}
         <AppealConservationTrack view={view} identities={identities} lang={lang}/>
         <TrackLane label={copy(lang, "声望", "REPUTATION")} tone="reputation" min={view.public_tracks?.reputation.minimum ?? 1} max={view.public_tracks?.reputation.maximum ?? maximum("reputation", 15)} values={values("reputation")} rewards={view.public_tracks?.reputation.rewards} lang={lang}/>
         <div className="ark-track-reward-legend"><b>{copy(lang, "进度奖励图例", "TRACK REWARD LEGEND")}</b>{rewardLegend.map(reward => <span key={reward.kind} title={trackRewardLabel(reward.kind, lang)}><i>{reward.symbol}</i>{trackRewardLabel(reward.kind, lang)}</span>)}</div>
         {view.break_rules_summary && <details className="ark-break-rules"><summary>{lang === "zh" ? view.break_rules_summary.title_cn : view.break_rules_summary.title_en}</summary><ol>{view.break_rules_summary.steps.map(step => <li key={step.key}><b>{step.order}</b><span>{lang === "zh" ? step.description_cn : step.description_en}</span></li>)}</ol><p>{lang === "zh" ? view.break_rules_summary.recurring_rule_cn : view.break_rules_summary.recurring_rule_en}</p></details>}
-      </div>
+      </details>
       <div className="ark-board-lower">
       <section className="ark-card-display">
         <header><b>{copy(lang, "中央卡牌展示区", "Card display")}</b><span>{copy(lang, "牌库", "Deck")} {view.deck_count} · {copy(lang, "弃牌", "Discard")} {view.discard_count}</span></header>
@@ -820,7 +820,7 @@ function AssociationBoard({view, identities, lang, legalActions, submitting, onC
     </div>
     <ConservationProjectGrid projects={view.base_conservation_projects} identities={identities} lang={lang} projectActions={projectActions} submitting={submitting} selectedProjectTier={selectedProjectTier} onSelectProjectTier={onSelectProjectTier}/>
     <ConservationProjectGrid projects={view.zoo_conservation_projects || []} identities={identities} lang={lang} projectActions={projectActions} submitting={submitting} selectedProjectTier={selectedProjectTier} onSelectProjectTier={onSelectProjectTier} zoo/>
-    {selectedProjectTier && projectActions.some(item => `${String(item.action.project_id)}::${String(item.action.level_id)}` === selectedProjectTier) && <section className="ark-project-reward-instruction" role="status"><b>{copy(lang, "保护项目档位已选择", "Conservation tier selected")}</b><span>{copy(lang, "请到下方玩家地图右侧的“保护项目”栏选择奖励，并选择在档位奖励前或奖励后领取。", "Choose the player-board reward in the sidebar beside the zoo map, including whether it resolves before or after the tier reward.")}</span></section>}
+    {selectedProjectTier && projectActions.some(item => `${String(item.action.project_id)}::${String(item.action.level_id)}` === selectedProjectTier) && <section className="ark-project-reward-instruction" role="status"><b>{copy(lang, "保护项目档位已选择", "Conservation tier selected")}</b><span>{copy(lang, "可在下方选择完整方案，或切换“我的动物园与手牌”，在保护项目栏选择玩家板奖励。", "Choose a complete option below, or switch to My zoo & hand to choose a player-board reward.")}</span></section>}
     {projectActions.length > 0 && <section className="ark-project-actions"><header><b>{copy(lang, "可执行的保护项目", "Available conservation projects")}</b><small>{copy(lang, "每个按钮都是完整的合法选择；放归选项已绑定动物、围栏、档位与玩家板奖励。", "Each button is a complete legal choice, including animal, enclosure, tier, and player-board reward for releases.")}</small></header><div>{projectActions.map(item => {
       const projectId = String(item.action.project_id || "");
       const levelId = String(item.action.level_id || "");
@@ -1086,9 +1086,9 @@ function PlayerActionControls({view, lang, legalActions, submitting, onChoose, i
   return <section className={`ark-player-action-controls action-${view.turn.action_card || "pending"}`} aria-live="polite">
     <header><div><span>CURRENT ACTION</span><b>{ACTION_LABELS[view.turn.action_card || ""]?.[lang] || view.turn.decision.replaceAll("_", " ")}{Number(view.turn.executions_total || 0) > 1 ? ` · ${copy(lang, "第", "execution")} ${view.turn.execution}/${view.turn.executions_total}` : ""}</b></div><small>{Number(view.turn.executions_total || 0) > 1 ? copy(lang, "X2：本次行动完成后立即继续执行同一张行动牌", "X2: immediately perform the same Action card again after this execution") : copy(lang, "在玩家版图完成当前行动", "Resolve the current action on the player board")}</small></header>
     <div>
-      {draw && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(draw)}><b>{copy(lang, "从牌库抽牌", "Draw from deck")}</b><small>{copy(lang, "抽取", "Draw")} {String(draw.action.draw_count)} · {Number(draw.action.discard_count) ? `${copy(lang, "随后弃", "then discard")} ${String(draw.action.discard_count)}` : copy(lang, "无需立即弃牌", "no immediate discard")}</small></button>}
+      {draw && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(draw)}><b>{copy(lang, "从牌库抽牌", "Draw from deck")}</b><small>{draw.action.draw_count === undefined ? draw.label : `${copy(lang, "抽取", "Draw")} ${draw.action.draw_count} · ${Number(draw.action.discard_count) ? `${copy(lang, "随后弃", "then discard")} ${draw.action.discard_count}` : copy(lang, "无需立即弃牌", "no immediate discard")}`}</small></button>}
       {beginAnimals && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(beginAnimals)}><b>{copy(lang, "开始选择动物", "Begin selecting Animals")}</b><small>{copy(lang, "随后从手牌或声望范围逐张选择", "Then choose cards one at a time")}</small></button>}
-      {advanceBreak && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(advanceBreak)}><b>{copy(lang, "不打赞助商：推进休息", "Skip sponsor: advance Break")}</b><small>+{String(advanceBreak.action.steps)} {copy(lang, "休息格", "Break")} · +{String(advanceBreak.action.money)} ₡</small></button>}
+      {advanceBreak && <button disabled={Boolean(submitting)} onClick={() => onChoose?.(advanceBreak)}><b>{copy(lang, "不打赞助商：推进休息", "Skip sponsor: advance Break")}</b><small>{advanceBreak.action.steps !== undefined ? `+${advanceBreak.action.steps} ${copy(lang, "休息格", "Break")} · +${advanceBreak.action.money ?? 0} ₡` : advanceBreak.label?.replace(/Advance Break (\d+) and gain (\d+) money/, lang === "zh" ? "推进休息 $1 格 · 获得 $2 金币" : "Advance Break $1 · gain $2 money")}</small></button>}
       {finishAssociation && <button className="ark-finish-association" disabled={Boolean(submitting)} onClick={() => onChoose?.(finishAssociation)}><b>{copy(lang, "确认并结束协会行动", "Confirm and finish Association")}</b><small>{copy(lang, "已完成所需协会事务后结束本次行动", "Finish this action after resolving the desired Association tasks")}</small></button>}
       {finish && <button className="secondary" disabled={Boolean(submitting)} onClick={() => onChoose?.(finish)}>{copy(lang, "结束当前行动", "Finish current action")}</button>}
     </div>
@@ -1235,19 +1235,16 @@ function ZooWorkspace({view, identities, lang, legalActions, submitting, selecte
   selectedActionId: string; onChoose?: (action: ArkLegalAction) => void; selectedAnimal: string; onSelectAnimal: (cardId: string) => void;
   selectedProjectTier: string;
 }) {
-  const decisionSeat = legalActions.length > 0 ? (view.viewer_seat ?? view.active_seat) : view.active_seat;
-  const [selection, setSelection] = useState({seat: decisionSeat, decision: view.decision_count});
-  const selectedSeat = legalActions.length > 0 && selection.decision !== view.decision_count
-    ? decisionSeat : selection.seat;
-  const seat = view.players.some(player => player.seat === selectedSeat)
-    ? selectedSeat : view.active_seat;
+  const decisionSeat = view.viewer_seat ?? view.active_seat;
+  const decisionKey = `${view.decision_count}:${decisionSeat}:${legalActions.length > 0}`;
+  const [selection, setSelection] = useState<{seat:number; decision:string} | null>(null);
+  const seat = selection?.decision === decisionKey ? selection.seat : decisionSeat;
   const player = view.players.find(item => item.seat === seat) || view.players[0];
   const interactive = legalActions.length > 0 && seat === decisionSeat;
   return <section className="ark-surface ark-zoo-workspace">
     <header className="ark-surface-header"><div><span>{player.map.name.toUpperCase()} · FLAT-TOP AXIAL</span><h2>{copy(lang, "玩家动物园地图", "Player zoo map")}</h2></div><div className="ark-map-status"><b>{player.map.geometry_status.includes("reference_transcribed") ? copy(lang, "参考图转录几何", "Reference-transcribed geometry") : copy(lang, "受控地图几何", "Controlled map geometry")}</b><span>{player.map.buildings.length} {copy(lang, "座建筑", "buildings")}</span></div></header>
-    <nav className="ark-player-tabs" aria-label={copy(lang, "选择玩家地图", "Choose player map")}>{view.players.map(item => <button key={item.seat} className={`${item.seat === seat ? "selected" : ""} ${item.seat === view.active_seat ? "active" : ""}`} onClick={() => setSelection({seat: item.seat, decision: view.decision_count})} style={{"--player-color": PLAYER_COLORS[item.seat]} as React.CSSProperties}><i>{item.seat + 1}</i><span>{playerName(identities, item.seat, lang)}</span><small>{item.seat === view.active_seat ? copy(lang, "行动中", "ACTIVE") : copy(lang, "公开地图", "PUBLIC")}</small></button>)}</nav>
+    <nav className="ark-player-tabs" aria-label={copy(lang, "选择玩家地图", "Choose player map")}>{view.players.map(item => <button key={item.seat} className={`${item.seat === seat ? "selected" : ""} ${item.seat === view.active_seat ? "active" : ""}`} onClick={() => setSelection({seat: item.seat, decision: decisionKey})} style={{"--player-color": PLAYER_COLORS[item.seat]} as React.CSSProperties}><i>{item.seat + 1}</i><span>{playerName(identities, item.seat, lang)}</span><small>{item.seat === view.active_seat ? copy(lang, "行动中", "ACTIVE") : copy(lang, "公开地图", "PUBLIC")}</small></button>)}</nav>
     <ActionCardRack view={view} player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} selectedActionId={selectedActionId} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
-    <PlayerActionControls view={view} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
     <PlayerCardArea view={view} player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive} selectedAnimal={selectedAnimal} onSelectAnimal={onSelectAnimal}/>
     <FinalScoringCardArea player={player} lang={lang} legalActions={interactive ? legalActions : []} submitting={submitting} onChoose={interactive ? onChoose : undefined} interactive={interactive}/>
     <div className="ark-zoo-layout">
@@ -1274,15 +1271,23 @@ export function ArkNovaTable({view, identities, lang, legalActions = [], submitt
   const [projectTierSelection, setProjectTierSelection] = useState({decision: -1, tier: ""});
   const selectedProjectTier = projectTierSelection.decision === view?.decision_count ? projectTierSelection.tier : "";
   const selectProjectTier = (tier: string) => setProjectTierSelection({decision: view?.decision_count ?? -1, tier});
+  const [surfaceChoice, setSurfaceChoice] = useState<{key:string; surface:string} | null>(null);
   if (!view) return <div className="empty-board">Ark Nova</div>;
+  const surfaceKey = `${view.decision_count}:${legalActions.length > 0}`;
+  const hasAssociation = legalActions.some(a=>["association_task","make_donation","finish_association_tasks"].includes(actionType(a)));
+  const hasDisplay = legalActions.some(a=>["draw_cards","snap_card"].includes(actionType(a)));
+  const preferred = hasAssociation ? "association" : hasDisplay ? "game" : "zoo";
+  const surface = surfaceChoice?.key === surfaceKey ? surfaceChoice.surface : preferred;
   return <div className="ark-table-v2">
     <section className="ark-match-banner"><div><span>ARK NOVA · OFFICIAL BASE</span><h1>{view.phase === "initial_hand_selection" ? copy(lang, "正在选择起始手牌", "Selecting starting hand") : copy(lang, "动物园规划桌", "Zoo planning table")}</h1></div><p>{copy(lang, "视觉组件使用结构化状态和原创 CSS 表达，不包含出版商卡图或逐字牌文。", "Components use structured state and original CSS; no publisher card art or verbatim card text.")}</p><code>{view.rules_version}</code></section>
     {view.endgame?.triggered && view.status !== "finished" && <section className={`ark-endgame-alert ${view.endgame.is_my_final_action ? "is-my-final-action" : ""}`} role="status" aria-live="assertive"><b>{view.endgame.is_my_final_action ? copy(lang, "你的最后行动", "YOUR FINAL ACTION") : copy(lang, "终局已触发", "ENDGAME TRIGGERED")}</b><span>{lang === "zh" ? view.endgame.instruction_cn : view.endgame.instruction_en}</span><small>{copy(lang, "触发者", "Triggered by")}：{view.endgame.triggered_by === null ? "—" : playerName(identities, view.endgame.triggered_by, lang)} · {copy(lang, "尚有最后行动", "Final turns remaining")}：{view.endgame.remaining_final_turn_seats.length ? view.endgame.remaining_final_turn_seats.map(seat => playerName(identities, seat, lang)).join(" · ") : copy(lang, "无", "none")}</small></section>}
     {(view.phase.includes("break") || view.break_track.triggered) && <section className="ark-break-alert" role="status" aria-live="assertive"><b>{view.solo_board ? copy(lang, "单人休息阶段", "SOLO BREAK") : copy(lang, "休息阶段", "BREAK")}</b><span>{copy(lang, "暂停常规行动：请依次处理弃牌、回收事务员、刷新协会与展示区，并领取收入。", "Regular actions pause while players discard, recall workers, refresh the Association board and display, and collect income.")}</span></section>}
     {view.solo_board && <SoloBoard board={view.solo_board} lang={lang}/>}
-    <GameBoard view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal}/>
-    <AssociationBoard view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedProjectTier={selectedProjectTier} onSelectProjectTier={selectProjectTier}/>
-    <ZooWorkspace view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} selectedActionId={selectedActionId} onChoose={onChoose} selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal} selectedProjectTier={selectedProjectTier}/>
+    <PlayerActionControls view={view} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} interactive={legalActions.length > 0}/>
+    <nav className="ark-workspace-tabs" aria-label={copy(lang,"牌桌区域","Table area")}>{[["zoo",copy(lang,"我的动物园与手牌","My zoo & hand")],["game",copy(lang,"公共牌与轨道","Display & tracks")],["association",copy(lang,"协会与保育项目","Association & projects")]].map(([key,label])=><button type="button" key={key} aria-pressed={surface===key} onClick={()=>setSurfaceChoice({key:surfaceKey,surface:key})}>{label}{key===preferred && legalActions.length>0 ? " •" : ""}</button>)}</nav>
+    {surface === "game" && <GameBoard view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal}/>}
+    {surface === "association" && <AssociationBoard view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} onChoose={onChoose} selectedProjectTier={selectedProjectTier} onSelectProjectTier={selectProjectTier}/>}
+    {surface === "zoo" && <ZooWorkspace view={view} identities={identities} lang={lang} legalActions={legalActions} submitting={submitting} selectedActionId={selectedActionId} onChoose={onChoose} selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal} selectedProjectTier={selectedProjectTier}/>}
     <details className="ark-content-status"><summary>{copy(lang, "规则版本与内容包状态", "Rules version & content status")}</summary><p>{copy(lang, "当前对局使用基础版程式化卡牌与语义引擎；界面只展示原创的规则摘要。", "This match uses the programmed base-card pack and semantic engine; the UI shows original rules summaries only.")}</p><code>{view.implementation_status}</code></details>
   </div>;
 }
