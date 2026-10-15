@@ -38,8 +38,8 @@ independently. Larger maps still support their own zoom or scrolling controls.
 
 The live table is **localhost-only** and has no multi-user authentication. Use it
 on a trusted machine. Node.js is needed to build the frontend; the built table is
-served by Python. Public GitHub Pages content is a static presentation/results
-site, not a hosted game server.
+served by Python. Public GitHub Pages content is a static project introduction,
+not a hosted game server. Benchmark results are currently withheld.
 
 <details>
 <summary><strong>Prefer the terminal? Run a match with Python only.</strong></summary>
@@ -178,7 +178,7 @@ failure metrics. [Experiment modes, memory, and result files →](docs/usage.md#
 | Configure harnesses, game variants, traces, or CLI actions | [Usage guide](docs/usage.md) |
 | Query large legal-action sets efficiently | [Legal action queries](docs/legal-action-queries.md) |
 | Understand the engine and evaluation design | [Architecture notes](docs/architecture.md) |
-| Develop the browser table or publish static results | [Web development](web/README.md) |
+| Develop the browser table or maintain the project page | [Web development](web/README.md) |
 | Run the Frontier12 batch on a server | [Server runbook (Chinese)](docs/frontier12-server-run.zh-CN.md) |
 | Review human-play changes and their test coverage | [Usability audit (Chinese)](docs/human-usability-audit-2026-10-16.md) |
 

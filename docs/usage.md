@@ -367,5 +367,6 @@ remain unfinished. Missing usage is not zero usage.
 
 The web server is local-only and has no participant login or seat authorization.
 Keep API keys, CLI credentials, raw traces, and runtime workspaces private.
-Review artifacts before publishing them; the static Pages workflow uses a
-sanitized results snapshot, described in [Web development](../web/README.md).
+Review artifacts before publishing them. The static Pages site currently
+withholds benchmark results; keep local exports outside `web/public`. See
+[Web development](../web/README.md).

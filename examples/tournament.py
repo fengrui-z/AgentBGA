@@ -9,7 +9,7 @@ Each pair plays N seeds × 2 seat orders (A-first / B-first).
 Results are written to CSV + a summary with Elo ratings.
 
 Usage:
-  python3 tournament.py --base-url http://123.57.212.178:3333 \\
+  python3 tournament.py --base-url https://your-gateway.example/v1 \\
     --parallel 30 --seeds 5 \\
     --mode both \\
     --harness opencode codex dsh \\
@@ -42,7 +42,6 @@ from pathlib import Path
 from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE_URL_DEFAULT = "http://123.57.212.178:3333"
 API_KEY_ENV = "OPENAI_API_KEY"
 
 
@@ -268,8 +267,8 @@ def compute_elo(results: list[dict], k: float = 32.0, base: float = 1500.0,
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="AgentBGA tournament runner")
-    ap.add_argument("--base-url", default=BASE_URL_DEFAULT,
-                    help=f"model API base URL (default: {BASE_URL_DEFAULT})")
+    ap.add_argument("--base-url", required=True,
+                    help="model API base URL; explicitly choose a trusted endpoint")
     ap.add_argument("--parallel", type=int, default=30, help="concurrent matches")
     ap.add_argument("--seeds", type=int, default=5,
                     help="seeds per seat order (total = seeds × 2 orders)")

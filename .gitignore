@@ -8,12 +8,15 @@ build/
 .agentbga/
 *.sqlite3
 .env
+.env.*
+!.env.example
 reference-input/
 web/node_modules/
 web/.next/
 web/.vinext/
 web/.wrangler/
 web/dist/
+web/public/results/
 
 # Local Ark Nova reports, milestone notes, and generated audit artifacts.
 # Machine-checked release evidence belongs under tests/fixtures instead.

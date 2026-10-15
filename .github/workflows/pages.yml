@@ -39,6 +39,8 @@ jobs:
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
           NEXT_PUBLIC_PAGES_RESULTS: "true"
         run: npm run build
+      - name: Verify benchmark results are excluded
+        run: test ! -e dist/client/results
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:

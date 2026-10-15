@@ -9,18 +9,17 @@ Grok 1.0.30 refuses to apply its sandbox when `/var/run/docker.sock` is a symlin
 The runtime-socket deny resolver reports `endpoint is a symlink`; changing the
 profile to an unrestricted one would discard the benchmark's isolation.
 
-On this host, the alias pointed to an inactive
-`/Users/ray/.docker/run/docker.sock`. The configured `desktop-linux` Docker
-context also pointed directly to that user socket. With macOS administrator
-authorization, only the global alias was moved to
-`/private/var/run/docker.sock.agentbga-backup-20260913`. The real socket was left
-unchanged. This is a host repair, not an automatic modification performed by the
-harness. Docker may recreate the alias when its default socket integration is
-reenabled; an upstream Grok resolver fix is the durable vendor solution.
+Some Docker Desktop setups point this alias at
+`$HOME/.docker/run/docker.sock`; the `desktop-linux` context may use that user
+socket directly. If an administrator temporarily relocates the global alias to
+work around this issue, keep the real socket unchanged and record the backup
+location privately. This is a host repair, not an automatic modification
+performed by the harness. Docker may recreate the alias when its default socket
+integration is reenabled; an upstream Grok resolver fix is the durable solution.
 
-To undo the host repair, first stop affected Grok runs and verify that no new
-`/private/var/run/docker.sock` exists, then move the saved symlink back with
-administrator privileges. Never overwrite a newly created socket.
+To undo a host repair, first stop affected Grok runs and verify that no new
+`/var/run/docker.sock` exists, then restore the saved symlink with administrator
+privileges. Never overwrite a newly created socket.
 
 ## Shared subscription authentication
 
