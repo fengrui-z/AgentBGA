@@ -112,13 +112,13 @@ export default function (pi: any) {
     async execute(_id: string, args: any) { const value = await context(); const reference = args.card_ref.startsWith("card:") ? args.card_ref : `card:${args.card_ref}`; const card = value.resources?.cards?.[reference];
       if (!card) throw new Error("card_ref is unavailable in this seat-scoped observation");
       await audit("inspect_card", args, card); return result(card); } });
-  pi.registerTool({ name: "inspect_rules", label: "Inspect rules", description: "Read an engine-aligned Ark Nova rules topic instead of guessing from action IDs.",
+  pi.registerTool({ name: "inspect_rules", label: "Inspect rules", description: "List the current game's rules topics, then request one. Ark Nova has detailed rules; other games provide an engine overview.",
     parameters: Type.Object({ topic: Type.Optional(Type.String()) }, { additionalProperties: false }),
     async execute(_id: string, args: any) { const value = await context(); const catalog = value.resources?.rules;
       if (!catalog) throw new Error("rules reference is unavailable for this game");
       if (!args.topic) { const { details, ...index } = catalog; await audit("inspect_rules", args, index); return result(index); }
       const topic = catalog.details?.[args.topic]; if (!topic) throw new Error(`unknown rules topic: ${args.topic}`);
-      const shown = { game: "ark_nova", topic: args.topic, ...topic };
+      const shown = { game: catalog.game, topic: args.topic, ...topic };
       await audit("inspect_rules", args, shown); return result(shown); } });
   pi.registerTool({ name: "inspect_map", label: "Inspect map", description: "Read a public player map on demand.",
     parameters: Type.Object({ seat: Type.Optional(Type.Integer({ minimum: 0 })),

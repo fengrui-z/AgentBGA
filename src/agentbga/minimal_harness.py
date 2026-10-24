@@ -61,7 +61,7 @@ MINIMAL_TOOLS = [
     }},
     {"type": "function", "function": {
         "name": "inspect_rules",
-        "description": "Read an engine-aligned Ark Nova rules topic. Call without topic to list topics; use instead of guessing action, building, income, reward, or keyword rules.",
+        "description": "List the current game's rules topics, then request one. Ark Nova has detailed rules; other games provide an engine overview. Legal actions remain authoritative.",
         "parameters": {"type": "object", "properties": {
             "topic": {"type": "string"},
         }, "additionalProperties": False},
@@ -917,8 +917,6 @@ class DirectGameAgent:
             method="POST",
         )
         ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
 
         content_parts: list[str] = []
         reasoning_parts: list[str] = []

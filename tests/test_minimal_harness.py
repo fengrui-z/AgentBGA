@@ -1,4 +1,6 @@
 import tempfile
+import ssl
+from dataclasses import replace
 import unittest
 from unittest import mock
 
@@ -8,6 +10,22 @@ from agentbga.minimal_harness import DirectGameAgent
 
 
 class MinimalHarnessTests(unittest.TestCase):
+    def test_api_requests_verify_certificates_and_hostnames(self):
+        agent = object.__new__(DirectGameAgent)
+        agent.config = replace(PlayerConfig.from_dict({
+            "name": "Minimal", "backend": "minimal", "model": "test",
+            "base_url": "https://example.test/v1",
+        }, 0), api_key="test-key")
+        agent._messages = []
+        agent.timeout = 10
+        response = mock.MagicMock()
+        response.__enter__.return_value.read.return_value = b""
+        with mock.patch("urllib.request.urlopen", return_value=response) as request:
+            agent._call_llm()
+        context = request.call_args.kwargs["context"]
+        self.assertEqual(ssl.CERT_REQUIRED, context.verify_mode)
+        self.assertTrue(context.check_hostname)
+
     def test_choose_accumulates_every_provider_response(self):
         with tempfile.TemporaryDirectory() as directory:
             config = PlayerConfig.from_dict({

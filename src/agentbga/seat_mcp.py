@@ -33,7 +33,7 @@ TOOLS = [
     },
     {
         "name": "inspect_rules",
-        "description": "Read one bounded, engine-aligned Ark Nova rules topic. Call without a topic to list available topics; use this instead of guessing rules from legal actions.",
+        "description": "List the current game's available rules topics, then request one topic. Ark Nova has detailed rules; other games provide an engine overview. Legal actions remain authoritative.",
         "inputSchema": {
             "type": "object",
             "properties": {"topic": {"type": "string"}},
