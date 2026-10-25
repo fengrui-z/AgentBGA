@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import Link from "next/link";
+import { mergeMatchSnapshot } from "./snapshot-state";
 import ArenaPage from "./arena/page";
 import { CarcassonneTable, CarcassonnePlayerPanel, type CarcassonneView, type CarcassonnePlayer } from "./carcassonne-table";
 import { WingspanTable, WingspanPlayerPanel, type WingspanView, type WingspanPlayer } from "./wingspan-table";
@@ -302,7 +302,7 @@ type SevenView = {
 type GameDescription = {id: GameId; name: string; rules_version: string; implementation_status: string; runnable: boolean};
 type Snapshot = {
   match_id: string; game: GameId; game_description: GameDescription; version: number; status: string; turn_count: number; decision_count?: number; active_seat: number;
-  paused: boolean; pause_pending: boolean; running?: boolean; mode?: "live" | "spectator" | "store";
+  paused: boolean; pause_pending: boolean; running?: boolean; mode?: "live" | "spectator" | "store"; event_seq?: number;
   human_turn?: {seat: number; player: string; version: number; legal_actions: LegalAction[]} | null;
   players: {seat: number; name: string; backend: string; model?: string; reasoning_effort?: string}[]; views: (View | AzulView | ArkView | BrassView | BurgundyView | CenturyView | SevenView | HarmoniesView | WingspanView | CarcassonneView)[];
   spectator_view?: ArkView;
@@ -1626,7 +1626,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
     const source = new EventSource(api(`/api/matches/${data.match_id}/events`));
     source.addEventListener("match", raw => {
       const item: Timeline = JSON.parse((raw as MessageEvent).data);
-      if (item.snapshot) setSnapshot(current => !current || item.snapshot!.version >= current.version ? item.snapshot! : current);
+      if (item.snapshot) setSnapshot(current => mergeMatchSnapshot(current, item.snapshot!));
       const event = item.event;
       const seat = event.seat ?? 0;
       const attempt = event.attempt ?? 1;
@@ -1728,7 +1728,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || "无法更新暂停状态");
       if (snapshot.mode === "spectator" || snapshot.running === false) attachMatch(data, false);
-      else setSnapshot(data);
+      else setSnapshot(current => mergeMatchSnapshot(current, data));
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setControlling(false); }
   }
@@ -1747,7 +1747,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || data.error || "无法提交行动");
-      setSnapshot(data); setHumanActionState(null);
+      setSnapshot(current => mergeMatchSnapshot(current, data)); setHumanActionState(null);
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       setError(message);
@@ -1765,7 +1765,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
 
   if (!snapshot) return <main className="setup-shell">
     <section className="hero">
-      <Link className="arena-link" href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/arena`}>About AgentBGA →</Link>
+      <a className="arena-link" href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/arena`}>About AgentBGA →</a>
       <button className="lang-toggle" onClick={toggleLang} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
       <div className="eyebrow">{t("hero_eyebrow")} / {GAME_COPY[game].eyebrow}</div>
       <h1>{t("hero_title_a")}<br/><i>{t("hero_title_b")}</i>{t("hero_title_c")}</h1>

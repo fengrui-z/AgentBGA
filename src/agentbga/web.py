@@ -102,6 +102,9 @@ class MatchHub:
         item = {"seq": len(record["events"]), "event": event}
         if snapshot is not None:
             decorated = self._with_runtime(snapshot, record)
+            # Runtime changes (pause / waiting humans) can share a game version.
+            # HTTP replies carry the same ordering key as the SSE snapshot.
+            decorated["event_seq"] = item["seq"]
             item["snapshot"] = decorated
             record["snapshot"] = decorated
         record["events"].append(item)
@@ -707,7 +710,14 @@ class WebHandler(BaseHTTPRequestHandler):
             if Path(relative).suffix:
                 self._json(HTTPStatus.NOT_FOUND, {"error": "not_found"})
                 return
-            target = self.static_dir / "index.html"
+            # Static exports use /arena.html, while browser links use /arena.
+            stem = self.static_dir / relative.rstrip("/")
+            candidates = [stem.with_suffix(".html"), stem / "index.html"]
+            target = next((candidate.resolve() for candidate in candidates if candidate.is_file()),
+                          self.static_dir / "index.html")
+            if self.static_dir.resolve() not in target.resolve().parents:
+                self._json(HTTPStatus.NOT_FOUND, {"error": "not_found"})
+                return
         if not target.is_file():
             self._json(HTTPStatus.NOT_FOUND, {"error": "frontend_not_built"})
             return

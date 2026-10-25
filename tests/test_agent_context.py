@@ -7,9 +7,73 @@ from agentbga.agent_context import CONTEXT_V2, prepare_seat_context
 from agentbga.agent_context import compact_card
 from agentbga.ark_nova_official import ArkNovaOfficialPlugin
 from agentbga.seat_tool import call_tool
+from agentbga.registry import game_ids, get_game
 
 
 class AgentContextTests(unittest.TestCase):
+    def test_non_ark_games_offer_their_own_rules_overview(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "turn-context.json"
+            for game_id in game_ids():
+                if game_id == "ark_nova":
+                    continue
+                with self.subTest(game=game_id):
+                    game = get_game(game_id)
+                    state = game.setup(game.describe()["players"]["minimum"], 42)
+                    prepare_seat_context(
+                        path, match_id="match", seat=0, version=0,
+                        observation=game.observe(state, 0), legal=game.legal_actions(state, 0),
+                    )
+                    catalog = call_tool(path, "inspect_rules")
+                    self.assertEqual(game_id, catalog["game"])
+                    self.assertEqual("engine_summary", catalog["scope"])
+                    overview = call_tool(path, "inspect_rules", {"topic": "overview"})
+                    self.assertEqual(game_id, overview["description"]["id"])
+                    with self.assertRaisesRegex(ValueError, "available topics: overview"):
+                        call_tool(path, "inspect_rules", {"topic": "association"})
+
+    def test_wingspan_visible_cards_are_inspectable_without_opponent_hand(self):
+        game = get_game("wingspan")
+        state = game.setup(2, 42)
+        observation = game.observe(state, 0)
+        visible = observation["players"][0]["hand"][0]
+        hidden = state["players"][1]["hand"][0]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "turn-context.json"
+            prepare_seat_context(path, match_id="match", seat=0, version=0,
+                                 observation=observation, legal=game.legal_actions(state, 0))
+            self.assertEqual(visible, call_tool(path, "inspect_card", {"card_ref": visible["id"]}))
+            with self.assertRaisesRegex(ValueError, "unavailable"):
+                call_tool(path, "inspect_card", {"card_ref": hidden if isinstance(hidden, str) else hidden["id"]})
+
+    def test_hidden_card_objects_are_never_added_to_resources(self):
+        observation = {"game": "splendor", "players": [], "cards": [
+            {"id": "secret", "name": "Hidden", "hidden": True},
+            {"id": "visible", "name": "Public"},
+        ]}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "turn-context.json"
+            prepare_seat_context(path, match_id="match", seat=0, version=0,
+                                 observation=observation, legal=[])
+            self.assertEqual("Public", call_tool(path, "inspect_card", {"card_ref": "visible"})["name"])
+            with self.assertRaisesRegex(ValueError, "unavailable"):
+                call_tool(path, "inspect_card", {"card_ref": "secret"})
+
+    def test_unnamed_nobles_and_spice_merchants_are_inspectable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "turn-context.json"
+            for game_id in ("splendor", "century_spice_road"):
+                with self.subTest(game=game_id):
+                    game = get_game(game_id)
+                    state = game.setup(2, 42)
+                    observation = game.observe(state, 0)
+                    cards = (observation["available_nobles"] if game_id == "splendor"
+                             else observation["players"][0]["hand"])
+                    prepare_seat_context(path, match_id="match", seat=0, version=0,
+                                         observation=observation, legal=game.legal_actions(state, 0))
+                    for card in cards:
+                        self.assertEqual(card, call_tool(path, "inspect_card", {"card_ref": card["id"]}))
+
     def setUp(self):
         self.plugin = ArkNovaOfficialPlugin()
         self.state = self.plugin.setup(2, 42)

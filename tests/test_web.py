@@ -447,6 +447,9 @@ class WebTests(unittest.TestCase):
             self.assertEqual("match_finished", events[-1]["event"]["type"])
             self.assertEqual("finished", events[-1]["snapshot"]["status"])
             self.assertEqual(2, len(events[-1]["snapshot"]["views"]))
+            for item in events:
+                if "snapshot" in item:
+                    self.assertEqual(item["seq"], item["snapshot"]["event_seq"])
             self.assertEqual(["Red", "Blue"], [p["name"] for p in created["players"]])
 
     def test_inline_api_key_reaches_agent_but_is_not_persisted(self):
@@ -782,6 +785,7 @@ class WebTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "index.html").write_text("<h1>AgentBGA</h1>", encoding="utf-8")
+            (root / "arena.html").write_text("<h1>Project introduction</h1>", encoding="utf-8")
             handler = type("TestWebHandler", (WebHandler,), {
                 "hub": MatchHub(root / "matches.sqlite3"), "static_dir": root,
             })
@@ -792,6 +796,13 @@ class WebTests(unittest.TestCase):
                 base = f"http://127.0.0.1:{server.server_port}"
                 health = json.load(urllib.request.urlopen(base + "/api/health"))
                 page = urllib.request.urlopen(base + "/").read().decode()
+                for route in ("/arena", "/arena/", "/arena.html"):
+                    with self.subTest(route=route):
+                        introduction = urllib.request.urlopen(base + route).read().decode()
+                        self.assertIn("Project introduction", introduction)
+                with self.assertRaises(urllib.error.HTTPError) as missing:
+                    urllib.request.urlopen(base + "/missing.js")
+                self.assertEqual(404, missing.exception.code)
             finally:
                 server.shutdown()
                 server.server_close()

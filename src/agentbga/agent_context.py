@@ -154,12 +154,18 @@ def compact_card(card: Mapping[str, Any]) -> dict[str, Any]:
 
 def _collect_cards(value: Any, cards: dict[str, dict[str, Any]]) -> None:
     if isinstance(value, Mapping):
+        if value.get("hidden"):
+            return
         reference = _card_ref(value)
         if reference and (
             value.get("display_title") is not None
             or value.get("card_type") is not None
+            or value.get("name") is not None
+            or value.get("cost") is not None
+            or value.get("required") is not None
             or value.get("kind") in {
                 "animal", "sponsor", "zoo_conservation_project", "final_scoring",
+                "gain", "trade", "upgrade",
             }
         ):
             cards.setdefault(reference, deepcopy(dict(value)))
@@ -952,6 +958,35 @@ def compact_ark_nova_observation(
     return {key: value for key, value in result.items() if value is not None}
 
 
+def _rules_resource(observation: Mapping[str, Any]) -> dict[str, Any]:
+    if observation.get("game") == "ark_nova":
+        return rules_resource()
+    # Other games expose a truthful engine summary rather than Ark Nova topics.
+    from .registry import get_game
+
+    game_id = str(observation.get("game", ""))
+    try:
+        description = get_game(game_id, observation.get("rules_version")).describe()
+    except ValueError:
+        description = {"id": game_id}
+    overview = {
+        "title": f"{description.get('name', game_id)} engine overview",
+        "description": description,
+        "instruction": (
+            "This is the engine's scope and action summary, not a complete rulebook. "
+            "Use observe for the current position, inspect_card for visible card data, "
+            "and legal_actions for authoritative choices."
+        ),
+    }
+    if "rules" in observation:
+        overview["rules"] = deepcopy(observation["rules"])
+    return {
+        "game": game_id, "scope": "engine_summary",
+        "topics": [{"id": "overview", "title": overview["title"]}],
+        "details": {"overview": overview},
+    }
+
+
 def _build_resources(observation: Mapping[str, Any]) -> dict[str, Any]:
     cards: dict[str, dict[str, Any]] = {}
     _collect_cards(observation, cards)
@@ -975,7 +1010,7 @@ def _build_resources(observation: Mapping[str, Any]) -> dict[str, Any]:
         }
     return {
         "cards": cards, "maps": maps, "zones": zones,
-        "rules": rules_resource(),
+        "rules": _rules_resource(observation),
     }
 
 
@@ -1073,6 +1108,7 @@ def prepare_seat_context(
             "schema_version": CONTEXT_V1, "match_id": match_id, "seat": seat,
             "version": version, "observation": projected_observation,
             "legal_actions": flattened,
+            "resources": _build_resources(observation),
         }
         if observation.get("game") in GAME_FILTERS:
             context["legal_action_query"] = query_metadata(observation["game"], flattened)
@@ -1153,7 +1189,7 @@ def inspect_card(context: Mapping[str, Any], arguments: Mapping[str, Any]) -> An
 
 
 def inspect_rules(context: Mapping[str, Any], arguments: Mapping[str, Any]) -> Any:
-    """Return a bounded Ark Nova rules topic, or the topic catalog."""
+    """Return a game-specific rules topic, or the available topic catalog."""
     rules = context.get("resources", {}).get("rules")
     if not isinstance(rules, Mapping):
         raise ValueError("rules reference is unavailable for this game")
@@ -1165,7 +1201,12 @@ def inspect_rules(context: Mapping[str, Any], arguments: Mapping[str, Any]) -> A
         }
     if not isinstance(topic, str) or not topic:
         raise ValueError("topic must be a non-empty string")
-    return rule_topic(topic)
+    if rules.get("game") == "ark_nova":
+        return rule_topic(topic)
+    details = rules.get("details", {})
+    if topic not in details:
+        raise ValueError(f"unknown rules topic: {topic}; available topics: {', '.join(details)}")
+    return {"game": rules.get("game"), "topic": topic, **deepcopy(details[topic])}
 
 
 def inspect_map(context: Mapping[str, Any], arguments: Mapping[str, Any]) -> Any:
