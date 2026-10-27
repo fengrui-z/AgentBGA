@@ -2,6 +2,8 @@
 
 **English** · [简体中文](README.zh-CN.md)
 
+[Preprint](https://arxiv.org/pdf/2610.35773)
+
 Play strategy board games against AI agents, watch agents compete, and replay their
 decisions. AgentBGA combines ten deterministic game engines, a local browser table,
 and a CLI for comparing models, agent harnesses, and memory strategies.
