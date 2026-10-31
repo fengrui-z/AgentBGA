@@ -15,6 +15,7 @@ import time
 from typing import Any
 from urllib.parse import urlsplit
 
+from .baselines.config import BASELINE_BACKENDS
 from .agents import PlayerConfig
 from .public_projection import public_action_id
 from .registry import get_game, list_games
@@ -211,7 +212,7 @@ class MatchHub:
             subscription_auth = config.backend in {"codex", "grok"} and config.auth_mode == "subscription"
             if config.backend == "grok" and subscription_auth and api_key:
                 raise ValueError(f"player {seat} grok subscription auth cannot use api_key")
-            if config.backend not in {"random", "human"} and not subscription_auth and (
+            if config.backend not in {"random", "human", *BASELINE_BACKENDS} and not subscription_auth and (
                 not isinstance(api_key, str) or not api_key.strip()
             ):
                 raise ValueError(f"player {seat} requires api_key")
@@ -278,7 +279,7 @@ class MatchHub:
             store.close()
         allowed = {
             "name", "backend", "model", "base_url", "api_key_env", "auth_mode",
-            "wire_api", "reasoning_effort", "series_id", "participant_id",
+            "wire_api", "reasoning_effort", "series_id", "participant_id", "algorithm_params",
         }
         return [
             PlayerConfig.from_dict(
@@ -290,7 +291,7 @@ class MatchHub:
 
     @staticmethod
     def _has_runtime_credentials(config: PlayerConfig) -> bool:
-        if config.backend in {"random", "human"}:
+        if config.backend in {"random", "human", *BASELINE_BACKENDS}:
             return True
         if config.backend in {"codex", "grok"} and config.auth_mode == "subscription":
             return True
@@ -310,7 +311,7 @@ class MatchHub:
             )
             identity_fields = (
                 "name", "backend", "model", "base_url", "api_key_env",
-                "auth_mode", "wire_api", "reasoning_effort",
+                "auth_mode", "wire_api", "reasoning_effort", "algorithm_params",
             )
             for seat, (config, expected) in enumerate(zip(configs, stored)):
                 if any(

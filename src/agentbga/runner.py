@@ -9,6 +9,7 @@ import time
 from typing import Any, Callable
 
 from .agents import AgentError, HARNESS_BACKENDS, PlayerConfig, build_model_agent, random_choice
+from .baselines import BASELINE_BACKENDS, build_baseline
 from .harness import build_harness_agent
 from .minimal_harness import build_minimal_agent
 from .public_projection import (
@@ -93,6 +94,9 @@ def run_match(
         for seat, config in enumerate(configs)
         if config.backend in {"openai", "anthropic", "gemini"}
     }
+    for seat, config in enumerate(configs):
+        if config.backend in BASELINE_BACKENDS:
+            model_agents[seat] = build_baseline(config, game, seat)
     sink_lock = threading.Lock()
     harness_event_lock = threading.Lock()
     attempt_error_lock = threading.Lock()
@@ -248,6 +252,8 @@ def run_match(
                     raise RuntimeError(f"seat {seat} has no legal actions")
                 observation = game.observe(state, seat)
                 observation["state_version"] = snapshot_version
+                if configs[seat].backend in BASELINE_BACKENDS:
+                    model_agents[seat].bind(state, snapshot_version)
                 inputs[seat] = observation, legal
 
             try:
@@ -326,5 +332,7 @@ def run_match(
             store.harness_events(match_id), HARNESS_BACKENDS, attempt_errors,
         ),
     }
+    from .baselines.metrics import baseline_metrics
+    result["baseline_metrics"] = baseline_metrics(configs, store.controller_calls(match_id))
     emit({"type": "match_finished", **result})
     return result

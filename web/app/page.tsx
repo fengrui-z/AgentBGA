@@ -193,12 +193,12 @@ function makeT(lang: Lang) {
 const LangCtx = createContext<Lang>("zh");
 const useLang = () => useContext(LangCtx);
 
-type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "qwen" | "codex" | "cursor" | "grok" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random";
+type Backend = "openai" | "anthropic" | "gemini" | "claude" | "pi" | "qwen" | "codex" | "cursor" | "grok" | "opencode" | "dsh" | "hermes" | "minimal" | "human" | "random" | "greedy" | "heuristic" | "ismcts";
 type Provider = "custom" | "claude_code" | "pi" | "qwen" | "codex" | "cursor" | "grok" | "opencode" | "dsh" | "hermes" | "minimal" | "deepseek" | "dashscope" | "zhipu" | "minimax";
 type GameId = "carcassonne" | "wingspan" | "harmonies" | "splendor" | "azul" | "ark_nova" | "brass_birmingham" | "castles_of_burgundy" | "century_spice_road" | "seven_wonders";
 type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "max" | "xhigh";
 type AuthMode = "api_key" | "subscription";
-type PlayerForm = { id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string; auth_mode: AuthMode; reasoning_effort: ReasoningEffort };
+type PlayerForm = { algorithm_params?: Record<string, number>; id: string; name: string; provider: Provider; backend: Backend; model: string; base_url: string; api_key: string; auth_mode: AuthMode; reasoning_effort: ReasoningEffort };
 type Card = { id: string; tier: number; bonus: string; points: number; cost: Record<string, number> };
 type PlayerView = {
   seat: number; tokens: Record<string, number>; bonuses: Record<string, number>; score: number;
@@ -373,7 +373,21 @@ const BACKENDS: Record<Backend, {label: Record<Lang, string>; url: string; key: 
   hermes: { label: {zh: "Hermes Agent", en: "Hermes Agent"}, url: "https://api.deepseek.com", key: "", model: "" },
   minimal: { label: {zh: "Minimal Harness", en: "Minimal Harness"}, url: "https://api.deepseek.com", key: "", model: "" },
   human: { label: {zh: "人类玩家", en: "Human player"}, url: "", key: "", model: "" },
+  greedy: {label: {zh: "贪心基线", en: "Greedy baseline"}, url: "", key: "", model: ""},
+  heuristic: {label: {zh: "启发式基线", en: "Heuristic baseline"}, url: "", key: "", model: ""},
+  ismcts: {label: {zh: "信息集蒙特卡洛树搜索", en: "ISMCTS baseline"}, url: "", key: "", model: ""},
   random: { label: {zh: "随机基线", en: "Random baseline"}, url: "", key: "", model: "" },
+};
+const BASELINE_BACKENDS = new Set<Backend>(["greedy", "heuristic", "ismcts"]);
+const BASELINE_PARAMETERS: Record<string, {label: Record<Lang, string>; value: number}> = {
+  seed: {label: {zh: "算法随机种子", en: "Algorithm seed"}, value: 0},
+  max_candidates: {label: {zh: "候选动作上限（0 = 全部）", en: "Candidate limit (0 = all)"}, value: 32},
+  time_limit_ms: {label: {zh: "决策时间预算 / ms（0 = 不限）", en: "Time budget / ms (0 = unlimited)"}, value: 0},
+  iterations: {label: {zh: "搜索迭代上限", en: "Search iterations"}, value: 128},
+  max_steps: {label: {zh: "每次模拟决策步数", en: "Steps per simulation"}, value: 24},
+  exploration: {label: {zh: "搜索探索系数", en: "Exploration constant"}, value: 1.4},
+  position_weight: {label: {zh: "长期局面权重", en: "Position weight"}, value: 1},
+  opponent_weight: {label: {zh: "对手局面权重", en: "Opponent weight"}, value: 0.25},
 };
 const HARNESS_BACKENDS = new Set<Backend>(["claude", "pi", "qwen", "codex", "cursor", "grok", "opencode", "dsh", "hermes", "minimal"]);
 const REASONING_OPTIONS: {value: ReasoningEffort; label: Record<Lang,string>}[] = [
@@ -1547,7 +1561,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       if (p.id !== id) return p;
       if (patch.backend && patch.backend !== p.backend) {
         const defaults = BACKENDS[patch.backend];
-        return {...p, ...patch, provider: patch.backend === "grok" ? "grok" : "custom", base_url: defaults.url, model: defaults.model, api_key: "", auth_mode: patch.backend === "grok" ? "subscription" : "api_key"};
+        return {...p, ...patch, algorithm_params: {}, provider: patch.backend === "grok" ? "grok" : "custom", base_url: defaults.url, model: defaults.model, api_key: "", auth_mode: patch.backend === "grok" ? "subscription" : "api_key"};
       }
       return {...p, ...patch};
     }));
@@ -1692,6 +1706,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
           }} : {}),
           players: players.map(p => ({
             name: p.name, backend: p.backend, model: p.model,
+            ...(BASELINE_BACKENDS.has(p.backend) ? {algorithm_params: p.algorithm_params || {}} : {}),
             ...(["codex", "grok"].includes(p.backend) ? {auth_mode: p.auth_mode} : {}),
             ...(!(["codex", "grok"].includes(p.backend) && p.auth_mode === "subscription") ? {base_url: p.base_url, api_key: p.api_key} : {}),
             ...((HARNESS_BACKENDS.has(p.backend) && !(p.backend === "grok" && p.auth_mode === "subscription")) ? {reasoning_effort: p.reasoning_effort} : {}),
@@ -1715,6 +1730,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
         return player.name === persisted?.name && player.backend === persisted?.backend;
       }) ? players.map(player => ({
         name: player.name, backend: player.backend, model: player.model,
+        ...(BASELINE_BACKENDS.has(player.backend) ? {algorithm_params: player.algorithm_params || {}} : {}),
         ...(["codex", "grok"].includes(player.backend) ? {auth_mode: player.auth_mode} : {}),
         ...(!(["codex", "grok"].includes(player.backend) && player.auth_mode === "subscription") ? {
           base_url: player.base_url, api_key: player.api_key,
@@ -1802,7 +1818,7 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
       <div className="players-config">{players.map((p, index) => <article className="player-config" key={p.id}>
         <div className="seat-order"><b>0{index + 1}</b><div><button disabled={index === 0} aria-label={`${p.name} ${t("move_up")}`} onClick={() => movePlayer(index, -1)}>↑</button><button disabled={index === players.length - 1} aria-label={`${p.name} ${t("move_down")}`} onClick={() => movePlayer(index, 1)}>↓</button></div></div>
         <div className="field grow"><label htmlFor={`${p.id}-name`}>{t("f_name")}</label><input id={`${p.id}-name`} value={p.name} onChange={e => updatePlayer(p.id, {name: e.target.value})}/></div>
-        {!(["random", "human"] as Backend[]).includes(p.backend) && <>
+        {!(["random", "human", "greedy", "heuristic", "ismcts"] as Backend[]).includes(p.backend) && <>
           <div className="field provider-field"><label htmlFor={`${p.id}-provider`}>{t("f_provider")}</label><select id={`${p.id}-provider`} value={p.provider} onChange={e => selectProvider(p.id, e.target.value as Provider)}><optgroup label={t("og_harness")}>{(["claude_code", "pi", "qwen", "codex", "cursor", "grok", "opencode", "dsh", "hermes", "minimal"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup><optgroup label={t("og_direct")}>{(["custom", "deepseek", "dashscope", "zhipu", "minimax"] as Provider[]).map(id => <option key={id} value={id}>{PROVIDERS[id].label[lang]}</option>)}</optgroup></select></div>
           <div className="field backend-field"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).filter(([id]) => id !== "random").map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select></div>
           {["codex", "grok"].includes(p.backend) && <div className="field auth-field"><label htmlFor={`${p.id}-auth`}>{t("f_auth")}</label><select id={`${p.id}-auth`} value={p.auth_mode} onChange={e => updatePlayer(p.id, {auth_mode: e.target.value as AuthMode})}><option value="subscription">{t(p.backend === "grok" ? "auth_grok" : "auth_subscription")}</option><option value="api_key">{t("auth_api_key")}</option></select></div>}
@@ -1812,7 +1828,16 @@ function HomeInner({lang, toggleLang}: {lang: Lang; toggleLang: () => void}) {
           {(HARNESS_BACKENDS.has(p.backend) && !(p.backend === "grok" && p.auth_mode === "subscription")) && <div className="field reasoning-field"><label htmlFor={`${p.id}-reasoning`}>Reasoning Effort</label><select id={`${p.id}-reasoning`} value={p.reasoning_effort} onChange={e => updatePlayer(p.id, {reasoning_effort: e.target.value as ReasoningEffort})}>{REASONING_OPTIONS.filter(option => !["codex", "qwen"].includes(p.backend) || option.value !== "none").map(option => <option key={option.value} value={option.value}>{option.label[lang]}</option>)}</select></div>}
           <div className="provider-note">{PROVIDERS[p.provider].note[lang]}</div>
         </>}
-        {(["random", "human"] as Backend[]).includes(p.backend) && <div className="field manual-backend"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select><small>{p.backend === "human" ? t("human_note") : t("random_note")}</small></div>}
+        {(["random", "human", "greedy", "heuristic", "ismcts"] as Backend[]).includes(p.backend) && <div className="field manual-backend"><label htmlFor={`${p.id}-backend`}>{t("f_backend")}</label><select id={`${p.id}-backend`} value={p.backend} onChange={e => updatePlayer(p.id, {backend: e.target.value as Backend})}>{Object.entries(BACKENDS).map(([id, b]) => <option key={id} value={id}>{b.label[lang]}</option>)}</select><small>{p.backend === "human" ? t("human_note") : p.backend === "random" ? t("random_note") : (lang === "zh" ? "本地算法，无需 API Key" : "Local algorithm; no API key required")}</small></div>}
+        {BASELINE_BACKENDS.has(p.backend) && Object.entries(BASELINE_PARAMETERS).filter(([key]) =>
+          ["seed", "max_candidates", "time_limit_ms"].includes(key) || p.backend === "ismcts" ||
+          (p.backend === "heuristic" && ["position_weight", "opponent_weight"].includes(key))
+        ).map(([key, definition]) => <div className="field" key={key}>
+          <label htmlFor={`${p.id}-${key}`}>{definition.label[lang]}</label>
+          <input id={`${p.id}-${key}`} type="number" step={key.endsWith("weight") || key === "exploration" ? "0.05" : "1"}
+            value={p.algorithm_params?.[key] ?? (key === "time_limit_ms" && p.backend === "ismcts" ? 1000 : definition.value)}
+            onChange={e => updatePlayer(p.id, {algorithm_params: {...p.algorithm_params, [key]: Number(e.target.value)}})}/>
+        </div>)}
         {players.length > minPlayers && <button className="remove" aria-label={`${t("remove")} ${p.name}`} onClick={() => setPlayers(x => x.filter(y => y.id !== p.id))}>×</button>}
       </article>)}</div>
       <div className="setup-actions">

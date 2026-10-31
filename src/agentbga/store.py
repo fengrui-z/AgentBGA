@@ -110,6 +110,8 @@ class Store:
             self.connection.execute("ALTER TABLE matches ADD COLUMN content_pack_id TEXT")
         if "content_hash" not in match_columns:
             self.connection.execute("ALTER TABLE matches ADD COLUMN content_hash TEXT")
+        if "algorithm_params" not in {row[1] for row in self.connection.execute("PRAGMA table_info(match_players)")}:
+            self.connection.execute("ALTER TABLE match_players ADD COLUMN algorithm_params TEXT")
         self.connection.commit()
 
     def close(self) -> None:
@@ -296,22 +298,24 @@ class Store:
             for seat, player in enumerate(players):
                 self.connection.execute(
                     "INSERT INTO match_players "
-                    "(match_id,seat,name,backend,model,base_url,api_key_env,auth_mode,harness,wire_api,reasoning_effort) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "(match_id,seat,name,backend,model,base_url,api_key_env,auth_mode,harness,wire_api,reasoning_effort,algorithm_params) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (match_id, seat, player["name"], player["backend"], player.get("model"),
                      player.get("base_url"), player.get("api_key_env"), player.get("auth_mode"),
                      player["backend"] if player["backend"] in HARNESS_BACKENDS else None,
-                     player.get("wire_api"), player.get("reasoning_effort")),
+                     player.get("wire_api"), player.get("reasoning_effort"),
+                     json.dumps(player["algorithm_params"], sort_keys=True) if player.get("algorithm_params") is not None else None),
                 )
 
     def players(self, match_id: str) -> list[dict[str, Any]]:
         self.load(match_id)
         rows = self.connection.execute(
-            "SELECT seat,name,backend,model,base_url,api_key_env,auth_mode,harness,wire_api,reasoning_effort "
+            "SELECT seat,name,backend,model,base_url,api_key_env,auth_mode,harness,wire_api,reasoning_effort,algorithm_params "
             "FROM match_players WHERE match_id=? ORDER BY seat",
             (match_id,),
         ).fetchall()
-        return [{key: row[key] for key in row.keys() if row[key] is not None} for row in rows]
+        return [{key: (json.loads(row[key]) if key == "algorithm_params" else row[key])
+                 for key in row.keys() if row[key] is not None} for row in rows]
 
     def list_matches(self, limit: int = 50) -> list[dict[str, Any]]:
         """Return recent tables for the local spectator UI."""
