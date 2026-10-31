@@ -37,6 +37,8 @@ def features(game, state, seat):
     if kind == 'ark_nova':
         tracks=p['tracks']; buildings=p['map'].get('buildings',[])
         material=tracks['appeal']+3*tracks['conservation']+min(p['money'],40)*0.12+len(p['played_cards'])*0.6
+        material+=tracks['reputation']*0.25+len(p['partner_zoos'])+len(p['universities'])
+        material+=sum(b.get('size',0)*0.6 for b in buildings if b['type']=='standard_enclosure' and not b.get('occupied'))
         position=tracks['reputation']*0.4+len(p['partner_zoos'])*1.5+len(p['universities'])*1.5
         position+=sum(c['upgraded'] for c in p['action_cards'])*2+len(buildings)*0.7+min(len(p['hand']),5)*0.25
         return material,position
@@ -110,6 +112,16 @@ def value(game,state,seat,position_weight=0.0,opponent_weight=0.0):
 def action_prior(game,state,seat,action):
     """Break material ties in staged actions without changing the rules."""
     kind=action.get('type','')
+    if game.game_id=='ark_nova' and kind=='start_action':
+        p=state['players'][seat]
+        card=action.get('action_card_id')
+        if card=='animals': return 2.0
+        if card=='association': return 1.8
+        if card=='build':
+            vacant=sum(b['type']=='standard_enclosure' and not b.get('occupied') for b in p['map']['buildings'])
+            return 1.6 if vacant<2 else 0.1
+        if card=='cards': return 1.4 if len(p['hand'])<4 else 0.2
+        if card=='sponsors': return 1.7 if p['money']<15 else 0.3
     if game.game_id=='brass_birmingham' and kind=='select_action':
         return {'sell':0.5,'build':0.4,'network':0.2,'develop':0.1,'loan':0.05,'pass':-0.5}.get(action.get('action'),0)
     # Prefer completing optional resolutions over cycling resources indefinitely.

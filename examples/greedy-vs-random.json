@@ -1,0 +1,7 @@
+{
+  "schema_version": "agentbga.players.v1",
+  "players": [
+    {"name": "Greedy v1", "backend": "greedy", "algorithm_params": {"max_candidates": 32, "time_limit_ms": 0, "seed": 7}},
+    {"name": "Random", "backend": "random"}
+  ]
+}
