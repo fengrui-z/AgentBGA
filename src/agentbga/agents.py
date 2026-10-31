@@ -15,6 +15,9 @@ import urllib.request
 from typing import Any, Callable, Iterator, Protocol
 
 
+from .baselines.config import BASELINE_BACKENDS, normalize_params
+
+
 class AgentError(RuntimeError):
     pass
 
@@ -40,6 +43,7 @@ class PlayerConfig:
     name: str
     backend: str
     model: str | None = None
+    algorithm_params: dict[str, Any] | None = None
     base_url: str | None = None
     api_key_env: str | None = None
     auth_mode: str | None = None
@@ -54,13 +58,13 @@ class PlayerConfig:
     def from_dict(cls, value: dict[str, Any], seat: int) -> "PlayerConfig":
         allowed = {
             "name", "backend", "model", "base_url", "api_key_env", "auth_mode", "wire_api",
-            "reasoning_effort", "series_id", "participant_id",
+            "reasoning_effort", "series_id", "participant_id", "algorithm_params",
         }
         unknown = set(value) - allowed
         if unknown:
             raise ValueError(f"player {seat} has unknown fields: {', '.join(sorted(unknown))}")
         backend = str(value.get("backend", "")).lower()
-        if backend not in {"random", "human", "openai", "anthropic", "gemini", *HARNESS_BACKENDS}:
+        if backend not in {"random", "human", "openai", "anthropic", "gemini", *HARNESS_BACKENDS, *BASELINE_BACKENDS}:
             raise ValueError(f"player {seat} has unsupported backend: {backend}")
         name = str(value.get("name", f"Seat {seat}")).strip()
         if not name:
@@ -68,8 +72,13 @@ class PlayerConfig:
         model = value.get("model")
         if backend == "grok" and value.get("auth_mode") == "subscription" and not model:
             model = "grok-4.6"
-        if backend not in {"random", "human"} and not model:
+        if backend not in {"random", "human", *BASELINE_BACKENDS} and not model:
             raise ValueError(f"player {seat} using {backend} requires model")
+        algorithm_params = None
+        if backend in BASELINE_BACKENDS:
+            algorithm_params = normalize_params(backend, value.get("algorithm_params"))
+        elif value.get("algorithm_params") is not None:
+            raise ValueError("algorithm_params is supported only by baseline backends")
         auth_mode = value.get("auth_mode")
         if auth_mode is not None:
             if backend not in {"codex", "grok"}:
@@ -176,6 +185,7 @@ class PlayerConfig:
             name=name,
             backend=backend,
             model=str(model) if model else None,
+            algorithm_params=algorithm_params,
             base_url=selected_url,
             api_key_env=selected_key_env,
             auth_mode=auth_mode,

@@ -166,8 +166,8 @@ def _rules_versions(value: dict[str, Any], games: list[str]) -> dict[str, str]:
 
 def _validate_player_count(game_id: str, player_count: int, rules_version: str) -> None:
     description = get_game(game_id, rules_version).describe()
-    minimum = int(description.get("min_players", 2))
-    maximum = min(4, int(description.get("max_players", 4)))
+    minimum = int(description.get("players", {}).get("minimum", 2))
+    maximum = min(4, int(description.get("players", {}).get("maximum", 4)))
     if not minimum <= player_count <= maximum:
         raise ValueError(
             f"game {game_id} does not support configured player count {player_count}"

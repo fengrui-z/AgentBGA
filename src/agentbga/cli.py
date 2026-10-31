@@ -14,6 +14,7 @@ import tempfile
 from typing import Any
 
 from . import __version__
+from .baselines.config import BASELINE_BACKENDS
 from .agents import AgentError, HARNESS_BACKENDS, harness_executable_name, load_players_config
 from .game import GameRuleError
 from .experiment import load_experiment, run_experiment, schedule_experiment
@@ -143,7 +144,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.add_argument(
         "--controllers",
-        help="legacy comma-separated seats: random, openai, or human",
+        help="comma-separated seats: random, greedy, heuristic, ismcts, openai, or human",
     )
     run.add_argument(
         "--players-config",
@@ -247,7 +248,7 @@ def execute(args: argparse.Namespace) -> int:
             player_checks = []
             for seat, player in enumerate(players):
                 subscription_auth = player.backend in {"codex", "grok"} and player.auth_mode == "subscription"
-                key_required = player.backend not in {"random", "human"} and not subscription_auth
+                key_required = player.backend not in {"random", "human", *BASELINE_BACKENDS} and not subscription_auth
                 key_configured = not key_required or bool(os.environ.get(player.api_key_env or ""))
                 harness_required = player.backend in HARNESS_BACKENDS
                 # "minimal" runs in-process (no external binary needed)
