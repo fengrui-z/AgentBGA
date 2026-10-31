@@ -1,0 +1,895 @@
+{
+  "schema_version": "agentbga.baseline-validation.v1",
+  "revision": "5eb6ae9c201009fed24635004dc11be63ea4d100",
+  "matches": [
+    {
+      "game": "splendor",
+      "rules_version": "classic-1.0",
+      "backend": "greedy",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0001.sqlite3",
+      "status": "ok",
+      "match_id": "c331ce33792f4da3",
+      "turns": 70,
+      "decisions": 70,
+      "rankings": [
+        {
+          "seat": 1,
+          "score": 15,
+          "development_cards": 13,
+          "nobles": 1,
+          "rank": 1,
+          "player": "greedy-1",
+          "backend": "greedy"
+        },
+        {
+          "seat": 0,
+          "score": 11,
+          "development_cards": 15,
+          "nobles": 1,
+          "rank": 2,
+          "player": "greedy-0",
+          "backend": "greedy"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 35,
+            "fallbacks": 0,
+            "latency_ms": 81.882,
+            "iterations": 0,
+            "simulation_steps": 230,
+            "nodes": 0,
+            "evaluated_candidates": 230
+          },
+          {
+            "seat": 1,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 35,
+            "fallbacks": 0,
+            "latency_ms": 67.553,
+            "iterations": 0,
+            "simulation_steps": 247,
+            "nodes": 0,
+            "evaluated_candidates": 247
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "c6b4b28504e8befd77ba31d340978514f056431a8d7780a8ee7ff0e94ced1bf0",
+      "seconds": 0.22
+    },
+    {
+      "game": "azul",
+      "rules_version": "next-move-2018-base-colored-wall-1.0",
+      "backend": "greedy",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0002.sqlite3",
+      "status": "ok",
+      "match_id": "5d6becda5e474e96",
+      "turns": 49,
+      "decisions": 49,
+      "rankings": [
+        {
+          "seat": 1,
+          "score": 39,
+          "completed_rows": 1,
+          "completed_columns": 1,
+          "completed_colors": 0,
+          "rank": 1,
+          "player": "greedy-1",
+          "backend": "greedy"
+        },
+        {
+          "seat": 0,
+          "score": 19,
+          "completed_rows": 2,
+          "completed_columns": 0,
+          "completed_colors": 0,
+          "rank": 2,
+          "player": "greedy-0",
+          "backend": "greedy"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 25,
+            "fallbacks": 0,
+            "latency_ms": 37.235,
+            "iterations": 0,
+            "simulation_steps": 157,
+            "nodes": 0,
+            "evaluated_candidates": 157
+          },
+          {
+            "seat": 1,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 24,
+            "fallbacks": 0,
+            "latency_ms": 37.579,
+            "iterations": 0,
+            "simulation_steps": 161,
+            "nodes": 0,
+            "evaluated_candidates": 161
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "8423aaeb34638d70e08272df2467851ffcc570b7987c2f9b0e422c7ee0bf77e5",
+      "seconds": 0.114
+    },
+    {
+      "game": "ark_nova",
+      "rules_version": "base-1.2-faq-v2-map0.1",
+      "backend": "greedy",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0003.sqlite3",
+      "status": "ok",
+      "match_id": "38f5c3c984ba4ebc",
+      "turns": 148,
+      "decisions": 511,
+      "rankings": [
+        {
+          "seat": 0,
+          "appeal": 64,
+          "conservation": 22,
+          "target_appeal": 58,
+          "victory_points": 6,
+          "map_completion_points": 0,
+          "pre_endgame_appeal": 64,
+          "pre_endgame_conservation": 20,
+          "pre_endgame_track_score": 100,
+          "final_track_score": 106,
+          "endgame_scoring_points": 6,
+          "supported_projects": 0,
+          "score_entries": [
+            {
+              "kind": "final_scoring_card",
+              "card_id": "final-002",
+              "conservation": 2,
+              "metric": "small_animal_count",
+              "metric_value": 7,
+              "awarded_conservation": 2
+            }
+          ],
+          "rank": 1,
+          "player": "greedy-0",
+          "backend": "greedy"
+        },
+        {
+          "seat": 1,
+          "appeal": 25,
+          "conservation": 30,
+          "target_appeal": 34,
+          "victory_points": -9,
+          "map_completion_points": 0,
+          "pre_endgame_appeal": 25,
+          "pre_endgame_conservation": 29,
+          "pre_endgame_track_score": 88,
+          "final_track_score": 91,
+          "endgame_scoring_points": 3,
+          "supported_projects": 1,
+          "score_entries": [
+            {
+              "kind": "final_scoring_card",
+              "card_id": "final-010",
+              "conservation": 1,
+              "metric": "rock_icon_count",
+              "metric_value": 2,
+              "awarded_conservation": 1
+            }
+          ],
+          "rank": 2,
+          "player": "greedy-1",
+          "backend": "greedy"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 266,
+            "fallbacks": 0,
+            "latency_ms": 39752.75,
+            "iterations": 0,
+            "simulation_steps": 966,
+            "nodes": 0,
+            "evaluated_candidates": 958
+          },
+          {
+            "seat": 1,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 245,
+            "fallbacks": 0,
+            "latency_ms": 40007.838,
+            "iterations": 0,
+            "simulation_steps": 890,
+            "nodes": 0,
+            "evaluated_candidates": 882
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "1633664996afc7e465d6296773736fceac95150ea365afcc9fa9ffb1a73b1adf",
+      "seconds": 123.838
+    },
+    {
+      "game": "brass_birmingham",
+      "rules_version": "roxley-2018.11-playable-beta.2",
+      "backend": "greedy",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0004.sqlite3",
+      "status": "ok",
+      "match_id": "9afa21a512a54db8",
+      "turns": 40,
+      "decisions": 271,
+      "rankings": [
+        {
+          "seat": 1,
+          "vp": 37,
+          "income_position": 2,
+          "income_level": -8,
+          "money": 12,
+          "rank": 1,
+          "player": "greedy-1",
+          "backend": "greedy"
+        },
+        {
+          "seat": 0,
+          "vp": 0,
+          "income_position": 0,
+          "income_level": -10,
+          "money": 0,
+          "rank": 2,
+          "player": "greedy-0",
+          "backend": "greedy"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 127,
+            "fallbacks": 0,
+            "latency_ms": 552.686,
+            "iterations": 0,
+            "simulation_steps": 461,
+            "nodes": 0,
+            "evaluated_candidates": 461
+          },
+          {
+            "seat": 1,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 144,
+            "fallbacks": 0,
+            "latency_ms": 2415.585,
+            "iterations": 0,
+            "simulation_steps": 513,
+            "nodes": 0,
+            "evaluated_candidates": 513
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "92c4147abcda5cd4beb8908912e15cb5d18ce46e50f3099c9db8c30c5c044d08",
+      "seconds": 7.018
+    },
+    {
+      "game": "castles_of_burgundy",
+      "rules_version": "ravensburger-2019-base-1.0",
+      "backend": "greedy",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0005.sqlite3",
+      "status": "ok",
+      "match_id": "92a11df958424997",
+      "turns": 50,
+      "decisions": 152,
+      "rankings": [
+        {
+          "seat": 1,
+          "score": 70,
+          "empty_spaces": 29,
+          "bridge": 0,
+          "board_score": 62,
+          "resource_points": 8,
+          "monastery_points": 0,
+          "rank": 1,
+          "player": "greedy-1",
+          "backend": "greedy"
+        },
+        {
+          "seat": 0,
+          "score": 44,
+          "empty_spaces": 30,
+          "bridge": 0,
+          "board_score": 34,
+          "resource_points": 10,
+          "monastery_points": 0,
+          "rank": 2,
+          "player": "greedy-0",
+          "backend": "greedy"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 76,
+            "fallbacks": 0,
+            "latency_ms": 303.09,
+            "iterations": 0,
+            "simulation_steps": 454,
+            "nodes": 0,
+            "evaluated_candidates": 454
+          },
+          {
+            "seat": 1,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 76,
+            "fallbacks": 0,
+            "latency_ms": 285.906,
+            "iterations": 0,
+            "simulation_steps": 444,
+            "nodes": 0,
+            "evaluated_candidates": 444
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "e57d10c644623a380a7bc38484ae3ceff40d8c2a686e4b0663fa17b23d7122a7",
+      "seconds": 0.91
+    },
+    {
+      "game": "century_spice_road",
+      "rules_version": "plan-b-2017-base-1.0",
+      "backend": "greedy",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0006.sqlite3",
+      "status": "ok",
+      "match_id": "c7ccdf14dd8c4b72",
+      "turns": 132,
+      "decisions": 132,
+      "rankings": [
+        {
+          "seat": 1,
+          "score": 87,
+          "point_cards": 6,
+          "gold": 0,
+          "silver": 3,
+          "rank": 1,
+          "player": "greedy-1",
+          "backend": "greedy"
+        },
+        {
+          "seat": 0,
+          "score": 51,
+          "point_cards": 3,
+          "gold": 0,
+          "silver": 1,
+          "rank": 2,
+          "player": "greedy-0",
+          "backend": "greedy"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 66,
+            "fallbacks": 0,
+            "latency_ms": 863.594,
+            "iterations": 0,
+            "simulation_steps": 528,
+            "nodes": 0,
+            "evaluated_candidates": 528
+          },
+          {
+            "seat": 1,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 66,
+            "fallbacks": 0,
+            "latency_ms": 1003.928,
+            "iterations": 0,
+            "simulation_steps": 525,
+            "nodes": 0,
+            "evaluated_candidates": 525
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "37a8d54309020a92d12ce630eb053e7e19dc41c7d9f6ff1ca4da225f404eb01f",
+      "seconds": 2.519
+    },
+    {
+      "game": "seven_wonders",
+      "rules_version": "second-edition-base-1.0",
+      "backend": "greedy",
+      "seed": 42,
+      "players": 3,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0007.sqlite3",
+      "status": "ok",
+      "match_id": "430852d7a69745f2",
+      "turns": 18,
+      "decisions": 54,
+      "rankings": [
+        {
+          "seat": 1,
+          "score": 25,
+          "coins": 51,
+          "breakdown": {
+            "wonder": 0,
+            "treasure": 17,
+            "military": 0,
+            "civil": 8,
+            "commercial": 0,
+            "science": 0,
+            "guilds": 0,
+            "total": 25
+          },
+          "rank": 1,
+          "player": "greedy-1",
+          "backend": "greedy"
+        },
+        {
+          "seat": 0,
+          "score": 25,
+          "coins": 48,
+          "breakdown": {
+            "wonder": 0,
+            "treasure": 16,
+            "military": 0,
+            "civil": 0,
+            "commercial": 0,
+            "science": 9,
+            "guilds": 0,
+            "total": 25
+          },
+          "rank": 2,
+          "player": "greedy-0",
+          "backend": "greedy"
+        },
+        {
+          "seat": 2,
+          "score": 19,
+          "coins": 54,
+          "breakdown": {
+            "wonder": 0,
+            "treasure": 18,
+            "military": 0,
+            "civil": 0,
+            "commercial": 0,
+            "science": 1,
+            "guilds": 0,
+            "total": 19
+          },
+          "rank": 3,
+          "player": "greedy-2",
+          "backend": "greedy"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 18,
+            "fallbacks": 0,
+            "latency_ms": 1730.398,
+            "iterations": 0,
+            "simulation_steps": 312,
+            "nodes": 0,
+            "evaluated_candidates": 104
+          },
+          {
+            "seat": 1,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 18,
+            "fallbacks": 0,
+            "latency_ms": 1681.174,
+            "iterations": 0,
+            "simulation_steps": 312,
+            "nodes": 0,
+            "evaluated_candidates": 104
+          },
+          {
+            "seat": 2,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 18,
+            "fallbacks": 0,
+            "latency_ms": 1877.984,
+            "iterations": 0,
+            "simulation_steps": 315,
+            "nodes": 0,
+            "evaluated_candidates": 105
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "2f0a9d57158614087ea88857164db4c3fc49ddbc7a10b3d0be3a2896521ffd78",
+      "seconds": 2.426
+    },
+    {
+      "game": "harmonies",
+      "rules_version": "libellud-2024-base-1.0",
+      "backend": "greedy",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0008.sqlite3",
+      "status": "ok",
+      "match_id": "ffd4551703dc4929",
+      "turns": 91,
+      "decisions": 91,
+      "rankings": [
+        {
+          "seat": 1,
+          "score": 40,
+          "animal_cubes": 2,
+          "score_breakdown": {
+            "trees": 3,
+            "mountains": 3,
+            "fields": 5,
+            "buildings": 15,
+            "water": 5,
+            "animals": 9,
+            "spirits": 0,
+            "total": 40
+          },
+          "rank": 1,
+          "player": "greedy-1",
+          "backend": "greedy"
+        },
+        {
+          "seat": 0,
+          "score": 37,
+          "animal_cubes": 1,
+          "score_breakdown": {
+            "trees": 6,
+            "mountains": 0,
+            "fields": 10,
+            "buildings": 15,
+            "water": 2,
+            "animals": 4,
+            "spirits": 0,
+            "total": 37
+          },
+          "rank": 2,
+          "player": "greedy-0",
+          "backend": "greedy"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 45,
+            "fallbacks": 0,
+            "latency_ms": 87.714,
+            "iterations": 0,
+            "simulation_steps": 269,
+            "nodes": 0,
+            "evaluated_candidates": 269
+          },
+          {
+            "seat": 1,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 46,
+            "fallbacks": 0,
+            "latency_ms": 86.355,
+            "iterations": 0,
+            "simulation_steps": 270,
+            "nodes": 0,
+            "evaluated_candidates": 270
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "14455c6db2faadf961954e48a52643e72ab3701d980f598f048d57af425eb6a3",
+      "seconds": 0.279
+    },
+    {
+      "game": "wingspan",
+      "rules_version": "stonemaier-base-en-1.0",
+      "backend": "greedy",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0009.sqlite3",
+      "status": "ok",
+      "match_id": "d428909971e84224",
+      "turns": 194,
+      "decisions": 194,
+      "rankings": [
+        {
+          "seat": 1,
+          "score": 46,
+          "food": 4,
+          "score_breakdown": {
+            "birds": 22,
+            "eggs": 5,
+            "cached_food": 0,
+            "tucked_cards": 1,
+            "round_goals": 15,
+            "bonus_cards": 3
+          },
+          "rank": 1,
+          "player": "greedy-1",
+          "backend": "greedy"
+        },
+        {
+          "seat": 0,
+          "score": 39,
+          "food": 2,
+          "score_breakdown": {
+            "birds": 32,
+            "eggs": 1,
+            "cached_food": 1,
+            "tucked_cards": 0,
+            "round_goals": 2,
+            "bonus_cards": 3
+          },
+          "rank": 2,
+          "player": "greedy-0",
+          "backend": "greedy"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 105,
+            "fallbacks": 0,
+            "latency_ms": 137.685,
+            "iterations": 0,
+            "simulation_steps": 371,
+            "nodes": 0,
+            "evaluated_candidates": 371
+          },
+          {
+            "seat": 1,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 89,
+            "fallbacks": 0,
+            "latency_ms": 122.016,
+            "iterations": 0,
+            "simulation_steps": 335,
+            "nodes": 0,
+            "evaluated_candidates": 335
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "cc340b180fd3cebcb6ddedb0cee13e141ecb0997959c0ba49b80225896cb6167",
+      "seconds": 0.512
+    },
+    {
+      "game": "carcassonne",
+      "rules_version": "hig-base-farmers-1.0",
+      "backend": "greedy",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0010.sqlite3",
+      "status": "ok",
+      "match_id": "9c888023c1794765",
+      "turns": 142,
+      "decisions": 142,
+      "rankings": [
+        {
+          "seat": 1,
+          "score": 22,
+          "rank": 1,
+          "player": "greedy-1",
+          "backend": "greedy"
+        },
+        {
+          "seat": 0,
+          "score": 9,
+          "rank": 2,
+          "player": "greedy-0",
+          "backend": "greedy"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 72,
+            "fallbacks": 0,
+            "latency_ms": 726.754,
+            "iterations": 0,
+            "simulation_steps": 442,
+            "nodes": 0,
+            "evaluated_candidates": 442
+          },
+          {
+            "seat": 1,
+            "algorithm": "greedy",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 0
+            },
+            "decisions": 70,
+            "fallbacks": 0,
+            "latency_ms": 706.654,
+            "iterations": 0,
+            "simulation_steps": 428,
+            "nodes": 0,
+            "evaluated_candidates": 428
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "651ec06184291c432a60d66e0d356c1c31a8469c1d83163fdffebbbc6ff1eb00",
+      "seconds": 1.893
+    }
+  ]
+}
