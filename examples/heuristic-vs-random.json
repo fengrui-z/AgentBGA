@@ -1,0 +1,7 @@
+{
+  "schema_version": "agentbga.players.v1",
+  "players": [
+    {"name": "Heuristic v1", "backend": "heuristic", "algorithm_params": {"max_candidates": 32, "time_limit_ms": 0, "seed": 7, "position_weight": 1.0, "opponent_weight": 0.25}},
+    {"name": "Random", "backend": "random"}
+  ]
+}
