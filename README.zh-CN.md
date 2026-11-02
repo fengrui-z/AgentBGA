@@ -50,6 +50,8 @@ Node.js 用于构建前端，构建完成后由 Python 提供页面。
 ./agentbga run --game splendor --players 2 --controllers random,random --seed 42
 ```
 
+非 LLM 对照可使用 `greedy`、`heuristic`、`ismcts`；参数与全游戏验证见[非 LLM 算法基线](docs/non-llm-baselines.zh-CN.md)。
+
 不需要 Node.js、API key、外部智能体 CLI 或安装 Python 包。
 结果会包含对局 ID；加上 `--jsonl` 可以逐条输出决策事件。
 

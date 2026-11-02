@@ -52,6 +52,8 @@ From the repository root, run a seeded Splendor match between two random players
 ./agentbga run --game splendor --players 2 --controllers random,random --seed 42
 ```
 
+Non-LLM controllers `greedy`, `heuristic`, and `ismcts` support all ten default games. See the [baseline configuration and validation guide](docs/non-llm-baselines.zh-CN.md) and `examples/*-vs-random.json`.
+
 This needs no Node.js, API key, external agent CLI, or Python package installation.
 The result includes the match ID. Add `--jsonl` to stream decisions as they happen.
 

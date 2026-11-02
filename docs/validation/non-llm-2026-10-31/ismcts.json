@@ -1,0 +1,1008 @@
+{
+  "schema_version": "agentbga.baseline-validation.v1",
+  "revision": "5eb6ae9c201009fed24635004dc11be63ea4d100",
+  "matches": [
+    {
+      "game": "splendor",
+      "rules_version": "classic-1.0",
+      "backend": "ismcts",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0001.sqlite3",
+      "status": "ok",
+      "match_id": "91badcf9ccce4504",
+      "turns": 72,
+      "decisions": 72,
+      "rankings": [
+        {
+          "seat": 1,
+          "score": 17,
+          "development_cards": 14,
+          "nobles": 2,
+          "rank": 1,
+          "player": "ismcts-1",
+          "backend": "ismcts"
+        },
+        {
+          "seat": 0,
+          "score": 4,
+          "development_cards": 15,
+          "nobles": 0,
+          "rank": 2,
+          "player": "ismcts-0",
+          "backend": "ismcts"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 36,
+            "fallbacks": 0,
+            "latency_ms": 780.803,
+            "iterations": 288,
+            "simulation_steps": 1710,
+            "nodes": 112,
+            "evaluated_candidates": 208
+          },
+          {
+            "seat": 1,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 36,
+            "fallbacks": 0,
+            "latency_ms": 755.109,
+            "iterations": 288,
+            "simulation_steps": 1697,
+            "nodes": 65,
+            "evaluated_candidates": 258
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "848c3a937155d60184e4406e9595b7d9bc0f0d9dbafcf64baa6b7a5ee06444f9",
+      "seconds": 1.614
+    },
+    {
+      "game": "azul",
+      "rules_version": "next-move-2018-base-colored-wall-1.0",
+      "backend": "ismcts",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0002.sqlite3",
+      "status": "ok",
+      "match_id": "97037ca1e20042c7",
+      "turns": 50,
+      "decisions": 50,
+      "rankings": [
+        {
+          "seat": 0,
+          "score": 21,
+          "completed_rows": 2,
+          "completed_columns": 0,
+          "completed_colors": 0,
+          "rank": 1,
+          "player": "ismcts-0",
+          "backend": "ismcts"
+        },
+        {
+          "seat": 1,
+          "score": 2,
+          "completed_rows": 1,
+          "completed_columns": 0,
+          "completed_colors": 0,
+          "rank": 2,
+          "player": "ismcts-1",
+          "backend": "ismcts"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 25,
+            "fallbacks": 0,
+            "latency_ms": 299.534,
+            "iterations": 200,
+            "simulation_steps": 1152,
+            "nodes": 47,
+            "evaluated_candidates": 174
+          },
+          {
+            "seat": 1,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 25,
+            "fallbacks": 0,
+            "latency_ms": 288.969,
+            "iterations": 192,
+            "simulation_steps": 1122,
+            "nodes": 42,
+            "evaluated_candidates": 173
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "3a1240981198fed7e191726b66913d8f6fa02bf2df5ab357411984c87c231b36",
+      "seconds": 0.631
+    },
+    {
+      "game": "ark_nova",
+      "rules_version": "base-1.2-faq-v2-map0.1",
+      "backend": "ismcts",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0003.sqlite3",
+      "status": "ok",
+      "match_id": "b8ba4803b38a4a91",
+      "turns": 180,
+      "decisions": 668,
+      "rankings": [
+        {
+          "seat": 1,
+          "appeal": 80,
+          "conservation": 18,
+          "target_appeal": 70,
+          "victory_points": 17,
+          "map_completion_points": 7,
+          "pre_endgame_appeal": 80,
+          "pre_endgame_conservation": 17,
+          "pre_endgame_track_score": 107,
+          "final_track_score": 117,
+          "endgame_scoring_points": 10,
+          "supported_projects": 1,
+          "score_entries": [
+            {
+              "kind": "final_scoring_card",
+              "card_id": "final-010",
+              "conservation": 1,
+              "metric": "rock_icon_count",
+              "metric_value": 1,
+              "awarded_conservation": 1
+            },
+            {
+              "kind": "map_completion",
+              "victory_points": 7
+            }
+          ],
+          "rank": 1,
+          "player": "ismcts-1",
+          "backend": "ismcts"
+        },
+        {
+          "seat": 0,
+          "appeal": 57,
+          "conservation": 27,
+          "target_appeal": 43,
+          "victory_points": 14,
+          "map_completion_points": 0,
+          "pre_endgame_appeal": 57,
+          "pre_endgame_conservation": 26,
+          "pre_endgame_track_score": 111,
+          "final_track_score": 114,
+          "endgame_scoring_points": 3,
+          "supported_projects": 3,
+          "score_entries": [
+            {
+              "kind": "final_scoring_card",
+              "card_id": "final-004",
+              "conservation": 1,
+              "conditions": {
+                "water_spaces_connected": false,
+                "rock_spaces_connected": true,
+                "all_border_building_spaces_covered": false,
+                "all_building_spaces_covered": false
+              },
+              "awarded_conservation": 1
+            }
+          ],
+          "rank": 2,
+          "player": "ismcts-0",
+          "backend": "ismcts"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 358,
+            "fallbacks": 0,
+            "latency_ms": 32066.183,
+            "iterations": 219,
+            "simulation_steps": 749,
+            "nodes": 217,
+            "evaluated_candidates": 218
+          },
+          {
+            "seat": 1,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 310,
+            "fallbacks": 0,
+            "latency_ms": 26760.297,
+            "iterations": 190,
+            "simulation_steps": 631,
+            "nodes": 189,
+            "evaluated_candidates": 189
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "fbdf0ed09dea6c49858794884c3200482706b7d8ab2f77f5eb120fd237e958b2",
+      "seconds": 113.914
+    },
+    {
+      "game": "brass_birmingham",
+      "rules_version": "roxley-2018.11-playable-beta.2",
+      "backend": "ismcts",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0004.sqlite3",
+      "status": "ok",
+      "match_id": "e3a72b2abaef41de",
+      "turns": 40,
+      "decisions": 202,
+      "rankings": [
+        {
+          "seat": 0,
+          "vp": 0,
+          "income_position": 0,
+          "income_level": -10,
+          "money": 0,
+          "rank": 1,
+          "player": "ismcts-0",
+          "backend": "ismcts"
+        },
+        {
+          "seat": 1,
+          "vp": 0,
+          "income_position": 0,
+          "income_level": -10,
+          "money": 0,
+          "rank": 1,
+          "player": "ismcts-1",
+          "backend": "ismcts"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 102,
+            "fallbacks": 0,
+            "latency_ms": 4476.025,
+            "iterations": 584,
+            "simulation_steps": 3480,
+            "nodes": 153,
+            "evaluated_candidates": 439
+          },
+          {
+            "seat": 1,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 100,
+            "fallbacks": 0,
+            "latency_ms": 4252.303,
+            "iterations": 544,
+            "simulation_steps": 3264,
+            "nodes": 172,
+            "evaluated_candidates": 384
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "8d2a3214ff7fc9131dcc00a7e6d3ef4499ff821af19396ed87d88bf04854f78a",
+      "seconds": 9.805
+    },
+    {
+      "game": "castles_of_burgundy",
+      "rules_version": "ravensburger-2019-base-1.0",
+      "backend": "ismcts",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0005.sqlite3",
+      "status": "ok",
+      "match_id": "0a92ccbe6bae45ef",
+      "turns": 50,
+      "decisions": 179,
+      "rankings": [
+        {
+          "seat": 1,
+          "score": 105,
+          "empty_spaces": 13,
+          "bridge": 3,
+          "board_score": 85,
+          "resource_points": 9,
+          "monastery_points": 11,
+          "rank": 1,
+          "player": "ismcts-1",
+          "backend": "ismcts"
+        },
+        {
+          "seat": 0,
+          "score": 103,
+          "empty_spaces": 15,
+          "bridge": 3,
+          "board_score": 89,
+          "resource_points": 2,
+          "monastery_points": 12,
+          "rank": 2,
+          "player": "ismcts-0",
+          "backend": "ismcts"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 91,
+            "fallbacks": 0,
+            "latency_ms": 1690.889,
+            "iterations": 520,
+            "simulation_steps": 3115,
+            "nodes": 174,
+            "evaluated_candidates": 405
+          },
+          {
+            "seat": 1,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 88,
+            "fallbacks": 0,
+            "latency_ms": 1577.026,
+            "iterations": 504,
+            "simulation_steps": 2947,
+            "nodes": 149,
+            "evaluated_candidates": 405
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "ec2e7f80c1b97de0791af41cacff60a2ec117ac4d77b0d6b6a33da07fab93b70",
+      "seconds": 3.589
+    },
+    {
+      "game": "century_spice_road",
+      "rules_version": "plan-b-2017-base-1.0",
+      "backend": "ismcts",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0006.sqlite3",
+      "status": "ok",
+      "match_id": "5ff337d205c74c16",
+      "turns": 152,
+      "decisions": 152,
+      "rankings": [
+        {
+          "seat": 0,
+          "score": 105,
+          "point_cards": 6,
+          "gold": 3,
+          "silver": 1,
+          "rank": 1,
+          "player": "ismcts-0",
+          "backend": "ismcts"
+        },
+        {
+          "seat": 1,
+          "score": 20,
+          "point_cards": 2,
+          "gold": 1,
+          "silver": 0,
+          "rank": 2,
+          "player": "ismcts-1",
+          "backend": "ismcts"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 76,
+            "fallbacks": 0,
+            "latency_ms": 2237.612,
+            "iterations": 606,
+            "simulation_steps": 3629,
+            "nodes": 91,
+            "evaluated_candidates": 591
+          },
+          {
+            "seat": 1,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 76,
+            "fallbacks": 0,
+            "latency_ms": 2117.079,
+            "iterations": 606,
+            "simulation_steps": 3593,
+            "nodes": 94,
+            "evaluated_candidates": 588
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "e8d0ad2d54a090653f174bf94a60a9da18e58c1451feb274f857648a296e40c1",
+      "seconds": 4.6
+    },
+    {
+      "game": "seven_wonders",
+      "rules_version": "second-edition-base-1.0",
+      "backend": "ismcts",
+      "seed": 42,
+      "players": 3,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0007.sqlite3",
+      "status": "ok",
+      "match_id": "41752c3af4094c87",
+      "turns": 18,
+      "decisions": 55,
+      "rankings": [
+        {
+          "seat": 0,
+          "score": 43,
+          "coins": 24,
+          "breakdown": {
+            "wonder": 10,
+            "treasure": 8,
+            "military": 7,
+            "civil": 0,
+            "commercial": 2,
+            "science": 16,
+            "guilds": 0,
+            "total": 43
+          },
+          "rank": 1,
+          "player": "ismcts-0",
+          "backend": "ismcts"
+        },
+        {
+          "seat": 2,
+          "score": 36,
+          "coins": 14,
+          "breakdown": {
+            "wonder": 3,
+            "treasure": 4,
+            "military": 7,
+            "civil": 19,
+            "commercial": 2,
+            "science": 0,
+            "guilds": 1,
+            "total": 36
+          },
+          "rank": 2,
+          "player": "ismcts-2",
+          "backend": "ismcts"
+        },
+        {
+          "seat": 1,
+          "score": 31,
+          "coins": 18,
+          "breakdown": {
+            "wonder": 10,
+            "treasure": 6,
+            "military": -2,
+            "civil": 8,
+            "commercial": 0,
+            "science": 9,
+            "guilds": 0,
+            "total": 31
+          },
+          "rank": 3,
+          "player": "ismcts-1",
+          "backend": "ismcts"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 18,
+            "fallbacks": 0,
+            "latency_ms": 1924.092,
+            "iterations": 93,
+            "simulation_steps": 528,
+            "nodes": 24,
+            "evaluated_candidates": 85
+          },
+          {
+            "seat": 1,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 18,
+            "fallbacks": 0,
+            "latency_ms": 1869.766,
+            "iterations": 90,
+            "simulation_steps": 506,
+            "nodes": 25,
+            "evaluated_candidates": 83
+          },
+          {
+            "seat": 2,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 19,
+            "fallbacks": 0,
+            "latency_ms": 1928.455,
+            "iterations": 97,
+            "simulation_steps": 543,
+            "nodes": 24,
+            "evaluated_candidates": 90
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "e278fbde47d576706c43ecc567e30d7adc970d00e4ed74a2254cd9381b8d0943",
+      "seconds": 2.608
+    },
+    {
+      "game": "harmonies",
+      "rules_version": "libellud-2024-base-1.0",
+      "backend": "ismcts",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0008.sqlite3",
+      "status": "ok",
+      "match_id": "46caa301d7ea42f9",
+      "turns": 97,
+      "decisions": 97,
+      "rankings": [
+        {
+          "seat": 0,
+          "score": 57,
+          "animal_cubes": 5,
+          "score_breakdown": {
+            "trees": 7,
+            "mountains": 2,
+            "fields": 5,
+            "buildings": 0,
+            "water": 19,
+            "animals": 24,
+            "spirits": 0,
+            "total": 57
+          },
+          "rank": 1,
+          "player": "ismcts-0",
+          "backend": "ismcts"
+        },
+        {
+          "seat": 1,
+          "score": 40,
+          "animal_cubes": 3,
+          "score_breakdown": {
+            "trees": 8,
+            "mountains": 10,
+            "fields": 5,
+            "buildings": 0,
+            "water": 2,
+            "animals": 15,
+            "spirits": 0,
+            "total": 40
+          },
+          "rank": 2,
+          "player": "ismcts-1",
+          "backend": "ismcts"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 50,
+            "fallbacks": 0,
+            "latency_ms": 822.478,
+            "iterations": 336,
+            "simulation_steps": 2016,
+            "nodes": 64,
+            "evaluated_candidates": 290
+          },
+          {
+            "seat": 1,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 47,
+            "fallbacks": 0,
+            "latency_ms": 745.097,
+            "iterations": 312,
+            "simulation_steps": 1792,
+            "nodes": 66,
+            "evaluated_candidates": 270
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "cc3e7553acf60b4e234be4c055b3744e6970d9637dc5184c11f31996bfde36cb",
+      "seconds": 1.68
+    },
+    {
+      "game": "wingspan",
+      "rules_version": "stonemaier-base-en-1.0",
+      "backend": "ismcts",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0009.sqlite3",
+      "status": "ok",
+      "match_id": "7baf256de800451c",
+      "turns": 194,
+      "decisions": 194,
+      "rankings": [
+        {
+          "seat": 1,
+          "score": 51,
+          "food": 10,
+          "score_breakdown": {
+            "birds": 11,
+            "eggs": 8,
+            "cached_food": 10,
+            "tucked_cards": 0,
+            "round_goals": 22,
+            "bonus_cards": 0
+          },
+          "rank": 1,
+          "player": "ismcts-1",
+          "backend": "ismcts"
+        },
+        {
+          "seat": 0,
+          "score": 36,
+          "food": 2,
+          "score_breakdown": {
+            "birds": 14,
+            "eggs": 14,
+            "cached_food": 0,
+            "tucked_cards": 4,
+            "round_goals": 4,
+            "bonus_cards": 0
+          },
+          "rank": 2,
+          "player": "ismcts-0",
+          "backend": "ismcts"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 94,
+            "fallbacks": 0,
+            "latency_ms": 1434.611,
+            "iterations": 720,
+            "simulation_steps": 4304,
+            "nodes": 384,
+            "evaluated_candidates": 291
+          },
+          {
+            "seat": 1,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 100,
+            "fallbacks": 0,
+            "latency_ms": 1540.743,
+            "iterations": 784,
+            "simulation_steps": 4625,
+            "nodes": 398,
+            "evaluated_candidates": 303
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "bd2aeee93a8ff0219dc5feb6289bdf08932488635ab148ab311b97b8cba4f93b",
+      "seconds": 3.215
+    },
+    {
+      "game": "carcassonne",
+      "rules_version": "hig-base-farmers-1.0",
+      "backend": "ismcts",
+      "seed": 42,
+      "players": 2,
+      "baseline_seat": null,
+      "opponent": "self",
+      "database": "match-0010.sqlite3",
+      "status": "ok",
+      "match_id": "97d91982752d499e",
+      "turns": 142,
+      "decisions": 142,
+      "rankings": [
+        {
+          "seat": 0,
+          "score": 51,
+          "rank": 1,
+          "player": "ismcts-0",
+          "backend": "ismcts"
+        },
+        {
+          "seat": 1,
+          "score": 51,
+          "rank": 1,
+          "player": "ismcts-1",
+          "backend": "ismcts"
+        }
+      ],
+      "baseline_metrics": {
+        "schema_version": "agentbga.baseline-metrics.v1",
+        "players": [
+          {
+            "seat": 0,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 72,
+            "fallbacks": 0,
+            "latency_ms": 3048.798,
+            "iterations": 407,
+            "simulation_steps": 2383,
+            "nodes": 119,
+            "evaluated_candidates": 336
+          },
+          {
+            "seat": 1,
+            "algorithm": "ismcts",
+            "algorithm_version": "1",
+            "algorithm_params": {
+              "seed": 0,
+              "max_candidates": 8,
+              "time_limit_ms": 100,
+              "iterations": 8,
+              "max_steps": 6,
+              "exploration": 1.4,
+              "position_weight": 1.0,
+              "opponent_weight": 0.25
+            },
+            "decisions": 70,
+            "fallbacks": 0,
+            "latency_ms": 2838.924,
+            "iterations": 372,
+            "simulation_steps": 2201,
+            "nodes": 98,
+            "evaluated_candidates": 320
+          }
+        ]
+      },
+      "replay_verified": true,
+      "final_state_hash": "3728e7c95072596fab7658fbcc62688e37562bd19f0d38b74e00dbf3a7558f1a",
+      "seconds": 6.298
+    }
+  ]
+}

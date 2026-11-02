@@ -1,0 +1,7 @@
+{
+  "schema_version": "agentbga.players.v1",
+  "players": [
+    {"name": "ISMCTS v1", "backend": "ismcts", "algorithm_params": {"iterations": 128, "max_steps": 24, "time_limit_ms": 1000, "max_candidates": 32, "exploration": 1.4, "seed": 7}},
+    {"name": "Random", "backend": "random"}
+  ]
+}
